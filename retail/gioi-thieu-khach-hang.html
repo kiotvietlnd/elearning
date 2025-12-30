@@ -1,0 +1,269 @@
+let currentLessonId = 0;
+    let completedLessons = new Set();
+    let quizState = { correct: 0, total: 0 };
+    let currentActiveTab = 'knowledge'; // Default tab
+
+    function init() {
+        renderMenu();
+        updateProgress();
+        const today = new Date();
+        document.getElementById('cert-date').innerText = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+        
+        const scrollTopBtn = document.getElementById('scroll-to-top');
+        window.onscroll = function() {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) { scrollTopBtn.classList.remove('hidden'); scrollTopBtn.classList.add('flex'); }
+            else { scrollTopBtn.classList.add('hidden'); scrollTopBtn.classList.remove('flex'); }
+        };
+    }
+
+    function renderMenu() {
+        const grid = document.getElementById('lesson-grid');
+        grid.innerHTML = courseData.map((lesson, idx) => `
+            <div onclick="loadLessonFromMenu(${idx})" class="glass-card bg-white rounded-xl p-5 cursor-pointer group hover:border-blue-400 relative overflow-hidden transition-all duration-300">
+                <div class="flex items-start gap-4 relative z-10">
+                    <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-sm border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300"><i class="${lesson.icon}"></i></div>
+                    <div><h3 class="font-bold text-lg text-slate-800 group-hover:text-blue-600 transition-colors">${lesson.title}</h3><p class="text-sm text-slate-500 mt-1 line-clamp-2">${lesson.desc}</p></div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-blue-500">Mục ${idx + 1}</span>
+                    ${completedLessons.has(idx) ? '<i class="fa-solid fa-circle-check text-green-500 text-xl animate__animated animate__rubberBand"></i>' : '<i class="fa-regular fa-circle-play text-slate-300 text-xl group-hover:text-blue-500 transition-colors"></i>'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function loadLessonFromMenu(id) {
+        currentActiveTab = 'knowledge';
+        if(id === -1) loadComprehensiveLesson(); else loadLesson(id);
+    }
+
+    function loadLesson(id) {
+        currentLessonId = id;
+        const lesson = courseData[id];
+        const mainTopic = '<span class="block text-sm text-blue-500 font-bold uppercase tracking-wider mb-1">Giới thiệu khách hàng</span>';
+        document.getElementById('lesson-title-container').innerHTML = `${mainTopic}<h2 id="lesson-title" class="text-2xl md:text-3xl font-black text-slate-800">${lesson.title}</h2>`;
+        document.getElementById('lesson-desc').innerText = lesson.desc;
+        document.getElementById('lesson-icon').className = `${lesson.icon} text-2xl`;
+        
+        renderKnowledge(lesson.knowledge);
+        renderDialogue(lesson.dialogue);
+        renderVocab(lesson.vocab);
+        renderQuiz(lesson.quiz);
+        
+        updateDropdown();
+        renderNavigation();
+        document.getElementById('view-menu').classList.add('hidden');
+        document.getElementById('view-learning').classList.remove('hidden');
+        switchTab(currentActiveTab);
+        window.scrollTo(0, 0);
+    }
+
+    function renderKnowledge(data) {
+        const container = document.getElementById('content-knowledge');
+        if(!data || data.length === 0) {
+             container.innerHTML = `<div class="p-6 bg-slate-50 rounded-xl text-center text-slate-500">Chưa có dữ liệu chi tiết.</div>`;
+             return;
+        }
+        container.innerHTML = data.map((item, idx) => `
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 animate__animated animate__fadeInUp" style="animation-delay: ${idx * 100}ms">
+                <div class="flex gap-4">
+                    <div class="shrink-0 w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold shadow-sm border border-blue-100">${idx + 1}</div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-slate-800 text-lg mb-3 pb-2 border-b border-slate-100">${item.header}</h3>
+                        <ul class="space-y-3 knowledge-list">
+                            ${item.content.map(point => `<li class="flex gap-3 text-sm text-slate-600 leading-relaxed items-start"><i class="fa-solid fa-check text-blue-500 mt-1 shrink-0"></i> <span>${point}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderDialogue(dialogue) {
+        const container = document.getElementById('content-dialogue');
+        container.innerHTML = dialogue.map((line, idx) => {
+            const isKiot = line.speaker.includes('KiotViet');
+            const formattedText = line.target.replace(/\*\*(.*?)\*\*/g, '<b class="text-blue-700 font-bold">$1</b>');
+            return `
+            <div class="flex ${isKiot ? 'flex-row' : 'flex-row-reverse'} gap-4 items-end animate__animated animate__fadeInUp" style="animation-delay: ${idx * 50}ms">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-md ${isKiot ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 text-slate-600'}"><i class="fa-solid ${isKiot ? 'fa-user-tie' : 'fa-store'}"></i></div>
+                <div class="flex flex-col ${isKiot ? 'items-start' : 'items-end'} max-w-[80%]">
+                    <span class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wide">${line.speaker}</span>
+                    <div class="p-4 rounded-2xl shadow-sm text-sm font-medium leading-relaxed border ${isKiot ? 'bg-blue-50 border-blue-100 rounded-bl-none text-slate-700' : 'bg-white border-slate-200 rounded-br-none text-slate-600'}">${formattedText}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderVocab(vocab) {
+        const container = document.getElementById('content-vocab');
+        container.innerHTML = vocab.map((v, i) => {
+            // FIXED: Parse markdown bold syntax to HTML span
+            const formattedFull = v.full.replace(/\*\*(.*?)\*\*/g, '<span class="text-yellow-300 font-black border-b border-yellow-300">$1</span>');
+            return `
+            <div class="flip-card h-56 perspective-1000 group animate__animated animate__fadeIn" style="animation-delay: ${i * 50}ms" onclick="this.classList.toggle('flipped')">
+                <div class="flip-card-inner shadow-sm rounded-xl">
+                    <div class="flip-card-front bg-white border border-slate-200 hover:border-blue-300 transition-colors">
+                        <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-4 text-blue-500"><i class="fa-solid fa-question text-xl"></i></div>
+                        <h3 class="text-base font-bold text-slate-800 px-4 leading-snug">${v.q}</h3>
+                        <p class="text-[10px] text-slate-400 mt-6 uppercase tracking-widest font-bold flex items-center gap-1"><i class="fa-solid fa-hand-pointer animate-pulse"></i> Chạm để lật</p>
+                    </div>
+                    <div class="flip-card-back bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+                        <i class="fa-solid fa-lightbulb text-yellow-300 text-3xl mb-3"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-blue-200 mb-1">Ghi nhớ</span>
+                        <p class="font-medium text-sm px-4 leading-relaxed">${formattedFull}</p>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+    }
+
+    function renderQuiz(quiz) {
+        const list = document.getElementById('quiz-list');
+        quizState = { correct: 0, total: quiz.length };
+        updateQuizStats();
+        list.innerHTML = quiz.map((q, idx) => `
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-100 quiz-card transition-all" id="quiz-${idx}">
+                <div class="flex gap-4 mb-4"><span class="shrink-0 w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs font-bold">Q${idx + 1}</span><h3 class="font-bold text-slate-800 text-base leading-snug">${q.q}</h3></div>
+                <div class="space-y-3 pl-12">
+                    ${q.opts.map((opt, oid) => `
+                        <button onclick="checkAnswer(${idx}, ${oid}, ${q.a})" class="w-full text-left p-3 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-all text-sm font-medium text-slate-600 quiz-opt flex items-center group">
+                            <span class="w-6 h-6 rounded-md border border-slate-300 flex items-center justify-center text-[10px] text-slate-500 font-bold mr-3 group-hover:border-blue-400 group-hover:text-blue-500 opt-idx transition-colors">${String.fromCharCode(65+oid)}</span><span class="flex-1">${opt}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function checkAnswer(qIdx, selected, correct) {
+        const card = document.getElementById(`quiz-${qIdx}`);
+        if(card.hasAttribute('data-answered')) return;
+        card.setAttribute('data-answered', 'true');
+        const opts = card.querySelectorAll('.quiz-opt');
+        opts.forEach((btn, idx) => {
+            btn.disabled = true;
+            btn.classList.remove('hover:bg-blue-50', 'hover:border-blue-300');
+            const idxSpan = btn.querySelector('.opt-idx');
+            if (idx === correct) {
+                btn.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+                idxSpan.classList.add('bg-green-500', 'border-green-500', 'text-white');
+                idxSpan.innerHTML = '<i class="fa-solid fa-check"></i>';
+            } else if (idx === selected) {
+                btn.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                idxSpan.classList.add('bg-red-500', 'border-red-500', 'text-white');
+                idxSpan.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            }
+        });
+        if (selected === correct) { quizState.correct++; confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } }); } 
+        else { card.classList.add('animate__animated', 'animate__shakeX'); }
+        updateQuizStats();
+        if(document.querySelectorAll('.quiz-card[data-answered]').length === quizState.total) {
+            if(quizState.correct === quizState.total && currentLessonId !== -1) { completedLessons.add(currentLessonId); updateProgress(); }
+            if(currentLessonId === -1 && quizState.correct === quizState.total) { triggerMegaConfetti(); setTimeout(() => toggleModal('certificate-modal'), 1200); }
+        }
+    }
+
+    function updateQuizStats() { document.getElementById('quiz-score').innerText = quizState.correct; document.getElementById('quiz-total').innerText = quizState.total; }
+    function resetQuiz() { if(currentLessonId === -1) loadComprehensiveLesson(); else renderQuiz(courseData[currentLessonId].quiz); }
+
+    function loadComprehensiveLesson() {
+        currentLessonId = -1;
+        const allQuizzes = courseData.flatMap(c => c.quiz);
+        const allDialogues = courseData.flatMap(c => c.dialogue);
+        const allVocabs = courseData.flatMap(c => c.vocab);
+        const allKnowledge = courseData.flatMap(c => c.knowledge);
+        
+        const mainTopic = '<span class="block text-sm text-indigo-500 font-bold uppercase tracking-wider mb-1">Giới thiệu khách hàng</span>';
+        document.getElementById('lesson-title-container').innerHTML = `${mainTopic}<h2 id="lesson-title" class="text-2xl md:text-3xl font-black text-slate-800">Bài kiểm tra Tổng hợp</h2>`;
+        document.getElementById('lesson-desc').innerText = "Ôn tập toàn diện và trả lời đúng 100% câu hỏi để nhận Chứng chỉ.";
+        document.getElementById('lesson-icon').className = "fa-solid fa-graduation-cap text-2xl";
+        
+        // Render content
+        renderKnowledge(allKnowledge); renderDialogue(allDialogues); renderVocab(allVocabs); renderQuiz(allQuizzes);
+        
+        // View transition
+        document.getElementById('view-menu').classList.add('hidden');
+        document.getElementById('view-learning').classList.remove('hidden');
+        document.getElementById('lesson-navigation').innerHTML = `<div class="w-full flex justify-center"><button onclick="goBack()" class="text-slate-400 font-bold text-sm hover:text-slate-600 flex items-center gap-2"><i class="fa-solid fa-arrow-up"></i> Quay về trang chủ</button></div>`;
+        
+        // Show all tabs
+        document.getElementById('btn-tab-knowledge').classList.remove('hidden');
+        document.getElementById('btn-tab-dialogue').nextElementSibling.classList.remove('hidden'); 
+        
+        updateDropdown(); // Update dropdown to show "Test" selected
+
+        switchTab('quiz'); 
+        window.scrollTo(0, 0);
+    }
+
+    function switchTab(tab) {
+        currentActiveTab = tab;
+        ['knowledge', 'dialogue', 'vocab', 'quiz'].forEach(t => { 
+            const contentEl = document.getElementById(`content-${t}`);
+            const btnEl = document.getElementById(`btn-tab-${t}`);
+            if(contentEl) contentEl.classList.add('hidden'); 
+            if(btnEl) btnEl.classList.remove('active', 'text-blue-600'); 
+        });
+        const targetContent = document.getElementById(`content-${tab}`);
+        const targetBtn = document.getElementById(`btn-tab-${tab}`);
+        if(targetContent) targetContent.classList.remove('hidden');
+        if(targetBtn) targetBtn.classList.add('active', 'text-blue-600');
+    }
+
+    function goBack() { 
+        document.getElementById('btn-tab-knowledge').classList.remove('hidden');
+        document.getElementById('btn-tab-dialogue').nextElementSibling.classList.remove('hidden');
+        document.getElementById('view-learning').classList.add('hidden'); 
+        document.getElementById('view-menu').classList.remove('hidden'); 
+        updateProgress(); 
+        renderMenu(); 
+        window.scrollTo(0, 0); 
+    }
+    function updateProgress() { const pct = Math.round((completedLessons.size / courseData.length) * 100); document.getElementById('course-progress').style.width = `${pct}%`; document.getElementById('progress-text').innerText = `${pct}%`; }
+    function updateDropdown() { 
+        const select = document.getElementById('lesson-selector'); 
+        let html = courseData.map((l, i) => `<option value="${i}" ${i === currentLessonId ? 'selected' : ''}>${i+1}. ${l.title}</option>`).join(''); 
+        html += `<option value="-1" ${currentLessonId === -1 ? 'selected' : ''}>Bài kiểm tra Tổng hợp</option>`;
+        select.innerHTML = html;
+    }
+    function switchLessonFromDropdown(val) { 
+        const id = parseInt(val);
+        if(id === -1) loadComprehensiveLesson();
+        else loadLesson(id); 
+    }
+
+    function renderNavigation() {
+        const container = document.getElementById('lesson-navigation');
+        const prev = currentLessonId > 0 ? currentLessonId - 1 : null;
+        const next = currentLessonId < courseData.length - 1 ? currentLessonId + 1 : null;
+        let html = '<div class="flex-1">';
+        if (prev !== null) html += `<button onclick="loadLesson(${prev})" class="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold text-sm transition-colors"><i class="fa-solid fa-arrow-left"></i> Mục trước</button>`;
+        html += '</div><div class="flex-1 text-right">';
+        if (next !== null) html += `<button onclick="loadLesson(${next})" class="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors ml-auto">Mục tiếp theo <i class="fa-solid fa-arrow-right"></i></button>`;
+        else html += `<button onclick="loadComprehensiveLesson()" class="flex items-center gap-2 text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg shadow-md font-bold text-sm transition-all ml-auto animate-pulse">Thi chứng chỉ <i class="fa-solid fa-graduation-cap"></i></button>`;
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function toggleModal(id) {
+        const m = document.getElementById(id);
+        const content = document.getElementById('cert-content');
+        if (m.classList.contains('opacity-0')) { m.classList.remove('opacity-0', 'pointer-events-none'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }
+        else { m.classList.add('opacity-0', 'pointer-events-none'); content.classList.remove('scale-100'); content.classList.add('scale-95'); }
+        document.body.classList.toggle('modal-active');
+    }
+
+    function triggerMegaConfetti() {
+        var duration = 3000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+        var interval = setInterval(function() {
+            var timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+            var particleCount = 50 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.2 + 0.1, y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: Math.random() * 0.2 + 0.7, y: Math.random() - 0.2 } }));
+        }, 250);
+    }
+
+    window.onload = init;
+</script>
