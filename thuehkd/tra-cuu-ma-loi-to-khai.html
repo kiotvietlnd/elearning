@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cẩm nang Xử lý Lỗi Tờ khai Hóa đơn Điện tử - KiotViet</title>
+    <meta name="description" content="Công cụ tra cứu và hướng dẫn xử lý chi tiết các mã lỗi thường gặp khi nộp tờ khai đăng ký sử dụng hóa đơn điện tử.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f9ff; /* Sky-50 */
+            color: #334155;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f9ff; }
+        ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* Background Animation */
+        @keyframes moveInCircle { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+        @keyframes moveVertical { 0% { transform: translateY(-50%); } 50% { transform: translateY(50%); } 100% { transform: translateY(-50%); } }
+        @keyframes moveHorizontal { 0% { transform: translateX(-50%); } 50% { transform: translateX(50%); } 100% { transform: translateX(-50%); } }
+        
+        .soft-glow-background { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; 
+            background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 50%, #dcfce7 100%);
+        }
+        .soft-glow-background .shape { position: absolute; filter: blur(120px); opacity: 0.6; }
+        .soft-glow-background .shape1 { height: 400px; width: 400px; background: #bae6fd; border-radius: 50%; top: -50px; left: -100px; animation: moveInCircle 25s ease-in-out infinite; }
+        .soft-glow-background .shape2 { height: 450px; width: 450px; background: #bbf7d0; border-radius: 50%; bottom: -100px; right: -100px; animation: moveVertical 30s ease-in-out infinite; }
+        .soft-glow-background .shape3 { height: 300px; width: 500px; background: #a5f3fc; border-radius: 50%; top: 50%; left: 50%; animation: moveHorizontal 40s ease-in-out infinite; }
+
+        /* Nav Button Styles - No Icons */
+        .nav-button {
+            transition: all 0.2s ease-in-out;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+        .nav-button:hover {
+            transform: translateX(4px);
+            background-color: white;
+            border-color: #93c5fd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .nav-button.active {
+            background: linear-gradient(135deg, #2563eb 0%, #16a34a 100%); /* Blue to Green Gradient */
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+        }
+        .nav-button.active span {
+            color: white !important;
+        }
+
+        /* Content Transition */
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .process-flow-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        .process-flow-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            right: -25%;
+            width: 50%;
+            border-bottom: 2px dashed #cbd5e1;
+            z-index: 0;
+        }
+        
+        @media (max-width: 1023px) {
+            .process-flow-container { flex-direction: column; gap: 2rem; }
+            .process-flow-item { text-align: left; display: flex; align-items: center; gap: 1rem; }
+            .process-flow-item:not(:last-child)::after { content: none; }
+            .process-flow-icon { margin: 0 !important; }
+        }
+        
+        .float-btn { transition: transform 0.2s; }
+        .float-btn:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="soft-glow-background">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-white/50 h-20 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full gap-8">
+                <!-- Logo -->
+                <a href="index.html" class="flex-shrink-0 flex items-center gap-3 select-none hover:opacity-80 transition-opacity">
+                    <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-8">
+                    <span class="text-slate-300 font-light text-2xl">|</span>
+                    <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-green-700 tracking-tight text-lg uppercase">E-Learning</span>
+                </a>
+
+                <!-- Back Link -->
+                <a href="index.html" class="flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> Quay lại Cẩm nang
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16">
+        <div data-aos="fade-down" class="text-center">
+            <h1 class="text-3xl sm:text-5xl font-black text-slate-800 mb-4 tracking-tight">
+                Cẩm nang Xử lý <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-green-600">Lỗi Tờ khai HĐĐT</span>
+            </h1>
+            <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto font-medium">
+                Tra cứu nhanh mã lỗi và hướng dẫn khắc phục chi tiết để hoàn tất thủ tục đăng ký hóa đơn điện tử.
+            </p>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-8" data-aos="fade-up" data-aos-delay="100">
+        <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 group-hover:text-blue-500 transition-colors"></i>
+            </div>
+            <input type="text" id="search-box" placeholder="Nhập mã lỗi (VD: 1034) hoặc từ khóa mô tả..." 
+                class="w-full pl-12 pr-4 py-4 border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all text-slate-700 bg-white/80 backdrop-blur">
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8 pt-10 pb-20">
+        
+        <!-- Sidebar Navigation (No Icons) -->
+        <aside class="lg:w-1/4 xl:w-1/5 shrink-0" data-aos="fade-right" data-aos-delay="200">
+            <div class="lg:sticky lg:top-28">
+                <h3 class="font-bold text-blue-900 mb-4 uppercase text-xs tracking-wider px-1">Danh sách lỗi</h3>
+                <nav id="error-nav" class="grid grid-cols-2 lg:grid-cols-1 gap-2 max-h-[70vh] overflow-y-auto custom-scrollbar pr-2">
+                    
+                    <button data-target="error-1034" class="nav-button active p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1034</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Người đại diện</span>
+                    </button>
+
+                    <button data-target="error-1008" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1008</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Trạng thái MST</span>
+                    </button>
+
+                    <button data-target="error-1009" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1009</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Cơ quan thuế</span>
+                    </button>
+
+                    <button data-target="error-1010" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1010</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Chưa đăng ký</span>
+                    </button>
+
+                    <button data-target="error-1011" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1011</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Sai CKS</span>
+                    </button>
+                    
+                    <button data-target="error-1012" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1012</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Sai đối tượng</span>
+                    </button>
+
+                    <button data-target="error-1025" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1025</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Loại hóa đơn</span>
+                    </button>
+
+                    <button data-target="error-1027" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1027</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Tổ chức T-VAN</span>
+                    </button>
+
+                    <button data-target="error-1031" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 1031</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Chưa có GPKD</span>
+                    </button>
+
+                    <button data-target="error-2007" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 2007</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Sai hình thức</span>
+                    </button>
+
+                    <button data-target="error-2013" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 2013</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">MST không khớp</span>
+                    </button>
+
+                    <button data-target="error-9991" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 9991</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Đang xử lý</span>
+                    </button>
+
+                    <button data-target="error-9992" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 9992</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Tờ khai tồn tại</span>
+                    </button>
+
+                    <button data-target="error-9994" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Lỗi 9994</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Ngừng sử dụng</span>
+                    </button>
+
+                    <button data-target="error-otp" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Vấn đề OTP</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">eTax Mobile</span>
+                    </button>
+
+                    <button data-target="error-status" class="nav-button p-3 bg-white/60 backdrop-blur rounded-xl text-left">
+                        <span class="block font-bold text-sm text-slate-800">Trạng thái</span>
+                        <span class="block text-[11px] text-slate-500 uppercase tracking-wide mt-0.5">Thời gian chờ</span>
+                    </button>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- Content Detail -->
+        <main class="w-full lg:w-3/4 xl:w-4/5">
+            <div id="error-content-container" class="bg-white rounded-3xl p-6 md:p-10 border border-slate-200 shadow-xl min-h-[500px]" data-aos="fade-up" data-aos-delay="300">
+                
+                <!-- Content: Error 1034 -->
+                <div id="error-1034" class="content-section active">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lỗi phổ biến nhất</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1034: Thông tin Người đại diện không đúng</h2>
+                    </div>
+                    
+                    <p class="mb-6 text-slate-600 leading-relaxed">
+                        Lỗi này xảy ra khi thông tin người đại diện theo pháp luật (NĐDTPL) trên tờ khai không khớp với dữ liệu của Cơ quan Thuế. Dưới đây là các trường hợp và cách xử lý cụ thể.
+                    </p>
+                    
+                    <div class="space-y-8">
+                        <!-- Case 1 -->
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                            <h3 class="font-bold text-lg mb-3 text-slate-800 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm">1</span>
+                                Trường hợp 1: Thông tin không khớp với VNeID
+                            </h3>
+                            <div class="pl-10">
+                                <p class="mb-4 text-sm text-slate-600"><strong>Lý do từ CQT:</strong> "1034 – Thông tin người đại diện theo pháp luật không đúng."</p>
+                                
+                                <div class="bg-white p-5 rounded-xl border border-slate-200 mb-6">
+                                    <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa các bước xử lý:</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_01.png" alt="Bước 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_05-1.png" alt="Bước 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_06.png" alt="Bước 3" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_07.png" alt="Bước 4" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_02.png" alt="Bước 5" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                         <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_03.png" alt="Bước 6" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                    </div>
+                                </div>
+
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                    <h4 class="font-bold text-blue-800 text-sm mb-2">Cách xử lý:</h4>
+                                    <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+                                        <li><strong>Kiểm tra VNeID:</strong> Đăng nhập ứng dụng VNeID, kiểm tra thông tin cá nhân/tổ chức để lấy dữ liệu chuẩn xác nhất.</li>
+                                        <li><strong>Đối chiếu và cập nhật:</strong> Vào phần mềm KiotViet Invoice > <em>Quản trị hệ thống</em> > <em>Thông tin đơn vị</em> để sửa lại thông tin NĐDTPL chính xác từng ký tự theo VNeID.</li>
+                                        <li><strong>Gửi lại tờ khai:</strong> Lập và gửi lại tờ khai đăng ký thay đổi thông tin.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Case 2 -->
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                            <h3 class="font-bold text-lg mb-3 text-slate-800 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm">2</span>
+                                Trường hợp 2: Sai thông tin so với Đăng ký kinh doanh
+                            </h3>
+                            <div class="pl-10">
+                                <p class="mb-4 text-sm text-slate-600"><strong>Lý do từ CQT:</strong> "1034 – Thông tin liên quan đến người đại diện pháp luật không đúng so với Đăng ký doanh nghiệp/Đăng ký thuế."</p>
+                                
+                                <div class="bg-white p-5 rounded-xl border border-slate-200 mb-6">
+                                    <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa kiểm tra:</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/nHAP_cccd-NGUOI_MUA07.png" alt="Minh họa 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/nHAP_cccd-NGUOI_MUA09.png" alt="Minh họa 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/nHAP_cccd-NGUOI_MUA08.png" alt="Minh họa 3" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                    </div>
+                                </div>
+
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                    <h4 class="font-bold text-blue-800 text-sm mb-2">Cách xử lý:</h4>
+                                    <ol class="list-decimal list-inside space-y-2 text-sm text-slate-700">
+                                        <li><strong>Kiểm tra giấy tờ:</strong> Đối chiếu thông tin NĐDTPL trên tờ khai với bản cứng Giấy ĐKKD.</li>
+                                        <li><strong>Cập nhật thông tin:</strong> Sửa lại thông tin trên phần mềm cho khớp.</li>
+                                        <li><strong>Gửi lại tờ khai.</strong></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Case 3 -->
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                            <h3 class="font-bold text-lg mb-3 text-slate-800 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm">3</span>
+                                Trường hợp 3: Sai do dấu cách thừa trên hệ thống Thuế
+                            </h3>
+                            <div class="pl-10">
+                                <p class="mb-4 text-sm text-slate-600">Tình trạng: Đã kiểm tra kỹ thông tin nhưng vẫn bị báo lỗi. Nguyên nhân có thể do tên NĐDTPL trên hệ thống thuế có dấu cách thừa ở cuối.</p>
+                                
+                                <div class="bg-white p-5 rounded-xl border border-slate-200 mb-6">
+                                    <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa cách soi lỗi (F12):</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_15.png" alt="Soi lỗi 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_16-1-1024x510.png" alt="Soi lỗi 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_17-1-1024x370.png" alt="Soi lỗi 3" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                        <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_18-1024x408.png" alt="Soi lỗi 4" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                                    </div>
+                                </div>
+
+                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                    <h4 class="font-bold text-blue-800 text-sm mb-1">Mẹo xử lý nâng cao (F12):</h4>
+                                    <p class="text-xs text-slate-700 leading-relaxed">
+                                        Truy cập trang tra cứu NNT, nhấn F12 > Console để xem dữ liệu thô (Data). Nếu thấy tên có dấu cách thừa, hãy thêm dấu cách tương ứng vào tờ khai trên KiotViet để khớp lệnh.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1008 -->
+                <div id="error-1008" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Lỗi trạng thái</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1008: Trạng thái MST không hợp lệ</h2>
+                    </div>
+                    
+                    <p class="mb-6 text-slate-600">Lỗi này xuất hiện khi Mã số thuế của người nộp thuế đang ở trạng thái ngừng hoạt động, tạm nghỉ kinh doanh hoặc bị khóa.</p>
+                    
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
+                        <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa trạng thái:</h4>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/nHAP_cccd-NGUOI_MUA18png.png" alt="Trạng thái 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/nHAP_cccd-NGUOI_MUA19png.png" alt="Trạng thái 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                         <div class="bg-white p-5 rounded-xl border border-red-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="text-red-500 text-2xl mb-3"><i class="fa-solid fa-shop-lock"></i></div>
+                            <h3 class="font-bold text-slate-800 mb-2">Tạm ngừng kinh doanh</h3>
+                            <p class="text-sm text-slate-600">Nếu bạn đang tạm nghỉ, bạn không thể đăng ký sử dụng hóa đơn điện tử.</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                            <div class="text-orange-500 text-2xl mb-3"><i class="fa-solid fa-rotate"></i></div>
+                            <h3 class="font-bold text-slate-800 mb-2">Sai trạng thái</h3>
+                            <p class="text-sm text-slate-600">Nếu bạn đang hoạt động nhưng bị báo lỗi này, hãy liên hệ ngay Cán bộ thuế quản lý để cập nhật lại trạng thái trên hệ thống.</p>
+                        </div>
+                    </div>
+                     <div class="mt-6 text-center">
+                        <a href="https://tracuunnt.gdt.gov.vn/" target="_blank" class="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline">
+                            Kiểm tra trạng thái MST tại đây <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1009 -->
+                <div id="error-1009" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Thông tin CQT</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1009: Mã Cơ quan Thuế không hợp lệ</h2>
+                    </div>
+                    <p class="text-slate-600 mb-6">Lỗi này thường xảy ra khi mã Cơ quan Thuế (CQT) trên tờ khai không khớp với dữ liệu quản lý của Tổng cục Thuế, thường do chọn nhầm các Chi cục Thuế có tên giống nhau.</p>
+                    
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h3 class="font-bold text-lg mb-3 text-slate-800">Ví dụ điển hình:</h3>
+                        <p class="text-sm text-slate-600 mb-3">Cùng tên là "Chi cục Thuế khu vực I" thuộc Cục Thuế tỉnh Cà Mau, nhưng có mã khác nhau cho các địa bàn khác nhau:</p>
+                        <ul class="list-disc pl-5 space-y-2 text-slate-600 text-sm mb-4">
+                            <li><strong>Mã 82311:</strong> Quản lý các xã Tân Thuận, Tân Tiến...</li>
+                            <li><strong>Mã 82301:</strong> Quản lý các phường An Xuyên, Lý Văn Lâm...</li>
+                        </ul>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                            <h4 class="font-bold text-blue-800 text-sm mb-1">Giải pháp:</h4>
+                            <p class="text-xs text-slate-700">Tra cứu chính xác CQT quản lý trực tiếp phường/xã của bạn trên trang <a href="https://tracuunnt.gdt.gov.vn/" target="_blank" class="text-blue-600 underline">tracuunnt.gdt.gov.vn</a> và chọn đúng mã tương ứng trên phần mềm.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1010 -->
+                <div id="error-1010" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Quy trình đăng ký</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1010: Chưa đăng ký sử dụng hóa đơn điện tử</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Nguyên nhân: Bạn đang chọn hình thức tờ khai là <strong>"Thay đổi thông tin"</strong> trong khi đơn vị chưa có bất kỳ tờ khai <strong>"Đăng ký mới"</strong> nào được CQT chấp nhận trước đó.</p>
+                    <div class="bg-white p-5 rounded-xl border border-orange-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                            <i class="fa-solid fa-lightbulb text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Cách xử lý:</h4>
+                            <p class="text-sm text-slate-600">Lập lại tờ khai và chọn hình thức là <strong class="text-orange-600">"Đăng ký mới"</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1011 -->
+                <div id="error-1011" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Chữ ký số</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1011: Thông tin chữ ký số không đúng định dạng</h2>
+                    </div>
+                    <p class="text-slate-600 mb-6">Nguyên nhân phổ biến nhất là do Mã số thuế (MST) trong Chữ ký số (USB Token) không trùng khớp với MST trên tờ khai.</p>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-slate-800 mb-2">Ví dụ sai lệch:</h3>
+                            <p class="text-sm text-slate-600">Tờ khai dùng <strong>CCCD (12 số)</strong> nhưng Chữ ký số lại được đăng ký theo <strong>CMND cũ (9 số)</strong> hoặc ngược lại.</p>
+                        </div>
+                        <div class="bg-teal-50 p-5 rounded-xl border border-teal-200">
+                            <h3 class="font-bold text-teal-800 mb-2">Cách khắc phục:</h3>
+                            <p class="text-sm text-slate-700">Liên hệ nhà cung cấp Chữ ký số để cập nhật lại thông tin MST/CMND/CCCD trong thiết bị Token cho đồng bộ với thông tin đăng ký thuế hiện tại.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1012 -->
+                <div id="error-1012" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Đối tượng</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1012: NNT không thuộc đối tượng sử dụng HĐĐT</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Lỗi này thường xảy ra do sự không đồng bộ thông tin giấy tờ tùy thân (CMT/CCCD) giữa tờ khai và hệ thống thuế.</p>
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <strong class="block text-slate-800 mb-1">Cách 1 (Khuyên dùng):</strong>
+                            <p class="text-sm text-slate-600">Liên hệ quản lý Thuế để cập nhật thông tin từ CMND cũ sang CCCD mới trên hệ thống thuế. Sau đó nộp lại tờ khai với số CCCD.</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <strong class="block text-slate-800 mb-1">Cách 2:</strong>
+                            <p class="text-sm text-slate-600">Nếu cần dùng gấp và Chữ ký số vẫn đang theo CMND cũ: Liên hệ KiotViet để được hỗ trợ chuyển thông tin tờ khai về CMND cũ cho khớp với hệ thống thuế.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1025 -->
+                <div id="error-1025" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Loại hóa đơn</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1025: Loại hóa đơn sử dụng không hợp lệ</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Bạn chọn loại hóa đơn trên tờ khai không phù hợp với phương pháp tính thuế đã đăng ký.</p>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h3 class="font-bold text-slate-800 mb-3">Quy tắc chọn đúng:</h3>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Nếu tính thuế <strong>Khấu trừ</strong>: Chọn <strong>Hóa đơn GTGT</strong>.</li>
+                            <li class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> Nếu tính thuế <strong>Trực tiếp/Khoán</strong>: Chọn <strong>Hóa đơn Bán hàng</strong>.</li>
+                        </ul>
+                        <p class="text-xs text-slate-500 mt-4 italic">Kiểm tra phương pháp tính thuế của bạn tại trang tracuunnt.gdt.gov.vn</p>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1027 -->
+                <div id="error-1027" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Tổ chức T-VAN</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1027: Tổ chức truyền nhận không hợp lệ</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Lỗi này xảy ra khi ngày "Từ ngày" bạn điền trong mục "Thông tin đơn vị truyền nhận" nhỏ hơn ngày KiotViet bắt đầu được cấp phép cung cấp dịch vụ.</p>
+                    <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
+                        <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa lỗi:</h4>
+                        <div class="space-y-4">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_08.png" alt="Lỗi 1027 hình 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_10-1024x257.png" alt="Lỗi 1027 hình 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_13-1024x278.png" alt="Lỗi 1027 hình 3" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 rounded-r-lg">
+                        <p class="font-bold">Cách xử lý:</p>
+                        <p class="text-sm mt-1">Điều chỉnh ngày "Từ ngày" ở phần thông tin T-VAN (KiotViet) đến thời điểm hiện tại hoặc tương lai gần.</p>
+                    </div>
+                </div>
+
+                <!-- Content: Error 1031 -->
+                <div id="error-1031" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Giấy phép</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 1031: Chưa có Giấy chứng nhận ĐKKD</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Hệ thống thuế chưa ghi nhận thông tin Giấy phép kinh doanh của bạn.</p>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                         <h4 class="font-bold text-slate-800 text-sm mb-2">Các bước xử lý:</h4>
+                         <ol class="list-decimal list-inside space-y-2 text-sm text-slate-600">
+                             <li>Tra cứu trên <strong>tracuunnt.gdt.gov.vn</strong>. Nếu mục "GPKD-Ngày cấp" bị trống, nghĩa là dữ liệu chưa được cập nhật.</li>
+                             <li>Liên hệ Cơ quan Thuế quản lý để yêu cầu cập nhật thông tin GPKD lên hệ thống.</li>
+                             <li>Sau khi thông tin đã có trên hệ thống, lập và gửi lại tờ khai.</li>
+                         </ol>
+                    </div>
+                </div>
+
+                <!-- Content: Error 2007 -->
+                <div id="error-2007" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Thông tin liên hệ</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 2007: Hình thức đăng ký chưa đúng</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">CQT yêu cầu bổ sung thông tin chi tiết hơn.</p>
+                    <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 text-sm text-rose-900">
+                        Vui lòng bổ sung đầy đủ: <strong>Người liên hệ, Điện thoại liên hệ</strong>. Phần địa chỉ cần ghi rõ Ngõ, Ngách, Hẻm (nếu có) hoặc Tên đường.
+                    </div>
+                </div>
+
+                <!-- Content: Error 2013 -->
+                <div id="error-2013" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Mã số thuế</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 2013: Thông tin MST không khớp trong CKS</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Tương tự lỗi 1011, thông tin giấy tờ tùy thân (CMND/CCCD) gắn với MST trên tờ khai khác với thông tin trong Chữ ký số.</p>
+                    <p class="font-bold text-blue-600">-> Xem lại cách xử lý của Lỗi 1011 hoặc Lỗi 1012.</p>
+                </div>
+
+                <!-- Content: Error 9991 -->
+                <div id="error-9991" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Hệ thống</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 9991: Đang có tờ khai chờ xử lý</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Bạn đã gửi một tờ khai trước đó và CQT đang xem xét, chưa ra quyết định cuối cùng (Chấp nhận/Từ chối). Hệ thống không cho phép gửi chồng tờ khai mới.</p>
+                    <div class="p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-900 rounded-r-lg">
+                        <p class="font-bold">Giải pháp:</p>
+                        <p class="text-sm mt-1">Vui lòng chờ CQT phản hồi tờ khai cũ. Nếu quá lâu (trên 2 ngày làm việc), hãy liên hệ cán bộ thuế để nhờ duyệt.</p>
+                    </div>
+                </div>
+
+                <!-- Content: Error 9992 -->
+                <div id="error-9992" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Trùng lặp</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 9992: Đã tồn tại tờ khai được chấp nhận</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">Bạn đang chọn hình thức <strong>"Đăng ký mới"</strong> trong khi trước đó bạn đã có một tờ khai đăng ký sử dụng HĐĐT được CQT chấp nhận rồi.</p>
+                    <p class="font-bold text-violet-600">-> Hãy chọn hình thức "Đăng ký thay đổi" nếu bạn muốn cập nhật thông tin.</p>
+                </div>
+
+                <!-- Content: Error 9994 -->
+                <div id="error-9994" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Ngừng sử dụng</span>
+                        <h2 class="text-2xl font-black text-blue-900">Lỗi 9994: Thuộc thời gian ngừng sử dụng HĐĐT</h2>
+                    </div>
+                    <p class="text-slate-600 mb-4">MST của bạn đang bị CQT cưỡng chế ngừng sử dụng hóa đơn hoặc đang trong trạng thái tạm nghỉ kinh doanh.</p>
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <p class="text-sm text-slate-700"><strong>Hành động:</strong> Liên hệ ngay với CQT để giải quyết các vấn đề về nợ thuế hoặc thủ tục kinh doanh để được mở lại trạng thái hoạt động.</p>
+                    </div>
+                </div>
+                
+                <!-- Content: Error OTP -->
+                <div id="error-otp" class="content-section">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Thông báo mới</span>
+                        <h2 class="text-2xl font-black text-blue-900">Vấn đề xác thực OTP eTax Mobile</h2>
+                    </div>
+                    
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-6 mb-6">
+                         <h3 class="font-bold text-indigo-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle"></i> Đã bỏ yêu cầu xác thực OTP
+                        </h3>
+                        <p class="text-slate-700 text-sm leading-relaxed">
+                            Từ ngày <strong>04/07/2025</strong>, để gỡ vướng cho doanh nghiệp, Cơ quan Thuế đã hỗ trợ <strong class="text-slate-900">bỏ qua bước yêu cầu NNT phải xác thực OTP</strong> qua eTax Mobile đối với tờ khai đăng ký hóa đơn điện tử.
+                        </p>
+                    </div>
+
+                    <p class="text-slate-600 mb-4">
+                        Nếu bạn vẫn nhận được email yêu cầu hoặc thấy trạng thái "Cần xác thực", đừng lo lắng. Tờ khai của bạn vẫn đang được hệ thống xử lý nội bộ.
+                    </p>
+                    
+                    <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                            <i class="fa-solid fa-hourglass-half text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Hành động cần thiết:</h4>
+                            <p class="text-sm text-slate-600">Bạn <strong>không cần làm gì thêm</strong>. Hãy kiên nhẫn chờ phản hồi chính thức từ CQT (thường từ 1-3 ngày làm việc).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Error Status -->
+                <div id="error-status" class="content-section">
+                     <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                        <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Quy trình</span>
+                        <h2 class="text-2xl font-black text-blue-900">Trạng thái Tờ khai & Thời gian chờ</h2>
+                    </div>
+                    
+                    <p class="mb-8 text-slate-600">Hiểu rõ quy trình xử lý của Cơ quan Thuế giúp bạn chủ động hơn trong việc theo dõi hồ sơ.</p>
+                    
+                     <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-6">
+                        <h4 class="font-bold text-sm text-slate-700 mb-3 uppercase tracking-wide">Minh họa trạng thái:</h4>
+                        <div class="space-y-4">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_19-1024x472.png" alt="Trạng thái 1" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_20-1024x478.png" alt="Trạng thái 2" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                            <img src="https://helpv4.meinvoice.vn/wp-content/uploads/2025/07/Loi_to_khai_ND_70_21-1024x476.png" alt="Trạng thái 3" class="rounded-lg border border-slate-100 shadow-sm w-full">
+                        </div>
+                    </div>
+
+                    <!-- Process Flow -->
+                    <div class="process-flow-container flex justify-between items-start space-x-4 mb-8">
+                        <div class="process-flow-item">
+                            <div class="process-flow-icon relative z-10 w-16 h-16 mx-auto bg-white border-2 border-blue-500 text-blue-600 rounded-full flex items-center justify-center text-2xl shadow-md">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </div>
+                            <p class="mt-3 font-bold text-slate-700">1. Gửi Tờ khai</p>
+                            <p class="text-xs text-slate-500 mt-1">Qua KiotViet eInvoice</p>
+                        </div>
+                         <div class="process-flow-item">
+                            <div class="process-flow-icon relative z-10 w-16 h-16 mx-auto bg-white border-2 border-orange-400 text-orange-500 rounded-full flex items-center justify-center text-2xl shadow-md">
+                                <i class="fa-solid fa-server"></i>
+                            </div>
+                            <p class="mt-3 font-bold text-slate-700">2. CQT Tiếp nhận</p>
+                            <p class="text-xs text-slate-500 mt-1">Kiểm tra sơ bộ</p>
+                        </div>
+                         <div class="process-flow-item">
+                            <div class="process-flow-icon relative z-10 w-16 h-16 mx-auto bg-white border-2 border-purple-500 text-purple-600 rounded-full flex items-center justify-center text-2xl shadow-md">
+                                <i class="fa-solid fa-user-gear"></i>
+                            </div>
+                            <p class="mt-3 font-bold text-slate-700">3. Xử lý Nội bộ</p>
+                            <p class="text-xs text-slate-500 mt-1">Cán bộ thuế rà soát</p>
+                        </div>
+                         <div class="process-flow-item">
+                            <div class="process-flow-icon relative z-10 w-16 h-16 mx-auto bg-white border-2 border-green-500 text-green-600 rounded-full flex items-center justify-center text-2xl shadow-md">
+                                <i class="fa-solid fa-envelope-open-text"></i>
+                            </div>
+                            <p class="mt-3 font-bold text-slate-700">4. Phản hồi</p>
+                            <p class="text-xs text-slate-500 mt-1">Chấp nhận / Từ chối</p>
+                        </div>
+                    </div>
+                    
+                     <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 flex items-start gap-3">
+                        <i class="fa-solid fa-circle-info text-blue-600 mt-1"></i>
+                        <p class="text-sm text-slate-700 leading-relaxed">
+                            <strong>Lưu ý:</strong> Toàn bộ quá trình này thường mất từ <strong>1-3 ngày làm việc</strong>. Trong thời gian này, vui lòng không gửi lại tờ khai nhiều lần để tránh nghẽn hệ thống.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-white/60 backdrop-blur-md border-t border-white/50 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+            <p class="text-slate-500 font-medium text-sm">Learning and Development Department</p>
+            <p class="text-slate-400 text-xs mt-2">© 2026 KiotViet. All rights reserved.</p>
+            <p class="text-[10px] text-slate-300 mt-4">Tài liệu lưu hành nội bộ và hỗ trợ khách hàng.</p>
+        </div>
+    </footer>
+
+    <!-- Floating Buttons -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-center space-y-3">
+        <a href="#top" class="float-btn flex items-center justify-center w-12 h-12 bg-white text-blue-600 rounded-full shadow-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+            <i class="fa-solid fa-arrow-up"></i>
+        </a>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            AOS.init({ duration: 600, once: true });
+
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            const searchInput = document.getElementById('search-box');
+            
+            function switchTab(targetId) {
+                // Update Buttons
+                navButtons.forEach(btn => {
+                    if (btn.dataset.target === targetId) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Update Content
+                contentSections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            }
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    switchTab(targetId);
+                    if (window.innerWidth < 1024) {
+                        document.getElementById('error-content-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+            });
+
+            // Search Logic
+            searchInput.addEventListener('input', function () {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let firstVisibleButton = null;
+
+                navButtons.forEach(button => {
+                    const buttonText = button.innerText.toLowerCase();
+                    const targetId = button.dataset.target;
+                    const contentSection = document.getElementById(targetId);
+                    const contentText = contentSection ? contentSection.innerText.toLowerCase() : '';
+
+                    const isMatch = buttonText.includes(searchTerm) || contentText.includes(searchTerm);
+                    
+                    if (isMatch) {
+                        button.style.display = 'block';
+                        if (!firstVisibleButton) firstVisibleButton = button;
+                    } else {
+                        button.style.display = 'none';
+                    }
+                });
+
+                if (firstVisibleButton) {
+                    switchTab(firstVisibleButton.dataset.target);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
