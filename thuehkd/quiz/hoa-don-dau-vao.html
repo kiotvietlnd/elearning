@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Learning: Hóa đơn đầu vào - KiotViet</title>
+    <meta name="description" content="Học nghiệp vụ Hóa đơn đầu vào, xử lý khớp dữ liệu và quy trình đồng bộ hóa đơn điện tử trên KiotViet.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f9ff; /* Sky-50 */
+            overflow: hidden; /* App mode */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #93c5fd; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+        /* Background Animation */
+        @keyframes moveInCircle { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+        @keyframes moveVertical { 0% { transform: translateY(-50%); } 50% { transform: translateY(50%); } 100% { transform: translateY(-50%); } }
+        @keyframes moveHorizontal { 0% { transform: translateX(-50%); } 50% { transform: translateX(50%); } 100% { transform: translateX(-50%); } }
+        
+        .soft-glow-background { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; 
+            background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 50%, #dcfce7 100%);
+        }
+        .soft-glow-background .shape { position: absolute; filter: blur(120px); opacity: 0.6; }
+        .soft-glow-background .shape1 { height: 400px; width: 400px; background: #bae6fd; border-radius: 50%; top: -50px; left: -100px; animation: moveInCircle 25s ease-in-out infinite; }
+        .soft-glow-background .shape2 { height: 450px; width: 450px; background: #bbf7d0; border-radius: 50%; bottom: -100px; right: -100px; animation: moveVertical 30s ease-in-out infinite; }
+        .soft-glow-background .shape3 { height: 300px; width: 500px; background: #a5f3fc; border-radius: 50%; top: 50%; left: 50%; animation: moveHorizontal 40s ease-in-out infinite; }
+
+        /* Navigation Styling */
+        .nav-link { 
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .nav-link:hover {
+            color: #2563eb; /* Blue-600 */
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .nav-link.active { 
+            color: #1e3a8a; /* Blue-900 */
+            border-left: 3px solid #2563eb; /* Blue-600 */
+            background: #eff6ff; /* Blue-50 */
+            font-weight: 600; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Card Flip Effect & Styling - INSTANT RESPONSE (0.2s) */
+        .perspective-1000 { perspective: 1000px; }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.2s ease-in-out; /* Tốc độ cực nhanh */
+            transform-style: preserve-3d;
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .card-back { transform: rotateY(180deg); }
+        
+        /* Card Hover Effect from Template - FIXED POSITION (No translateY) */
+        .type-card { transition: all 0.2s ease; }
+        .type-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #93c5fd; }
+
+        /* Chat UI Styles */
+        .chat-container { background: white; border-radius: 1rem; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .chat-bubble { max-width: 80%; padding: 0.75rem 1rem; border-radius: 1rem; position: relative; font-size: 0.95rem; line-height: 1.5; }
+        .chat-bubble-customer { background-color: #f1f5f9; color: #334155; border-bottom-left-radius: 0.25rem; margin-left: 3rem; }
+        .chat-bubble-consultant { background-color: #eff6ff; color: #1e40af; border-bottom-right-radius: 0.25rem; margin-right: 3rem; border: 1px solid #dbeafe; }
+        .chat-avatar { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: absolute; bottom: 0; }
+        .chat-avatar-customer { left: -3.5rem; background-color: #cbd5e1; color: #64748b; }
+        .chat-avatar-consultant { right: -3.5rem; background-color: #2563eb; color: white; }
+
+        /* Animation */
+        .fade-in-up { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Certificate */
+        .certificate-border {
+            border: 8px double #B48E43;
+            background-image: radial-gradient(circle at center, #fff 0%, #fffbeb 100%);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .font-serif { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="text-slate-700 antialiased h-screen flex flex-col">
+
+    <!-- Background -->
+    <div class="soft-glow-background">
+        <div class="shape shape1"></div>
+        <div class="shape shape2"></div>
+        <div class="shape shape3"></div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/50 h-16 shadow-sm flex-shrink-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full gap-8">
+                <!-- Logo -->
+                <a href="#" class="flex-shrink-0 flex items-center gap-3 select-none hover:opacity-80 transition-opacity">
+                    <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-6 md:h-7">
+                    <span class="text-slate-300 font-light text-xl">|</span>
+                    <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-green-700 tracking-tight text-base md:text-lg uppercase">Learning Hub</span>
+                </a>
+
+                <!-- Right Side: Back Link Only -->
+                <div class="flex items-center gap-6">
+                    <!-- Nút Quay lại Cẩm nang (Mới) -->
+                    <a href="https://kiotvietlnd.github.io/elearning/thuehkd/" class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-700 transition-colors bg-white/50 px-3 py-1.5 rounded-lg border border-transparent hover:border-blue-200">
+                        <i class="fa-solid fa-arrow-left"></i> 
+                        <span class="hidden sm:inline">Quay lại Cẩm nang</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <div class="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full pt-4 pb-4 px-4 sm:px-6 gap-6">
+        
+        <!-- SIDEBAR NAVIGATION (Floating Glass Style) -->
+        <aside class="w-72 hidden md:flex flex-col flex-shrink-0 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/60 shadow-lg overflow-hidden transition-all duration-300">
+            <div class="p-5 border-b border-white/50">
+                <h3 class="font-bold text-blue-900 uppercase text-xs tracking-wider mb-1">Mục lục bài học</h3>
+                <div class="w-full bg-slate-200 rounded-full h-1.5 mt-2">
+                    <div id="totalProgress" class="bg-gradient-to-r from-blue-500 to-green-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between mt-1 text-[10px] text-slate-500 font-medium">
+                    <span id="completedCount">0/16</span>
+                    <span>Đã hoàn thành</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+                <!-- Cheatsheet -->
+                <button onclick="switchTab('cheatsheet')" id="nav-cheatsheet" class="nav-link w-full text-left px-3 py-3.5 text-slate-700 rounded-lg flex items-center gap-3 active">
+                    <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-bolt"></i></div>
+                    <span class="font-bold text-[15px]">Tóm tắt nhanh</span>
+                </button>
+
+                <div class="py-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Nội dung học tập</div>
+
+                <button onclick="switchTab('intro')" id="nav-intro" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</div>
+                    <span class="font-medium text-[15px]">Tổng quan & Lợi ích</span>
+                </button>
+                <button onclick="switchTab('connect')" id="nav-connect" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</div>
+                    <span class="font-medium text-[15px]">Kết nối & Đồng bộ</span>
+                </button>
+                <button onclick="switchTab('mapping')" id="nav-mapping" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</div>
+                    <span class="font-medium text-[15px]">Khớp dữ liệu</span>
+                </button>
+                <button onclick="switchTab('create')" id="nav-create" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</div>
+                    <span class="font-medium text-[15px]">Tạo phiếu nhập</span>
+                </button>
+                <button onclick="switchTab('advanced')" id="nav-advanced" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">5</div>
+                    <span class="font-medium text-[15px]">Tính năng nâng cao</span>
+                </button>
+
+                <div class="py-2 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Ôn tập & Kiểm tra</div>
+
+                <button onclick="switchTab('summary')" id="nav-summary" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 text-xs"><i class="fa-solid fa-table-columns"></i></div>
+                    <span class="font-medium text-[15px]">Bảng so sánh</span>
+                </button>
+                <button onclick="switchTab('game')" id="nav-game" class="nav-link w-full text-left px-3 py-3 text-slate-700 rounded-lg flex items-center gap-3">
+                    <div class="w-6 h-6 rounded bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0 text-xs"><i class="fa-solid fa-gamepad"></i></div>
+                    <span class="font-bold text-[15px] text-orange-600">Thử thách</span>
+                </button>
+            </nav>
+            
+            <div class="p-4 bg-white/40 text-center text-[10px] text-slate-400">
+                © KiotViet Training
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto scroll-smooth rounded-2xl bg-white/40 backdrop-blur-sm border border-white/40 shadow-inner relative" id="contentArea">
+            
+            <!-- Mobile Menu Button (Sticky) -->
+            <div class="md:hidden sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100 p-4 flex justify-between items-center shadow-sm">
+                <span class="font-bold text-blue-900 text-lg" id="mobilePageTitle">Tóm tắt nhanh</span>
+                <button onclick="toggleSidebar()" class="text-blue-600 p-2 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-100">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 md:p-8 lg:p-10 pb-20 max-w-5xl mx-auto">
+                
+                <!-- TAB 0: CHEATSHEET -->
+                <div id="tab-cheatsheet" class="tab-content block animate-fade-in-up">
+                    <div class="mb-8 text-center">
+                         <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-200">Kiến thức nền tảng</span>
+                        <h1 class="text-2xl md:text-3xl font-black text-blue-900 mt-4 leading-tight">Hóa đơn đầu vào</h1>
+                        <p class="text-slate-500 mt-2 italic text-sm md:text-base">Giải pháp đồng bộ tự động từ Cơ quan Thuế</p>
+                    </div>
+                    
+                    <!-- REFACTORED: Lợi ích cốt lõi -->
+                    <div class="mb-8">
+                         <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2 px-1">
+                            <i class="fa-solid fa-star text-yellow-500"></i> 3 LỢI ÍCH CỐT LÕI
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Card 1 -->
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
+                                <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl mb-3">
+                                    <i class="fa-solid fa-clock"></i>
+                                </div>
+                                <div class="text-2xl font-black text-slate-800 mb-1">80%</div>
+                                <div class="text-sm text-slate-500 font-medium">Tiết kiệm thời gian nhập liệu</div>
+                            </div>
+                            <!-- Card 2 -->
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
+                                <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mb-3">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </div>
+                                <div class="text-2xl font-black text-slate-800 mb-1">0%</div>
+                                <div class="text-sm text-slate-500 font-medium">Rủi ro sai giá, sai thuế</div>
+                            </div>
+                            <!-- Card 3 -->
+                            <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
+                                <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-3">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                                </div>
+                                <div class="text-2xl font-black text-slate-800 mb-1">100%</div>
+                                <div class="text-sm text-slate-500 font-medium">Đồng bộ từ Cơ quan Thuế</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <h3 class="font-bold text-base md:text-lg text-blue-800 mb-6 uppercase flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fa-solid fa-list-check"></i></span>
+                            Quy trình 4 Bước chuẩn
+                        </h3>
+                        <div class="space-y-6">
+                            <!-- Step 1 -->
+                            <div class="flex gap-4 items-start group">
+                                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm md:text-base group-hover:bg-blue-600 group-hover:text-white transition-colors">1</div>
+                                <div class="flex-1 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                                    <h4 class="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-700 transition-colors">Kết nối</h4>
+                                    <p class="text-xs md:text-sm text-slate-600 mt-1">Đăng nhập bằng tài khoản <span class="font-mono bg-red-50 text-red-600 px-1 rounded border border-red-100">hoadondientu.gdt.gov.vn</span> (Thuế cấp). <br><span class="text-xs text-slate-400 italic">Lưu ý: Không dùng tài khoản KiotViet.</span></p>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="flex gap-4 items-start group">
+                                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm md:text-base group-hover:bg-blue-600 group-hover:text-white transition-colors">2</div>
+                                <div class="flex-1 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                                    <h4 class="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-700 transition-colors">Đồng bộ</h4>
+                                    <p class="text-xs md:text-sm text-slate-600 mt-1">Chọn khoảng thời gian -> Nhấn "Đồng bộ" để tải hóa đơn về.</p>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="flex gap-4 items-start group">
+                                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm md:text-base group-hover:bg-blue-600 group-hover:text-white transition-colors">3</div>
+                                <div class="flex-1 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
+                                    <h4 class="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-700 transition-colors">Khớp dữ liệu (Quan trọng nhất)</h4>
+                                    <p class="text-xs md:text-sm text-slate-600 mt-1">Khớp Nhà cung cấp & Hàng hóa. Hệ thống tự nhớ cho lần sau.</p>
+                                    <div class="mt-2 inline-block bg-green-50 text-green-700 text-xs px-2 py-1 rounded border border-green-100"><i class="fa-solid fa-lightbulb mr-1"></i>Mẹo: Nếu chưa có hàng -> Bấm "+ Thêm mới" ngay tại đây.</div>
+                                </div>
+                            </div>
+                            <!-- Step 4 -->
+                            <div class="flex gap-4 items-start group">
+                                <div class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm md:text-base group-hover:bg-blue-600 group-hover:text-white transition-colors">4</div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-slate-800 text-sm md:text-base group-hover:text-blue-700 transition-colors">Tạo phiếu</h4>
+                                    <ul class="text-xs md:text-sm text-slate-600 mt-1 list-disc pl-4 space-y-1">
+                                        <li><strong>Tạo phiếu nhập:</strong> Cho hàng hóa bán hàng.</li>
+                                        <li><strong>Lập phiếu chi:</strong> Cho hóa đơn Điện/Nước/Internet.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TAB 1: INTRO -->
+                <div id="tab-intro" class="tab-content hidden animate-fade-in-up">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">1</span> 
+                        Tổng quan & Lợi ích
+                    </h2>
+
+                    <!-- Conversation Simulation -->
+                    <div class="chat-container">
+                        <div class="flex flex-col space-y-4">
+                            <!-- Customer -->
+                            <div class="flex items-end relative mb-2">
+                                <div class="chat-avatar chat-avatar-customer"><i class="fa-solid fa-user"></i></div>
+                                <div class="chat-bubble chat-bubble-customer">
+                                    <strong>Khách hàng:</strong> "Cửa hàng anh mỗi ngày nhập cả trăm tờ hóa đơn. Giờ bắt dùng hóa đơn điện tử, chẳng lẽ anh phải ngồi gõ lại từng tờ vào máy tính? Thế thì mất công lắm!"
+                                </div>
+                            </div>
+                            <!-- Consultant -->
+                            <div class="flex items-end justify-end relative">
+                                <div class="chat-bubble chat-bubble-consultant text-right">
+                                    <strong>Chuyên viên KiotViet:</strong> "Dạ anh yên tâm! Với tính năng 'Hóa đơn đầu vào', KiotViet kết nối trực tiếp với Cơ quan Thuế. Anh không cần gõ tay, hệ thống tự động tải về, giúp anh tiết kiệm 80% thời gian và tránh sai sót số liệu ạ."
+                                </div>
+                                <div class="chat-avatar chat-avatar-consultant"><i class="fa-solid fa-headset"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cards-intro"></div>
+                </div>
+
+                <!-- TAB 2: CONNECT -->
+                <div id="tab-connect" class="tab-content hidden animate-fade-in-up">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">2</span> 
+                        Kết nối & Đồng bộ
+                    </h2>
+
+                    <!-- Conversation Simulation -->
+                    <div class="chat-container">
+                        <div class="flex flex-col space-y-4">
+                            <!-- Customer -->
+                            <div class="flex items-end relative mb-2">
+                                <div class="chat-avatar chat-avatar-customer"><i class="fa-solid fa-user"></i></div>
+                                <div class="chat-bubble chat-bubble-customer">
+                                    <strong>Khách hàng:</strong> "Anh đang ở màn hình Kết nối. Anh nhập đúng tài khoản đăng nhập KiotViet rồi mà sao hệ thống cứ báo sai thông tin hoài vậy em?"
+                                </div>
+                            </div>
+                            <!-- Consultant -->
+                            <div class="flex items-end justify-end relative">
+                                <div class="chat-bubble chat-bubble-consultant text-right">
+                                    <strong>Chuyên viên KiotViet:</strong> "Dạ lưu ý giúp em, tại cổng kết nối này anh cần sử dụng <b>Tài khoản Thuế điện tử</b> (trang hoadondientu.gdt.gov.vn) do Cơ quan Thuế cấp, KHÔNG phải tài khoản phần mềm KiotViet anh nhé."
+                                </div>
+                                <div class="chat-avatar chat-avatar-consultant"><i class="fa-solid fa-headset"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cards-connect"></div>
+                </div>
+
+                <!-- TAB 3: MAPPING -->
+                <div id="tab-mapping" class="tab-content hidden animate-fade-in-up">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">3</span> 
+                        Khớp dữ liệu
+                    </h2>
+
+                    <!-- Conversation Simulation -->
+                    <div class="chat-container">
+                        <div class="flex flex-col space-y-4">
+                            <!-- Customer -->
+                            <div class="flex items-end relative mb-2">
+                                <div class="chat-avatar chat-avatar-customer"><i class="fa-solid fa-user"></i></div>
+                                <div class="chat-bubble chat-bubble-customer">
+                                    <strong>Khách hàng:</strong> "Anh thấy hóa đơn về rồi. Nhưng tên hàng nhà cung cấp viết tắt lung tung, không giống tên hàng anh đặt trên KiotViet. Mỗi lần nhập lại phải ngồi dò từng dòng thế này à?"
+                                </div>
+                            </div>
+                            <!-- Consultant -->
+                            <div class="flex items-end justify-end relative">
+                                <div class="chat-bubble chat-bubble-consultant text-right">
+                                    <strong>Chuyên viên KiotViet:</strong> "Dạ không ạ! Anh chỉ cần 'dạy' phần mềm <b>một lần duy nhất</b> bằng cách chọn khớp tên hàng. Từ lần sau, KiotViet sẽ tự động ghi nhớ và điền đúng mã hàng đó cho anh luôn ạ."
+                                </div>
+                                <div class="chat-avatar chat-avatar-consultant"><i class="fa-solid fa-headset"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6" id="cards-mapping"></div>
+                </div>
+
+                <!-- TAB 4: CREATE -->
+                <div id="tab-create" class="tab-content hidden animate-fade-in-up">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">4</span> 
+                        Tạo phiếu nhập
+                    </h2>
+
+                    <!-- Conversation Simulation -->
+                    <div class="chat-container">
+                        <div class="flex flex-col space-y-4">
+                            <!-- Customer -->
+                            <div class="flex items-end relative mb-2">
+                                <div class="chat-avatar chat-avatar-customer"><i class="fa-solid fa-user"></i></div>
+                                <div class="chat-bubble chat-bubble-customer">
+                                    <strong>Khách hàng:</strong> "Hóa đơn họ xuất 10 thùng, nhưng thực tế anh kiểm kho thấy vỡ mất 1 thùng. Số liệu trên phần mềm có sửa lại theo thực tế được không em?"
+                                </div>
+                            </div>
+                            <!-- Consultant -->
+                            <div class="flex items-end justify-end relative">
+                                <div class="chat-bubble chat-bubble-consultant text-right">
+                                    <strong>Chuyên viên KiotViet:</strong> "Dạ hoàn toàn được ạ. Dữ liệu từ hóa đơn là gợi ý, anh có thể sửa lại số lượng, đơn giá... cho đúng thực tế nhập kho trước khi bấm Lưu phiếu nhé."
+                                </div>
+                                <div class="chat-avatar chat-avatar-consultant"><i class="fa-solid fa-headset"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="cards-create"></div>
+                </div>
+
+                <!-- TAB 5: ADVANCED -->
+                <div id="tab-advanced" class="tab-content hidden animate-fade-in-up">
+                     <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">5</span> 
+                        Tính năng nâng cao
+                    </h2>
+
+                    <!-- Conversation Simulation -->
+                    <div class="chat-container">
+                        <div class="flex flex-col space-y-4">
+                            <!-- Customer -->
+                            <div class="flex items-end relative mb-2">
+                                <div class="chat-avatar chat-avatar-customer"><i class="fa-solid fa-user"></i></div>
+                                <div class="chat-bubble chat-bubble-customer">
+                                    <strong>Khách hàng:</strong> "Em ơi, sao tự nhiên hôm nay anh bấm đồng bộ mà không thấy hóa đơn mới về? Hôm qua anh vừa đổi mật khẩu trang Thuế xong."
+                                </div>
+                            </div>
+                            <!-- Consultant -->
+                            <div class="flex items-end justify-end relative">
+                                <div class="chat-bubble chat-bubble-consultant text-right">
+                                    <strong>Chuyên viên KiotViet:</strong> "Dạ, do anh đổi mật khẩu bên Thuế nên kết nối bị ngắt quãng ạ. Anh vui lòng vào mục <b>Sửa thiết lập</b> trên KiotViet và nhập lại mật khẩu mới để hệ thống đồng bộ tiếp anh nhé."
+                                </div>
+                                <div class="chat-avatar chat-avatar-consultant"><i class="fa-solid fa-headset"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="cards-advanced"></div>
+                </div>
+
+                <!-- TAB 6: SUMMARY (UPDATED) -->
+                <div id="tab-summary" class="tab-content hidden animate-fade-in-up">
+                    <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-6 flex items-center gap-3">
+                        <span class="bg-white text-blue-600 w-10 h-10 flex items-center justify-center rounded-full text-lg font-black border border-blue-200 shadow-sm">6</span> 
+                        Bảng so sánh Mệnh đề
+                    </h2>
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                        <table class="min-w-full divide-y divide-slate-100">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-16">#</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-red-600 uppercase tracking-wider w-1/2 border-r border-slate-100">
+                                        <i class="fa-solid fa-circle-xmark mr-2"></i>Lầm tưởng (Sai)
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-green-600 uppercase tracking-wider w-1/2">
+                                        <i class="fa-solid fa-circle-check mr-2"></i>Sự thật (Đúng)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100 text-sm leading-relaxed" id="summaryTableBody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 7: GAME -->
+                <div id="tab-game" class="tab-content hidden animate-fade-in-up">
+                    <!-- Start Screen -->
+                    <div id="game-start" class="text-center py-20 bg-white/60 backdrop-blur rounded-3xl border border-white/50 shadow-xl">
+                        <div class="inline-block p-6 rounded-full bg-orange-100 mb-6 animate-bounce">
+                            <i class="fa-solid fa-gamepad text-5xl md:text-6xl text-orange-500"></i>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 tracking-tight">Thử thách Sự thật</h2>
+                        <p class="text-slate-600 mb-8 max-w-lg mx-auto leading-relaxed text-sm md:text-base">Hệ thống sẽ hiển thị ngẫu nhiên các mệnh đề. Nhiệm vụ của bạn là xác định nó ĐÚNG hay SAI. <br><strong>Đạt 13/16 câu để nhận Chứng chỉ.</strong></p>
+                        <button onclick="startGame()" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 md:px-10 py-3 md:py-4 rounded-xl font-bold text-lg md:text-xl shadow-lg hover:shadow-orange-200 hover:scale-105 transition transform border-2 border-white/20">
+                            BẮT ĐẦU NGAY <i class="fa-solid fa-play ml-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Playing Screen -->
+                    <div id="game-playing" class="hidden max-w-3xl mx-auto py-10">
+                        <div class="flex justify-between items-center mb-6 px-2">
+                            <div class="text-slate-400 font-bold uppercase text-xs tracking-wider">Câu hỏi: <span id="q-progress" class="text-orange-600 text-base">1/16</span></div>
+                            <div class="text-xs font-bold bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm text-slate-600">Score: <span id="current-score" class="text-green-600">0</span></div>
+                        </div>
+                        
+                        <div class="bg-white rounded-3xl shadow-xl p-8 md:p-10 min-h-[280px] md:min-h-[320px] flex items-center justify-center text-center border border-slate-100 mb-8 relative overflow-hidden">
+                             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-purple-400"></div>
+                            <h3 id="question-text" class="text-xl md:text-3xl font-extrabold text-slate-800 leading-snug">Loading...</h3>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 md:gap-6">
+                            <button onclick="answerGame(true)" class="py-4 md:py-6 rounded-2xl bg-white border-2 border-green-100 hover:border-green-500 hover:bg-green-50 text-green-600 font-bold text-lg md:text-2xl shadow-sm hover:shadow-lg transition-all transform active:scale-95 group">
+                                <i class="fa-solid fa-check-circle mb-1 block text-2xl md:text-3xl group-hover:scale-110 transition-transform"></i> ĐÚNG
+                            </button>
+                            <button onclick="answerGame(false)" class="py-4 md:py-6 rounded-2xl bg-white border-2 border-red-100 hover:border-red-500 hover:bg-red-50 text-red-600 font-bold text-lg md:text-2xl shadow-sm hover:shadow-lg transition-all transform active:scale-95 group">
+                                <i class="fa-solid fa-times-circle mb-1 block text-2xl md:text-3xl group-hover:scale-110 transition-transform"></i> SAI
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Result Screen -->
+                    <div id="game-result" class="hidden text-center py-6">
+                        <!-- Certificate -->
+                        <div id="certificate" class="hidden max-w-4xl mx-auto certificate-border p-6 md:p-12 mb-10 relative text-slate-800 bg-white shadow-2xl">
+                            <!-- Corner Decorations -->
+                            <div class="absolute top-4 left-4 w-12 h-12 md:w-16 md:h-16 border-t-4 border-l-4 border-yellow-600"></div>
+                            <div class="absolute top-4 right-4 w-12 h-12 md:w-16 md:h-16 border-t-4 border-r-4 border-yellow-600"></div>
+                            <div class="absolute bottom-4 left-4 w-12 h-12 md:w-16 md:h-16 border-b-4 border-l-4 border-yellow-600"></div>
+                            <div class="absolute bottom-4 right-4 w-12 h-12 md:w-16 md:h-16 border-b-4 border-r-4 border-yellow-600"></div>
+                            
+                            <div class="text-center relative z-10">
+                                <div class="w-20 h-20 md:w-24 md:h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6 text-yellow-600 text-4xl md:text-5xl border-4 border-yellow-200">
+                                    <i class="fa-solid fa-award"></i>
+                                </div>
+                                <h2 class="text-3xl md:text-5xl font-serif font-bold text-slate-900 mb-2 tracking-wide">GIẤY CHỨNG NHẬN</h2>
+                                <p class="text-base md:text-xl font-serif italic text-slate-600 mb-8">Đã hoàn thành xuất sắc khóa học "Hóa Đơn Đầu Vào"</p>
+                                
+                                <div class="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-400 mb-2" id="final-score-cert">16/16</div>
+                                <p class="text-slate-400 uppercase tracking-widest text-xs font-bold">Điểm số đạt được</p>
+
+                                <div class="mt-12 pt-8 border-t border-slate-200 w-2/3 md:w-1/3 mx-auto">
+                                    <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" class="h-6 mx-auto opacity-50 grayscale hover:grayscale-0 transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="fail-message" class="hidden mb-10 bg-white p-10 rounded-3xl border border-red-100 shadow-xl">
+                            <div class="inline-block p-4 rounded-full bg-red-50 mb-4">
+                                <i class="fa-solid fa-face-sad-tear text-5xl text-red-400"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-800">Chưa đạt yêu cầu</h3>
+                            <p class="text-slate-500 mt-2">Bạn cần đúng ít nhất 13 câu. Hãy ôn lại bài nhé!</p>
+                        </div>
+
+                        <button onclick="switchTab('game'); startGame()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-blue-700 transition mb-12 hover:shadow-blue-200">
+                            <i class="fa-solid fa-rotate-right mr-2"></i> Chơi lại
+                        </button>
+
+                        <!-- Review Table -->
+                        <h3 class="text-xl font-bold text-blue-900 mb-6 text-left border-l-4 border-orange-500 pl-4 max-w-4xl mx-auto flex items-center">
+                            Chi tiết kết quả
+                            <span class="ml-auto text-xs font-normal text-slate-500 bg-white px-2 py-1 rounded border">Cuộn để xem</span>
+                        </h3>
+                        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                            <table class="min-w-full divide-y divide-slate-100">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Câu hỏi</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase w-32">Bạn chọn</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase w-40">Kết quả</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="review-body" class="bg-white divide-y divide-slate-100 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // Toggle Sidebar for Mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('aside');
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('flex');
+            sidebar.classList.toggle('absolute');
+            sidebar.classList.toggle('z-50');
+            sidebar.classList.toggle('h-full');
+            sidebar.classList.toggle('shadow-2xl');
+        }
+
+        // --- DATA RESTRUCTURED ---
+        const lessonData = [
+            // INTRO
+            { 
+                id: 1, 
+                tabId: 'intro',
+                wrong: "Tính năng này yêu cầu nhập tay phiếu nhập từ file PDF.", 
+                right: "Kết nối trực tiếp CQT, tự động đồng bộ hóa đơn.",
+                questionText: "Tính năng này yêu cầu nhập tay phiếu nhập từ file PDF hóa đơn?",
+                isTrue: false 
+            },
+            { 
+                id: 2, 
+                tabId: 'intro',
+                wrong: "Đồng bộ cả hóa đơn sai, không hợp lệ.", 
+                right: "Chỉ đồng bộ hóa đơn hợp lệ (đúng mã CQT, đúng MST).",
+                questionText: "Hệ thống tự động kiểm tra tính hợp lệ của hóa đơn (Mã CQT, MST) trước khi đồng bộ?",
+                isTrue: true 
+            },
+            { 
+                id: 3, 
+                tabId: 'intro',
+                wrong: "Không tiết kiệm thời gian so với nhập tay.", 
+                right: "Giảm 60-80% thời gian, loại bỏ sai sót.",
+                questionText: "Sử dụng tính năng này giúp tiết kiệm 60-80% thời gian nhập liệu?",
+                isTrue: true 
+            },
+            
+            // CONNECT
+            { 
+                id: 4, 
+                tabId: 'connect',
+                wrong: "Dùng tài khoản Admin KiotViet để kết nối Thuế.", 
+                right: "Phải dùng tài khoản trang hoadondientu.gdt.gov.vn.",
+                questionText: "Để kết nối, bạn sử dụng Tài khoản quản trị KiotViet (admin) để đăng nhập?",
+                isTrue: false 
+            },
+            { 
+                id: 5, 
+                tabId: 'connect',
+                wrong: "Chỉ cho phép kết nối duy nhất 1 Mã số thuế.", 
+                right: "Kết nối được nhiều MST bằng nút 'Thêm kết nối'.",
+                questionText: "KiotViet chỉ cho phép kết nối duy nhất 1 Mã số thuế?",
+                isTrue: false 
+            },
+            { 
+                id: 6, 
+                tabId: 'connect',
+                wrong: "Hóa đơn tự chảy về ngay khi NCC xuất.", 
+                right: "Cần bấm 'Đồng bộ hóa đơn' thủ công.",
+                questionText: "Hóa đơn tự động chảy về KiotViet ngay khi NCC xuất, không cần làm gì thêm?",
+                isTrue: false 
+            },
+            
+            // MAPPING
+            { 
+                id: 7, 
+                tabId: 'mapping',
+                wrong: "Phải chọn NCC thủ công 100%.", 
+                right: "Tự gợi ý nếu trùng MST hoặc tên > 80%.",
+                questionText: "Hệ thống tự động gợi ý khớp NCC nếu trùng MST hoặc trùng tên trên 80%?",
+                isTrue: true 
+            },
+            { 
+                id: 8, 
+                tabId: 'mapping',
+                wrong: "Phải thoát ra tạo hàng mới rồi quay lại.", 
+                right: "Bấm '+ Thêm mới' ngay trên màn hình khớp.",
+                questionText: "Nếu NCC hoặc Hàng hóa chưa có, bạn bắt buộc phải thoát ra tạo mới rồi quay lại?",
+                isTrue: false 
+            },
+            { 
+                id: 9, 
+                tabId: 'mapping',
+                wrong: "Luôn phải khớp lại hàng hóa cũ từ đầu.", 
+                right: "Hệ thống tự nhớ lịch sử khớp trước đó.",
+                questionText: "Mỗi lần nhập cùng mặt hàng từ cùng NCC, bạn đều phải khớp lại từ đầu?",
+                isTrue: false 
+            },
+            { 
+                id: 10, 
+                tabId: 'mapping',
+                wrong: "Có thể bỏ qua khớp vài dòng để tạo phiếu.", 
+                right: "Bắt buộc khớp 100% dòng hàng mới được tạo phiếu.",
+                questionText: "Có thể bỏ qua khớp một vài mặt hàng để tạo phiếu nhập cho nhanh?",
+                isTrue: false 
+            },
+            
+            // CREATE
+            { 
+                id: 11, 
+                tabId: 'create',
+                wrong: "Số lượng/Đơn giá từ hóa đơn bị khóa, không sửa được.", 
+                right: "Hoàn toàn có thể chỉnh sửa số liệu thực tế.",
+                questionText: "Dữ liệu số lượng và đơn giá lấy từ hóa đơn thuế là cố định, không thể sửa?",
+                isTrue: false 
+            },
+            { 
+                id: 12, 
+                tabId: 'create',
+                wrong: "Hàng Lô/Date tự điền số lượng theo hóa đơn.", 
+                right: "Số lượng là 0. Phải nhập tay chi tiết Lô/Date.",
+                questionText: "Hàng Serial/IMEI hoặc Lô/Date sẽ tự động điền số lượng theo hóa đơn?",
+                isTrue: false 
+            },
+            { 
+                id: 13, 
+                tabId: 'create',
+                wrong: "Hóa đơn vẫn giữ trạng thái 'Mới' sau khi xong.", 
+                right: "Chuyển trạng thái 'Đã lập phiếu' để tránh trùng.",
+                questionText: "Sau khi bấm 'Hoàn thành', trạng thái hóa đơn sẽ chuyển thành 'Đã lập phiếu'?",
+                isTrue: true 
+            },
+            
+            // ADVANCED
+            { 
+                id: 14, 
+                tabId: 'advanced',
+                wrong: "Đổi mật khẩu Thuế thì KiotViet tự cập nhật.", 
+                right: "Phải vào KiotViet nhập lại mật khẩu mới.",
+                questionText: "Nếu đổi mật khẩu trang Thuế, KiotViet sẽ tự động cập nhật theo?",
+                isTrue: false 
+            },
+            { 
+                id: 15, 
+                tabId: 'advanced',
+                wrong: "Không thể xóa kết nối cũ.", 
+                right: "Được phép xóa trong Danh sách kết nối.",
+                questionText: "Tôi có thể xóa kết nối tài khoản TCT cũ đi không?",
+                isTrue: true 
+            },
+            { 
+                id: 16, 
+                tabId: 'advanced',
+                wrong: "Không nhập được hóa đơn điện, nước (dịch vụ).", 
+                right: "Nhập được bằng cách chọn 'Lập phiếu chi'.",
+                questionText: "Hóa đơn Tiền điện, nước (dịch vụ) có nhập được qua tính năng này không?",
+                isTrue: true 
+            }
+        ];
+
+        // --- CORE LOGIC ---
+        let completedCards = new Set();
+        const totalCards = lessonData.length; 
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            
+            // Active state styling
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('active', 'bg-blue-50', 'text-blue-900', 'border-blue-600');
+                el.classList.add('text-slate-700');
+            });
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-slate-700');
+            
+            // Scroll top content area
+            document.getElementById('contentArea').scrollTop = 0;
+            
+            // Mobile Title Update
+            const titles = {
+                'cheatsheet': 'Tóm tắt nhanh',
+                'intro': '1. Tổng quan',
+                'connect': '2. Kết nối',
+                'mapping': '3. Khớp dữ liệu',
+                'create': '4. Tạo phiếu',
+                'advanced': '5. Nâng cao',
+                'summary': 'Bảng so sánh',
+                'game': 'Thử thách'
+            };
+            document.getElementById('mobilePageTitle').innerText = titles[tabId];
+
+            if(tabId === 'summary') renderSummary();
+            
+            // Hide sidebar on mobile after click
+            if(window.innerWidth < 768) {
+                const sidebar = document.querySelector('aside');
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex', 'absolute', 'z-50', 'h-full');
+            }
+        }
+
+        // --- RENDER CARDS ---
+        function renderCards() {
+            lessonData.forEach(item => {
+                const container = document.getElementById('cards-' + item.tabId);
+                if (!container) return;
+
+                const cardHTML = `
+                <div class="perspective-1000 h-80 cursor-pointer group" onclick="flipCard(this)">
+                    <div class="card-inner h-full type-card rounded-2xl bg-white border border-slate-200">
+                        <div class="card-face p-6 flex flex-col justify-between relative bg-white rounded-2xl">
+                            <div>
+                                <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-blue-100">Mệnh đề ${item.id}</span>
+                                <h3 class="mt-5 text-base md:text-lg font-bold text-slate-800 leading-snug">"${item.questionText}"</h3>
+                            </div>
+                            <div class="text-center text-xs font-bold text-blue-400 mt-4 border-t border-slate-50 pt-4 uppercase tracking-wider flex items-center justify-center gap-2 group-hover:text-blue-600 transition-colors">
+                                <i class="fa-solid fa-rotate"></i> Chạm để lật
+                            </div>
+                        </div>
+                        <div class="card-face card-back ${item.isTrue ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-green-200' : 'bg-gradient-to-br from-red-50 to-rose-100 border-red-200'} p-6 border-2 flex flex-col justify-center rounded-2xl">
+                            <div class="${item.isTrue ? 'text-green-600' : 'text-red-500'} font-black text-2xl mb-3 flex items-center justify-center gap-2">
+                                <i class="fa-solid ${item.isTrue ? 'fa-circle-check' : 'fa-circle-xmark'} text-3xl"></i>
+                                ${item.isTrue ? 'ĐÚNG' : 'SAI'}
+                            </div>
+                            <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-2 text-center">Sự thật là:</p>
+                            <p class="text-slate-700 text-sm font-medium leading-relaxed text-center bg-white/60 p-3 rounded-lg backdrop-blur-sm shadow-sm">${item.right}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        function flipCard(element) {
+            const inner = element.querySelector('.card-inner');
+            inner.classList.toggle('flipped');
+            if (!completedCards.has(element)) {
+                completedCards.add(element);
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            const count = completedCards.size;
+            document.getElementById('completedCount').innerText = `${count}/${totalCards}`;
+            const percent = (count / totalCards) * 100;
+            document.getElementById('totalProgress').style.width = `${percent}%`;
+        }
+
+        // --- SUMMARY LOGIC ---
+        function renderSummary() {
+            const tbody = document.getElementById('summaryTableBody');
+            let html = '';
+            
+            lessonData.forEach(item => {
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-400 text-center">${item.id}</td>
+                        <td class="px-6 py-4 text-slate-600 bg-red-50/50 border-r border-slate-100 align-top">
+                            <div class="flex gap-2">
+                                <i class="fa-solid fa-xmark text-red-400 mt-1 flex-shrink-0"></i>
+                                <span>${item.wrong}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-800 bg-green-50/50 align-top font-medium">
+                            <div class="flex gap-2">
+                                <i class="fa-solid fa-check text-green-500 mt-1 flex-shrink-0"></i>
+                                <span>${item.right}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // --- GAME LOGIC ---
+        let gameQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+
+        function startGame() {
+            gameQuestions = [...lessonData].sort(() => 0.5 - Math.random());
+            currentIndex = 0;
+            score = 0;
+            userAnswers = [];
+            
+            document.getElementById('game-start').classList.add('hidden');
+            document.getElementById('game-result').classList.add('hidden');
+            document.getElementById('game-playing').classList.remove('hidden');
+            
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = gameQuestions[currentIndex];
+            document.getElementById('question-text').innerText = q.questionText;
+            document.getElementById('q-progress').innerText = `${currentIndex + 1}/${lessonData.length}`;
+            document.getElementById('current-score').innerText = score;
+        }
+
+        function answerGame(userChoice) {
+            const q = gameQuestions[currentIndex];
+            const isCorrect = (userChoice === q.isTrue);
+            
+            if (isCorrect) score++;
+            
+            userAnswers.push({
+                question: q.questionText,
+                userChoice: userChoice,
+                correctAnswer: q.isTrue,
+                isUserCorrect: isCorrect
+            });
+
+            currentIndex++;
+            if (currentIndex < gameQuestions.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            document.getElementById('game-playing').classList.add('hidden');
+            document.getElementById('game-result').classList.remove('hidden');
+            
+            const tbody = document.getElementById('review-body');
+            let html = '';
+            userAnswers.forEach((ans, idx) => {
+                const userBadge = ans.userChoice 
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">ĐÚNG</span>' 
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">SAI</span>';
+                
+                const resultText = ans.isUserCorrect
+                    ? '<span class="font-bold text-slate-900 flex items-center gap-1"><i class="fa-solid fa-check text-green-500"></i> Chính xác</span>'
+                    : '<span class="font-bold text-slate-400 flex items-center gap-1"><i class="fa-solid fa-xmark text-red-400"></i> Sai rồi</span>';
+                
+                const rowClass = ans.isUserCorrect ? 'bg-white' : 'bg-red-50/50';
+
+                html += `
+                    <tr class="${rowClass} border-b border-slate-50 last:border-0">
+                        <td class="px-6 py-4 text-slate-700 font-medium">
+                            <span class="text-xs text-slate-400 mr-2">#${idx+1}</span> ${ans.question}
+                        </td>
+                        <td class="px-6 py-4 text-left whitespace-nowrap">${userBadge}</td>
+                        <td class="px-6 py-4 text-left whitespace-nowrap">${resultText}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+
+            const passThreshold = 13;
+            if (score >= passThreshold) {
+                document.getElementById('certificate').classList.remove('hidden');
+                document.getElementById('fail-message').classList.add('hidden');
+                document.getElementById('final-score-cert').innerText = `${score}/${lessonData.length}`;
+            } else {
+                document.getElementById('certificate').classList.add('hidden');
+                document.getElementById('fail-message').classList.remove('hidden');
+            }
+        }
+
+        // Initialize Cards
+        window.onload = function() {
+            switchTab('cheatsheet');
+            renderCards();
+        }
+    </script>
+</body>
+</html>
