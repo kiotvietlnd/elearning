@@ -1,0 +1,1822 @@
+<!DOCTYPE html><html lang="vi"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KiotViet Learning App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* CSS CORE */
+        body { font-family: 'Inter', sans-serif; background-color: #e2e8f0; overflow: hidden; touch-action: manipulation; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+        #mobile-frame { width: 100%; height: 100%; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        @media (min-width: 768px) { #mobile-frame { width: 100%; max-width: 1024px; height: 92vh; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border: 1px solid #cbd5e1; } ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; } }
+        #app-container { position: relative; width: 100%; height: 100%; overflow: hidden; flex: 1; padding-bottom: 80px; }
+        .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; items-center; padding: 1rem; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); transform: translateX(50px) scale(0.95); }
+        .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0) scale(1); z-index: 10; }
+        .inner-content { width: 100%; width: 100%; max-height: 100%; overflow-y: auto; padding: 10px 5px; border-radius: 1rem; scroll-behavior: smooth; }
+        .inner-content::-webkit-scrollbar { width: 4px; }
+        .inner-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+        .perspective-1000 { perspective: 1000px; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); background-color: white; }
+        .card-back { transform: rotateY(180deg); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .soft-bg { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); }
+        .chat-bubble { max-width: 90%; padding: 14px 20px; border-radius: 16px; font-size: 1rem; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: popIn 0.3s ease-out backwards; }
+        .chat-bubble-customer { background: white; border: 1px solid #e2e8f0; border-top-left-radius: 4px; margin-right: auto; }
+        .chat-bubble-consultant { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-top-right-radius: 4px; margin-left: auto; }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        #sidebar { transition: transform 0.3s ease; }
+        .sidebar-closed { transform: translateX(-100%); }
+        .sidebar-open { transform: translateX(0); }
+        #dl-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 9999; color: white; }
+        #dl-loading:not(.hidden) { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .bottom-nav-btn { position: absolute; bottom: 20px; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.2s; z-index: 50; cursor: pointer; border: none; opacity: 0.8; background: white; color: #64748b; border: 1px solid #e2e8f0; }
+        .bottom-nav-btn:hover { opacity: 1; background: #f8fafc; color: #3b82f6; }
+        .bottom-nav-btn:active { transform: scale(0.9); }
+        .bottom-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; background: #f1f5f9; color: #cbd5e1; box-shadow: none; }
+        #btn-prev { left: 20px; } #btn-next { right: 20px; }
+        /* Concept Card & Infographic Styles */
+        .concept-card-single { width: 100%; max-width: 900px; background: white; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+        .concept-header-single { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
+        .concept-body-single { padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem; flex: 1; overflow-y: auto; }
+        .concept-item-single { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 1.1rem; color: #334155; line-height: 1.6; }
+        @media (min-width: 768px) { .concept-item-single { font-size: 1.25rem; } }
+        .concept-item-single i { margin-top: 0.5rem; font-size: 0.6rem; color: #cbd5e1; }
+        .comp-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media (min-width: 768px) { .comp-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+        .comp-col { display: flex; flex-direction: column; gap: 1rem; }
+        .comp-item { display: flex; flex-direction: column; padding: 1rem; border-radius: 12px; border: 1px solid; height: 100%; }
+        .comp-item-prob { background-color: #fef2f2; border-color: #fecaca; }
+        .comp-item-sol { background-color: #eff6ff; border-color: #bfdbfe; }
+        .comp-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+        .prob-label { color: #ef4444; }
+        .sol-label { color: #3b82f6; }
+        .comp-text { font-size: 0.95rem; font-weight: 500; color: #1e293b; line-height: 1.4; }
+    </style></head><body>
+    <div id="mobile-frame">
+        <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 flex-shrink-0 shadow-sm relative">
+            <div class="flex items-center gap-4 z-10">
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-blue-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"><i class="fa-solid fa-bars text-xl"></i></button>
+                <button onclick="toggleMute()" id="btn-mute" class="text-slate-400 hover:text-blue-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition" title="Bật/Tắt âm thanh"><i class="fa-solid fa-volume-high text-lg"></i></button>
+                <div class="flex flex-col"><span id="header-section-title" class="text-xs font-bold text-blue-600 uppercase tracking-wide hidden md:block">Tổng quan</span><div class="flex items-center gap-1"><span id="slide-indicator" class="text-[10px] text-slate-400 font-medium">1/--</span></div></div>
+            </div>
+            <div class="flex items-center gap-2 z-10"><img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet" class="h-6 md:h-8 opacity-100"></div>
+            <div class="absolute bottom-0 left-0 w-full h-0.5 bg-slate-100"><div id="progress-bar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div></div>
+        </header>
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden transition-opacity" style="position:absolute;"></div>
+        <aside id="sidebar" class="absolute inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl sidebar-closed flex flex-col h-full">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-center bg-slate-50 relative">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="Logo" class="h-6">
+                <button onclick="toggleSidebar()" class="absolute right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1" id="sidebar-content"></div>
+        </aside>
+        <main id="app-container" class="soft-bg relative"></main>
+        <button onclick="navSlide(-1)" id="btn-prev" class="bottom-nav-btn"><i class="fa-solid fa-arrow-left text-xl"></i></button>
+        <button onclick="navSlide(1)" id="btn-next" class="bottom-nav-btn"><i class="fa-solid fa-arrow-right text-xl"></i></button>
+    </div>
+    <div id="dl-loading" class="hidden"><i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3"></i><p class="font-bold">Đang tạo chứng nhận...</p></div>
+
+    <template id="tpl-title">
+        <div class="slide">
+            <div class="text-center max-w-lg md:max-w-4xl animate-fade-in-up w-full px-4 mx-auto">
+                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600 text-5xl shadow-sm border-4 border-white">
+                    <i class="slide-icon"></i>
+                </div>
+                <h2 class="text-2xl md:text-4xl font-black text-blue-800 mb-2 slide-title leading-tight"></h2>
+                <p class="text-lg md:text-xl font-bold text-blue-600 mb-3 slide-subtitle hidden"></p>
+                <p class="text-slate-500 slide-desc text-sm md:text-lg">Bài học tương tác</p>
+                <div class="mt-8">
+                    <button onclick="navSlide(1)" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-blue-700 active:scale-95 transition text-sm md:text-base md:px-10 md:py-4">Bắt đầu ngay <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-intro"><div class="slide"><div class="text-center max-w-lg md:max-w-2xl animate-fade-in-up w-full px-4 mx-auto"><div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 text-4xl shadow-sm border-4 border-white"><i class="fa-solid fa-hand-sparkles"></i></div><h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 intro-title">Chào mừng bạn!</h2><div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 text-left space-y-4"><p class="text-slate-600 text-sm md:text-base leading-relaxed">Chào mừng bạn đến với học phần <span class="font-bold text-blue-600 course-name-span"></span>.</p><p class="text-slate-600 text-sm md:text-base leading-relaxed">Bên cạnh việc tự học qua <b>Tài liệu</b> và <b>Video Hướng dẫn sử dụng</b>, ứng dụng này mang đến một phương pháp học tập tương tác mới giúp bạn:</p><ul class="list-none space-y-3 mt-2"><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span><b>Hệ thống hóa</b> kiến thức sản phẩm một cách logic.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Làm quen với các <b>tình huống giả định</b> thực tế.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Nhận diện và xóa bỏ các <b>lầm tưởng thường gặp</b>.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Hiểu rõ sự thật để <b>tư vấn khách hàng</b> hiệu quả nhất.</span></li></ul></div></div></div></template>
+    <template id="tpl-concept-single"><div class="slide"><div class="inner-content w-full px-4 flex flex-col items-center justify-center h-full"><div class="concept-card-single animate-fade-in-up"><div class="concept-header-single header-color-bg"><div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md text-xl icon-color"><i class="concept-icon"></i></div><h3 class="text-xl font-bold text-slate-800 concept-card-title"></h3></div><div class="concept-body-single"></div></div></div></div></template>
+    <template id="tpl-chat"><div class="slide"><div class="inner-content flex flex-col justify-center h-full w-full"><div class="space-y-6 chat-container w-full px-2 max-w-5xl mx-auto"></div></div></div></template>
+
+    <template id="tpl-card">
+        <div class="slide">
+            <div class="w-full h-full flex items-center justify-center p-4">
+                <div class="w-full max-w-[320px] aspect-[3/4] perspective-1000 relative">
+                    <div class="card-inner duration-500 w-full h-full shadow-2xl rounded-2xl relative">
+                        <div class="card-face bg-white border-2 border-slate-100 p-6 flex flex-col justify-between items-center text-center">
+                            <div class="hidden card-id">#</div>
+                            <div class="flex-1 flex flex-col justify-center w-full">
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">Nhận định</p>
+                                <h3 class="text-lg font-medium text-slate-800 leading-snug card-question mb-6"></h3>
+                                <div class="grid grid-cols-2 gap-3 w-full mt-auto">
+                                    <button class="btn-true py-3 bg-green-50 text-green-600 border border-green-200 rounded-xl font-bold hover:bg-green-100 transition active:scale-95 shadow-sm text-sm"><i class="fa-solid fa-check mr-1"></i> ĐÚNG (1)</button>
+                                    <button class="btn-false py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold hover:bg-red-100 transition active:scale-95 shadow-sm text-sm"><i class="fa-solid fa-xmark mr-1"></i> SAI (2)</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-face card-back p-6 flex flex-col text-center">
+                            <div class="flex flex-col h-full overflow-y-auto">
+                                <div class="mb-4">
+                                    <div class="result-header text-lg font-bold flex items-center justify-center gap-2"></div>
+                                </div>
+                                <div class="text-left bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Nhận định:</p>
+                                    <p class="text-xs text-slate-600 italic card-original-q"></p>
+                                </div>
+                                <div class="text-left mb-3 bg-white border border-slate-100 p-2 rounded-lg shadow-sm">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] font-bold uppercase text-slate-500">Phương án bạn chọn:</span>
+                                        <span class="text-xs font-bold user-choice-label"></span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] font-bold uppercase text-slate-500">Đáp án chính xác:</span>
+                                        <span class="text-xs font-bold correct-ans-label"></span>
+                                    </div>
+                                </div>
+                                <div class="text-left flex-1">
+                                    <p class="text-[10px] text-blue-600 font-bold uppercase mb-1"><i class="fa-solid fa-lightbulb mr-1"></i> Sự thật là:</p>
+                                    <p class="text-sm text-slate-700 font-medium leading-relaxed card-right-answer"></p>
+                                </div>
+                                <button class="btn-reset mt-auto text-xs uppercase tracking-wider p-3 rounded-xl border border-blue-100 bg-white text-blue-900 font-bold hover:bg-blue-50 transition shadow-sm"><i class="fa-solid fa-rotate-left mr-1"></i> Xem lại (0)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-comparison"><div class="slide"><div class="inner-content w-full px-1 h-full flex flex-col"><div class="text-center mb-4 pt-2"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Tổng kết</span><h3 class="text-lg font-bold text-slate-800 mt-2">Sự thật vs Lầm tưởng</h3><p class="text-[10px] text-slate-400 mt-1 italic">(Sử dụng mũi tên Lên/Xuống để cuộn)</p></div><div class="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-slate-200 relative comparison-scroll-area max-w-4xl mx-auto w-full"><table class="w-full text-left border-collapse"><thead class="bg-slate-50 sticky top-0 z-10 shadow-sm"><tr><th class="p-3 text-[10px] font-bold uppercase text-red-500 w-1/2 border-b border-slate-200 border-r text-center">Lầm tưởng (Sai)</th><th class="p-3 text-[10px] font-bold uppercase text-green-600 w-1/2 border-b border-slate-200 text-center">Sự thật (Đúng)</th></tr></thead><tbody class="text-xs text-slate-700 divide-y divide-slate-100 comp-tbody"></tbody></table></div></div></div></template>
+    <template id="tpl-game-start"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center w-full max-w-md border border-slate-100 mx-auto transition-all"><div class="inline-block p-4 rounded-full bg-orange-100 mb-4 animate-bounce"><i class="fa-solid fa-gamepad text-4xl text-orange-500"></i></div><h2 class="text-2xl font-black text-slate-800 mb-2">Quiz Game</h2><p class="text-sm text-slate-500 mb-6 italic px-4">Học xong mà không làm quiz ôn tập thì kiến thức đọng lại "Như muối bỏ bể", "Chớp mắt một cái" là quên luôn đấy!</p><div class="space-y-3 game-mode-buttons"></div></div></div></div></template>
+    <template id="tpl-game-play"><div class="slide"><div class="w-full max-w-sm md:max-w-3xl p-4 md:p-8 mx-auto"><div class="flex justify-between items-center mb-6"><span class="text-xs md:text-lg font-bold text-slate-400">Nhận định <span class="game-q-current">1</span>/<span class="game-q-total">10</span></span><span class="text-xs md:text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-100">Điểm: <span class="game-score">0</span></span></div><div class="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-12 min-h-[180px] md:min-h-[250px] flex items-center justify-center text-center mb-6 relative overflow-hidden"><h3 class="text-base md:text-2xl font-bold text-slate-800 game-question-text leading-relaxed"></h3></div><div class="grid grid-cols-2 gap-3 md:gap-6"><button onclick="answerGame(true)" class="game-btn btn-game-true py-4 md:py-8 rounded-2xl bg-white border-2 border-green-100 text-green-600 font-bold text-base md:text-2xl hover:bg-green-50 hover:border-green-500 transition active:scale-95 shadow-sm"><i class="fa-solid fa-check mr-1"></i> ĐÚNG (1)</button><button onclick="answerGame(false)" class="game-btn btn-game-false py-4 md:py-8 rounded-2xl bg-white border-2 border-red-100 text-red-600 font-bold text-base md:text-2xl hover:bg-red-50 hover:border-red-500 transition active:scale-95 shadow-sm"><i class="fa-solid fa-xmark mr-1"></i> SAI (2)</button></div></div></div></template>
+    <template id="tpl-winner-input"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4"><div class="bg-white p-8 rounded-3xl shadow-2xl text-center w-full max-w-md border border-blue-100 mx-auto"><div class="inline-block p-4 rounded-full bg-yellow-100 mb-4 animate-bounce"><i class="fa-solid fa-trophy text-4xl text-yellow-500"></i></div><h2 class="text-2xl font-black text-blue-900 mb-2">CHÚC MỪNG!</h2><p class="text-sm text-slate-600 mb-6">Bạn đã vượt qua bài kiểm tra với số điểm <span class="font-bold text-green-600 winner-score"></span>.<br>Vui lòng nhập thông tin để nhận chứng nhận.</p><div class="space-y-4 text-left"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase ml-1">Họ và Tên</label><input type="text" id="input-winner-name" placeholder="Đỗ Hoàng Sơn" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-bold"></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase ml-1">Bộ phận / Phòng ban</label><input type="text" id="input-winner-dept" placeholder="LND... / TSHNI... / DSSGN... / Customer Service..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"></div><button onclick="submitWinnerInfo()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 active:scale-95 transition mt-2">Nhận chứng nhận <i class="fa-solid fa-arrow-right ml-2"></i></button></div></div></div></div></template>
+    <template id="tpl-certificate"><div class="slide"><div class="inner-content flex flex-col items-center w-full px-2"><div id="cert-view" class="w-full aspect-[4/3] md:aspect-video bg-white shadow-xl flex overflow-hidden rounded-xl relative mb-6 border border-slate-200 max-w-sm md:max-w-3xl mx-auto"><div class="w-1/3 bg-blue-900 flex flex-col items-center justify-center text-white p-4 gap-4 relative"><i class="fa-solid fa-award text-4xl md:text-7xl text-yellow-400 mb-6 drop-shadow-md"></i><div class="text-center z-10"><p class="uppercase tracking-widest text-[8px] md:text-xs opacity-70 mb-2">Cấp bởi</p><p class="font-bold text-[10px] md:text-base tracking-wide">KiotViet LND</p></div><div class="absolute bottom-0 left-0 w-full h-1.5 bg-yellow-400"></div></div><div class="w-2/3 p-4 md:p-8 flex flex-col justify-center relative"><h1 class="text-lg md:text-3xl font-black text-blue-900 uppercase mb-2">GIẤY CHỨNG NHẬN</h1><p class="text-slate-500 italic text-[8px] md:text-sm mb-4 border-b border-slate-100 pb-2 cert-course-title"></p><div class="mb-4 flex flex-col justify-center"><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Học viên</p><h2 class="text-sm md:text-2xl font-bold text-blue-700 uppercase cert-name leading-normal py-1 truncate"></h2><p class="text-[8px] md:text-xs text-slate-500 font-medium cert-dept truncate mt-1 pb-2 leading-relaxed h-auto block"></p></div><div class="flex justify-between items-end mt-auto pt-4 border-t border-slate-50"><div><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold">Ngày cấp</p><p class="text-[9px] md:text-sm font-medium text-slate-600 cert-date"></p></div><div class="text-right"><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold">Điểm số</p><p class="text-lg md:text-3xl font-black text-green-600 cert-score"></p></div></div><div class="cert-fail-mark hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 text-2xl md:text-5xl font-black text-red-100 border-4 border-red-100 p-2 rounded-lg whitespace-nowrap">KHÔNG ĐẠT</div></div></div><div class="flex flex-col gap-3 w-full max-w-xs md:max-w-md"><button id="btn-download-cert" onclick="downloadCert()" class="w-full bg-blue-600 text-white border border-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition text-sm flex items-center justify-center gap-2 shadow-lg"><i class="fa-solid fa-download"></i> Tải chứng nhận</button><div class="grid grid-cols-2 gap-3"><button onclick="backToGameLogin()" class="bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition text-sm"><i class="fa-solid fa-rotate-right mr-2"></i> Chơi lại (0)</button><button onclick="goToReview()" class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-3 rounded-xl font-bold hover:bg-indigo-100 transition text-sm"><i class="fa-solid fa-list-check mr-2"></i> Xem chi tiết</button></div></div></div></template>
+    <template id="tpl-game-review"><div class="slide"><div class="inner-content w-full px-2 h-full flex flex-col"><div class="text-center mb-6 pt-2"><h3 class="text-xl font-bold text-slate-800">Chi tiết kết quả</h3><p class="text-xs text-slate-500 mt-1">Bảng tổng hợp đáp án</p></div><div class="flex-1 overflow-y-auto w-full max-w-4xl mx-auto pb-4"><table class="w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm border border-slate-200"><thead class="bg-slate-50 text-slate-600 text-xs uppercase font-bold sticky top-0 shadow-sm"><tr><th class="p-4 w-1/2">Nhận định</th><th class="p-4 w-1/4 text-center">Đáp án chính xác</th><th class="p-4 w-1/4 text-center">Đáp án bạn chọn</th></tr></thead><tbody class="text-sm bg-white divide-y divide-slate-100 review-tbody"></tbody></table></div></div></div></template>
+    <template id="tpl-end-course"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4 text-center"><div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-2xl border border-blue-50 relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div><div class="inline-block p-5 rounded-full bg-yellow-100 mb-6 animate-pulse"><i class="fa-solid fa-star text-5xl text-yellow-500"></i></div><h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 end-course-title">Chúc mừng bạn đã hoàn thành học phần <span class="text-blue-600 course-name-span"></span>!</h2><p class="text-slate-600 text-sm md:text-base leading-relaxed mb-6 px-4">Nếu bạn đang tham gia khóa học trên hệ thống LMS, bạn có thể đóng ứng dụng E-Learning và đừng quên <span class="font-bold text-blue-700">làm nhiệm vụ trên LMS</span> để xác nhận hoàn thành học phần nhé!</p><div class="grid grid-cols-2 gap-3 w-full max-w-xl mx-auto mb-6"><button onclick="goToOverview()" class="bg-white border border-blue-200 text-blue-700 px-4 py-3 rounded-xl font-bold hover:bg-blue-50 transition text-sm"><i class="fa-solid fa-book-open mr-2"></i> Xem Cẩm nang</button><button onclick="goToComparison()" class="bg-purple-50 border border-purple-100 text-purple-700 px-4 py-3 rounded-xl font-bold hover:bg-purple-100 transition text-sm"><i class="fa-solid fa-table-columns mr-2"></i> Xem Bảng so sánh</button></div><div class="border-t border-slate-100 pt-6"><p class="text-slate-700 font-bold mb-1">Chúc bạn có trải nghiệm học tập hiệu quả và vui vẻ!</p><p class="text-slate-400 text-xs italic">From LND Team with <i class="fa-solid fa-heart text-red-400 mx-1"></i></p></div></div></div></div></template>
+    <template id="tpl-video"><div class="slide"><div class="inner-content w-full px-2 flex flex-col items-center justify-center h-full"><div class="w-full max-w-4xl bg-black rounded-xl overflow-hidden shadow-xl aspect-video relative border-4 border-slate-200"><iframe class="w-full h-full video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div></div></template>
+    <template id="tpl-image"><div class="slide"><div class="inner-content w-full px-0 h-full flex flex-col justify-center items-center"><img src="" class="w-full h-auto max-h-full object-contain img-content shadow-lg rounded-lg"></div></div></template>
+    <script>
+        // --- 1. DATA CONFIG ---
+        const lessonData = {
+  "courseTitle": "Tổng Quan Các Nhóm Giải Pháp KiotViet",
+  "courseSubtitle": "Ngành Ăn uống, Giải trí",
+  "courseIcon": "fa-solid fa-utensils",
+  "mediaModules": [
+    {
+      "type": "video",
+      "title": "Video tổng quan giải pháp FNB",
+      "src": "https://www.youtube.com/embed/3m_HvUQaJC0"
+    },
+    {
+      "type": "image",
+      "title": "Infographic Giải pháp Tối ưu Vận hành",
+      "src": "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/03034118/GIAI-PHAP-TOI-UU-VAN-HANH.jpg"
+    }
+  ],
+  "overviewModules": [
+    {
+      "type": "concept",
+      "title": "I. Nhóm Tối ưu Vận hành",
+      "data": [
+        {
+          "title": "Quy trình Phục vụ & Bếp",
+          "icon": "fa-solid fa-bell-concierge",
+          "color": "blue",
+          "bullets": [
+            "Nhận đặt bàn: Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng.",
+            "Gọi món: Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar.",
+            "Cập nhật đơn: Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt.",
+            "Chế biến: Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác."
+          ]
+        },
+        {
+          "title": "Thanh toán & Giao hàng",
+          "icon": "fa-solid fa-cash-register",
+          "color": "green",
+          "bullets": [
+            "Giao hàng: Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển.",
+            "Thanh toán: Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót.",
+            "Hóa đơn điện tử: Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn.",
+            "Kết ca: Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát."
+          ]
+        },
+        {
+          "title": "Hạ tầng & Đặc thù",
+          "icon": "fa-solid fa-server",
+          "color": "purple",
+          "bullets": [
+            "Thiết bị phần cứng: Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị.",
+            "Chuyên ngành: Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "concept",
+      "title": "II. Nhóm Tối ưu Quản lý",
+      "data": [
+        {
+          "title": "Quản lý Tài nguyên",
+          "icon": "fa-solid fa-boxes-stacked",
+          "color": "orange",
+          "bullets": [
+            "Hàng hóa: Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu.",
+            "Giao dịch: Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác.",
+            "Nhà cung cấp: Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch.",
+            "Khách hàng: Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc."
+          ]
+        },
+        {
+          "title": "Nhân sự & Tài chính",
+          "icon": "fa-solid fa-users-gear",
+          "color": "red",
+          "bullets": [
+            "Nhân viên: Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng.",
+            "Sổ quỹ: Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng.",
+            "Báo cáo: Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan."
+          ]
+        },
+        {
+          "title": "Hệ thống & Mở rộng",
+          "icon": "fa-solid fa-network-wired",
+          "color": "cyan",
+          "bullets": [
+            "Thiết lập: Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn.",
+            "Kết nối API: Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ thống của đối tác thứ ba như website, CRM."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "concept",
+      "title": "III. Nhóm Thúc đẩy Doanh thu",
+      "data": [
+        {
+          "title": "Bán hàng Đa kênh",
+          "icon": "fa-solid fa-shop",
+          "color": "pink",
+          "bullets": [
+            "Thực đơn điện tử: Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ.",
+            "KiotViet Web: Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng.",
+            "Liên kết FoodApp: Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý.",
+            "Facebook POS: Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý."
+          ]
+        },
+        {
+          "title": "Marketing & CSKH",
+          "icon": "fa-solid fa-bullhorn",
+          "color": "yellow",
+          "bullets": [
+            "Chăm sóc khách hàng: Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS.",
+            "Tích điểm: Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng.",
+            "Khuyến mại: Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng.",
+            "Voucher: Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing.",
+            "Phân tích: Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh."
+          ]
+        }
+      ]
+    },
+    {
+      "type": "comparison-link",
+      "title": "Tổng kết: Sự thật vs Lầm tưởng",
+      "data": null
+    }
+  ],
+  "comparison": [
+    {
+      "prob": "Nhận đặt bàn chỉ là việc ghi chép tên khách vào sổ tay, không giúp ích gì cho việc sắp xếp chỗ ngồi.",
+      "sol": "Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng."
+    },
+    {
+      "prob": "Gọi món trên phần mềm chậm hơn ghi giấy tay và không thể tùy chỉnh ghi chú cho bếp.",
+      "sol": "Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar."
+    },
+    {
+      "prob": "Khi khách muốn đổi bàn, nhân viên phải hủy đơn cũ và tạo đơn mới hoàn toàn thủ công.",
+      "sol": "Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt."
+    },
+    {
+      "prob": "Bếp chỉ nhận được thông tin món ăn lúc đầu, mọi thay đổi sau đó nhân viên phải chạy xuống bếp báo miệng.",
+      "sol": "Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác."
+    },
+    {
+      "prob": "Phần mềm bán hàng tại chỗ không thể quản lý được đơn giao hàng hay phí vận chuyển.",
+      "sol": "Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển."
+    },
+    {
+      "prob": "KiotViet chỉ hỗ trợ thanh toán bằng tiền mặt, không hỗ trợ thẻ hay QR code.",
+      "sol": "Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót."
+    },
+    {
+      "prob": "Muốn xuất hóa đơn điện tử, cửa hàng phải sử dụng một phần mềm kế toán riêng biệt khác.",
+      "sol": "Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn."
+    },
+    {
+      "prob": "Việc tổng kết tiền cuối ngày hoàn toàn dựa vào trí nhớ và sổ sách thủ công của nhân viên.",
+      "sol": "Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát."
+    },
+    {
+      "prob": "Phần mềm KiotViet hoạt động độc lập, không thể kết nối với máy in bếp hay két tiền.",
+      "sol": "Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị."
+    },
+    {
+      "prob": "KiotViet FNB chỉ có một giao diện chung cho mọi loại hình từ cafe đến karaoke.",
+      "sol": "Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…"
+    },
+    {
+      "prob": "Phần mềm chỉ quản lý được tên món ăn bán ra chứ không trừ được kho nguyên liệu chế biến.",
+      "sol": "Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu."
+    },
+    {
+      "prob": "Sau khi in hóa đơn xong, dữ liệu sẽ biến mất và không thể tra cứu lại lịch sử giao dịch.",
+      "sol": "Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác."
+    },
+    {
+      "prob": "Việc quản lý nợ nần với nhà cung cấp phải ghi chép riêng bên ngoài sổ sách.",
+      "sol": "Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch."
+    },
+    {
+      "prob": "Nhà hàng F&B khách vãng lai nhiều nên không cần và không thể lưu trữ thông tin khách hàng.",
+      "sol": "Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc."
+    },
+    {
+      "prob": "Phần mềm bán hàng không liên quan gì đến việc chấm công hay tính lương cho nhân viên.",
+      "sol": "Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng."
+    },
+    {
+      "prob": "Sổ quỹ trên phần mềm chỉ ghi nhận tiền bán hàng, không ghi được các khoản chi phí điện nước hay tiền mặt bằng.",
+      "sol": "Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng."
+    },
+    {
+      "prob": "Muốn xem báo cáo doanh thu, chủ quán phải tự cộng tay từ các hóa đơn bán trong ngày.",
+      "sol": "Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan."
+    },
+    {
+      "prob": "Phần mềm được lập trình cố định, không thể thay đổi cài đặt in ấn hay tính giờ theo ý muốn.",
+      "sol": "Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn."
+    },
+    {
+      "prob": "Dữ liệu trên KiotViet bị đóng kín hoàn toàn, không thể kết nối với bất kỳ hệ thống nào khác.",
+      "sol": "Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ hệ thống của đối tác thứ ba như website, CRM."
+    },
+    {
+      "prob": "Mã QR tại bàn chỉ dùng để thanh toán chuyển khoản, không thể dùng để xem menu hay gọi món.",
+      "sol": "Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ."
+    },
+    {
+      "prob": "Muốn có website bán hàng, chủ quán bắt buộc phải thuê đơn vị thiết kế web bên ngoài với chi phí cao.",
+      "sol": "Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng."
+    },
+    {
+      "prob": "Đơn hàng từ các app giao đồ ăn phải quản lý trên điện thoại riêng của từng app, không thể gộp chung.",
+      "sol": "Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý."
+    },
+    {
+      "prob": "Việc quản lý tin nhắn Fanpage và chốt đơn bán hàng là hai hoạt động hoàn toàn tách biệt.",
+      "sol": "Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý."
+    },
+    {
+      "prob": "Việc gửi tin nhắn chăm sóc khách hàng phải làm thủ công từng người một qua điện thoại cá nhân.",
+      "sol": "Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS."
+    },
+    {
+      "prob": "Điểm tích lũy chỉ để cho vui, không có giá trị quy đổi hay thanh toán thực tế.",
+      "sol": "Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng."
+    },
+    {
+      "prob": "Nhân viên thu ngân phải tự nhớ và tính toán giảm giá bằng tay cho từng chương trình khuyến mại.",
+      "sol": "Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng."
+    },
+    {
+      "prob": "Voucher chỉ là phiếu giấy in ra, không thể quản lý được việc khách hàng dùng lại nhiều lần.",
+      "sol": "Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing."
+    },
+    {
+      "prob": "Báo cáo bán hàng chỉ cho biết tổng doanh thu chứ không phân tích sâu được hiệu quả từng khu vực bàn.",
+      "sol": "Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh."
+    }
+  ],
+  "practiceTopics": [
+    {
+      "title": "Tình huống Nhận đặt bàn",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tính năng đặt bàn trên KiotViet có giúp sắp xếp chỗ ngồi không hay chỉ ghi nhận thông tin thôi?"
+        },
+        {
+          "r": "consultant",
+          "t": "Chào bạn, tính năng này giúp bạn sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng đấy ạ."
+        }
+      ],
+      "cards": [
+        {
+          "id": 1,
+          "question": "Tính năng Nhận đặt bàn giúp nhà hàng tối ưu việc sắp xếp chỗ ngồi.",
+          "isTrue": true,
+          "wrong": "Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng.",
+          "right": "Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng."
+        },
+        {
+          "id": 2,
+          "question": "Việc nhận đặt bàn trên KiotViet chỉ dừng lại ở ghi chép thông tin khách hàng, không hỗ trợ sắp xếp bàn.",
+          "isTrue": false,
+          "wrong": "Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng.",
+          "right": "Sắp xếp và quản lý lịch đặt bàn chuyên nghiệp, giúp tối ưu chỗ ngồi và nâng cao trải nghiệm khách hàng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Gọi món",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Việc gọi món trên phần mềm có nhanh và gửi được yêu cầu xuống bếp ngay không?"
+        },
+        {
+          "r": "consultant",
+          "t": "KiotViet hỗ trợ ghi nhận order tại bàn rất nhanh, tùy chỉnh được món ăn và gửi yêu cầu tức thì xuống bếp/bar bạn nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 3,
+          "question": "Khi nhân viên thực hiện Gọi món, yêu cầu sẽ được gửi tức thì xuống bếp/bar.",
+          "isTrue": true,
+          "wrong": "Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar.",
+          "right": "Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar."
+        },
+        {
+          "id": 4,
+          "question": "Gọi món trên phần mềm chậm chạp và không thể tùy chỉnh các ghi chú món ăn cho bếp.",
+          "isTrue": false,
+          "wrong": "Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar.",
+          "right": "Ghi nhận order tại bàn nhanh chóng, tùy chỉnh món ăn và gửi yêu cầu tức thì xuống bếp/bar."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Cập nhật đơn",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Khách muốn đổi bàn thì tôi có phải hủy đơn cũ tạo đơn mới không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Không cần đâu ạ. KiotViet xử lý các yêu cầu chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt."
+        }
+      ],
+      "cards": [
+        {
+          "id": 5,
+          "question": "KiotViet hỗ trợ xử lý chuyển bàn, gộp bàn ngay tại chỗ.",
+          "isTrue": true,
+          "wrong": "Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt.",
+          "right": "Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt."
+        },
+        {
+          "id": 6,
+          "question": "Khi khách muốn đổi bàn, nhân viên bắt buộc phải hủy đơn cũ và nhập lại từ đầu.",
+          "isTrue": false,
+          "wrong": "Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt.",
+          "right": "Xử lý các yêu cầu phát sinh như chuyển bàn, gộp bàn hay tách hóa đơn ngay tại chỗ để phục vụ linh hoạt."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Chế biến",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Nếu khách hủy món thì bếp có biết ngay không hay nhân viên phải chạy xuống báo?"
+        },
+        {
+          "r": "consultant",
+          "t": "Hệ thống sẽ gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác ạ."
+        }
+      ],
+      "cards": [
+        {
+          "id": 7,
+          "question": "Mọi yêu cầu hủy món hay cập nhật đều được gửi tức thì xuống bộ phận chế biến.",
+          "isTrue": true,
+          "wrong": "Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác.",
+          "right": "Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác."
+        },
+        {
+          "id": 8,
+          "question": "Bếp chỉ nhận được thông tin món ăn lúc order, các thay đổi sau đó không được cập nhật tự động.",
+          "isTrue": false,
+          "wrong": "Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác.",
+          "right": "Gửi yêu cầu chế biến, hủy món hoặc cập nhật bàn xuống bếp/bar tức thì, đảm bảo thông tin luôn chính xác."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Giao hàng",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Phần mềm FNB này có quản lý được đơn giao hàng (ship) không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Có chứ ạ. KiotViet giúp quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển."
+        }
+      ],
+      "cards": [
+        {
+          "id": 9,
+          "question": "KiotViet FNB hỗ trợ quản lý quy trình giao hàng từ tạo đơn đến theo dõi trạng thái.",
+          "isTrue": true,
+          "wrong": "Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển.",
+          "right": "Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển."
+        },
+        {
+          "id": 10,
+          "question": "Phần mềm bán hàng tại chỗ hoàn toàn không có chức năng quản lý đơn giao hàng.",
+          "isTrue": false,
+          "wrong": "Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển.",
+          "right": "Quản lý quy trình giao hàng từ A-Z: tạo đơn, theo dõi trạng thái và cập nhật phí vận chuyển."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Thanh toán",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "KiotViet chỉ nhận thanh toán tiền mặt hay cả thẻ và QR vậy?"
+        },
+        {
+          "r": "consultant",
+          "t": "Phần mềm hỗ trợ thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR) để giảm thiểu sai sót nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 11,
+          "question": "KiotViet hỗ trợ đa dạng phương thức thanh toán như tiền mặt, thẻ, VietQR.",
+          "isTrue": true,
+          "wrong": "Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót.",
+          "right": "Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót."
+        },
+        {
+          "id": 12,
+          "question": "Hệ thống KiotViet chỉ chấp nhận thanh toán bằng tiền mặt.",
+          "isTrue": false,
+          "wrong": "Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót.",
+          "right": "Thực hiện thanh toán nhanh chóng tại quầy với đa dạng phương thức (tiền mặt, thẻ, VietQR), giảm thiểu sai sót."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Hóa đơn điện tử",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn xuất hóa đơn điện tử thì có cần mua thêm phần mềm kế toán không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Không cần đâu ạ. KiotViet cho phép phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật."
+        }
+      ],
+      "cards": [
+        {
+          "id": 13,
+          "question": "KiotViet tích hợp tính năng phát hành hóa đơn điện tử ngay trên máy tính tiền.",
+          "isTrue": true,
+          "wrong": "Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn.",
+          "right": "Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn."
+        },
+        {
+          "id": 14,
+          "question": "Để xuất hóa đơn điện tử, cửa hàng bắt buộc phải sử dụng phần mềm kế toán riêng biệt.",
+          "isTrue": false,
+          "wrong": "Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn.",
+          "right": "Phát hành hóa đơn điện tử từ máy tính tiền theo đúng quy định pháp luật, giúp vận hành chuyên nghiệp hơn."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Kết ca",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Làm sao để biết nhân viên có làm thất thoát tiền trong ca làm việc không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Bạn hãy dùng tính năng Kết ca để đối soát thu chi tiền mặt chi tiết cuối mỗi ca, giúp kiểm soát dòng tiền và chống thất thoát."
+        }
+      ],
+      "cards": [
+        {
+          "id": 15,
+          "question": "Tính năng Kết ca giúp đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc.",
+          "isTrue": true,
+          "wrong": "Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát.",
+          "right": "Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát."
+        },
+        {
+          "id": 16,
+          "question": "Việc tổng kết tiền cuối ca hoàn toàn phụ thuộc vào tính trung thực và trí nhớ của nhân viên.",
+          "isTrue": false,
+          "wrong": "Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát.",
+          "right": "Đối soát thu chi tiền mặt chi tiết cuối mỗi ca làm việc, giúp kiểm soát dòng tiền và chống thất thoát."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Thiết bị phần cứng",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Phần mềm này có kết nối được với máy in bếp tôi đang có không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Được ạ. KiotViet kết nối và đồng bộ tốt với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị."
+        }
+      ],
+      "cards": [
+        {
+          "id": 17,
+          "question": "KiotViet có khả năng đồng bộ với các thiết bị phần cứng như máy in bếp, màn hình hiển thị.",
+          "isTrue": true,
+          "wrong": "Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị.",
+          "right": "Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị."
+        },
+        {
+          "id": 18,
+          "question": "Phần mềm KiotViet chỉ chạy độc lập trên máy tính, không kết nối được với các thiết bị ngoại vi.",
+          "isTrue": false,
+          "wrong": "Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị.",
+          "right": "Kết nối và đồng bộ phần mềm với các thiết bị F&B chuyên dụng như máy POS, máy in bếp, màn hình hiển thị."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Chuyên ngành",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi kinh doanh Karaoke thì có dùng chung giao diện với quán Cafe không?"
+        },
+        {
+          "r": "consultant",
+          "t": "KiotViet cung cấp các bộ giải pháp chuyên ngành riêng biệt cho từng mô hình như cafe, nhà hàng, karaoke, buffet nên bạn yên tâm nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 19,
+          "question": "KiotViet cung cấp giải pháp chuyên ngành riêng cho nhiều mô hình F&B khác nhau.",
+          "isTrue": true,
+          "wrong": "Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…",
+          "right": "Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…"
+        },
+        {
+          "id": 20,
+          "question": "Tất cả các mô hình kinh doanh F&B trên KiotViet đều phải sử dụng chung một giao diện.",
+          "isTrue": false,
+          "wrong": "Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…",
+          "right": "Cung cấp các bộ giải pháp chuyên ngành cho nhiều mô hình như cafe, nhà hàng, karaoke, buffet…"
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Hàng hóa",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Làm sao để tôi quản lý được lượng nguyên liệu tiêu hao cho mỗi món ăn?"
+        },
+        {
+          "r": "consultant",
+          "t": "Bạn có thể thiết lập và quản lý Menu chi tiết, đồng thời kiểm soát tồn kho nguyên vật liệu ngay trên hệ thống ạ."
+        }
+      ],
+      "cards": [
+        {
+          "id": 21,
+          "question": "KiotViet cho phép kiểm soát tồn kho nguyên vật liệu dựa trên Menu món ăn.",
+          "isTrue": true,
+          "wrong": "Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu.",
+          "right": "Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu."
+        },
+        {
+          "id": 22,
+          "question": "Phần mềm chỉ quản lý tên món ăn bán ra, không hỗ trợ trừ kho nguyên liệu.",
+          "isTrue": false,
+          "wrong": "Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu.",
+          "right": "Thiết lập và quản lý Menu chi tiết (món ăn, đồ uống, topping), đồng thời kiểm soát tồn kho nguyên vật liệu."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Giao dịch",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn xem lại các hóa đơn cũ thì có được không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Được chứ ạ. Bạn có thể tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác."
+        }
+      ],
+      "cards": [
+        {
+          "id": 23,
+          "question": "Người dùng có thể tra cứu lại toàn bộ lịch sử giao dịch và hóa đơn trên hệ thống.",
+          "isTrue": true,
+          "wrong": "Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác.",
+          "right": "Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác."
+        },
+        {
+          "id": 24,
+          "question": "Dữ liệu hóa đơn sẽ bị xóa ngay sau khi in và không thể tra cứu lại.",
+          "isTrue": false,
+          "wrong": "Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác.",
+          "right": "Tra cứu lịch sử mọi giao dịch, hóa đơn bán hàng và nhập kho để kiểm soát doanh thu, chi phí chính xác."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Nhà cung cấp",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi hay quên công nợ với bên giao đá, giao bia. Phần mềm có nhắc không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Có ạ. Hệ thống giúp lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch."
+        }
+      ],
+      "cards": [
+        {
+          "id": 25,
+          "question": "KiotViet giúp quản lý công nợ phải trả và lịch sử nhập hàng từ nhà cung cấp.",
+          "isTrue": true,
+          "wrong": "Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch.",
+          "right": "Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch."
+        },
+        {
+          "id": 26,
+          "question": "Việc theo dõi công nợ nhà cung cấp phải thực hiện thủ công ngoài sổ sách.",
+          "isTrue": false,
+          "wrong": "Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch.",
+          "right": "Lưu trữ thông tin nhà cung cấp, theo dõi lịch sử nhập hàng và quản lý công nợ phải trả minh bạch."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Khách hàng",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Khách ăn uống xong là đi, có cần lưu thông tin làm gì không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Rất cần ạ. Việc xây dựng cơ sở dữ liệu khách hàng giúp bạn theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc hiệu quả."
+        }
+      ],
+      "cards": [
+        {
+          "id": 27,
+          "question": "Hệ thống hỗ trợ xây dựng cơ sở dữ liệu khách hàng để phục vụ chăm sóc sau bán.",
+          "isTrue": true,
+          "wrong": "Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc.",
+          "right": "Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc."
+        },
+        {
+          "id": 28,
+          "question": "Mô hình F&B không cần thiết và không thể lưu trữ thông tin khách hàng.",
+          "isTrue": false,
+          "wrong": "Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc.",
+          "right": "Xây dựng cơ sở dữ liệu khách hàng để theo dõi lịch sử sử dụng dịch vụ và triển khai các chương trình chăm sóc."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Nhân viên",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Phần mềm có tính được lương và hoa hồng cho nhân viên không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Có bạn nhé. KiotViet quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng."
+        }
+      ],
+      "cards": [
+        {
+          "id": 29,
+          "question": "KiotViet có tính năng tự động tạo bảng lương, tính hoa hồng và chấm công nhân viên.",
+          "isTrue": true,
+          "wrong": "Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng.",
+          "right": "Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng."
+        },
+        {
+          "id": 30,
+          "question": "Phần mềm bán hàng chỉ quản lý hàng hóa, không liên quan đến nhân sự hay tiền lương.",
+          "isTrue": false,
+          "wrong": "Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng.",
+          "right": "Quản lý thông tin nhân viên, theo dõi chấm công, tính hoa hồng và tự động tạo bảng lương hàng tháng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Sổ quỹ",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn ghi lại tiền điện nước hàng tháng vào phần mềm được không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Được ạ. Sổ quỹ giúp ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng."
+        }
+      ],
+      "cards": [
+        {
+          "id": 31,
+          "question": "Sổ quỹ ghi nhận mọi khoản thu chi phát sinh như tiền điện, nước, mặt bằng.",
+          "isTrue": true,
+          "wrong": "Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng.",
+          "right": "Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng."
+        },
+        {
+          "id": 32,
+          "question": "Sổ quỹ trên phần mềm chỉ ghi nhận tiền thu từ bán hàng, không ghi được các chi phí khác.",
+          "isTrue": false,
+          "wrong": "Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng.",
+          "right": "Ghi nhận mọi khoản thu chi phát sinh, giúp kiểm soát dòng tiền minh bạch và đối soát ngân hàng dễ dàng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Báo cáo",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Làm sao tôi biết món nào đang bán chạy nhất quán?"
+        },
+        {
+          "r": "consultant",
+          "t": "Bạn chỉ cần xem Báo cáo. Hệ thống theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ rất trực quan."
+        }
+      ],
+      "cards": [
+        {
+          "id": 33,
+          "question": "Hệ thống báo cáo trực quan giúp theo dõi món bán chạy và doanh thu.",
+          "isTrue": true,
+          "wrong": "Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan.",
+          "right": "Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan."
+        },
+        {
+          "id": 34,
+          "question": "Để biết doanh thu hay món bán chạy, chủ quán phải tự tổng hợp thủ công từ hóa đơn.",
+          "isTrue": false,
+          "wrong": "Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan.",
+          "right": "Theo dõi các chỉ số quan trọng như doanh thu, món bán chạy, hiệu suất phục vụ qua hệ thống báo cáo trực quan."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Thiết lập",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Quán tôi có tính giờ dịch vụ, phần mềm có chỉnh được không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Có ạ. Bạn vào mục Thiết lập để tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) cho đúng mô hình của mình nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 35,
+          "question": "KiotViet cho phép tùy chỉnh các tính năng đặc thù như tính giờ, in bếp.",
+          "isTrue": true,
+          "wrong": "Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn.",
+          "right": "Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn."
+        },
+        {
+          "id": 36,
+          "question": "Phần mềm được thiết kế cố định, không thể thay đổi cài đặt theo đặc thù quán.",
+          "isTrue": false,
+          "wrong": "Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn.",
+          "right": "Tùy chỉnh các tính năng đặc thù (in bếp, tính giờ, khung giờ) để phần mềm vận hành theo đúng mô hình của bạn."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Kết nối API",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn kết nối dữ liệu KiotViet với hệ thống CRM riêng thì làm thế nào?"
+        },
+        {
+          "r": "consultant",
+          "t": "KiotViet cung cấp cổng Kết nối API để liên kết dữ liệu với các hệ thống đối tác thứ ba như website hay CRM bạn nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 37,
+          "question": "KiotViet hỗ trợ mở cổng API để kết nối với các hệ thống bên thứ ba.",
+          "isTrue": true,
+          "wrong": "Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ thống của đối tác thứ ba như website, CRM.",
+          "right": "Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ thống của đối tác thứ ba như website, CRM."
+        },
+        {
+          "id": 38,
+          "question": "Dữ liệu trên KiotViet là đóng kín và không thể liên kết với website hay CRM khác.",
+          "isTrue": false,
+          "wrong": "Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ thống của đối tác thứ ba như website, CRM.",
+          "right": "Mở cổng kết nối để liên kết dữ liệu KiotViet với các hệ thống của đối tác thứ ba như website, CRM."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Thực đơn điện tử",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Mã QR tại bàn chỉ để thanh toán thôi đúng không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Không chỉ vậy đâu ạ. Mã QR cho phép khách tự xem thực đơn điện tử và gọi món, giúp giảm tải cho nhân viên phục vụ đấy."
+        }
+      ],
+      "cards": [
+        {
+          "id": 39,
+          "question": "Thực đơn điện tử cho phép khách hàng quét mã QR để tự gọi món tại bàn.",
+          "isTrue": true,
+          "wrong": "Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ.",
+          "right": "Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ."
+        },
+        {
+          "id": 40,
+          "question": "Mã QR dán tại bàn chỉ có chức năng duy nhất là hỗ trợ thanh toán chuyển khoản.",
+          "isTrue": false,
+          "wrong": "Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ.",
+          "right": "Cho phép khách hàng quét mã QR tại bàn để tự xem thực đơn và gọi món, giảm tải cho nhân viên phục vụ."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống KiotViet Web",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn có website đặt món riêng nhưng ngại chi phí thiết kế cao."
+        },
+        {
+          "r": "consultant",
+          "t": "Bạn có thể dùng KiotViet Web để tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 41,
+          "question": "KiotViet Web giúp tạo website đặt món online đồng bộ với phần mềm tại cửa hàng.",
+          "isTrue": true,
+          "wrong": "Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng.",
+          "right": "Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng."
+        },
+        {
+          "id": 42,
+          "question": "Để có website bán hàng, chủ quán bắt buộc phải thuê đơn vị thiết kế bên ngoài với chi phí lớn.",
+          "isTrue": false,
+          "wrong": "Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng.",
+          "right": "Tạo một website đặt món online chuyên nghiệp, tự động đồng bộ thực đơn và đơn hàng với cửa hàng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Liên kết FoodApp",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Quán tôi bán cả Grab và ShopeeFood, quản lý nhiều máy vất vả quá."
+        },
+        {
+          "r": "consultant",
+          "t": "Hãy dùng tính năng Liên kết FoodApp để quản lý tập trung đơn hàng từ các ứng dụng ngay trên KiotViet bạn nhé."
+        }
+      ],
+      "cards": [
+        {
+          "id": 43,
+          "question": "KiotViet hỗ trợ quản lý tập trung đơn hàng từ GrabFood, ShopeeFood ngay trên một màn hình.",
+          "isTrue": true,
+          "wrong": "Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý.",
+          "right": "Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý."
+        },
+        {
+          "id": 44,
+          "question": "Đơn hàng từ các ứng dụng giao đồ ăn không thể quản lý chung trên phần mềm KiotViet.",
+          "isTrue": false,
+          "wrong": "Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý.",
+          "right": "Quản lý tập trung đơn hàng từ GrabFood, ShopeeFood… ngay trên KiotViet, tối ưu quy trình xử lý."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Facebook POS",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Làm sao để vừa trả lời tin nhắn Fanpage vừa chốt đơn nhanh?"
+        },
+        {
+          "r": "consultant",
+          "t": "Facebook POS sẽ giúp bạn xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý."
+        }
+      ],
+      "cards": [
+        {
+          "id": 45,
+          "question": "Facebook POS giúp xử lý tin nhắn và chốt đơn từ nhiều Fanpage trên cùng một hệ thống.",
+          "isTrue": true,
+          "wrong": "Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý.",
+          "right": "Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý."
+        },
+        {
+          "id": 46,
+          "question": "KiotViet không hỗ trợ quản lý tin nhắn hay chốt đơn từ Facebook.",
+          "isTrue": false,
+          "wrong": "Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý.",
+          "right": "Xử lý tin nhắn, bình luận và chốt đơn từ nhiều Fanpage trên cùng một màn hình quản lý."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Chăm sóc khách hàng",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Tôi muốn gửi tin nhắn cảm ơn khách sau khi ăn xong thì làm thế nào?"
+        },
+        {
+          "r": "consultant",
+          "t": "Hệ thống có thể gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán tự động qua Zalo ZNS và SMS đấy ạ."
+        }
+      ],
+      "cards": [
+        {
+          "id": 47,
+          "question": "Hệ thống có thể tự động gửi tin nhắn cảm ơn hoặc xác nhận qua Zalo/SMS.",
+          "isTrue": true,
+          "wrong": "Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS.",
+          "right": "Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS."
+        },
+        {
+          "id": 48,
+          "question": "Việc gửi tin nhắn chăm sóc khách hàng bắt buộc phải thực hiện thủ công.",
+          "isTrue": false,
+          "wrong": "Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS.",
+          "right": "Gửi tin nhắn xác nhận đặt bàn, cảm ơn sau khi thanh toán… tự động qua Zalo ZNS và SMS."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Tích điểm",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Điểm tích lũy của khách hàng dùng để làm gì?"
+        },
+        {
+          "r": "consultant",
+          "t": "Chương trình Tích điểm cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng, giúp giữ chân khách hàng hiệu quả."
+        }
+      ],
+      "cards": [
+        {
+          "id": 49,
+          "question": "Khách hàng có thể sử dụng điểm tích lũy để thanh toán trực tiếp vào hóa đơn.",
+          "isTrue": true,
+          "wrong": "Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng.",
+          "right": "Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng."
+        },
+        {
+          "id": 50,
+          "question": "Điểm tích lũy trên KiotViet chỉ để theo dõi hạng thành viên, không có giá trị thanh toán.",
+          "isTrue": false,
+          "wrong": "Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng.",
+          "right": "Xây dựng chương trình khách hàng thân thiết, cho phép khách dùng điểm để thanh toán và nhận ưu đãi riêng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Khuyến mại",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Mỗi lần có khuyến mại nhân viên lại tính tiền sai, phần mềm có giúp được không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Được chứ ạ. Bạn hãy thiết lập các chương trình ưu đãi trên hệ thống, máy sẽ tự động tính giảm giá hoặc tặng món chính xác."
+        }
+      ],
+      "cards": [
+        {
+          "id": 51,
+          "question": "KiotViet hỗ trợ thiết lập và tự động áp dụng các chương trình khuyến mại khi thanh toán.",
+          "isTrue": true,
+          "wrong": "Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng.",
+          "right": "Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng."
+        },
+        {
+          "id": 52,
+          "question": "Nhân viên thu ngân phải tự tính toán giá trị khuyến mại thủ công khi thanh toán.",
+          "isTrue": false,
+          "wrong": "Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng.",
+          "right": "Thiết lập các chương trình ưu đãi đa dạng (giảm giá, tặng món, giờ vàng) để thu hút khách hàng."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Voucher",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Làm sao để kiểm soát việc khách dùng lại voucher cũ?"
+        },
+        {
+          "r": "consultant",
+          "t": "Hệ thống giúp phát hành và quản lý trạng thái voucher, đảm bảo mỗi mã chỉ được dùng đúng quy định để tránh gian lận."
+        }
+      ],
+      "cards": [
+        {
+          "id": 53,
+          "question": "Hệ thống giúp quản lý phát hành và trạng thái sử dụng của Voucher.",
+          "isTrue": true,
+          "wrong": "Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing.",
+          "right": "Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing."
+        },
+        {
+          "id": 54,
+          "question": "Voucher chỉ có thể quản lý thủ công bằng phiếu giấy, không thể kiểm soát trên phần mềm.",
+          "isTrue": false,
+          "wrong": "Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing.",
+          "right": "Phát hành và quản lý voucher giảm giá, giúp kích cầu và theo dõi hiệu quả các chiến dịch marketing."
+        }
+      ]
+    },
+    {
+      "title": "Tình huống Phân tích",
+      "chat": [
+        {
+          "r": "customer",
+          "t": "Báo cáo có cho tôi biết khu vực bàn nào khách thích ngồi nhất không?"
+        },
+        {
+          "r": "consultant",
+          "t": "Có ạ. Tính năng Phân tích cung cấp báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình để bạn tối ưu kinh doanh."
+        }
+      ],
+      "cards": [
+        {
+          "id": 55,
+          "question": "Tính năng Phân tích cung cấp báo cáo chuyên sâu về hiệu suất từng khu vực bàn.",
+          "isTrue": true,
+          "wrong": "Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh.",
+          "right": "Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh."
+        },
+        {
+          "id": 56,
+          "question": "Báo cáo chỉ hiển thị tổng doanh thu chung, không phân tích chi tiết hiệu suất bàn.",
+          "isTrue": false,
+          "wrong": "Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh.",
+          "right": "Xem báo cáo chuyên sâu về hiệu suất bàn, doanh thu trung bình, món bán chạy để tối ưu chiến lược kinh doanh."
+        }
+      ]
+    }
+  ]
+};
+        // --- KẾT THÚC PHẦN DỮ LIỆU CỦA AI ---
+
+        const { courseTitle, courseSubtitle, courseIcon, overviewModules, practiceTopics, mediaModules } = lessonData;
+
+        const audioCtx = new(window.AudioContext || window.webkitAudioContext)(); 
+        let isMuted = false;
+        let slides = []; 
+        let currentSlideIndex = 0; 
+        let gameQuestions = []; 
+        let gameScore = 0; 
+        let gameCurrentQIndex = 0; 
+        let gameStartSlideIndex = 0;
+        let userGameHistory = []; 
+        let overviewStartIndex = 1; 
+        let comparisonSlideIndex = 0;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('btn-mute');
+            btn.innerHTML = isMuted ? '<i class="fa-solid fa-volume-xmark text-lg"></i>' : '<i class="fa-solid fa-volume-high text-lg"></i>';
+            btn.classList.toggle('text-red-500', isMuted);
+            btn.classList.toggle('text-slate-400', !isMuted);
+        }
+
+        function playSound(type) {
+            if (isMuted || audioCtx.state === 'suspended') {
+                audioCtx.resume();
+                if(isMuted) return;
+            }
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            const n = audioCtx.currentTime;
+            
+            if(type === 'pop'){
+                o.type='sine';
+                o.frequency.setValueAtTime(800,n);
+                o.frequency.exponentialRampToValueAtTime(300,n+0.1);
+                g.gain.setValueAtTime(0.3,n);
+                g.gain.exponentialRampToValueAtTime(0.01,n+0.1);
+            } else if(type === 'correct'){
+                o.type='sine';
+                o.frequency.setValueAtTime(600,n);
+                o.frequency.exponentialRampToValueAtTime(1200,n+0.1);
+                g.gain.setValueAtTime(0.3,n);
+                g.gain.exponentialRampToValueAtTime(0.01,n+0.3);
+            } else if(type === 'incorrect'){
+                o.type='sawtooth';
+                o.frequency.setValueAtTime(200,n);
+                o.frequency.linearRampToValueAtTime(150,n+0.2);
+                g.gain.setValueAtTime(0.3,n);
+                g.gain.linearRampToValueAtTime(0.01,n+0.2);
+            } else if(type === 'win'){
+                const t=[523.25,659.25,783.99,1046.5];
+                let e=n;
+                t.forEach((t,i)=>{
+                    const s=audioCtx.createOscillator();
+                    const a=audioCtx.createGain();
+                    s.connect(a);
+                    a.connect(audioCtx.destination);
+                    s.type='triangle';
+                    s.frequency.setValueAtTime(t,e);
+                    a.gain.setValueAtTime(0.2,e);
+                    a.gain.linearRampToValueAtTime(0,e+0.5);
+                    s.start(e);
+                    s.stop(e+0.5);
+                    e+=i===t.length-2?0.3:0.15;
+                });
+                return;
+            } else if(type === 'fail'){
+                o.type='sawtooth';
+                o.frequency.setValueAtTime(300,n);
+                o.frequency.linearRampToValueAtTime(150,n+0.8);
+                g.gain.setValueAtTime(0.3,n);
+                g.gain.linearRampToValueAtTime(0,n+0.8);
+            }
+            o.start();
+            o.stop(n + (type==='pop' ? 0.1 : type==='correct' ? 0.3 : type==='incorrect' ? 0.2 : 0.8));
+        }
+
+        function initApp() {
+            slides = [];
+            const sidebarContent = document.getElementById('sidebar-content');
+            sidebarContent.innerHTML = '';
+            
+            slides.push({ type: 'title', section: 'Mở đầu' });
+            slides.push({ type: 'intro', section: 'Mở đầu' });
+            
+            const createSidebarGroup = (t) => {
+                const d = document.createElement('div');
+                d.className = "text-sm font-bold text-slate-700 bg-slate-100 p-3 rounded-lg mt-4 mb-2 shadow-sm uppercase";
+                d.innerText = t;
+                sidebarContent.appendChild(d);
+            };
+            
+            const createSidebarButton = (t, i, c, o) => {
+                const b = document.createElement('button');
+                b.className = `w-full text-left px-4 py-2 rounded-lg hover:bg-${c}-50 text-sm font-medium text-slate-600 hover:text-${c}-600 flex items-center gap-3 transition`;
+                b.innerHTML = `<i class="${i} w-4 text-center text-${c}-500"></i><span class="truncate">${t}</span>`;
+                b.onclick = () => { o(); toggleSidebar(); };
+                sidebarContent.appendChild(b);
+            };
+            
+            overviewStartIndex = slides.length;
+
+            if(mediaModules && mediaModules.length > 0) {
+                const grpTitle = "Tài liệu đa phương tiện";
+                createSidebarGroup(grpTitle);
+                mediaModules.forEach(m => {
+                    const s = slides.length;
+                    if(m.type === 'video') slides.push({ type: 'video', data: m.src, title: m.title, section: grpTitle });
+                    else if(m.type === 'image') slides.push({ type: 'image', data: m.src, title: m.title, section: grpTitle });
+                    
+                    const icon = m.type === 'video' ? 'fa-brands fa-youtube' : 'fa-solid fa-image';
+                    createSidebarButton(m.title, icon, "red", () => { currentSlideIndex = s; renderSlide(); });
+                });
+            }
+
+            if(overviewModules && overviewModules.length > 0){
+                overviewModules.forEach(m => {
+                    const grpTitle = m.title;
+                    createSidebarGroup(grpTitle);
+                    if (m.type === 'concept') {
+                        if(Array.isArray(m.data)){
+                            m.data.forEach((item) => {
+                                const sIndex = slides.length;
+                                slides.push({ type: 'concept-single', data: item, title: item.title, section: grpTitle });
+                                createSidebarButton(item.title, item.icon, item.color, () => { currentSlideIndex = sIndex; renderSlide(); });
+                            });
+                        }
+                    } else if (m.type === 'comparison-link') {
+                        // Skip
+                    } else {
+                        const s = slides.length;
+                        slides.push({ type: m.type, data: m.data, title: m.title, section: grpTitle });
+                        createSidebarButton("Xem Cẩm nang", "fa-solid fa-book-open", "blue", () => { currentSlideIndex = s; renderSlide(); });
+                    }
+                });
+            }
+            
+            if(practiceTopics && practiceTopics.length > 0){
+                const grpTitle = "2. Tìm hiểu chi tiết";
+                createSidebarGroup(grpTitle);
+                practiceTopics.forEach(t => {
+                    let s = slides.length;
+                    if(t.chat){
+                        for(let i = 0; i < t.chat.length; i += 2){
+                            slides.push({type:'chat', data: t.chat.slice(i, i+2), title: t.title, section: grpTitle});
+                        }
+                    }
+                    if(t.cards){
+                        t.cards.forEach(c => slides.push({type:'card', data: c, title: t.title, section: grpTitle}));
+                    }
+                    createSidebarButton(t.title, "fa-solid fa-comment-dots", "slate", () => { currentSlideIndex = s; renderSlide(); });
+                });
+            }
+            
+            const reviewTitle = "3. Tổng kết & Đánh giá";
+            createSidebarGroup(reviewTitle);
+            
+            comparisonSlideIndex = slides.length;
+            slides.push({type:'comparison', title: "Bảng so sánh", section: reviewTitle});
+            createSidebarButton("Bảng so sánh", "fa-solid fa-table-columns", "purple", () => { currentSlideIndex = comparisonSlideIndex; renderSlide(); });
+            
+            gameStartSlideIndex = slides.length;
+            slides.push({type:'game-start', title: "Quiz Game", section: reviewTitle});
+            slides.push({type:'game-play', title: "Đang chơi...", section: reviewTitle});
+            slides.push({type:'winner-input', title: "Nhận thưởng", section: reviewTitle});
+            slides.push({type:'certificate', title: "Chứng nhận", section: reviewTitle});
+            slides.push({type:'game-review', title: "Chi tiết kết quả", section: reviewTitle});
+            slides.push({type:'end-course', title: "Kết thúc", section: reviewTitle});
+
+            createSidebarButton("Quiz Game", "fa-solid fa-gamepad", "orange", () => { currentSlideIndex = gameStartSlideIndex; renderSlide(); });
+            
+            renderSlide();
+        }
+
+        function renderSlide() {
+            const c = document.getElementById('app-container');
+            const s = slides[currentSlideIndex];
+            
+            document.getElementById('header-section-title').innerText = s.section || "Bài học";
+            let subTitle = s.title ? ` • ${s.title}` : "";
+            if(s.type === 'title') subTitle = "";
+            document.getElementById('slide-indicator').innerText = `${currentSlideIndex+1}/${slides.length}${subTitle}`;
+            document.getElementById('progress-bar').style.width = `${((currentSlideIndex+1)/slides.length)*100}%`;
+            
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            btnPrev.disabled = currentSlideIndex === 0;
+            
+            let disableNext = false;
+            if (currentSlideIndex >= slides.length - 1) disableNext = true;
+            if (s.type === 'game-start') disableNext = true;
+            if (s.type === 'game-play') disableNext = true;
+            if (s.type === 'winner-input') disableNext = true;
+            btnNext.disabled = disableNext;
+
+            const tpl = document.getElementById(`tpl-${s.type}`);
+            if(!tpl) { console.error("Template not found:", s.type); return; }
+
+            const t = tpl.content.cloneNode(true);
+            const e = t.querySelector('.slide');
+            
+            if(s.type === 'title'){
+                e.querySelector('.slide-title').innerText = courseTitle;
+                e.querySelector('.slide-icon').className = courseIcon + " slide-icon";
+                
+                const subEl = e.querySelector('.slide-subtitle');
+                if(lessonData.courseSubtitle) {
+                    subEl.innerText = lessonData.courseSubtitle;
+                    subEl.classList.remove('hidden');
+                }
+            }
+            else if(s.type === 'intro'){
+                e.querySelector('.course-name-span').innerText = courseTitle;
+            }
+            else if(s.type === 'end-course'){
+                e.querySelector('.end-course-title').innerText = "Chúc mừng bạn đã hoàn thành học phần " + courseTitle + "!";
+            }
+            else if(s.type === 'video'){
+                let vidSrc = s.data;
+                // FIX YOUTUBE LINKS
+                if (vidSrc.includes('youtube.com/watch?v=')) {
+                    vidSrc = vidSrc.replace('watch?v=', 'embed/');
+                    if(vidSrc.includes('&')) vidSrc = vidSrc.split('&')[0];
+                } else if (vidSrc.includes('youtu.be/')) {
+                    vidSrc = vidSrc.replace('youtu.be/', 'www.youtube.com/embed/');
+                }
+                e.querySelector('.video-iframe').src = vidSrc;
+            }
+            else if(s.type === 'image'){
+                e.querySelector('.img-content').src = s.data;
+            }
+            else if(s.type === 'concept-single'){
+                e.querySelector('.concept-card-single').classList.add(`border-${s.data.color}-200`);
+                e.querySelector('.concept-header-single').classList.add(`bg-${s.data.color}-50`, `text-${s.data.color}-700`);
+                e.querySelector('.concept-icon').className = `${s.data.icon} text-2xl`;
+                e.querySelector('.concept-card-title').innerText = s.data.title;
+                const body = e.querySelector('.concept-body-single');
+                
+                if(s.data.comparison) {
+                    body.innerHTML = `
+                        <div class="comp-grid">
+                            <div class="comp-col">
+                                <div class="comp-item comp-item-prob">
+                                    <div class="comp-label prob-label"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Vấn đề / Nỗi đau</div>
+                                    ${s.data.comparison.map(i => `<div class="mb-4 pb-4 border-b border-red-200 last:border-0 last:pb-0 last:mb-0"><p class="comp-text">${i.prob}</p></div>`).join('')}
+                                </div>
+                            </div>
+                            <div class="comp-col">
+                                <div class="comp-item comp-item-sol">
+                                    <div class="comp-label sol-label"><i class="fa-solid fa-circle-check mr-1"></i> Giải pháp KiotViet</div>
+                                    ${s.data.comparison.map(i => `<div class="mb-4 pb-4 border-b border-blue-200 last:border-0 last:pb-0 last:mb-0"><p class="comp-text">${i.sol}</p></div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const bullets = Array.isArray(s.data.bullets) ? s.data.bullets : [];
+                    body.innerHTML = bullets.map(b => `<div class="concept-item-single"><i class="fa-solid fa-circle text-[8px] mt-2 text-${s.data.color}-500"></i><span>${b}</span></div>`).join('');
+                }
+            }
+            else if(s.type === 'chat'){
+                const iconCustomer = '<div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 flex-shrink-0 shadow-sm border border-gray-300"><i class="fa-solid fa-user"></i></div>';
+                const iconConsultant = '<div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white flex-shrink-0 shadow-sm border border-blue-700"><i class="fa-solid fa-headset"></i></div>';
+
+                e.querySelector('.chat-container').innerHTML = s.data.map((m, i) => {
+                    const role = m.r || m.type || (m.role ? m.role : 'consultant');
+                    const txt = m.t || m.text || m.content || '';
+                    const isCust = (role === 'customer' || role === 'user');
+                    
+                    return `
+                    <div class="flex w-full gap-2 items-end ${isCust ? 'flex-row' : 'flex-row-reverse'}" style="animation-delay:${i * 0.2}s">
+                        ${isCust ? iconCustomer : iconConsultant}
+                        <div class="chat-bubble ${isCust ? 'chat-bubble-customer' : 'chat-bubble-consultant'}">
+                            <div class="text-[9px] font-bold uppercase mb-1 opacity-60">${isCust ? 'Chủ cửa hàng/Nhân viên' : 'Chuyên viên KiotViet'}</div>
+                            ${txt}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            }
+            else if(s.type === 'card'){
+                e.querySelector('.card-id').innerText = s.data.id;
+                e.querySelector('.card-question').innerHTML = s.data.question;
+                e.querySelector('.card-original-q').innerHTML = s.data.question;
+                e.querySelector('.card-right-answer').innerHTML = s.data.right;
+                const bT = e.querySelector('.btn-true');
+                const bF = e.querySelector('.btn-false');
+                const bR = e.querySelector('.btn-reset');
+                bT.onclick = ev => { ev.stopPropagation(); flipCardCheck(e, true, s.data.isTrue); };
+                bF.onclick = ev => { ev.stopPropagation(); flipCardCheck(e, false, s.data.isTrue); };
+                bR.onclick = ev => { ev.stopPropagation(); resetCardFlip(e); };
+            }
+            else if(s.type === 'comparison'){
+                const y = e.querySelector('.comp-tbody');
+                let comps = [];
+                if(lessonData.comparison) comps = lessonData.comparison;
+                y.innerHTML = comps.map(c => `<tr><td class="p-3 align-top border-r border-slate-100 bg-red-50/20 text-red-800">${c.prob}</td><td class="p-3 align-top bg-green-50/20 text-green-800">${c.sol}</td></tr>`).join('');
+            }
+            else if(s.type === 'game-start'){
+                let totalQ = 0;
+                practiceTopics.forEach(t => { if(t.cards) totalQ += t.cards.length; });
+                
+                const btnContainer = e.querySelector('.game-mode-buttons');
+                if(totalQ < 10) {
+                     btnContainer.innerHTML = `<button onclick="startGame('promax')" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2 group"><i class="fa-solid fa-rocket"></i> <span>Qua nốt màn này là ngon luôn ;)</span> <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Enter]</span></button>
+                     <p class="text-[10px] text-slate-400 mt-2 md:hidden">(Nhấn Enter hoặc Space để bắt đầu)</p>`;
+                } else {
+                     btnContainer.innerHTML = `
+                        <button onclick="startGame('standard')" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:bg-blue-700 active:scale-95 transition flex items-center justify-center gap-2"><span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span> Tiêu chuẩn (5 câu) <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Phím 1]</span></button>
+                        <button onclick="startGame('promax')" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"><span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span> Promax (Toàn bộ) <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Phím 2]</span></button>
+                     `;
+                }
+            }
+            else if(s.type === 'game-play'){
+                const q = gameQuestions[gameCurrentQIndex];
+                if(q){
+                    e.querySelector('.game-q-current').innerText = gameCurrentQIndex + 1;
+                    e.querySelector('.game-q-total').innerText = gameQuestions.length;
+                    e.querySelector('.game-score').innerText = gameScore;
+                    e.querySelector('.game-question-text').innerHTML = q.question;
+                } else {
+                    e.querySelector('.game-question-text').innerText = "Vui lòng chọn chế độ!";
+                    e.querySelectorAll('.game-btn').forEach(b => b.disabled = true);
+                }
+            }
+            else if(s.type === 'winner-input'){
+                const total = gameQuestions.length;
+                const pct = total > 0 ? Math.round((gameScore / total) * 100) : 0;
+                e.querySelector('.winner-score').innerText = pct + "%";
+                setTimeout(() => {
+                    const inp = document.getElementById('input-winner-name');
+                    if(inp) inp.focus();
+                }, 500);
+            }
+            else if(s.type === 'certificate'){
+                 const name = localStorage.getItem('kv_player_name');
+                 const dept = localStorage.getItem('kv_player_dept');
+                 const score = localStorage.getItem('kv_player_score');
+                 const passed = (parseInt(score) || 0) >= 80;
+                 
+                 if(name) e.querySelector('.cert-name').innerText = name;
+                 if(dept) e.querySelector('.cert-dept').innerText = dept;
+                 if(score) e.querySelector('.cert-score').innerText = score + "%";
+                 
+                 e.querySelector('.cert-course-title').innerText = `Hoàn thành khóa học ${courseTitle}`;
+                 const d = new Date();
+                 e.querySelector('.cert-date').innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+                 
+                 const failMark = e.querySelector('.cert-fail-mark');
+                 const dlBtn = e.querySelector('#btn-download-cert');
+                 const certView = e.querySelector('#cert-view');
+
+                 if(passed){
+                    failMark.classList.add('hidden');
+                    certView.classList.remove('grayscale');
+                    if(dlBtn) dlBtn.classList.remove('hidden');
+                 } else {
+                    failMark.classList.remove('hidden');
+                    certView.classList.add('grayscale');
+                    if(dlBtn) dlBtn.classList.add('hidden');
+                    e.querySelector('.cert-name').innerText = "---";
+                    e.querySelector('.cert-dept').innerText = "";
+                 }
+            }
+            else if(s.type === 'game-review'){
+                const tbody = e.querySelector('.review-tbody');
+                if(userGameHistory.length === 0){
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">Chưa có dữ liệu. Hãy chơi Quiz Game trước!</td></tr>';
+                } else {
+                    tbody.innerHTML = userGameHistory.map(item => {
+                        const correctAnsText = item.qObj.isTrue ? "Đúng" : "Sai";
+                        const yourAnsText = item.yourChoiceVal ? "Đúng" : "Sai";
+                        
+                        const rowClass = item.isCorrect ? "bg-green-50/30" : "bg-red-50/30";
+                        const statusClass = item.isCorrect ? "text-green-600 font-bold" : "text-red-600 font-bold";
+                        
+                        return `<tr class="${rowClass} border-b border-slate-50 last:border-0">
+                            <td class="p-4 align-top text-slate-800">${item.q}</td>
+                            <td class="p-4 align-top text-center font-bold text-slate-600">${correctAnsText}</td>
+                            <td class="p-4 align-top text-center ${statusClass}">${yourAnsText}</td>
+                        </tr>`;
+                    }).join('');
+                }
+            }
+            
+            c.innerHTML = '';
+            e.classList.add('active');
+            c.appendChild(e);
+        }
+
+        function navSlide(dir){
+            const next = currentSlideIndex + dir;
+            if(next >= 0 && next < slides.length){
+                if(slides[currentSlideIndex].type === 'game-start' && dir === 1) return;
+                if(slides[currentSlideIndex].type === 'game-play' && dir > 0) return;
+                if(slides[currentSlideIndex].type === 'winner-input' && dir > 0) return;
+                playSound('pop');
+                currentSlideIndex = next;
+                renderSlide();
+            }
+        }
+
+        function toggleSidebar(){
+            const sb = document.getElementById('sidebar');
+            const ov = document.getElementById('sidebar-overlay');
+            sb.classList.toggle('sidebar-closed');
+            sb.classList.toggle('sidebar-open');
+            ov.classList.toggle('hidden');
+        }
+
+        function flipCardCheck(slideEl, userChoice, isCorrectValue){
+            const cardInner = slideEl.querySelector('.card-inner');
+            const isUserCorrect = (userChoice === isCorrectValue);
+            const cardBack = slideEl.querySelector('.card-back');
+            const resultHeader = cardBack.querySelector('.result-header');
+            
+            // Inject User Choice & Correct Answer
+            const userChoiceLabel = cardBack.querySelector('.user-choice-label');
+            const correctAnsLabel = cardBack.querySelector('.correct-ans-label');
+            
+            if(userChoiceLabel) {
+                userChoiceLabel.innerText = userChoice ? "ĐÚNG" : "SAI";
+                userChoiceLabel.className = `text-xs font-bold user-choice-label ml-2 ${userChoice === isCorrectValue ? 'text-green-600' : 'text-red-600'}`;
+            }
+            
+            if(correctAnsLabel) {
+                correctAnsLabel.innerText = isCorrectValue ? "ĐÚNG" : "SAI";
+                correctAnsLabel.className = "text-xs font-bold correct-ans-label ml-2 text-blue-600";
+            }
+            
+            playSound(isUserCorrect ? 'correct' : 'incorrect');
+            
+            if(isUserCorrect){
+                resultHeader.innerHTML = `<i class="fa-solid fa-check-circle text-green-500"></i><span class="text-green-600">CHÍNH XÁC!</span>`;
+                cardBack.className = 'card-face card-back p-6 flex flex-col text-center border-2 border-green-200 bg-green-50/20';
+                confetti({particleCount: 30, spread: 50, origin: {y: 0.6}});
+            } else {
+                resultHeader.innerHTML = `<i class="fa-solid fa-times-circle text-red-500"></i><span class="text-red-600">CHƯA ĐÚNG!</span>`;
+                cardBack.className = 'card-face card-back p-6 flex flex-col text-center border-2 border-red-200 bg-red-50/20';
+            }
+            cardInner.classList.add('flipped');
+        }
+
+        function resetCardFlip(slideEl){
+            playSound('pop');
+            slideEl.querySelector('.card-inner').classList.remove('flipped');
+        }
+
+        function startGame(mode){
+            let allQ = [];
+            practiceTopics.forEach(t => { if(t.cards) allQ = [...allQ, ...t.cards] });
+            allQ.sort(() => 0.5 - Math.random());
+            gameQuestions = mode === 'standard' ? allQ.slice(0, Math.min(5, allQ.length)) : allQ;
+            gameScore = 0;
+            gameCurrentQIndex = 0;
+            userGameHistory = [];
+            const next = currentSlideIndex + 1;
+            if(next < slides.length){
+                playSound('pop');
+                currentSlideIndex = next;
+                renderSlide();
+            }
+        }
+
+        function answerGame(choice){
+            const q = gameQuestions[gameCurrentQIndex];
+            if(!q) return;
+            const isCorrect = (choice === q.isTrue);
+            userGameHistory.push({
+                q: q.question,
+                qObj: q,
+                isCorrect: isCorrect,
+                yourChoiceVal: choice
+            });
+            playSound(isCorrect ? 'correct' : 'incorrect');
+            if(isCorrect){
+                gameScore++;
+                confetti({particleCount: 50, spread: 60, origin: {y: 0.7}});
+            } else {
+                const qt = document.querySelector('.game-question-text');
+                if(qt){
+                    qt.parentElement.classList.add('animate-shake');
+                    setTimeout(() => qt.parentElement.classList.remove('animate-shake'), 400);
+                }
+            }
+            document.querySelectorAll('.game-btn').forEach(b => b.disabled = true);
+            setTimeout(() => {
+                gameCurrentQIndex++;
+                if(gameCurrentQIndex < gameQuestions.length){
+                    renderSlide();
+                } else {
+                    finishGame();
+                }
+            }, isCorrect ? 500 : 800);
+        }
+
+        function finishGame(){
+            const total = gameQuestions.length;
+            const pct = total > 0 ? Math.round((gameScore / total) * 100) : 0;
+            localStorage.setItem('kv_player_score', pct);
+            if(pct >= 80){
+                currentSlideIndex++; // To winner-input
+                renderSlide();
+                playSound('win');
+                confetti({particleCount: 100, spread: 100, origin: {y: 0.6}});
+            } else {
+                currentSlideIndex += 2; // Skip winner-input, go to cert
+                renderSlide();
+                playSound('fail');
+            }
+        }
+
+        function submitWinnerInfo(){
+            const name = document.getElementById('input-winner-name').value.trim();
+            const dept = document.getElementById('input-winner-dept').value.trim();
+            if(!name){ alert("Vui lòng nhập Họ tên!"); return; }
+            localStorage.setItem('kv_player_name', name);
+            localStorage.setItem('kv_player_dept', dept);
+            currentSlideIndex++; // Go to cert
+            renderSlide();
+            playSound('win');
+            confetti({particleCount: 200, spread: 120, origin: {y: 0.6}});
+        }
+
+        function backToGameLogin(){ currentSlideIndex = gameStartSlideIndex; renderSlide(); }
+
+        function goToReview(){
+            const idx = slides.findIndex(s => s.type === 'game-review');
+            if(idx !== -1) {
+                currentSlideIndex = idx;
+                renderSlide();
+            }
+        }
+
+        function goToOverview(){ currentSlideIndex = overviewStartIndex; renderSlide(); }
+        function goToComparison(){ currentSlideIndex = comparisonSlideIndex; renderSlide(); }
+
+        function downloadCert(){
+            const originalCert = document.getElementById('cert-view');
+            const loading = document.getElementById('dl-loading');
+            loading.classList.remove('hidden');
+            const clone = originalCert.cloneNode(true);
+            clone.style.width = "1024px";
+            clone.style.height = "auto";
+            clone.style.aspectRatio = "16/9";
+            clone.style.position = "fixed";
+            clone.style.top = "0";
+            clone.style.left = "-9999px";
+            clone.style.zIndex = "-1";
+            clone.classList.remove("shadow-xl", "rounded-xl");
+            document.body.appendChild(clone);
+            html2canvas(clone, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'chung-nhan-kiotviet.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                document.body.removeChild(clone);
+                loading.classList.add('hidden');
+            }).catch(err => {
+                console.error(err);
+                alert("Lỗi khi tạo ảnh. Vui lòng thử lại!");
+                loading.classList.add('hidden');
+                document.body.removeChild(clone);
+            });
+        }
+
+        document.addEventListener('keydown', e => {
+            const s = document.querySelector('.slide.active');
+            if(!s || !slides[currentSlideIndex]) return;
+            const t = slides[currentSlideIndex].type;
+            if(e.key === 'ArrowRight') navSlide(1);
+            else if(e.key === 'ArrowLeft') navSlide(-1);
+            
+            if(t === 'card'){
+                if(e.key === '1') s.querySelector('.btn-true')?.click();
+                else if(e.key === '2') s.querySelector('.btn-false')?.click();
+                else if(e.key === '0') s.querySelector('.btn-reset')?.click();
+            } else if(t === 'game-start'){
+                let totalQ = 0;
+                practiceTopics.forEach(t => { if(t.cards) totalQ += t.cards.length; });
+                if (totalQ < 10) {
+                    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') startGame('promax');
+                } else {
+                    if (e.key === '1') startGame('standard');
+                    else if (e.key === '2') startGame('promax');
+                }
+            } else if(t === 'game-play'){
+                if(e.key === '1') s.querySelector('.btn-game-true:not(:disabled)')?.click();
+                else if(e.key === '2') s.querySelector('.btn-game-false:not(:disabled)')?.click();
+            } else if(t === 'certificate' && e.key === '0') backToGameLogin();
+            else if(t === 'comparison'){
+                const a = s.querySelector('.comparison-scroll-area');
+                if(e.key === 'ArrowUp') a.scrollTop -= 50;
+                else if(e.key === 'ArrowDown') a.scrollTop += 50;
+            } else if(t === 'winner-input' && e.key === 'Enter'){
+                submitWinnerInfo();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script></body></html>
