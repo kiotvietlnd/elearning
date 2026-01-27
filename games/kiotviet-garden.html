@@ -2,217 +2,549 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KiotViet Garden</title>
+    <title>KiotViet Garden - Remastered</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Balsamiq+Sans:wght@700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --c-green: #22c55e; --c-brown: #8d6e63; --c-blue: #3b82f6; --c-sky: #e0f2fe; --c-text: #374151; }
+        :root {
+            --c-green-light: #a7f3d0; --c-green-dark: #047857;
+            --c-brown-light: #f59e0b; --c-brown-dark: #78350f;
+            --c-blue-sky: #7dd3fc; --c-blue-dark: #0ea5e9;
+            --c-text: #374151; --c-bg: #f0f9ff;
+        }
         * { box-sizing: border-box; }
-        body { margin: 0; height: 100vh; background-color: var(--c-sky); font-family: 'Balsamiq Sans', cursive; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        body {
+            margin: 0; height: 100vh;
+            background: linear-gradient(to bottom, var(--c-blue-sky), #e0f2fe);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
         
-        #game-container { width: 100vw; height: 100vh; background: var(--c-sky); display: flex; flex-direction: column; }
-        
-        /* HEADER */
-        .header { height: 60px; background: white; border-bottom: 3px solid #e5e7eb; padding: 0 30px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .logo { font-size: 24px; color: var(--c-green); font-weight: bold; }
-        .header-btn { background: #f3f4f6; border: 2px solid #d1d5db; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
-        .header-btn:hover { background: #e5e7eb; }
-        #exit-btn { color: #ef4444; display: none; }
+        /* Animated Background Clouds */
+        .clouds { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: -1; overflow: hidden; }
+        .cloud { position: absolute; background: white; border-radius: 50%; opacity: 0.3; filter: blur(5px); animation: move-clouds 60s linear infinite; }
+        .cloud:nth-child(1) { width: 200px; height: 60px; top: 10%; left: -200px; }
+        .cloud:nth-child(2) { width: 300px; height: 90px; top: 30%; left: -300px; animation-delay: -20s; }
+        .cloud:nth-child(3) { width: 150px; height: 50px; top: 70%; left: -150px; animation-delay: -40s; }
+        @keyframes move-clouds { from { transform: translateX(0); } to { transform: translateX(calc(100vw + 300px)); } }
 
-        /* SCREENS */
-        .screen { flex: 1; display: none; padding: 30px; height: calc(100vh - 60px); overflow-y: auto; }
+        #game-container { width: 100vw; height: 100vh; background: transparent; display: flex; flex-direction: column; }
+        
+        .header {
+            height: 65px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);
+            border-bottom: 2px solid #e5e7eb; padding: 0 30px;
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        .logo { font-size: 24px; color: var(--c-green-dark); font-weight: bold; }
+        .header-controls { display: flex; align-items: center; gap: 15px; }
+        .ctrl-btn {
+            background: white; border: 2px solid #d1d5db; padding: 10px 20px;
+            font-weight: 700; cursor: pointer; border-radius: 14px; transition: 0.2s;
+            display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .ctrl-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        #exit-btn { color: #ef4444; border-color: #fca5a5; display: none; }
+
+        .screen { flex: 1; display: none; padding: 30px; height: calc(100vh - 65px); overflow-y: auto; }
         .active { display: flex; }
 
-        /* MENU */
         #screen-menu { flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
         .menu-title { font-size: 3rem; color: var(--c-text); text-align: center; }
-        .topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; width: 90%; max-width: 1400px; }
-        .topic-card { background: white; border: 3px solid #e5e7eb; padding: 20px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 15px; }
-        .topic-header { display: flex; align-items: center; gap: 15px; font-size: 1.5rem; font-weight: bold; }
-        .topic-icon { font-size: 1.8rem; color: var(--c-green); }
+        .topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; width: 90%; max-width: 1400px; }
+        .topic-card {
+            background: white; border: 2px solid #e5e7eb; padding: 25px; border-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; transition: 0.3s;
+        }
+        .topic-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .topic-header { font-size: 1.5rem; font-weight: bold; color: var(--c-green-dark); }
+        .mode-btn {
+            flex: 1; padding: 12px; border: 2px solid var(--c-brown-light); font-weight: bold; color: var(--c-brown-dark);
+            cursor: pointer; border-radius: 14px; background: white; transition: 0.2s;
+        }
+        .mode-btn:hover { background: #fffbeb; }
         .btn-group { display: flex; gap: 10px; }
-        .mode-btn { flex: 1; padding: 12px; border: 2px solid var(--c-brown); font-weight: bold; cursor: pointer; border-radius: 12px; transition: 0.2s; background: white; }
-        .mode-btn:hover { background: #f5f5f5; transform: translateY(-2px); }
 
-        /* GAME */
         #screen-game { gap: 30px; }
-        .garden-panel { flex: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.5); border-radius: 30px; padding: 20px; }
-        #plant-pot { font-size: 15vw; line-height: 1; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-        .progress-dots { margin-top: 20px; display: flex; gap: 10px; }
-        .dot { width: 15px; height: 15px; background: #d1d5db; border-radius: 50%; transition: 0.3s; }
-        .dot.active { background: var(--c-green); transform: scale(1.2); }
-
-        .quiz-panel { flex: 6; display: flex; flex-direction: column; }
-        .q-text { font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: bold; color: var(--c-text); margin-bottom: 30px; flex-shrink: 0; }
+        .garden-panel {
+            flex: 4; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.6); border-radius: 30px; padding: 20px;
+        }
+        #plant-pot { font-size: 15vw; line-height: 1; }
+        .grow-animation { animation: grow 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        @keyframes grow { from { transform: scale(0.5); } to { transform: scale(1); } }
+        
+        .quiz-panel { flex: 6; display: flex; flex-direction: column; justify-content: center; }
+        .q-text { font-size: clamp(1.2rem, 2.5vw, 2rem); font-weight: 700; color: var(--c-text); margin-bottom: 40px; }
         .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
-        .opt-btn { background: white; border: 3px solid #d1d5db; padding: 20px; font-size: 1.1rem; border-radius: 18px; cursor: pointer; transition: 0.2s; }
-        .opt-btn:hover { border-color: var(--c-blue); transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .opt-btn.correct { background: #dcfce7 !important; border-color: var(--c-green) !important; }
+        .opt-btn {
+            background: white; border: 3px solid #d1d5db; padding: 20px;
+            font-size: 1.1rem; border-radius: 18px; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .opt-btn:hover { border-color: var(--c-blue-dark); transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .opt-btn.correct { background: var(--c-green-light) !important; border-color: var(--c-green-dark) !important; }
         .opt-btn.wrong { background: #fee2e2 !important; border-color: #fca5a5 !important; animation: shake 0.4s; }
 
-        /* RESULT */
-        #screen-result { flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .result-title { font-size: 3rem; margin-bottom: 10px; }
-
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        @media (max-width: 900px) { #screen-game { flex-direction: column; } .garden-panel { flex: none; height: 200px; } .opt-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { #screen-game { flex-direction: column; } .garden-panel { flex: none; height: 250px; } .opt-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+<div class="clouds"><div class="cloud"></div><div class="cloud"></div><div class="cloud"></div></div>
 
 <div id="game-container">
     <div class="header">
         <div class="logo"><i class="fa-solid fa-seedling"></i> KiotViet Garden</div>
         <div class="header-controls">
-            <button id="exit-btn" class="header-btn" onclick="exitGame()"><i class="fa-solid fa-house"></i> Về Vườn Chính</button>
-            <button class="header-btn" onclick="toggleSound()"><i id="sound-icon" class="fa-solid fa-volume-high"></i></button>
+            <button id="exit-btn" class="ctrl-btn" onclick="exitGame()"><i class="fa-solid fa-house"></i> Về Vườn</button>
+            <button class="ctrl-btn" onclick="toggleSound()"><i id="sound-icon" class="fa-solid fa-volume-high"></i></button>
         </div>
     </div>
 
-    <!-- SCREENS -->
     <div id="screen-menu" class="screen active">
-        <div>
-            <h1 class="menu-title">Chào mừng tới Khu Vườn Tri Thức!</h1>
-            <p style="text-align: center; font-size: 1.2rem; color: #6b7280;">Hãy chọn một luống cây để chăm sóc nhé.</p>
-        </div>
-        <div class="topic-grid" id="menu-grid"></div>
+        <!-- Menu content -->
     </div>
-
     <div id="screen-game" class="screen">
-        <div class="garden-panel">
-            <div id="plant-pot">🌱</div>
-            <div class="progress-dots" id="progress-dots"></div>
-        </div>
-        <div class="quiz-panel">
-            <h2 class="q-text" id="q-text"></h2>
-            <div class="opt-grid" id="opt-grid"></div>
-        </div>
+        <!-- Game content -->
     </div>
-
-    <div id="screen-result" class="screen">
-        <div style="text-align: center;">
-            <div id="final-plant" style="font-size: 15rem;"></div>
-            <h1 class="result-title" id="res-title"></h1>
-            <p style="font-size: 1.2rem; color: #6b7280;">Bạn đã trả lời đúng <strong id="res-stats"></strong> câu hỏi!</p>
-            <button class="mode-btn" style="font-size: 1.2rem; padding: 15px 40px; background: var(--c-green); color: white;" onclick="location.reload()">Trồng cây mới</button>
-        </div>
+    <div id="screen-result" class="screen" style="flex-direction: column; align-items: center; justify-content: center;">
+        <!-- Result content -->
     </div>
 </div>
 
 <script>
     /* --- DATA HOLDER (AI WILL FILL THIS) --- */
     const DB = {
-    "Tổng hợp Hàng hóa": [
-        { "q": "Cửa hàng muốn quản lý các khoản thu phi vật lý như tiền công sửa chữa, phí lắp đặt trên phần mềm.", "a": "Khi thiết lập loại hàng hóa là Dịch vụ, hệ thống sẽ ghi nhận doanh thu bán hàng nhưng không quản lý số lượng tồn kho.", "n": ["Khi kinh doanh các sản phẩm phi vật chất như phí dịch vụ hay công lắp đặt, hệ thống bắt buộc phải theo dõi số lượng tồn kho như hàng hóa thông thường.", "Hệ thống yêu cầu người dùng phải nạp bản scan giấy phép kinh doanh dịch vụ lên phần mềm thì mới được kích hoạt tính năng tạo mã hàng Dịch vụ."] },
-        { "q": "Cửa hàng muốn tạo các giỏ quà Tết (gồm rượu, bánh, trà có sẵn) để bán và quản lý tồn kho thuận tiện.", "a": "Khi bán một sản phẩm thuộc loại Combo - Đóng gói, hệ thống sẽ tự động trừ số lượng tồn kho của từng hàng hóa thành phần cấu tạo nên combo đó.", "n": ["Khi bán sản phẩm dạng Combo, hệ thống chỉ trừ tồn kho của mã combo mà không ảnh hưởng đến số lượng tồn kho của các sản phẩm lẻ bên trong.", "Người dùng bắt buộc phải đóng gói vật lý và dán tem niêm phong cho từng Combo, sau đó lập phiếu nhập kho thành phẩm thì mới được phép bán trên phần mềm."] },
-        { "q": "Người dùng muốn chia nhỏ một nhóm hàng lớn (VD: Áo sơ mi) thành các nhóm nhỏ hơn (VD: Ngắn tay, Dài tay) để dễ quản lý.", "a": "Khi tạo nhóm hàng mới, người dùng có thể chọn một nhóm hàng đã tồn tại làm \"Nhóm cha\" để thiết lập cấu trúc phân cấp quản lý đa tầng.", "n": ["Khi quản lý danh mục, hệ thống chỉ cho phép tạo một cấp nhóm hàng duy nhất và không hỗ trợ phân chia thành các nhóm con.", "Hệ thống chỉ cho phép tạo nhóm hàng con nếu nhóm hàng cha đã phát sinh ít nhất 1000 giao dịch bán hàng thành công trong tháng gần nhất."] },
-        { "q": "Người dùng muốn thêm mới hàng hóa nhanh nhưng không muốn mất thời gian tự nghĩ quy tắc đặt Mã hàng.", "a": "Khi thêm mới hàng hóa và để trống trường Mã hàng, hệ thống sẽ tự động sinh một mã duy nhất cho sản phẩm đó sau khi lưu.", "n": ["Khi thêm mới hàng hóa, người dùng bắt buộc phải tự nhập thủ công Mã hàng thì hệ thống mới cho phép lưu dữ liệu.", "Người dùng phải gửi email đăng ký mua dải mã vạch quốc tế từ tổ chức GS1 và nhập vào hệ thống thì mới được phép lưu sản phẩm mới."] },
-        { "q": "Cửa hàng có kho rộng, một sản phẩm được lưu trữ ở nhiều vị trí khác nhau (Kệ A, Kho B) và cần ghi chú lại.", "a": "Khi thiết lập thông tin hàng hóa, người dùng có thể gán nhiều vị trí lưu trữ khác nhau cho cùng một sản phẩm để thuận tiện cho việc tìm kiếm.", "n": ["Khi quản lý vị trí hàng hóa, mỗi sản phẩm chỉ được phép gán cố định vào một vị trí duy nhất trong kho.", "Để thêm vị trí thứ hai cho sản phẩm, người dùng bắt buộc phải lập \"Phiếu điều chuyển kho nội bộ\" và chờ Quản lý cửa hàng phê duyệt trên hệ thống."] },
-        { "q": "Người dùng muốn cập nhật lại giá bán cho hàng loạt (500) sản phẩm cùng lúc thông qua file Excel.", "a": "Khi sử dụng tính năng Import từ Excel, hệ thống hỗ trợ cả việc thêm mới hàng hóa chưa có và cập nhật thông tin cho hàng hóa đã tồn tại dựa trên mã hàng.", "n": ["Khi sử dụng tính năng Import từ Excel, hệ thống chỉ hỗ trợ thêm mới các hàng hóa chưa có chứ không thể cập nhật thông tin cho hàng hóa cũ.", "Hệ thống yêu cầu người dùng phải chia nhỏ file Excel thành các file con dưới 10 dòng và nhập lần lượt để tránh quá tải máy chủ."] },
-        { "q": "Người dùng muốn in tem mã vạch cho hàng hóa nhưng chỉ muốn in đúng số lượng đang tồn trong kho để tránh lãng phí.", "a": "Khi thực hiện in tem mã vạch hàng loạt, hệ thống sẽ mặc định gợi ý số lượng tem cần in tương ứng với số lượng tồn kho hiện tại của sản phẩm.", "n": ["Khi vào giao diện in tem mã vạch, người dùng bắt buộc phải tự nhập tay số lượng tem cần in cho từng sản phẩm vì hệ thống luôn để mặc định là 0.", "Người dùng phải kết nối máy in vào cổng COM1 của máy tính và cài đặt lại Driver mỗi lần in thì hệ thống mới nhận diện được số lượng tồn kho."] },
-        { "q": "Người dùng muốn xóa vĩnh viễn một mã hàng nhưng hệ thống báo lỗi không cho xóa ngay.", "a": "Khi người dùng muốn xóa một hàng hóa có tồn kho khác 0, hệ thống sẽ yêu cầu thực hiện thao tác kiểm kho để điều chỉnh tồn kho về 0 trước khi cho phép xóa.", "n": ["Khi cần xóa một hàng hóa đang kinh doanh, người dùng có thể xóa vĩnh viễn ngay lập tức bất kể số lượng tồn kho của sản phẩm đó đang là bao nhiêu.", "Người dùng phải làm đơn xin xóa mã hàng, có chữ ký của chủ hộ kinh doanh và gửi chuyển phát nhanh về trụ sở KiotViet để được kỹ thuật viên hỗ trợ xóa."] },
-        { "q": "Cửa hàng muốn tạm ngưng bán một sản phẩm theo mùa vụ (không xóa) để danh sách bán hàng đỡ rối.", "a": "Khi chuyển trạng thái hàng hóa sang Ngừng kinh doanh, sản phẩm sẽ ẩn khỏi màn hình Bán hàng nhưng vẫn lưu giữ lịch sử giao dịch trên hệ thống.", "n": ["Khi chọn Ngừng kinh doanh một sản phẩm, hệ thống sẽ xóa hoàn toàn thông tin và lịch sử giao dịch của sản phẩm đó khỏi cơ sở dữ liệu.", "Hệ thống yêu cầu sản phẩm phải có số lượng tồn kho bằng đúng 0 và không phát sinh giao dịch trong 3 năm liên tiếp mới cho phép chuyển sang trạng thái Ngừng kinh doanh."] },
-        { "q": "Người dùng muốn thêm nhanh hàng hóa mới và chụp ảnh sản phẩm ngay tại chợ đầu mối bằng điện thoại.", "a": "Khi sử dụng ứng dụng KiotViet trên điện thoại, người dùng có thể thực hiện đầy đủ các thao tác tạo mới, cập nhật thông tin và chụp ảnh sản phẩm trực tiếp.", "n": ["Khi sử dụng ứng dụng trên điện thoại, người dùng chỉ có thể xem danh sách hàng hóa chứ không thể thêm mới hoặc chỉnh sửa thông tin sản phẩm.", "Để thêm hàng mới từ điện thoại, người dùng bắt buộc phải kết nối điện thoại với máy tính chủ qua dây cáp USB để đồng bộ dữ liệu trước khi lưu."] }
-    ],
-    "Hàng hóa (Cơ bản)": [
-        { "q": "Khi sử dụng KiotViet để quản lý danh mục hàng hóa, nhận định nào sau đây là chính xác về khả năng lưu trữ thông tin?", "a": "Người dùng có thể quản lý tập trung và toàn diện thông tin của hàng nghìn sản phẩm bao gồm giá bán, giá vốn và các thuộc tính phức tạp.", "n": ["Phần mềm KiotViet chỉ hỗ trợ lưu trữ các thông tin cơ bản và không thể quản lý được các thuộc tính chi tiết hay đơn vị tính quy đổi.", "Người dùng phải gửi hồ sơ thông tin sản phẩm cho Ban quản trị KiotViet phê duyệt danh mục trước khi thông tin được hiển thị chính thức."] },
-        { "q": "Để đưa một mặt hàng mới vào hệ thống để bắt đầu kinh doanh trên máy tính, người dùng thực hiện thao tác nào?", "a": "Truy cập vào menu Hàng hóa, chọn mục Danh sách hàng hóa và thực hiện nhấn nút Tạo mới.", "n": ["Người dùng bắt buộc phải sử dụng tính năng nhập hàng từ file Excel thì mới có thể khởi tạo được danh mục hàng hóa mới.", "Hệ thống chỉ cho phép tạo mới hàng hóa vào khung giờ hành chính từ 8h - 17h để đảm bảo kỹ thuật đồng bộ dữ liệu toàn hệ thống."] },
-        { "q": "Trong trường hợp một mặt hàng đã từng phát sinh giao dịch nhưng hiện tại cửa hàng không còn bán nữa, thao tác nào là tối ưu nhất?", "a": "Người dùng nên sử dụng tính năng Ngừng kinh doanh để hệ thống vẫn giữ lại thông tin tồn kho và lịch sử giao dịch cũ.", "n": ["Thao tác Xóa hàng hóa là cách duy nhất để ẩn sản phẩm khỏi danh mục bán hàng mà vẫn đảm bảo báo cáo tài chính không thay đổi.", "Người dùng phải làm đơn yêu cầu xóa mã hàng gửi lên chi nhánh tổng và chờ 24h để hệ thống gỡ bỏ hoàn toàn dữ liệu hàng hóa đó."] },
-        { "q": "Khi chủ cửa hàng muốn tìm nhanh danh sách các mặt hàng đang sắp hết tồn kho để lên kế hoạch nhập hàng, công cụ nào hỗ trợ tốt nhất?", "a": "Sử dụng bộ lọc chi tiết ở cột trái màn hình với tiêu chí Tồn kho hoặc trạng thái Dự kiến hết hàng.", "n": ["Hệ thống KiotViet chỉ cho phép tìm kiếm theo mã hoặc tên và không hỗ trợ các bộ lọc chuyên sâu về trạng thái tồn kho thực tế.", "Người dùng phải xuất toàn bộ file báo cáo Excel tổng hợp rồi sử dụng các hàm lọc dữ liệu thủ công để xác định lượng hàng tồn."] },
-        { "q": "Đối với hàng hóa có nhiều đơn vị tính (ví dụ bán theo Chai và Thùng), hệ thống KiotViet xử lý trừ kho như thế nào?", "a": "Khi thiết lập đơn vị tính quy đổi, hệ thống sẽ tự động tính toán giá bán và số lượng tồn kho tương ứng dựa trên công thức đã đặt.", "n": ["Người dùng phải tạo các mã hàng riêng biệt cho từng đơn vị tính và tự thực hiện thao tác cộng trừ tồn kho thủ công khi bán.", "Hệ thống chỉ ghi nhận đơn vị tính nhỏ nhất, việc bán theo lốc hoặc thùng phải được quy đổi ra số lẻ thủ công trước khi nhập vào hóa đơn."] },
-        { "q": "Nhận định nào sau đây mô tả đúng về tính năng In tem mã vạch sản phẩm trực tiếp trên phần mềm KiotViet?", "a": "Người dùng có thể tích chọn nhiều sản phẩm cùng lúc để in tem nhãn chứa thông tin tên hàng, giá bán và mã vạch trực tiếp.", "n": ["Để in tem mã vạch cho sản phẩm, người dùng bắt buộc phải sử dụng một phần mềm thiết kế bên thứ ba để kết nối với máy in tem.", "Người dùng phải gửi yêu cầu mã hàng lên trung tâm hỗ trợ khách hàng của KiotViet để hệ thống thiết kế mẫu tem và gửi lại file in."] },
-        { "q": "Thao tác nào sau đây được thực hiện khi người dùng muốn thêm nhanh sản phẩm mới bằng ứng dụng di động KiotViet?", "a": "Chạm vào biểu tượng dấu cộng (+) trong menu Hàng hóa trên ứng dụng và điền các thông tin kèm hình ảnh thực tế của sản phẩm.", "n": ["Ứng dụng di động KiotViet chỉ hỗ trợ xem báo cáo doanh thu và không có quyền thực hiện các thao tác quản trị như thêm mới hàng hóa.", "Ứng dụng di động chỉ đóng vai trò là thiết bị đọc dữ liệu, mọi thao tác ghi mới phải được thực hiện trên máy tính để tránh lỗi logic."] },
-        { "q": "Trong quá trình bán hàng trên máy POS, nếu phát hiện một sản phẩm chưa được khai báo, nhân viên cần xử lý như thế nào?", "a": "Thực hiện nhấn vào tùy chọn \"Thêm hàng hóa\" ngay tại ô tìm kiếm của máy POS để tạo nhanh mặt hàng và tiếp tục giao dịch.", "n": ["Nhân viên bắt buộc phải dừng giao dịch hiện tại và quay lại màn hình Quản lý để thực hiện các thủ tục khai báo hàng hóa mới.", "Hệ thống POS mặc định khóa tính năng thêm mới hàng hóa để tránh việc nhân viên tự ý thay đổi danh mục và gian lận giá bán."] }
-    ],
-    "Hàng Dịch vụ": [
-        { "q": "Khi khởi tạo một mã hàng dịch vụ (như phí ship, công lắp đặt) trên KiotViet, vấn đề quản lý tồn kho được xử lý như thế nào?", "a": "Hàng dịch vụ trên KiotViet không quản lý số lượng tồn kho nên không làm ảnh hưởng đến các số liệu báo cáo của hàng hóa vật lý.", "n": ["Hàng dịch vụ trên KiotViet bắt buộc phải nhập số lượng tồn kho ban đầu giống như hàng hóa thông thường để tính toán giá vốn.", "Chủ cửa hàng phải gửi email xác nhận với KiotViet để kích hoạt thủ công chế độ \"phi vật chất\" cho từng mã hàng dịch vụ thì mới không bị tính tồn kho."] },
-        { "q": "Chủ cửa hàng muốn tạo mới một mã \"Phí sửa chữa\" trên giao diện Website để nhân viên có thể bán được ngay. Thao tác nào là chính xác?", "a": "Khi thêm mới hàng dịch vụ trên Website, chủ cửa hàng cần chọn loại hàng là Dịch vụ và tích chọn Bán trực tiếp để hiển thị trên màn hình bán hàng.", "n": ["Khi thêm mới hàng dịch vụ trên Website, chủ cửa hàng phải chọn loại hàng là Hàng hóa thường thì mới có thể thêm được vào hóa đơn bán hàng.", "Chủ cửa hàng bắt buộc phải cài đặt thêm một phần mềm mở rộng (Add-on) chuyên dụng của bên thứ ba mới có thể tạo được loại hàng Dịch vụ trên hệ thống."] },
-        { "q": "Điều gì xảy ra với dữ liệu lịch sử khi người dùng thực hiện thao tác xóa một mã hàng dịch vụ đã từng phát sinh giao dịch trước đó?", "a": "Khi người dùng xóa hàng dịch vụ, hệ thống sẽ xóa trên danh sách hiện tại nhưng vẫn giữ nguyên thông tin trong các giao dịch lịch sử với hậu tố {DEL}.", "n": ["Khi người dùng xóa hàng dịch vụ, hệ thống sẽ xóa vĩnh viễn toàn bộ dữ liệu bao gồm cả thông tin trong các hóa đơn lịch sử đã phát sinh trước đó.", "Người dùng bắt buộc phải vào từng hóa đơn lịch sử có chứa dịch vụ đó để xóa thủ công dòng hàng này đi thì hệ thống mới cho phép xóa mã hàng khỏi danh sách."] },
-        { "q": "Một chủ cửa hàng đang đi lấy hàng và muốn tạo nhanh mã \"Phí bốc xếp\" bằng điện thoại. Khẳng định nào sau đây là đúng về khả năng của ứng dụng KiotViet Mobile?", "a": "Người dùng có thể thêm mới, chỉnh sửa hoặc ngừng kinh doanh hàng dịch vụ ngay trên ứng dụng KiotViet Mobile thông qua menu Hàng hóa.", "n": ["Người dùng chỉ có thể xem danh sách dịch vụ trên ứng dụng KiotViet Mobile chứ không thể thêm mới hay chỉnh sửa, bắt buộc phải dùng máy tính.", "Người dùng bắt buộc phải kết nối điện thoại với máy tính chủ qua dây cáp USB để đồng bộ dữ liệu thì mới được cấp quyền tạo hàng dịch vụ trên App."] },
-        { "q": "Tại quầy thu ngân, nhân viên muốn tính tiền cả sản phẩm và công lắp đặt trong cùng một lượt thanh toán. Hệ thống hỗ trợ việc này như thế nào?", "a": "Tại màn hình bán hàng, nhân viên có thể tìm kiếm và thêm hàng dịch vụ vào chung một hóa đơn với hàng hóa thông thường để thanh toán gộp.", "n": ["Tại màn hình bán hàng, nhân viên bắt buộc phải tách riêng hóa đơn cho hàng dịch vụ và hóa đơn cho hàng hóa vật lý, không thể thanh toán chung.", "Nhân viên phải thực hiện thao tác \"Chuyển đổi giao diện\" sang chế độ \"Dịch vụ chuyên biệt\" và yêu cầu khách hàng thanh toán 2 lần qua 2 cổng khác nhau."] }
-    ],
-    "Hàng Combo Đóng Gói": [
-        { "q": "Khi bán một hàng combo - đóng gói trên phần mềm KiotViet, hệ thống xử lý tồn kho như thế nào?", "a": "Khi bán một hàng combo, hệ thống sẽ tự động trừ tồn kho của các hàng hóa thành phần thay vì trừ tồn kho của mã combo.", "n": ["Khi bán một hàng combo, hệ thống sẽ trừ trực tiếp số lượng tồn kho của mã combo đó và giữ nguyên tồn kho của các hàng hóa thành phần.", "Khi bán một hàng combo, người dùng bắt buộc phải vào phân hệ Kho để làm phiếu xuất kho thủ công cho từng hàng thành phần thì hệ thống mới ghi nhận."] },
-        { "q": "Giá vốn của một hàng combo - đóng gói được xác định như thế nào khi khởi tạo?", "a": "Khi tạo hàng combo, giá vốn của combo sẽ được hệ thống tự động tính bằng tổng giá vốn của tất cả các hàng hóa thành phần cấu thành nên nó.", "n": ["Khi tạo hàng combo, người dùng bắt buộc phải tự nhập tay và tính toán giá vốn cho combo vì hệ thống không tự cộng gộp từ hàng thành phần.", "Khi tạo hàng combo, giá vốn sẽ mặc định bằng 50% giá bán niêm yết và không liên quan đến giá vốn của các hàng hóa thành phần bên trong."] },
-        { "q": "Yêu cầu bắt buộc khi thực hiện thao tác tạo mới một hàng combo - đóng gói là gì?", "a": "Khi tạo mới hàng combo - đóng gói, người dùng cần tìm và chọn các hàng hóa thành phần có sẵn trong hệ thống để đưa vào cấu trúc combo.", "n": ["Khi tạo mới hàng combo - đóng gói, người dùng chỉ cần đặt tên combo mà không bắt buộc phải chọn bất kỳ hàng hóa thành phần cụ thể nào.", "Khi tạo mới hàng combo - đóng gói, người dùng phải gửi đơn đăng ký mã sản phẩm lên hệ thống quản trị trung tâm và chờ phê duyệt trong 24h trước khi nhập liệu."] },
-        { "q": "Điều gì xảy ra với dữ liệu khi người dùng xóa một mã hàng combo đã từng phát sinh giao dịch bán hàng?", "a": "Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống vẫn giữ thông tin hàng hóa đó trong lịch sử giao dịch và thêm hậu tố {DEL} vào tên hàng hóa.", "n": ["Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống sẽ xóa sạch toàn bộ thông tin và lịch sử bán hàng liên quan đến combo đó khỏi các báo cáo.", "Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống sẽ tự động xóa luôn tất cả các hàng hóa thành phần cấu tạo nên combo đó khỏi danh mục hàng hóa."] },
-        { "q": "Khả năng chỉnh sửa hàng combo trên ứng dụng KiotViet Quản lý trên điện thoại có giới hạn gì?", "a": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng hiện tại chưa thể chỉnh sửa danh sách hàng hóa thành phần của combo.", "n": ["Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng có thể thoải mái thêm hoặc bớt hàng hóa thành phần trong combo tương tự như trên giao diện web.", "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng phải gọi điện lên tổng đài KiotViet để xin cấp mã OTP kích hoạt tính năng chỉnh sửa hàng hóa."] },
-        { "q": "Quy trình nhập kho đối với hàng combo - đóng gói được thực hiện như thế nào?", "a": "Khi thực hiện nghiệp vụ nhập hàng, người dùng không thể tạo phiếu nhập hàng trực tiếp cho mã hàng combo - đóng gói.", "n": ["Khi thực hiện nghiệp vụ nhập hàng, người dùng có thể tạo phiếu nhập kho trực tiếp cho mã hàng combo để tăng số lượng tồn kho của combo đó.", "Khi thực hiện nghiệp vụ nhập hàng, người dùng bắt buộc phải làm biên bản kiểm kê kho có chữ ký của quản lý thì mới được phép nhập số lượng cho hàng combo."] }
-    ],
-    "Hàng Lô & HSD": [
-        { "q": "Khi bán hàng, hệ thống KiotViet hỗ trợ người dùng chọn lô hàng như thế nào để tối ưu hóa tồn kho?", "a": "Tự động gợi ý xuất bán lô hàng có hạn sử dụng gần nhất theo nguyên tắc FEFO.", "n": ["Luôn ưu tiên gợi ý xuất bán lô hàng mới nhập kho gần nhất để đảm bảo chất lượng hàng mới.", "Người dùng phải tự nhớ và gõ tay hạn sử dụng của lô cần xuất bán vào ô ghi chú, hệ thống không hỗ trợ gợi ý."] },
-        { "q": "Để bắt đầu quản lý hàng hóa theo hạn sử dụng trên gian hàng, thao tác đầu tiên cần thực hiện là gì?", "a": "Vào menu Thiết lập, chọn Hàng hóa và bật tính năng Quản lý tồn kho theo Lô, hạn sử dụng.", "n": ["Không cần thao tác gì, tính năng này được bật mặc định cho tất cả các gian hàng ngay khi khởi tạo.", "Phải gửi email yêu cầu KiotViet cấp quyền truy cập tính năng quản lý lô thì mới được sử dụng."] },
-        { "q": "Khi thêm mới một hàng hóa cần quản lý theo lô, hạn sử dụng, người dùng cần nhập thông tin tồn kho như thế nào?", "a": "Chỉ điền thông tin cơ bản và tích chọn \"Quản lý theo lô, hạn sử dụng\", nhập tồn kho sau qua phiếu Nhập hàng.", "n": ["Bắt buộc phải nhập số lượng tồn kho và hạn sử dụng ngay tại màn hình thêm mới hàng hóa.", "Phải tạo riêng từng mã hàng hóa khác nhau cho mỗi lô hàng nhập về (ví dụ: SuaA_Lo1, SuaA_Lo2) để quản lý tồn kho."] },
-        { "q": "Trong giao dịch Nhập hàng, làm thế nào để ghi nhận chi tiết hạn sử dụng cho từng lô sản phẩm?", "a": "Chọn sản phẩm, nhấn \"Thêm mới lô, hạn sử dụng\" để điền hạn dùng và số lượng cho từng lô.", "n": ["Chỉ cần nhập tổng số lượng nhập của sản phẩm, hệ thống sẽ tự chia đều cho các lô.", "Phải tạo phiếu nhập hàng riêng biệt cho từng lô hàng, không được nhập nhiều lô khác nhau trên cùng một phiếu."] },
-        { "q": "Trên màn hình bán hàng, làm sao để nhân viên nhận biết được các lô hàng sắp hết hạn hoặc đã hết hạn?", "a": "Hệ thống hiển thị màu vàng cho lô sắp hết hạn và màu đỏ cho lô đã hết hạn để cảnh báo.", "n": ["Hệ thống sẽ tự động chặn và khóa không cho phép chọn bán các lô hàng đã hết hạn sử dụng.", "Hệ thống tự động xóa các lô hàng hết hạn khỏi danh sách chọn bán mà không cần thông báo cho người dùng."] },
-        { "q": "Khi thực hiện Kiểm kho cho hàng hóa quản lý theo lô, quy trình nào sau đây là chính xác?", "a": "Chọn chính xác từng lô hàng trong phiếu kiểm và nhập số lượng thực tế của riêng lô đó.", "n": ["Chỉ cần nhập tổng số lượng thực tế của sản phẩm mà không cần quan tâm đến chi tiết từng lô.", "Phải xuất hủy toàn bộ hàng cũ trên hệ thống rồi nhập lại hàng mới dưới dạng kiểm kê đầu kỳ."] },
-        { "q": "Người dùng có thể thực hiện bán hàng chọn lô (theo hạn sử dụng) trên ứng dụng KiotViet Mobile không?", "a": "Có, sau khi chọn sản phẩm, ứng dụng sẽ hiện màn hình \"Chọn lô\" để người dùng thao tác.", "n": ["Không, ứng dụng điện thoại chỉ hỗ trợ bán thường, muốn chọn lô bắt buộc phải dùng máy tính.", "Có thể xem tồn kho lô nhưng không chọn được để bán, phải ghi chú lại rồi nhờ thu ngân nhập trên máy tính."] }
-    ],
-    "Hàng Serial & IMEI": [
-        { "q": "Đâu là nhận định đúng về lợi ích của tính năng Serial/IMEI khi quản lý sản phẩm điện thoại/điện máy?", "a": "Khi áp dụng quản lý theo Serial/IMEI, cửa hàng sẽ kiểm soát chính xác vòng đời của từng sản phẩm duy nhất từ lúc nhập kho đến khi bán hàng và bảo hành.", "n": ["Khi kinh doanh điện thoại hoặc điện máy, cửa hàng chỉ cần quản lý số lượng tổng của mã hàng là đủ để phân biệt các sản phẩm cùng loại.", "Cửa hàng bắt buộc phải đăng ký mã số định danh sản phẩm với cơ quan quản lý thị trường trước khi được phép nhập liệu vào hệ thống phần mềm."] },
-        { "q": "Một chủ cửa hàng mới muốn kích hoạt tính năng quản lý Serial/IMEI trên KiotViet. Thao tác nào sau đây là chính xác?", "a": "Khi muốn bắt đầu sử dụng tính năng quản lý Serial/IMEI, chủ cửa hàng cần truy cập menu Thiết lập, chọn Hàng hóa và bật tùy chọn Quản lý tồn kho theo Serial/IMEI.", "n": ["Tính năng quản lý theo Serial/IMEI được hệ thống KiotViet bật sẵn mặc định cho tất cả các gian hàng ngay khi vừa khởi tạo.", "Chủ cửa hàng phải soạn thảo công văn yêu cầu kích hoạt tính năng và gửi về bộ phận kỹ thuật của KiotViet để được cấp quyền truy cập đặc biệt."] },
-        { "q": "Khi thêm mới một sản phẩm như \"iPhone 16\" có quản lý theo Serial/IMEI, người dùng cần lưu ý điều gì về việc nhập tồn kho?", "a": "Khi thêm mới hàng hóa có quản lý theo Serial/IMEI, người dùng chỉ thiết lập thông tin cơ bản và chưa nhập số lượng tồn kho ngay tại màn hình này.", "n": ["Khi tạo mới một mã hàng Serial/IMEI, người dùng bắt buộc phải nhập số lượng tồn kho và liệt kê các mã IMEI ngay tại màn hình thêm mới hàng hóa.", "Người dùng phải nhập mẫu ít nhất 10 mã Serial/IMEI vào hệ thống để phần mềm học định dạng dữ liệu trước khi cho phép lưu thông tin hàng hóa."] },
-        { "q": "Nhân viên kho đang thực hiện nhập hàng loạt máy tính bảng về kho. Hệ thống sẽ ghi nhận số lượng như thế nào?", "a": "Khi tạo phiếu nhập hàng Serial/IMEI, số lượng hàng hóa sẽ tự động tăng lên tương ứng với số lượng mã Serial/IMEI mà người dùng nhập hoặc quét vào hệ thống.", "n": ["Người dùng phải tự nhập tay tổng số lượng hàng hóa vào ô Số lượng trước khi bắt đầu quét các mã Serial/IMEI chi tiết vào phiếu nhập.", "Người dùng phải scan văn bản chứng từ nhập kho bản cứng và tải lên hệ thống để xác thực số lượng thì phần mềm mới cho phép nhập mã IMEI."] },
-        { "q": "Khi bán hàng cho khách, nhân viên thu ngân cần chọn mã Serial/IMEI như thế nào để đảm bảo quy trình?", "a": "Khi bán hàng Serial/IMEI, nhân viên cần tìm kiếm hoặc quét chính xác mã Serial/IMEI của sản phẩm thực tế để đảm bảo ghi nhận đúng thông tin bảo hành.", "n": ["Nhân viên thu ngân có thể chọn ngẫu nhiên bất kỳ mã Serial/IMEI nào còn trong kho để xuất bán mà không cần quan tâm đến sản phẩm thực tế khách hàng lấy.", "Nhân viên phải chụp ảnh khách hàng cầm sản phẩm và tải lên hệ thống để mở khóa mã IMEI tương ứng trước khi có thể thêm vào giỏ hàng."] },
-        { "q": "Cửa hàng trưởng muốn kiểm kê kho hàng điện máy cuối tháng. Tính năng kiểm kho của KiotViet hỗ trợ việc này ra sao?", "a": "Khi thực hiện kiểm kho, người dùng quét các mã Serial/IMEI thực tế có tại cửa hàng và hệ thống sẽ tự động đối chiếu để thống kê chi tiết các mã bị lệch.", "n": ["Người dùng phải tự so sánh thủ công danh sách IMEI trên sổ sách và thực tế, sau đó tự tính toán số lượng chênh lệch để điền vào phiếu kiểm kho.", "Hệ thống yêu cầu tạm dừng toàn bộ hoạt động bán hàng của toàn chuỗi trong 24 giờ để đồng bộ dữ liệu trước khi cho phép tạo phiếu kiểm kho Serial/IMEI."] },
-        { "q": "Nhân viên giao hàng muốn sử dụng điện thoại di động để thực hiện các nghiệp vụ kho với hàng Serial/IMEI. Khả năng đáp ứng của ứng dụng KiotViet là gì?", "a": "Khi sử dụng ứng dụng KiotViet trên thiết bị di động, người dùng có thể thực hiện đầy đủ các nghiệp vụ như nhập hàng, bán hàng và kiểm kho với hàng hóa Serial/IMEI.", "n": ["Ứng dụng KiotViet trên điện thoại chỉ cho phép xem danh sách hàng hóa Serial/IMEI chứ không hỗ trợ tạo các giao dịch nhập xuất hay kiểm kho.", "Người dùng bắt buộc phải kết nối điện thoại với máy chủ qua dây cáp USB để đồng bộ dữ liệu IMEI thì mới thao tác được trên ứng dụng di động."] }
-    ]
-};
-    
-    // Mapping icons for different categories
-    const ICON_MAP = { 
-        "Tổng hợp Hàng hóa": "fa-boxes-stacked",
-        "Hàng hóa (Cơ bản)": "fa-box",
-        "Hàng Dịch vụ": "fa-concierge-bell",
-        "Hàng Combo Đóng Gói": "fa-gift",
-        "Hàng Lô & HSD": "fa-calendar-days",
-        "Hàng Serial & IMEI": "fa-barcode"
+      "Phân loại Hàng hóa": [
+        {
+          "q": "Cửa hàng muốn quản lý các khoản thu phi vật lý như tiền công sửa chữa, phí lắp đặt trên phần mềm.",
+          "a": "Khi thiết lập loại hàng hóa là Dịch vụ, hệ thống sẽ ghi nhận doanh thu bán hàng nhưng không quản lý số lượng tồn kho.",
+          "n": [
+            "Khi kinh doanh các sản phẩm phi vật chất như phí dịch vụ hay công lắp đặt, hệ thống bắt buộc phải theo dõi số lượng tồn kho như hàng hóa thông thường.",
+            "Hệ thống yêu cầu người dùng phải nạp bản scan giấy phép kinh doanh dịch vụ lên phần mềm thì mới được kích hoạt tính năng tạo mã hàng Dịch vụ."
+          ]
+        },
+        {
+          "q": "Cửa hàng muốn tạo các giỏ quà Tết (gồm rượu, bánh, trà có sẵn) để bán và quản lý tồn kho thuận tiện.",
+          "a": "Khi bán một sản phẩm thuộc loại Combo - Đóng gói, hệ thống sẽ tự động trừ số lượng tồn kho của từng hàng hóa thành phần cấu tạo nên combo đó.",
+          "n": [
+            "Khi bán sản phẩm dạng Combo, hệ thống chỉ trừ tồn kho của mã combo mà không ảnh hưởng đến số lượng tồn kho của các sản phẩm lẻ bên trong.",
+            "Người dùng bắt buộc phải đóng gói vật lý và dán tem niêm phong cho từng Combo, sau đó lập phiếu nhập kho thành phẩm thì mới được phép bán trên phần mềm."
+          ]
+        },
+        {
+          "q": "Người dùng muốn chia nhỏ một nhóm hàng lớn (VD: Áo sơ mi) thành các nhóm nhỏ hơn (VD: Ngắn tay, Dài tay) để dễ quản lý.",
+          "a": "Khi tạo nhóm hàng mới, người dùng có thể chọn một nhóm hàng đã tồn tại làm \"Nhóm cha\" để thiết lập cấu trúc phân cấp quản lý đa tầng.",
+          "n": [
+            "Khi quản lý danh mục, hệ thống chỉ cho phép tạo một cấp nhóm hàng duy nhất và không hỗ trợ phân chia thành các nhóm con.",
+            "Hệ thống chỉ cho phép tạo nhóm hàng con nếu nhóm hàng cha đã phát sinh ít nhất 1000 giao dịch bán hàng thành công trong tháng gần nhất."
+          ]
+        },
+        {
+          "q": "Người dùng muốn thêm mới hàng hóa nhanh nhưng không muốn mất thời gian tự nghĩ quy tắc đặt Mã hàng.",
+          "a": "Khi thêm mới hàng hóa và để trống trường Mã hàng, hệ thống sẽ tự động sinh một mã duy nhất cho sản phẩm đó sau khi lưu.",
+          "n": [
+            "Khi thêm mới hàng hóa, người dùng bắt buộc phải tự nhập thủ công Mã hàng thì hệ thống mới cho phép lưu dữ liệu.",
+            "Người dùng phải gửi email đăng ký mua dải mã vạch quốc tế từ tổ chức GS1 và nhập vào hệ thống thì mới được phép lưu sản phẩm mới."
+          ]
+        },
+        {
+          "q": "Cửa hàng có kho rộng, một sản phẩm được lưu trữ ở nhiều vị trí khác nhau (Kệ A, Kho B) và cần ghi chú lại.",
+          "a": "Khi thiết lập thông tin hàng hóa, người dùng có thể gán nhiều vị trí lưu trữ khác nhau cho cùng một sản phẩm để thuận tiện cho việc tìm kiếm.",
+          "n": [
+            "Khi quản lý vị trí hàng hóa, mỗi sản phẩm chỉ được phép gán cố định vào một vị trí duy nhất trong kho.",
+            "Để thêm vị trí thứ hai cho sản phẩm, người dùng bắt buộc phải lập \"Phiếu điều chuyển kho nội bộ\" và chờ Quản lý cửa hàng phê duyệt trên hệ thống."
+          ]
+        },
+        {
+          "q": "Người dùng muốn cập nhật lại giá bán cho hàng loạt (500) sản phẩm cùng lúc thông qua file Excel.",
+          "a": "Khi sử dụng tính năng Import từ Excel, hệ thống hỗ trợ cả việc thêm mới hàng hóa chưa có và cập nhật thông tin cho hàng hóa đã tồn tại dựa trên mã hàng.",
+          "n": [
+            "Khi sử dụng tính năng Import từ Excel, hệ thống chỉ hỗ trợ thêm mới các hàng hóa chưa có chứ không thể cập nhật thông tin cho hàng hóa cũ.",
+            "Hệ thống yêu cầu người dùng phải chia nhỏ file Excel thành các file con dưới 10 dòng và nhập lần lượt để tránh quá tải máy chủ."
+          ]
+        },
+        {
+          "q": "Người dùng muốn in tem mã vạch cho hàng hóa nhưng chỉ muốn in đúng số lượng đang tồn trong kho để tránh lãng phí.",
+          "a": "Khi thực hiện in tem mã vạch hàng loạt, hệ thống sẽ mặc định gợi ý số lượng tem cần in tương ứng với số lượng tồn kho hiện tại của sản phẩm.",
+          "n": [
+            "Khi vào giao diện in tem mã vạch, người dùng bắt buộc phải tự nhập tay số lượng tem cần in cho từng sản phẩm vì hệ thống luôn để mặc định là 0.",
+            "Người dùng phải kết nối máy in vào cổng COM1 của máy tính và cài đặt lại Driver mỗi lần in thì hệ thống mới nhận diện được số lượng tồn kho."
+          ]
+        },
+        {
+          "q": "Người dùng muốn xóa vĩnh viễn một mã hàng nhưng hệ thống báo lỗi không cho xóa ngay.",
+          "a": "Khi người dùng muốn xóa một hàng hóa có tồn kho khác 0, hệ thống sẽ yêu cầu thực hiện thao tác kiểm kho để điều chỉnh tồn kho về 0 trước khi cho phép xóa.",
+          "n": [
+            "Khi cần xóa một hàng hóa đang kinh doanh, người dùng có thể xóa vĩnh viễn ngay lập tức bất kể số lượng tồn kho của sản phẩm đó đang là bao nhiêu.",
+            "Người dùng phải làm đơn xin xóa mã hàng, có chữ ký của chủ hộ kinh doanh và gửi chuyển phát nhanh về trụ sở KiotViet để được kỹ thuật viên hỗ trợ xóa."
+          ]
+        },
+        {
+          "q": "Cửa hàng muốn tạm ngưng bán một sản phẩm theo mùa vụ (không xóa) để danh sách bán hàng đỡ rối.",
+          "a": "Khi chuyển trạng thái hàng hóa sang Ngừng kinh doanh, sản phẩm sẽ ẩn khỏi màn hình Bán hàng nhưng vẫn lưu giữ lịch sử giao dịch trên hệ thống.",
+          "n": [
+            "Khi chọn Ngừng kinh doanh một sản phẩm, hệ thống sẽ xóa hoàn toàn thông tin và lịch sử giao dịch của sản phẩm đó khỏi cơ sở dữ liệu.",
+            "Hệ thống yêu cầu sản phẩm phải có số lượng tồn kho bằng đúng 0 và không phát sinh giao dịch trong 3 năm liên tiếp mới cho phép chuyển sang trạng thái Ngừng kinh doanh."
+          ]
+        },
+        {
+          "q": "Người dùng muốn thêm nhanh hàng hóa mới và chụp ảnh sản phẩm ngay tại chợ đầu mối bằng điện thoại.",
+          "a": "Khi sử dụng ứng dụng KiotViet trên điện thoại, người dùng có thể thực hiện đầy đủ các thao tác tạo mới, cập nhật thông tin và chụp ảnh sản phẩm trực tiếp.",
+          "n": [
+            "Khi sử dụng ứng dụng trên điện thoại, người dùng chỉ có thể xem danh sách hàng hóa chứ không thể thêm mới hoặc chỉnh sửa thông tin sản phẩm.",
+            "Để thêm hàng mới từ điện thoại, người dùng bắt buộc phải kết nối điện thoại với máy tính chủ qua dây cáp USB để đồng bộ dữ liệu trước khi lưu."
+          ]
+        }
+      ],
+      "Hàng hóa thường": [
+        {
+          "q": "Khi sử dụng KiotViet để quản lý danh mục hàng hóa, nhận định nào sau đây là chính xác về khả năng lưu trữ thông tin?",
+          "a": "Người dùng có thể quản lý tập trung và toàn diện thông tin của hàng nghìn sản phẩm bao gồm giá bán, giá vốn và các thuộc tính phức tạp.",
+          "n": [
+            "Phần mềm KiotViet chỉ hỗ trợ lưu trữ các thông tin cơ bản và không thể quản lý được các thuộc tính chi tiết hay đơn vị tính quy đổi.",
+            "Người dùng phải gửi hồ sơ thông tin sản phẩm cho Ban quản trị KiotViet phê duyệt danh mục trước khi thông tin được hiển thị chính thức."
+          ]
+        },
+        {
+          "q": "Để đưa một mặt hàng mới vào hệ thống để bắt đầu kinh doanh trên máy tính, người dùng thực hiện thao tác nào?",
+          "a": "Truy cập vào menu Hàng hóa, chọn mục Danh sách hàng hóa và thực hiện nhấn nút Tạo mới.",
+          "n": [
+            "Người dùng bắt buộc phải sử dụng tính năng nhập hàng từ file Excel thì mới có thể khởi tạo được danh mục hàng hóa mới.",
+            "Hệ thống chỉ cho phép tạo mới hàng hóa vào khung giờ hành chính từ 8h - 17h để đảm bảo kỹ thuật đồng bộ dữ liệu toàn hệ thống."
+          ]
+        },
+        {
+          "q": "Trong trường hợp một mặt hàng đã từng phát sinh giao dịch nhưng hiện tại cửa hàng không còn bán nữa, thao tác nào là tối ưu nhất?",
+          "a": "Người dùng nên sử dụng tính năng Ngừng kinh doanh để hệ thống vẫn giữ lại thông tin tồn kho và lịch sử giao dịch cũ.",
+          "n": [
+            "Thao tác Xóa hàng hóa là cách duy nhất để ẩn sản phẩm khỏi danh mục bán hàng mà vẫn đảm bảo báo cáo tài chính không thay đổi.",
+            "Người dùng phải làm đơn yêu cầu xóa mã hàng gửi lên chi nhánh tổng và chờ 24h để hệ thống gỡ bỏ hoàn toàn dữ liệu hàng hóa đó."
+          ]
+        },
+        {
+          "q": "Khi chủ cửa hàng muốn tìm nhanh danh sách các mặt hàng đang sắp hết tồn kho để lên kế hoạch nhập hàng, công cụ nào hỗ trợ tốt nhất?",
+          "a": "Sử dụng bộ lọc chi tiết ở cột trái màn hình với tiêu chí Tồn kho hoặc trạng thái Dự kiến hết hàng.",
+          "n": [
+            "Hệ thống KiotViet chỉ cho phép tìm kiếm theo mã hoặc tên và không hỗ trợ các bộ lọc chuyên sâu về trạng thái tồn kho thực tế.",
+            "Người dùng phải xuất toàn bộ file báo cáo Excel tổng hợp rồi sử dụng các hàm lọc dữ liệu thủ công để xác định lượng hàng tồn."
+          ]
+        },
+        {
+          "q": "Đối với hàng hóa có nhiều đơn vị tính (ví dụ bán theo Chai và Thùng), hệ thống KiotViet xử lý trừ kho như thế nào?",
+          "a": "Khi thiết lập đơn vị tính quy đổi, hệ thống sẽ tự động tính toán giá bán và số lượng tồn kho tương ứng dựa trên công thức đã đặt.",
+          "n": [
+            "Người dùng phải tạo các mã hàng riêng biệt cho từng đơn vị tính và tự thực hiện thao tác cộng trừ tồn kho thủ công khi bán.",
+            "Hệ thống chỉ ghi nhận đơn vị tính nhỏ nhất, việc bán theo lốc hoặc thùng phải được quy đổi ra số lẻ thủ công trước khi nhập vào hóa đơn."
+          ]
+        },
+        {
+          "q": "Nhận định nào sau đây mô tả đúng về tính năng In tem mã vạch sản phẩm trực tiếp trên phần mềm KiotViet?",
+          "a": "Người dùng có thể tích chọn nhiều sản phẩm cùng lúc để in tem nhãn chứa thông tin tên hàng, giá bán và mã vạch trực tiếp.",
+          "n": [
+            "Để in tem mã vạch cho sản phẩm, người dùng bắt buộc phải sử dụng một phần mềm thiết kế bên thứ ba để kết nối với máy in tem.",
+            "Người dùng phải gửi yêu cầu mã hàng lên trung tâm hỗ trợ khách hàng của KiotViet để hệ thống thiết kế mẫu tem và gửi lại file in."
+          ]
+        },
+        {
+          "q": "Thao tác nào sau đây được thực hiện khi người dùng muốn thêm nhanh sản phẩm mới bằng ứng dụng di động KiotViet?",
+          "a": "Chạm vào biểu tượng dấu cộng (+) trong menu Hàng hóa trên ứng dụng và điền các thông tin kèm hình ảnh thực tế của sản phẩm.",
+          "n": [
+            "Ứng dụng di động KiotViet chỉ hỗ trợ xem báo cáo doanh thu và không có quyền thực hiện các thao tác quản trị như thêm mới hàng hóa.",
+            "Ứng dụng di động chỉ đóng vai trò là thiết bị đọc dữ liệu, mọi thao tác ghi mới phải được thực hiện trên máy tính để tránh lỗi logic."
+          ]
+        },
+        {
+          "q": "Trong quá trình bán hàng trên máy POS, nếu phát hiện một sản phẩm chưa được khai báo, nhân viên cần xử lý như thế nào?",
+          "a": "Thực hiện nhấn vào tùy chọn \"Thêm hàng hóa\" ngay tại ô tìm kiếm của máy POS để tạo nhanh mặt hàng và tiếp tục giao dịch.",
+          "n": [
+            "Nhân viên bắt buộc phải dừng giao dịch hiện tại và quay lại màn hình Quản lý để thực hiện các thủ tục khai báo hàng hóa mới.",
+            "Hệ thống POS mặc định khóa tính năng thêm mới hàng hóa để tránh việc nhân viên tự ý thay đổi danh mục và gian lận giá bán."
+          ]
+        }
+      ],
+      "Hàng dịch vụ": [
+        {
+          "q": "Khi khởi tạo một mã hàng dịch vụ (như phí ship, công lắp đặt) trên KiotViet, vấn đề quản lý tồn kho được xử lý như thế nào?",
+          "a": "Hàng dịch vụ trên KiotViet không quản lý số lượng tồn kho nên không làm ảnh hưởng đến các số liệu báo cáo của hàng hóa vật lý.",
+          "n": [
+            "Hàng dịch vụ trên KiotViet bắt buộc phải nhập số lượng tồn kho ban đầu giống như hàng hóa thông thường để tính toán giá vốn.",
+            "Chủ cửa hàng phải gửi email xác nhận với KiotViet để kích hoạt thủ công chế độ \"phi vật chất\" cho từng mã hàng dịch vụ thì mới không bị tính tồn kho."
+          ]
+        },
+        {
+          "q": "Chủ cửa hàng muốn tạo mới một mã \"Phí sửa chữa\" trên giao diện Website để nhân viên có thể bán được ngay. Thao tác nào là chính xác?",
+          "a": "Khi thêm mới hàng dịch vụ trên Website, chủ cửa hàng cần chọn loại hàng là Dịch vụ và tích chọn Bán trực tiếp để hiển thị trên màn hình bán hàng.",
+          "n": [
+            "Khi thêm mới hàng dịch vụ trên Website, chủ cửa hàng phải chọn loại hàng là Hàng hóa thường thì mới có thể thêm được vào hóa đơn bán hàng.",
+            "Chủ cửa hàng bắt buộc phải cài đặt thêm một phần mềm mở rộng (Add-on) chuyên dụng của bên thứ ba mới có thể tạo được loại hàng Dịch vụ trên hệ thống."
+          ]
+        },
+        {
+          "q": "Điều gì xảy ra với dữ liệu lịch sử khi người dùng thực hiện thao tác xóa một mã hàng dịch vụ đã từng phát sinh giao dịch trước đó?",
+          "a": "Khi người dùng xóa hàng dịch vụ, hệ thống sẽ xóa trên danh sách hiện tại nhưng vẫn giữ nguyên thông tin trong các giao dịch lịch sử với hậu tố {DEL}.",
+          "n": [
+            "Khi người dùng xóa hàng dịch vụ, hệ thống sẽ xóa vĩnh viễn toàn bộ dữ liệu bao gồm cả thông tin trong các hóa đơn lịch sử đã phát sinh trước đó.",
+            "Người dùng bắt buộc phải vào từng hóa đơn lịch sử có chứa dịch vụ đó để xóa thủ công dòng hàng này đi thì hệ thống mới cho phép xóa mã hàng khỏi danh sách."
+          ]
+        },
+        {
+          "q": "Một chủ cửa hàng đang đi lấy hàng và muốn tạo nhanh mã \"Phí bốc xếp\" bằng điện thoại. Khẳng định nào sau đây là đúng về khả năng của ứng dụng KiotViet Mobile?",
+          "a": "Người dùng có thể thêm mới, chỉnh sửa hoặc ngừng kinh doanh hàng dịch vụ ngay trên ứng dụng KiotViet Mobile thông qua menu Hàng hóa.",
+          "n": [
+            "Người dùng chỉ có thể xem danh sách dịch vụ trên ứng dụng KiotViet Mobile chứ không thể thêm mới hay chỉnh sửa, bắt buộc phải dùng máy tính.",
+            "Người dùng bắt buộc phải kết nối điện thoại với máy tính chủ qua dây cáp USB để đồng bộ dữ liệu thì mới được cấp quyền tạo hàng dịch vụ trên App."
+          ]
+        },
+        {
+          "q": "Tại quầy thu ngân, nhân viên muốn tính tiền cả sản phẩm và công lắp đặt trong cùng một lượt thanh toán. Hệ thống hỗ trợ việc này như thế nào?",
+          "a": "Tại màn hình bán hàng, nhân viên có thể tìm kiếm và thêm hàng dịch vụ vào chung một hóa đơn với hàng hóa thông thường để thanh toán gộp.",
+          "n": [
+            "Tại màn hình bán hàng, nhân viên bắt buộc phải tách riêng hóa đơn cho hàng dịch vụ và hóa đơn cho hàng hóa vật lý, không thể thanh toán chung.",
+            "Nhân viên phải thực hiện thao tác \"Chuyển đổi giao diện\" sang chế độ \"Dịch vụ chuyên biệt\" và yêu cầu khách hàng thanh toán 2 lần qua 2 cổng khác nhau."
+          ]
+        }
+      ],
+      "Hàng Combo Đóng Gói": [
+        {
+          "q": "Khi bán một hàng combo - đóng gói trên phần mềm KiotViet, hệ thống xử lý tồn kho như thế nào?",
+          "a": "Khi bán một hàng combo, hệ thống sẽ tự động trừ tồn kho của các hàng hóa thành phần thay vì trừ tồn kho của mã combo.",
+          "n": [
+            "Khi bán một hàng combo, hệ thống sẽ trừ trực tiếp số lượng tồn kho của mã combo đó và giữ nguyên tồn kho của các hàng hóa thành phần.",
+            "Khi bán một hàng combo, người dùng bắt buộc phải vào phân hệ Kho để làm phiếu xuất kho thủ công cho từng hàng thành phần thì hệ thống mới ghi nhận."
+          ]
+        },
+        {
+          "q": "Giá vốn của một hàng combo - đóng gói được xác định như thế nào khi khởi tạo?",
+          "a": "Khi tạo hàng combo, giá vốn của combo sẽ được hệ thống tự động tính bằng tổng giá vốn của tất cả các hàng hóa thành phần cấu thành nên nó.",
+          "n": [
+            "Khi tạo hàng combo, người dùng bắt buộc phải tự nhập tay và tính toán giá vốn cho combo vì hệ thống không tự cộng gộp từ hàng thành phần.",
+            "Khi tạo hàng combo, giá vốn sẽ mặc định bằng 50% giá bán niêm yết và không liên quan đến giá vốn của các hàng hóa thành phần bên trong."
+          ]
+        },
+        {
+          "q": "Yêu cầu bắt buộc khi thực hiện thao tác tạo mới một hàng combo - đóng gói là gì?",
+          "a": "Khi tạo mới hàng combo - đóng gói, người dùng cần tìm và chọn các hàng hóa thành phần có sẵn trong hệ thống để đưa vào cấu trúc combo.",
+          "n": [
+            "Khi tạo mới hàng combo - đóng gói, người dùng chỉ cần đặt tên combo mà không bắt buộc phải chọn bất kỳ hàng hóa thành phần cụ thể nào.",
+            "Khi tạo mới hàng combo - đóng gói, người dùng phải gửi đơn đăng ký mã sản phẩm lên hệ thống quản trị trung tâm và chờ phê duyệt trong 24h trước khi nhập liệu."
+          ]
+        },
+        {
+          "q": "Điều gì xảy ra với dữ liệu khi người dùng xóa một mã hàng combo đã từng phát sinh giao dịch bán hàng?",
+          "a": "Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống vẫn giữ thông tin hàng hóa đó trong lịch sử giao dịch và thêm hậu tố {DEL} vào tên hàng hóa.",
+          "n": [
+            "Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống sẽ xóa sạch toàn bộ thông tin và lịch sử bán hàng liên quan đến combo đó khỏi các báo cáo.",
+            "Khi xóa một hàng combo đã phát sinh giao dịch, hệ thống sẽ tự động xóa luôn tất cả các hàng hóa thành phần cấu tạo nên combo đó khỏi danh mục hàng hóa."
+          ]
+        },
+        {
+          "q": "Khả năng chỉnh sửa hàng combo trên ứng dụng KiotViet Quản lý trên điện thoại có giới hạn gì?",
+          "a": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng hiện tại chưa thể chỉnh sửa danh sách hàng hóa thành phần của combo.",
+          "n": [
+            "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng có thể thoải mái thêm hoặc bớt hàng hóa thành phần trong combo tương tự như trên giao diện web.",
+            "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng phải gọi điện lên tổng đài KiotViet để xin cấp mã OTP kích hoạt tính năng chỉnh sửa hàng hóa."
+          ]
+        },
+        {
+          "q": "Quy trình nhập kho đối với hàng combo - đóng gói được thực hiện như thế nào?",
+          "a": "Khi thực hiện nghiệp vụ nhập hàng, người dùng không thể tạo phiếu nhập hàng trực tiếp cho mã hàng combo - đóng gói.",
+          "n": [
+            "Khi thực hiện nghiệp vụ nhập hàng, người dùng có thể tạo phiếu nhập kho trực tiếp cho mã hàng combo để tăng số lượng tồn kho của combo đó.",
+            "Khi thực hiện nghiệp vụ nhập hàng, người dùng bắt buộc phải làm biên bản kiểm kê kho có chữ ký của quản lý thì mới được phép nhập số lượng cho hàng combo."
+          ]
+        }
+      ],
+      "Hàng Lô-HSD": [
+        {
+          "q": "Khi bán hàng, hệ thống KiotViet hỗ trợ người dùng chọn lô hàng như thế nào để tối ưu hóa tồn kho?",
+          "a": "Tự động gợi ý xuất bán lô hàng có hạn sử dụng gần nhất theo nguyên tắc FEFO.",
+          "n": [
+            "Luôn ưu tiên gợi ý xuất bán lô hàng mới nhập kho gần nhất để đảm bảo chất lượng hàng mới.",
+            "Người dùng phải tự nhớ và gõ tay hạn sử dụng của lô cần xuất bán vào ô ghi chú, hệ thống không hỗ trợ gợi ý."
+          ]
+        },
+        {
+          "q": "Để bắt đầu quản lý hàng hóa theo hạn sử dụng trên gian hàng, thao tác đầu tiên cần thực hiện là gì?",
+          "a": "Vào menu Thiết lập, chọn Hàng hóa và bật tính năng Quản lý tồn kho theo Lô, hạn sử dụng.",
+          "n": [
+            "Không cần thao tác gì, tính năng này được bật mặc định cho tất cả các gian hàng ngay khi khởi tạo.",
+            "Phải gửi email yêu cầu KiotViet cấp quyền truy cập tính năng quản lý lô thì mới được sử dụng."
+          ]
+        },
+        {
+          "q": "Khi thêm mới một hàng hóa cần quản lý theo lô, hạn sử dụng, người dùng cần nhập thông tin tồn kho như thế nào?",
+          "a": "Chỉ điền thông tin cơ bản và tích chọn \"Quản lý theo lô, hạn sử dụng\", nhập tồn kho sau qua phiếu Nhập hàng.",
+          "n": [
+            "Bắt buộc phải nhập số lượng tồn kho và hạn sử dụng ngay tại màn hình thêm mới hàng hóa.",
+            "Phải tạo riêng từng mã hàng hóa khác nhau cho mỗi lô hàng nhập về (ví dụ: SuaA_Lo1, SuaA_Lo2) để quản lý tồn kho."
+          ]
+        },
+        {
+          "q": "Trong giao dịch Nhập hàng, làm thế nào để ghi nhận chi tiết hạn sử dụng cho từng lô sản phẩm?",
+          "a": "Chọn sản phẩm, nhấn \"Thêm mới lô, hạn sử dụng\" để điền hạn dùng và số lượng cho từng lô.",
+          "n": [
+            "Chỉ cần nhập tổng số lượng nhập của sản phẩm, hệ thống sẽ tự chia đều cho các lô.",
+            "Phải tạo phiếu nhập hàng riêng biệt cho từng lô hàng, không được nhập nhiều lô khác nhau trên cùng một phiếu."
+          ]
+        },
+        {
+          "q": "Trên màn hình bán hàng, làm sao để nhân viên nhận biết được các lô hàng sắp hết hạn hoặc đã hết hạn?",
+          "a": "Hệ thống hiển thị màu vàng cho lô sắp hết hạn và màu đỏ cho lô đã hết hạn để cảnh báo.",
+          "n": [
+            "Hệ thống sẽ tự động chặn và khóa không cho phép chọn bán các lô hàng đã hết hạn sử dụng.",
+            "Hệ thống tự động xóa các lô hàng hết hạn khỏi danh sách chọn bán mà không cần thông báo cho người dùng."
+          ]
+        },
+        {
+          "q": "Khi thực hiện Kiểm kho cho hàng hóa quản lý theo lô, quy trình nào sau đây là chính xác?",
+          "a": "Chọn chính xác từng lô hàng trong phiếu kiểm và nhập số lượng thực tế của riêng lô đó.",
+          "n": [
+            "Chỉ cần nhập tổng số lượng thực tế của sản phẩm mà không cần quan tâm đến chi tiết từng lô.",
+            "Phải xuất hủy toàn bộ hàng cũ trên hệ thống rồi nhập lại hàng mới dưới dạng kiểm kê đầu kỳ."
+          ]
+        },
+        {
+          "q": "Người dùng có thể thực hiện bán hàng chọn lô (theo hạn sử dụng) trên ứng dụng KiotViet Mobile không?",
+          "a": "Có, sau khi chọn sản phẩm, ứng dụng sẽ hiện màn hình \"Chọn lô\" để người dùng thao tác.",
+          "n": [
+            "Không, ứng dụng điện thoại chỉ hỗ trợ bán thường, muốn chọn lô bắt buộc phải dùng máy tính.",
+            "Có thể xem tồn kho lô nhưng không chọn được để bán, phải ghi chú lại rồi nhờ thu ngân nhập trên máy tính."
+          ]
+        }
+      ],
+      "Hàng Serial-IMEI": [
+        {
+          "q": "Chủ cửa hàng điện thoại đang băn khoăn về cách quản lý sản phẩm để tránh thất thoát và nhầm lẫn. Đâu là nhận định đúng về lợi ích của tính năng Serial/IMEI?",
+          "a": "Khi áp dụng quản lý theo Serial/IMEI, cửa hàng sẽ kiểm soát chính xác vòng đời của từng sản phẩm duy nhất từ lúc nhập kho đến khi bán hàng và bảo hành.",
+          "n": [
+            "Khi kinh doanh điện thoại hoặc điện máy, cửa hàng chỉ cần quản lý số lượng tổng của mã hàng là đủ để phân biệt các sản phẩm cùng loại.",
+            "Cửa hàng bắt buộc phải đăng ký mã số định danh sản phẩm với cơ quan quản lý thị trường trước khi được phép nhập liệu vào hệ thống phần mềm."
+          ]
+        },
+        {
+          "q": "Một chủ cửa hàng mới muốn kích hoạt tính năng quản lý Serial/IMEI trên KiotViet. Thao tác nào sau đây là chính xác?",
+          "a": "Khi muốn bắt đầu sử dụng tính năng quản lý Serial/IMEI, chủ cửa hàng cần truy cập menu Thiết lập, chọn Hàng hóa và bật tùy chọn Quản lý tồn kho theo Serial/IMEI.",
+          "n": [
+            "Tính năng quản lý theo Serial/IMEI được hệ thống KiotViet bật sẵn mặc định cho tất cả các gian hàng ngay khi vừa khởi tạo.",
+            "Chủ cửa hàng phải soạn thảo công văn yêu cầu kích hoạt tính năng và gửi về bộ phận kỹ thuật của KiotViet để được cấp quyền truy cập đặc biệt."
+          ]
+        },
+        {
+          "q": "Khi thêm mới một sản phẩm như \"iPhone 16\" có quản lý theo Serial/IMEI, người dùng cần lưu ý điều gì về việc nhập tồn kho?",
+          "a": "Khi thêm mới hàng hóa có quản lý theo Serial/IMEI, người dùng chỉ thiết lập thông tin cơ bản và chưa nhập số lượng tồn kho ngay tại màn hình này.",
+          "n": [
+            "Khi tạo mới một mã hàng Serial/IMEI, người dùng bắt buộc phải nhập số lượng tồn kho và liệt kê các mã IMEI ngay tại màn hình thêm mới hàng hóa.",
+            "Người dùng phải nhập mẫu ít nhất 10 mã Serial/IMEI vào hệ thống để phần mềm học định dạng dữ liệu trước khi cho phép lưu thông tin hàng hóa."
+          ]
+        },
+        {
+          "q": "Nhân viên kho đang thực hiện nhập hàng loạt máy tính bảng về kho. Hệ thống sẽ ghi nhận số lượng như thế nào?",
+          "a": "Khi tạo phiếu nhập hàng Serial/IMEI, số lượng hàng hóa sẽ tự động tăng lên tương ứng với số lượng mã Serial/IMEI mà người dùng nhập hoặc quét vào hệ thống.",
+          "n": [
+            "Người dùng phải tự nhập tay tổng số lượng hàng hóa vào ô Số lượng trước khi bắt đầu quét các mã Serial/IMEI chi tiết vào phiếu nhập.",
+            "Người dùng phải scan văn bản chứng từ nhập kho bản cứng và tải lên hệ thống để xác thực số lượng thì phần mềm mới cho phép nhập mã IMEI."
+          ]
+        },
+        {
+          "q": "Khi bán hàng cho khách, nhân viên thu ngân cần chọn mã Serial/IMEI như thế nào để đảm bảo quy trình?",
+          "a": "Khi bán hàng Serial/IMEI, nhân viên cần tìm kiếm hoặc quét chính xác mã Serial/IMEI của sản phẩm thực tế để đảm bảo ghi nhận đúng thông tin bảo hành.",
+          "n": [
+            "Nhân viên thu ngân có thể chọn ngẫu nhiên bất kỳ mã Serial/IMEI nào còn trong kho để xuất bán mà không cần quan tâm đến sản phẩm thực tế khách hàng lấy.",
+            "Nhân viên phải chụp ảnh khách hàng cầm sản phẩm và tải lên hệ thống để mở khóa mã IMEI tương ứng trước khi có thể thêm vào giỏ hàng."
+          ]
+        },
+        {
+          "q": "Cửa hàng trưởng muốn kiểm kê kho hàng điện máy cuối tháng. Tính năng kiểm kho của KiotViet hỗ trợ việc này ra sao?",
+          "a": "Khi thực hiện kiểm kho, người dùng quét các mã Serial/IMEI thực tế có tại cửa hàng và hệ thống sẽ tự động đối chiếu để thống kê chi tiết các mã bị lệch.",
+          "n": [
+            "Người dùng phải tự so sánh thủ công danh sách IMEI trên sổ sách và thực tế, sau đó tự tính toán số lượng chênh lệch để điền vào phiếu kiểm kho.",
+            "Hệ thống yêu cầu tạm dừng toàn bộ hoạt động bán hàng của toàn chuỗi trong 24 giờ để đồng bộ dữ liệu trước khi cho phép tạo phiếu kiểm kho Serial/IMEI."
+          ]
+        },
+        {
+          "q": "Nhân viên giao hàng muốn sử dụng điện thoại di động để thực hiện các nghiệp vụ kho với hàng Serial/IMEI. Khả năng đáp ứng của ứng dụng KiotViet là gì?",
+          "a": "Khi sử dụng ứng dụng KiotViet trên thiết bị di động, người dùng có thể thực hiện đầy đủ các nghiệp vụ như nhập hàng, bán hàng và kiểm kho với hàng hóa Serial/IMEI.",
+          "n": [
+            "Ứng dụng KiotViet trên điện thoại chỉ cho phép xem danh sách hàng hóa Serial/IMEI chứ không hỗ trợ tạo các giao dịch nhập xuất hay kiểm kho.",
+            "Người dùng bắt buộc phải kết nối điện thoại với máy chủ qua dây cáp USB để đồng bộ dữ liệu IMEI thì mới thao tác được trên ứng dụng di động."
+          ]
+        }
+      ]
     };
+    const ICON_MAP = { "Hàng hóa thường": "fa-box", "Hàng dịch vụ": "fa-hand-sparkles", "Hàng Combo Đóng Gói": "fa-boxes-packing", "Hàng Lô-HSD": "fa-calendar-days", "Hàng Serial-IMEI": "fa-barcode", "Phân loại Hàng hóa": "fa-layer-group" };
 
     // --- SOUND ENGINE ---
     let soundOn = true;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function sfx(type) {
-        if(!soundOn) return; if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
-        if(type === 'hover') { osc.type='sine'; osc.frequency.setValueAtTime(600, now); gain.gain.setValueAtTime(0.01, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); }
-        else if(type === 'click') { osc.type='sine'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); }
-        else if(type === 'correct') { // water drop
-            osc.frequency.setValueAtTime(1200, now); gain.gain.setValueAtTime(0.2, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.frequency.exponentialRampToValueAtTime(600, now + 0.3);
-        } else if(type === 'wrong') { // leaf rustle
-            const bufferSize = audioCtx.sampleRate; const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            let data = buffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-            const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1000;
-            noise.connect(filter); filter.connect(gain); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-            noise.start(now); noise.stop(now + 0.2); return;
-        } else if(type === 'win') { // magical chime
-            osc.frequency.setValueAtTime(1046, now); osc.frequency.setValueAtTime(1318, now+0.1); osc.frequency.setValueAtTime(1568, now+0.2);
-            gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.5);
-        }
-        osc.start(now); osc.stop(now+0.5);
-    }
+    function sfx(type) { if(!soundOn) return; /* ... (sound logic remains same) ... */ }
     function toggleSound() { soundOn = !soundOn; document.getElementById('sound-icon').className = soundOn ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark'; sfx('click'); }
 
     // --- GAME ENGINE ---
     let pool=[], idx=0, correctCount=0, canAnswer=false;
-    const plantStages = ['🌱', '🌿', '🌷', '🌸', '🌻'];
+    const plantStages = ['<img src="https://em-content.zobj.net/source/apple/354/potted-plant_1fab4.png" width="80%">', '🌱', '🌿', '🌷', '🌸', '🌳'];
     let currentPlantStage = 0;
 
-    function init() {
+    // Simplified sound function for brevity
+    function sfx(type) {
+        if(!soundOn || (audioCtx.state === 'suspended' && audioCtx.resume()));
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
+        if(type==='hover'){osc.frequency.setValueAtTime(600,now);gain.gain.setValueAtTime(0.01,now);gain.gain.exponentialRampToValueAtTime(1e-4,now+0.1);}
+        else if(type==='click'){osc.frequency.setValueAtTime(800,now);gain.gain.setValueAtTime(0.05,now);gain.gain.exponentialRampToValueAtTime(1e-4,now+0.1);}
+        else if(type==='correct'){osc.frequency.setValueAtTime(1200,now);gain.gain.setValueAtTime(0.2,now);gain.gain.exponentialRampToValueAtTime(1e-4,now+0.3);osc.frequency.exponentialRampToValueAtTime(600,now+0.3);}
+        else if(type==='wrong'){osc.type='square';osc.frequency.setValueAtTime(100,now);gain.gain.setValueAtTime(0.1,now);gain.gain.exponentialRampToValueAtTime(1e-4,now+0.2);}
+        else if(type==='win'){osc.frequency.setValueAtTime(1046,now);osc.frequency.setValueAtTime(1318,now+0.1);osc.frequency.setValueAtTime(1568,now+0.2);gain.gain.setValueAtTime(0.1,now);gain.gain.exponentialRampToValueAtTime(1e-4,now+0.5);}
+        osc.start(now); osc.stop(now+0.5);
+    }
+    
+    // --- MAIN FUNCTIONS ---
+    function initMenu() {
+        const menuScreen = document.getElementById('screen-menu');
+        menuScreen.innerHTML = `
+            <div>
+                <h1 class="menu-title">Khu Vườn Tri Thức</h1>
+                <p style="text-align: center; font-size: 1.2rem; color: #6b7280;">Chọn một luống cây để vun trồng kiến thức.</p>
+            </div>
+            <div class="topic-grid" id="menu-grid"></div>`;
+        
         const grid = document.getElementById('menu-grid');
         Object.keys(DB).forEach(cat => {
             const card = document.createElement('div'); card.className = 'topic-card';
-            card.innerHTML = `<div class="topic-header"><i class="fa-solid ${ICON_MAP[cat] || 'fa-star'} topic-icon"></i><span>${cat}</span></div>
+            card.innerHTML = `<div class="topic-header"><i class="fa-solid ${ICON_MAP[cat] || 'fa-star'} topic-icon"></i><span> ${cat}</span></div>
+                <div style="color:#6b7280; flex:1;">Có tổng cộng <strong>${DB[cat].length}</strong> hạt giống kiến thức.</div>
                 <div class="btn-group">
-                    <button class="mode-btn" onmouseenter="sfx('hover')" onclick="start('rand', '${cat}')"><i class="fa-solid fa-dice"></i> Thử thách 5 câu</button>
-                    <button class="mode-btn" onmouseenter="sfx('hover')" onclick="start('all', '${cat}')"><i class="fa-solid fa-book-open"></i> Học toàn bộ</button>
+                    <button class="mode-btn" onmouseenter="sfx('hover')" onclick="start('rand', '${cat}')"><i class="fa-solid fa-dice"></i> Gieo hạt (5 câu)</button>
+                    <button class="mode-btn" onmouseenter="sfx('hover')" onclick="start('all', '${cat}')"><i class="fa-solid fa-book-open"></i> Chăm sóc toàn diện</button>
                 </div>`;
             grid.appendChild(card);
         });
+    }
+
+    function initGameScreen() {
+        document.getElementById('screen-game').innerHTML = `
+            <div class="garden-panel">
+                <div id="plant-pot"></div>
+                <div id="progress-bar" style="width: 80%; height: 20px; background: #e5e7eb; border-radius: 10px; margin-top: 20px; overflow: hidden;"><div id="progress-fill" style="width: 0%; height: 100%; background: var(--c-green-dark); transition: width 0.5s;"></div></div>
+            </div>
+            <div class="quiz-panel">
+                <h2 class="q-text" id="q-text"></h2>
+                <div class="opt-grid" id="opt-grid"></div>
+            </div>`;
+    }
+
+    function initResultScreen() {
+        document.getElementById('screen-result').innerHTML = `
+            <div style="text-align: center;">
+                <div id="final-plant" style="font-size: 15rem; line-height: 1;"></div>
+                <h1 id="res-title" style="font-size: 3rem;"></h1>
+                <p style="font-size: 1.2rem; color: #6b7280;">Bạn đã tưới đúng <strong id="res-stats" style="color:var(--c-green-dark)"></strong> giọt nước tri thức!</p>
+                <button class="mode-btn" style="font-size: 1.2rem; padding: 15px 40px; background: var(--c-green-dark); color: white;" onclick="location.reload()">Trồng một cây khác</button>
+            </div>`;
     }
 
     function start(mode, cat) {
@@ -220,7 +552,7 @@
         if(mode==='rand') pool=[...DB[cat]].sort(()=>Math.random()-0.5).slice(0,5);
         else pool=[...DB[cat]].sort(()=>Math.random()-0.5);
         
-        idx=0; correctCount=0; currentPlantStage = 0;
+        idx=0; correctCount=0; currentPlantStage=1;
         document.querySelector('.active').classList.remove('active');
         document.getElementById('screen-game').classList.add('active');
         document.getElementById('exit-btn').style.display = 'flex';
@@ -234,31 +566,25 @@
         if(idx>=pool.length) return end();
         canAnswer = true;
         const q = pool[idx];
-        document.getElementById('q-text').innerText = `Câu ${idx+1}/${pool.length}: ${q.q}`;
+        document.getElementById('q-text').innerText = q.q;
         const opts = [q.a, ...q.n].sort(()=>Math.random()-0.5);
         const grid = document.getElementById('opt-grid'); grid.innerHTML='';
         opts.forEach((o,i)=>{const b=document.createElement('button');b.className='opt-btn';b.innerHTML=o;b.onmouseenter=()=>sfx('hover');b.onclick=()=>check(o,b);grid.appendChild(b);});
+        
+        // Update progress bar
+        const progressFill = document.getElementById('progress-fill');
+        progressFill.style.width = `${(idx / pool.length) * 100}%`;
     }
 
     function updatePlant(isCorrect) {
-        if(isCorrect) {
-            currentPlantStage = Math.min(currentPlantStage + 1, plantStages.length - 1);
-        } else if (isCorrect === false) {
-            currentPlantStage = Math.max(currentPlantStage - 1, 0);
-        }
+        if(isCorrect) currentPlantStage = Math.min(currentPlantStage + 1, plantStages.length - 1);
+        else if(isCorrect === false) currentPlantStage = Math.max(currentPlantStage - 1, 1);
+        
         const pot = document.getElementById('plant-pot');
-        pot.innerText = plantStages[currentPlantStage];
-        pot.style.transform = 'scale(1.2)';
-        setTimeout(() => pot.style.transform = 'scale(1)', 300);
-
-        const dotsContainer = document.getElementById('progress-dots');
-        dotsContainer.innerHTML = '';
-        for(let i=0; i < pool.length; i++) {
-            const dot = document.createElement('div');
-            dot.className = 'dot';
-            if(i < idx) dot.classList.add('active');
-            dotsContainer.appendChild(dot);
-        }
+        pot.classList.remove('grow-animation');
+        void pot.offsetWidth; // Trigger reflow
+        pot.innerHTML = plantStages[currentPlantStage];
+        if (isCorrect) pot.classList.add('grow-animation');
     }
 
     function check(ans, btn) {
@@ -266,14 +592,14 @@
         const q = pool[idx];
         const isCorrect = ans === q.a;
         
-        if(isCorrect){ sfx('correct'); correctCount++; if(btn)btn.classList.add('correct'); confetti({particleCount:50, spread:70, origin: { y: 0.6 }}); }
-        else { sfx('wrong'); if(btn)btn.classList.add('wrong'); document.querySelectorAll('.opt-btn').forEach(b=>{if(b.innerText === q.a)b.classList.add('correct');}); }
+        if(isCorrect){ sfx('correct'); correctCount++; if(btn)btn.classList.add('correct'); confetti({particleCount:40, spread:60}); }
+        else { sfx('wrong'); if(btn)btn.classList.add('wrong'); document.querySelectorAll('.opt-btn').forEach(b=>{if(b.innerText.includes(q.a))b.classList.add('correct');}); }
         
-        updatePlant(isCorrect);
         setTimeout(() => {
             idx++;
+            updatePlant(isCorrect);
             load();
-        }, 2000);
+        }, 1500);
     }
 
     function end() {
@@ -281,19 +607,23 @@
         document.querySelector('.active').classList.remove('active');
         document.getElementById('screen-result').classList.add('active');
         document.getElementById('exit-btn').style.display = 'none';
-        confetti({ particleCount: 150, spread: 180, ticks: 200 });
 
         const pct = (correctCount / pool.length) * 100;
         const rank = document.getElementById('res-title');
         const plant = document.getElementById('final-plant');
         
-        if(pct >= 80) { rank.innerText="Khu vườn rực rỡ!"; plant.innerText = "🌳"; }
-        else if(pct >= 50) { rank.innerText="Cây đã nở hoa!"; plant.innerText = "🌸"; }
-        else { rank.innerText="Cần chăm sóc thêm nhé!"; plant.innerText = "🌱"; }
+        if(pct > 80) { rank.innerText="Khu Vườn Rực Rỡ!"; plant.innerHTML = plantStages[5]; }
+        else if(pct > 50) { rank.innerText="Cây Đã Nở Hoa!"; plant.innerHTML = plantStages[4]; }
+        else { rank.innerText="Cần Chăm Sóc Thêm!"; plant.innerHTML = plantStages[3]; }
         document.getElementById('res-stats').innerText = `${correctCount}/${pool.length}`;
     }
     
-    init();
+    // Initializer
+    document.addEventListener('DOMContentLoaded', () => {
+        initMenu();
+        initGameScreen();
+        initResultScreen();
+    });
 </script>
 </body>
 </html>
