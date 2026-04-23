@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L&D Dungeon: KiotViet Onboarding Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #12100E; /* Dark dungeon background */
+            color: #EAE0D5;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* --- Game Specific Styles --- */
+        .arena-bg {
+            background: radial-gradient(circle at center, #2A241D 0%, #12100E 70%);
+            border: 1px solid #3E3222;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* HP Bar */
+        .hp-bar-container {
+            width: 100%;
+            height: 12px;
+            background-color: #332b2b;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #111;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        .hp-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease-out, background-color 0.3s;
+        }
+        .hp-player { background: linear-gradient(90deg, #d97706, #fbbf24); }
+        .hp-enemy { background: linear-gradient(90deg, #991b1b, #ef4444); }
+
+        /* Timer Bar */
+        .timer-bar-container {
+            width: 100%;
+            height: 4px;
+            background-color: #222;
+            margin-bottom: 15px;
+        }
+        .timer-bar-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .animate-shake { animation: shake 0.5s; }
+
+        @keyframes attack-right {
+            0% { transform: translateX(0) rotate(0); }
+            50% { transform: translateX(50px) rotate(15deg) scale(1.2); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+        .animate-attack-right { animation: attack-right 0.3s ease-in-out; }
+
+        @keyframes attack-left {
+            0% { transform: translateX(0) rotate(0); }
+            50% { transform: translateX(-50px) rotate(-15deg) scale(1.2); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+        .animate-attack-left { animation: attack-left 0.3s ease-in-out; }
+
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+        .damage-number {
+            position: absolute;
+            font-weight: 900;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 0 #000;
+            animation: float-up 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+        .dmg-player { color: #ff3333; }
+        .dmg-enemy { color: #fbbf24; }
+
+        /* The Doors */
+        .door-container {
+            position: relative;
+            background-color: #2D2721; /* Stone color */
+            border-radius: 40px 40px 10px 10px;
+            padding: 10px 10px 20px 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .door-container:hover:not(.disabled) {
+            transform: translateY(-5px);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.6);
+        }
+
+        .door-wood {
+            background: linear-gradient(180deg, #5C3A21 0%, #3E2412 100%);
+            border-radius: 30px 30px 5px 5px;
+            border: 2px solid #2A170B;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+        }
+        
+        /* Wood planks effect */
+        .door-wood::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 30%; right: 30%; bottom: 0;
+            border-left: 1px solid rgba(0,0,0,0.3);
+            border-right: 1px solid rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        .door-letter-badge {
+            background-color: #1A1A1A;
+            color: #888;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .door-text {
+            color: #D4C3A3;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            z-index: 10;
+            line-height: 1.4;
+        }
+
+        /* Door States */
+        .door-container.correct {
+            border-color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+        }
+        .door-container.correct .door-wood {
+            background: linear-gradient(180deg, #7A5323 0%, #4A3011 100%); /* Lighter open feel */
+        }
+        .door-container.correct .door-text { color: #fff; }
+        
+        .door-container.wrong {
+            border-color: #ef4444;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            opacity: 0.7;
+        }
+        
+        .door-container.disabled { cursor: not-allowed; }
+
+        /* Message Box */
+        .msg-box {
+            background: rgba(15, 12, 10, 0.85);
+            border: 1px solid #4B3E2F;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Glow effects */
+        .glow-text-gold { text-shadow: 0 0 10px rgba(251, 191, 36, 0.8); }
+        .glow-text-red { text-shadow: 0 0 10px rgba(239, 68, 68, 0.8); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-2 md:p-6 relative">
+
+    <!-- Screen Flash Element -->
+    <div id="screenFlash" class="fixed inset-0 pointer-events-none z-50 opacity-0 transition-opacity duration-200"></div>
+
+    <!-- Main Game Container -->
+    <div id="gameContainer" class="w-full max-w-4xl mx-auto flex flex-col h-[95vh] md:h-auto">
+        
+        <!-- Header & Arena -->
+        <div class="arena-bg rounded-2xl p-4 md:p-6 mb-6 relative">
+            <!-- Streak Power -->
+            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex items-center bg-[#1a1614] border border-[#3E3222] px-4 py-1 rounded-full z-20">
+                <i class="fa-solid fa-bolt text-yellow-500 mr-2 text-sm"></i>
+                <span class="text-xs font-bold text-gray-400 mr-2 tracking-widest uppercase">Combo</span>
+                <div class="flex gap-1" id="streakDots">
+                    <div class="w-3 h-3 rounded-full border border-yellow-600 bg-transparent"></div>
+                    <div class="w-3 h-3 rounded-full border border-yellow-600 bg-transparent"></div>
+                    <div class="w-3 h-3 rounded-full border border-yellow-600 bg-transparent"></div>
+                </div>
+            </div>
+
+            <!-- Health Bars & Avatars -->
+            <div class="flex justify-between items-center relative">
+                
+                <!-- Player (Hero L&D) -->
+                <div class="w-[40%] flex flex-col items-center relative">
+                    <div class="w-full flex justify-between text-xs font-bold mb-1 px-1">
+                        <span class="text-amber-400"><i class="fa-solid fa-user-shield mr-1"></i> L&D Hero</span>
+                        <span id="playerHpText" class="text-gray-300">100/100</span>
+                    </div>
+                    <div class="hp-bar-container">
+                        <div id="playerHpBar" class="hp-bar-fill hp-player" style="width: 100%;"></div>
+                    </div>
+                    
+                    <div id="playerAvatar" class="mt-6 text-6xl text-slate-300 relative">
+                        <i class="fa-solid fa-chess-knight filter drop-shadow-lg"></i>
+                        <i class="fa-solid fa-sword absolute -right-4 top-2 text-3xl text-amber-500 transform rotate-45"></i>
+                    </div>
+                </div>
+
+                <!-- VS Text -->
+                <div class="text-yellow-600 font-black text-2xl md:text-3xl tracking-wider glow-text-gold">VS</div>
+
+                <!-- Enemy (Boss) -->
+                <div class="w-[40%] flex flex-col items-center relative">
+                    <div class="w-full flex justify-between text-xs font-bold mb-1 px-1">
+                        <span id="enemyHpText" class="text-gray-300">100/100</span>
+                        <span class="text-red-400"><i class="fa-solid fa-dragon mr-1"></i> Rule Bot</span>
+                    </div>
+                    <div class="hp-bar-container justify-end flex">
+                        <div id="enemyHpBar" class="hp-bar-fill hp-enemy" style="width: 100%;"></div>
+                    </div>
+                    
+                    <div id="enemyAvatar" class="mt-6 text-6xl text-red-800 relative">
+                        <i class="fa-solid fa-ghost filter drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer & Message Box -->
+        <div class="timer-bar-container rounded-full overflow-hidden">
+            <div id="timerFill" class="timer-bar-fill"></div>
+        </div>
+
+        <div id="messageBox" class="msg-box py-3 px-4 mb-6 text-center h-16 flex flex-col justify-center items-center transition-all">
+            <span id="messageText" class="text-lg font-bold text-gray-300">Chuẩn bị sẵn sàng!</span>
+            <span id="subMessageText" class="text-sm text-gray-500"></span>
+        </div>
+
+        <!-- Question Area -->
+        <div class="mb-6 text-center px-2">
+            <h2 id="questionText" class="text-xl md:text-2xl font-bold text-white leading-tight">...</h2>
+        </div>
+
+        <!-- Doors (Options) Area -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 flex-1">
+            <!-- Door A -->
+            <div class="door-container" id="door-0" onclick="selectAnswer(0)">
+                <div class="door-wood">
+                    <div class="door-letter-badge">A</div>
+                    <div class="door-text" id="optText-0">...</div>
+                    <i id="icon-0" class="fa-solid fa-check text-4xl text-yellow-400 absolute bottom-4 opacity-0 transition-opacity"></i>
+                    <i id="icon-wrong-0" class="fa-solid fa-xmark text-5xl text-red-500 absolute bottom-4 opacity-0 transition-opacity glow-text-red"></i>
+                </div>
+            </div>
+            <!-- Door B -->
+            <div class="door-container" id="door-1" onclick="selectAnswer(1)">
+                <div class="door-wood">
+                    <div class="door-letter-badge">B</div>
+                    <div class="door-text" id="optText-1">...</div>
+                    <i id="icon-1" class="fa-solid fa-check text-4xl text-yellow-400 absolute bottom-4 opacity-0 transition-opacity"></i>
+                    <i id="icon-wrong-1" class="fa-solid fa-xmark text-5xl text-red-500 absolute bottom-4 opacity-0 transition-opacity glow-text-red"></i>
+                </div>
+            </div>
+            <!-- Door C -->
+            <div class="door-container" id="door-2" onclick="selectAnswer(2)">
+                <div class="door-wood">
+                    <div class="door-letter-badge">C</div>
+                    <div class="door-text" id="optText-2">...</div>
+                    <i id="icon-2" class="fa-solid fa-check text-4xl text-yellow-400 absolute bottom-4 opacity-0 transition-opacity"></i>
+                    <i id="icon-wrong-2" class="fa-solid fa-xmark text-5xl text-red-500 absolute bottom-4 opacity-0 transition-opacity glow-text-red"></i>
+                </div>
+            </div>
+            <!-- Door D -->
+            <div class="door-container" id="door-3" onclick="selectAnswer(3)">
+                <div class="door-wood">
+                    <div class="door-letter-badge">D</div>
+                    <div class="door-text" id="optText-3">...</div>
+                    <i id="icon-3" class="fa-solid fa-check text-4xl text-yellow-400 absolute bottom-4 opacity-0 transition-opacity"></i>
+                    <i id="icon-wrong-3" class="fa-solid fa-xmark text-5xl text-red-500 absolute bottom-4 opacity-0 transition-opacity glow-text-red"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Controls -->
+        <div class="mt-8 flex justify-between items-center px-4">
+            <div class="text-gray-500 font-bold tracking-widest text-sm">
+                ẢI <span id="progressText" class="text-yellow-600">1 / 8</span>
+            </div>
+            <button id="nextBtn" onclick="nextQuestion()" class="hidden bg-yellow-600 hover:bg-yellow-500 text-black font-extrabold py-2 px-8 rounded border-b-4 border-yellow-800 active:border-b-0 active:translate-y-1 transition-all">
+                Tiếp Tục <i class="fa-solid fa-angle-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Start/End Screen Overlay -->
+    <div id="overlayScreen" class="fixed inset-0 bg-black/90 z-[100] flex flex-col items-center justify-center p-6 text-center">
+        <h1 id="overlayTitle" class="text-4xl md:text-5xl font-black text-amber-500 mb-4 glow-text-gold">L&D DUNGEON</h1>
+        <p id="overlayDesc" class="text-lg text-gray-300 mb-8 max-w-lg">Vượt ải để củng cố kiến thức Quy trình Tiếp nhận & Đào tạo. Sai 1 ly đi 1 vạn máu!</p>
+        
+        <div id="finalScoreArea" class="hidden mb-8">
+            <div class="text-2xl text-gray-400 mb-2">Máu còn lại: <span id="finalHpText" class="text-white font-bold"></span>/100</div>
+            <div class="text-xl text-yellow-500">Combo Cao nhất: <span id="finalComboText" class="text-white font-bold"></span></div>
+        </div>
+
+        <button onclick="startGame()" class="bg-amber-600 hover:bg-amber-500 text-black text-xl font-extrabold py-3 px-12 rounded-lg border-b-4 border-amber-800 active:border-b-0 active:translate-y-1 transition-all">
+            <span id="overlayBtnText">BẮT ĐẦU CHIẾN</span>
+        </button>
+    </div>
+
+    <!-- Game Logic -->
+    <script>
+        // --- GAME DATA (SLA RULES) ---
+        const questions = [
+            {
+                q: "Khối Kinh doanh: Hạn chót gửi kết quả bài test Lần 1?",
+                opts: ["Trước 15h Thứ 5", "Trước 12h Thứ 6", "12h Thứ 7", "Hết ngày Thứ 6"],
+                ans: 1,
+                dmg: 20,
+                expl: "SLA cứng: Gửi kết quả cho IT, HR, SM trước 12h00 trưa Thứ 6."
+            },
+            {
+                q: "Khối Ngoài Kinh doanh (Non-Sales): Khi nào phải gửi báo cáo tiến độ học LMS?",
+                opts: ["Cuối tháng", "Trước 12h Thứ 6 hàng tuần", "Ngày 15 hàng tháng", "Trước 15h Thứ 5"],
+                ans: 1,
+                dmg: 20,
+                expl: "L&D phải xuất dữ liệu hệ thống báo cáo Quản lý trước 12h Thứ 6."
+            },
+            {
+                q: "Nhân sự Sales trượt bài test Lần 2. L&D xử lý thế nào?",
+                opts: ["Báo HR làm thủ tục nghỉ việc", "Cho thi lại Lần 3", "Giao Quản lý đào tạo lại", "Trừ lương"],
+                ans: 0,
+                dmg: 30, // High damage for this critical rule
+                expl: "Tuyệt đối KHÔNG thi Lần 3. Báo HRBP chấm dứt hợp đồng ngay."
+            },
+            {
+                q: "Nhân viên Sales đi làm vào Thứ 2. Khi nào L&D phải gửi Thư mời đào tạo?",
+                opts: ["Ngày Onboard", "16h ngày trước đó", "Trước 12h Thứ 7 tuần trước", "Sáng Thứ 2"],
+                ans: 2,
+                dmg: 20,
+                expl: "Gia nhập T2-T4 -> Thư mời phải đi trước 12h00 Thứ 7 tuần liền trước."
+            },
+            {
+                q: "Điều kiện mở Lớp đào tạo Sản phẩm cho khối Sales là gì?",
+                opts: ["Tối thiểu 5 HV", "Không yêu cầu", "Tối thiểu 6 HV, học 3 ngày liên tiếp", "Tối đa 6 HV"],
+                ans: 2,
+                dmg: 15,
+                expl: "Nếu <= 5 HV, lớp sẽ bị hủy và trả về cho Quản lý tự đào tạo."
+            },
+            {
+                q: "KPI đánh giá chất lượng của Phòng Đào tạo được tính thế nào?",
+                opts: ["Tỷ lệ Pass test >= 80%", "Tỷ lệ Pass test = 100%", "Tỷ lệ Pass test >= 70%", "Không có KPI"],
+                ans: 0,
+                dmg: 20,
+                expl: "Dưới 80% là KHÔNG ĐẠT tiêu chuẩn chất lượng."
+            },
+            {
+                q: "Bài kiểm tra định kỳ Tháng 1 (KV1) diễn ra vào ngày nào?",
+                opts: ["Ngày 10", "Ngày 15 hàng tháng", "Ngày 20", "Cuối tháng"],
+                ans: 1,
+                dmg: 15,
+                expl: "Tổ chức vào ngày 15 hàng tháng (tối đa 2 lần thi)."
+            },
+            {
+                q: "Quản lý (SM) sẽ Đánh giá Kỹ năng Thực hành (Phiên tư vấn) vào lúc nào?",
+                opts: ["T2 hoặc T3 tuần 2", "Tất cả các ngày", "Bất cứ lúc nào rảnh", "Thứ 5 (TS) hoặc Thứ 6 (DS) tuần 2"],
+                ans: 3,
+                dmg: 15,
+                expl: "Sau khi đánh giá, L&D có 24h để tổng hợp và thông báo điểm."
+            }
+        ];
+
+        // --- GAME STATE ---
+        const MAX_HP = 100;
+        const ENEMY_MAX_HP = questions.reduce((sum, q) => sum + q.dmg, 0); // Enemy HP = total possible damage
+        const TIME_PER_Q = 15; // seconds
+
+        let currentQ = 0;
+        let playerHp = MAX_HP;
+        let enemyHp = ENEMY_MAX_HP;
+        let combo = 0;
+        let maxCombo = 0;
+        let isAnswered = false;
+        let timerInterval;
+        let timeLeft = 0;
+
+        // --- DOM ELEMENTS ---
+        const elPlayerHp = document.getElementById('playerHpBar');
+        const elPlayerHpText = document.getElementById('playerHpText');
+        const elEnemyHp = document.getElementById('enemyHpBar');
+        const elEnemyHpText = document.getElementById('enemyHpText');
+        const elQuestion = document.getElementById('questionText');
+        const elMessage = document.getElementById('messageText');
+        const elSubMessage = document.getElementById('subMessageText');
+        const elProgress = document.getElementById('progressText');
+        const elNextBtn = document.getElementById('nextBtn');
+        const elTimerFill = document.getElementById('timerFill');
+        const elStreakDots = document.getElementById('streakDots');
+        
+        // --- LOGIC FUNCTIONS ---
+
+        function startGame() {
+            document.getElementById('overlayScreen').classList.add('hidden');
+            currentQ = 0;
+            playerHp = MAX_HP;
+            enemyHp = ENEMY_MAX_HP;
+            combo = 0;
+            maxCombo = 0;
+            updateHpUI();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQ >= questions.length || playerHp <= 0) {
+                endGame();
+                return;
+            }
+
+            isAnswered = false;
+            const qData = questions[currentQ];
+            elQuestion.innerText = qData.q;
+            elProgress.innerText = `${currentQ + 1} / ${questions.length}`;
+            
+            // Reset UI
+            elNextBtn.classList.add('hidden');
+            elMessage.innerText = "Nhanh tay chọn đáp án!";
+            elMessage.className = "text-lg font-bold text-gray-300";
+            elSubMessage.innerText = "";
+            document.getElementById('messageBox').style.borderColor = '#4B3E2F';
+            
+            // Render Doors
+            for (let i = 0; i < 4; i++) {
+                const door = document.getElementById(`door-${i}`);
+                const text = document.getElementById(`optText-${i}`);
+                const iconCorrect = document.getElementById(`icon-${i}`);
+                const iconWrong = document.getElementById(`icon-wrong-${i}`);
+                
+                door.className = "door-container"; // reset
+                text.innerText = qData.opts[i];
+                iconCorrect.classList.remove('opacity-100');
+                iconCorrect.classList.add('opacity-0');
+                iconWrong.classList.remove('opacity-100');
+                iconWrong.classList.add('opacity-0');
+            }
+
+            updateComboUI();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = TIME_PER_Q;
+            elTimerFill.style.transition = "none";
+            elTimerFill.style.width = "100%";
+            elTimerFill.style.backgroundColor = "#3b82f6";
+            
+            // Small timeout to allow CSS reset
+            setTimeout(() => {
+                elTimerFill.style.transition = `width ${TIME_PER_Q}s linear`;
+                elTimerFill.style.width = "0%";
+            }, 50);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if(timeLeft <= 5) elTimerFill.style.backgroundColor = "#ef4444"; // red warning
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeOut();
+                }
+            }, 1000);
+        }
+
+        function handleTimeOut() {
+            if(isAnswered) return;
+            isAnswered = true;
+            disableDoors();
+            
+            const qData = questions[currentQ];
+            const dmg = qData.dmg;
+            
+            // Enemy attacks
+            applyDamage('player', dmg);
+            combo = 0;
+            
+            // Show correct answer visually
+            highlightCorrectAnswer(qData.ans);
+            
+            showFeedback("Hết giờ! Boss chém bạn mất máu.", qData.expl, "wrong");
+        }
+
+        function selectAnswer(index) {
+            if (isAnswered) return;
+            isAnswered = true;
+            clearInterval(timerInterval);
+            elTimerFill.style.width = elTimerFill.style.width; // freeze timer bar
+            disableDoors();
+
+            const qData = questions[currentQ];
+            const door = document.getElementById(`door-${index}`);
+            
+            if (index === qData.ans) {
+                // CORRECT
+                combo++;
+                if(combo > maxCombo) maxCombo = combo;
+                
+                door.classList.add('correct');
+                document.getElementById(`icon-${index}`).classList.replace('opacity-0', 'opacity-100');
+                
+                // Bonus damage based on combo
+                let bonus = 0;
+                if(combo >= 3) bonus = 10;
+                applyDamage('enemy', qData.dmg + bonus);
+                
+                showFeedback(`Chính xác! Gây sát thương lên Boss.`, qData.expl, "correct");
+            } else {
+                // WRONG
+                combo = 0;
+                door.classList.add('wrong');
+                document.getElementById(`icon-wrong-${index}`).classList.replace('opacity-0', 'opacity-100');
+                
+                highlightCorrectAnswer(qData.ans);
+                applyDamage('player', qData.dmg);
+                
+                showFeedback(`Sai quy định! Boss phản đòn.`, qData.expl, "wrong");
+            }
+        }
+
+        function highlightCorrectAnswer(correctIdx) {
+            const correctDoor = document.getElementById(`door-${correctIdx}`);
+            correctDoor.classList.add('correct');
+            // Remove wrong icon if it was there (shouldn't be, but safe)
+            document.getElementById(`icon-${correctIdx}`).classList.replace('opacity-0', 'opacity-100');
+        }
+
+        function disableDoors() {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`door-${i}`).classList.add('disabled');
+            }
+            // Show next button after a short delay
+            setTimeout(() => {
+                elNextBtn.classList.remove('hidden');
+                if(playerHp <= 0) elNextBtn.innerText = "Kết thúc";
+            }, 800);
+        }
+
+        function applyDamage(target, amount) {
+            updateComboUI();
+
+            if (target === 'enemy') {
+                // Player attacks
+                document.getElementById('playerAvatar').classList.add('animate-attack-right');
+                setTimeout(() => document.getElementById('playerAvatar').classList.remove('animate-attack-right'), 300);
+                
+                setTimeout(() => {
+                    document.getElementById('enemyAvatar').classList.add('animate-shake');
+                    setTimeout(() => document.getElementById('enemyAvatar').classList.remove('animate-shake'), 500);
+                    showDamageNumber('enemy', amount);
+                    flashScreen('rgba(251, 191, 36, 0.2)'); // Yellow flash
+                    enemyHp = Math.max(0, enemyHp - amount);
+                    updateHpUI();
+                }, 150);
+
+            } else {
+                // Enemy attacks
+                document.getElementById('enemyAvatar').classList.add('animate-attack-left');
+                setTimeout(() => document.getElementById('enemyAvatar').classList.remove('animate-attack-left'), 300);
+                
+                setTimeout(() => {
+                    document.getElementById('gameContainer').classList.add('animate-shake'); // Shake whole screen for player damage
+                    setTimeout(() => document.getElementById('gameContainer').classList.remove('animate-shake'), 500);
+                    showDamageNumber('player', amount);
+                    flashScreen('rgba(239, 68, 68, 0.3)'); // Red flash
+                    playerHp = Math.max(0, playerHp - amount);
+                    updateHpUI();
+                }, 150);
+            }
+        }
+
+        function showDamageNumber(target, amount) {
+            const num = document.createElement('div');
+            num.className = `damage-number ${target === 'player' ? 'dmg-player' : 'dmg-enemy'}`;
+            num.innerText = `-${amount}`;
+            
+            // Append near avatar
+            const avatar = document.getElementById(target + 'Avatar');
+            avatar.appendChild(num);
+            
+            // Remove after animation
+            setTimeout(() => num.remove(), 1000);
+        }
+
+        function flashScreen(color) {
+            const flash = document.getElementById('screenFlash');
+            flash.style.backgroundColor = color;
+            flash.style.opacity = '1';
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
+        }
+
+        function updateHpUI() {
+            // Player
+            const pPct = (playerHp / MAX_HP) * 100;
+            elPlayerHp.style.width = pPct + "%";
+            elPlayerHpText.innerText = `${playerHp}/${MAX_HP}`;
+            
+            // Enemy
+            const ePct = (enemyHp / ENEMY_MAX_HP) * 100;
+            elEnemyHp.style.width = ePct + "%";
+            elEnemyHpText.innerText = `${enemyHp}/${ENEMY_MAX_HP}`;
+        }
+
+        function updateComboUI() {
+            let html = '';
+            for(let i=1; i<=3; i++) {
+                if(i <= combo) {
+                    html += `<div class="w-3 h-3 rounded-full bg-yellow-400 shadow-[0_0_8px_#facc15]"></div>`;
+                } else {
+                    html += `<div class="w-3 h-3 rounded-full border border-yellow-600 bg-[#2a241d]"></div>`;
+                }
+            }
+            elStreakDots.innerHTML = html;
+        }
+
+        function showFeedback(title, sub, type) {
+            elMessage.innerText = title;
+            elSubMessage.innerText = sub;
+            const box = document.getElementById('messageBox');
+            
+            if(type === 'correct') {
+                elMessage.className = "text-xl font-bold text-yellow-400 glow-text-gold";
+                box.style.borderColor = "#fbbf24";
+                box.style.background = "rgba(251, 191, 36, 0.1)";
+            } else {
+                elMessage.className = "text-xl font-bold text-red-500 glow-text-red";
+                box.style.borderColor = "#ef4444";
+                box.style.background = "rgba(239, 68, 68, 0.15)";
+            }
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            loadQuestion();
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            const overlay = document.getElementById('overlayScreen');
+            const title = document.getElementById('overlayTitle');
+            const desc = document.getElementById('overlayDesc');
+            const btn = document.getElementById('overlayBtnText');
+            
+            document.getElementById('finalScoreArea').classList.remove('hidden');
+            document.getElementById('finalHpText').innerText = playerHp;
+            document.getElementById('finalComboText').innerText = maxCombo;
+
+            if (playerHp > 0) {
+                title.innerText = "CHIẾN THẮNG!";
+                title.className = "text-5xl font-black text-emerald-400 mb-4 glow-text-gold";
+                desc.innerText = "Tuyệt vời! Bạn đã nắm vững các quy định SLA của L&D KiotViet. Boss Onboard đã bị tiêu diệt.";
+                btn.innerText = "CHƠI LẠI ĐỂ NHUẦN NHUYỄN HƠN";
+            } else {
+                title.innerText = "GAME OVER";
+                title.className = "text-5xl font-black text-red-500 mb-4 glow-text-red";
+                desc.innerText = "Bạn đã hết máu! Sai quy định quá nhiều sẽ ảnh hưởng tới tiến trình Onboard của nhân sự. Hãy xem lại sổ tay nhé.";
+                btn.innerText = "PHỤC THÙ NGAY";
+            }
+            
+            overlay.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
