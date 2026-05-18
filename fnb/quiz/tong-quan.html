@@ -1,1066 +1,725 @@
-<!DOCTYPE html><html lang="vi"><head>
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet Learning App</title>
+    <title>KiotViet E-Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* CSS CORE */
-        body { font-family: 'Inter', sans-serif; background-color: #e2e8f0; overflow: hidden; touch-action: manipulation; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
-        #mobile-frame { width: 100%; height: 100%; background: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-        @media (min-width: 768px) { #mobile-frame { width: 100%; max-width: 1024px; height: 92vh; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border: 1px solid #cbd5e1; } ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; } }
-        #app-container { position: relative; width: 100%; height: 100%; overflow: hidden; flex: 1; padding-bottom: 80px; }
-        .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; items-center; padding: 1rem; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); transform: translateX(50px) scale(0.95); }
-        .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0) scale(1); z-index: 10; }
-        .inner-content { width: 100%; width: 100%; max-height: 100%; overflow-y: auto; padding: 10px 5px; border-radius: 1rem; scroll-behavior: smooth; }
-        .inner-content::-webkit-scrollbar { width: 4px; }
-        .inner-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
-        .perspective-1000 { perspective: 1000px; }
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
-        .card-inner.flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); background-color: white; }
-        .card-back { transform: rotateY(180deg); }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-        .animate-shake { animation: shake 0.4s ease-in-out; }
-        .soft-bg { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); }
-        .chat-bubble { max-width: 90%; padding: 14px 20px; border-radius: 16px; font-size: 1rem; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: popIn 0.3s ease-out backwards; }
-        .chat-bubble-customer { background: white; border: 1px solid #e2e8f0; border-top-left-radius: 4px; margin-right: auto; }
-        .chat-bubble-consultant { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-top-right-radius: 4px; margin-left: auto; }
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
-        #sidebar { transition: transform 0.3s ease; }
-        .sidebar-closed { transform: translateX(-100%); }
-        .sidebar-open { transform: translateX(0); }
-        #dl-loading { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 9999; color: white; }
-        #dl-loading:not(.hidden) { display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .bottom-nav-btn { position: absolute; bottom: 20px; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.2s; z-index: 50; cursor: pointer; border: none; opacity: 0.8; background: white; color: #64748b; border: 1px solid #e2e8f0; }
-        .bottom-nav-btn:hover { opacity: 1; background: #f8fafc; color: #3b82f6; }
-        .bottom-nav-btn:active { transform: scale(0.9); }
-        .bottom-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; background: #f1f5f9; color: #cbd5e1; box-shadow: none; }
-        #btn-prev { left: 20px; } #btn-next { right: 20px; }
-        /* Concept Card & Infographic Styles */
-        .concept-card-single { width: 100%; max-width: 900px; background: white; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
-        .concept-header-single { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #f1f5f9; flex-shrink: 0; }
-        .concept-body-single { padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem; flex: 1; overflow-y: auto; }
-        .concept-item-single { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 1.1rem; color: #334155; line-height: 1.6; }
-        @media (min-width: 768px) { .concept-item-single { font-size: 1.25rem; } }
-        .concept-item-single i { margin-top: 0.5rem; font-size: 0.6rem; color: #cbd5e1; }
-        .comp-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-        @media (min-width: 768px) { .comp-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
-        .comp-col { display: flex; flex-direction: column; gap: 1rem; }
-        .comp-item { display: flex; flex-direction: column; padding: 1rem; border-radius: 12px; border: 1px solid; height: 100%; }
-        .comp-item-prob { background-color: #fef2f2; border-color: #fecaca; }
-        .comp-item-sol { background-color: #eff6ff; border-color: #bfdbfe; }
-        .comp-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.05em; }
-        .prob-label { color: #ef4444; }
-        .sol-label { color: #3b82f6; }
-        .comp-text { font-size: 0.95rem; font-weight: 500; color: #1e293b; line-height: 1.4; }
-    </style></head><body>
-    <div id="mobile-frame">
-        <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 flex-shrink-0 shadow-sm relative">
-            <div class="flex items-center gap-4 z-10">
-                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-blue-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition"><i class="fa-solid fa-bars text-xl"></i></button>
-                <button onclick="toggleMute()" id="btn-mute" class="text-slate-400 hover:text-blue-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-50 transition" title="Bật/Tắt âm thanh"><i class="fa-solid fa-volume-high text-lg"></i></button>
-                <div class="flex flex-col"><span id="header-section-title" class="text-xs font-bold text-blue-600 uppercase tracking-wide hidden md:block">Tổng quan</span><div class="flex items-center gap-1"><span id="slide-indicator" class="text-[10px] text-slate-400 font-medium">1/--</span></div></div>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; }
+        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
+        .nav-main-btn.active { background-color: #ea580c; color: #ffffff; border-color: #c2410c; box-shadow: 0 4px 15px -3px rgba(0,0,0,0.1); }
+        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #ea580c; border-color: #ea580c; }
+        
+        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #f8fafc; color: #ea580c; border-color: #fed7aa; }
+        .nav-quiz-btn.active { background-color: #ea580c; color: #ffffff; border-color: #c2410c; box-shadow: 0 4px 15px -3px rgba(234,88,12,0.4); transform: scale(1.02); }
+        .nav-quiz-btn:not(.active):hover { background-color: #fff7ed; border-color: #ea580c; transform: scale(1.02); }
+        
+        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .topic-item:hover { background-color: #f8fafc; color: #ea580c; }
+        .topic-item.active { background-color: #f1f5f9; color: #ea580c; border-left-color: #ea580c; font-weight: 700; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: #94a3b8; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; margin: 0 2px; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        .chat-list { list-style-type: disc; padding-left: 1.25rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body class="flex flex-col h-[100dvh]">
+
+    <div class="tech-bg"></div>
+
+    <header class="shrink-0 bg-[#ea580c] border-b border-[#c2410c] shadow-sm py-2 sm:py-3 px-4 sm:px-6 z-50">
+        <div class="container mx-auto flex justify-between items-center max-w-[1400px]">
+            <div class="flex items-center gap-3 sm:gap-4 select-none">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-6 sm:h-8" style="filter: brightness(0) invert(1);">
+                <span class="text-white/30 font-light text-xl lg:text-2xl hidden sm:inline">|</span>
+                <div class="hidden sm:block">
+                    <h1 class="text-base sm:text-lg font-bold text-white tracking-tight uppercase leading-tight">E-Learning</h1>
+                    <p class="text-[10px] sm:text-xs text-white/80 font-semibold tracking-wide mt-0.5">Trang Tổng quan F&B</p>
+                </div>
             </div>
-            <div class="flex items-center gap-2 z-10"><img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet" class="h-6 md:h-8 opacity-100"></div>
-            <div class="absolute bottom-0 left-0 w-full h-0.5 bg-slate-100"><div id="progress-bar" class="h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div></div>
-        </header>
-        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 z-40 hidden transition-opacity" style="position:absolute;"></div>
-        <aside id="sidebar" class="absolute inset-y-0 left-0 z-50 w-64 bg-white shadow-2xl sidebar-closed flex flex-col h-full">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-center bg-slate-50 relative">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="Logo" class="h-6">
-                <button onclick="toggleSidebar()" class="absolute right-4 text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 border border-white/30 px-3 sm:px-4 py-1.5 rounded-full flex items-center gap-1.5 sm:gap-2 shadow-sm backdrop-blur-sm">
+                    <i class="fa-solid fa-utensils text-white"></i>
+                    <span class="text-white font-bold text-xs sm:text-sm tracking-wide hidden xs:inline">F&B</span>
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto p-2 space-y-1" id="sidebar-content"></div>
-        </aside>
-        <main id="app-container" class="soft-bg relative"></main>
-        <button onclick="navSlide(-1)" id="btn-prev" class="bottom-nav-btn"><i class="fa-solid fa-arrow-left text-xl"></i></button>
-        <button onclick="navSlide(1)" id="btn-next" class="bottom-nav-btn"><i class="fa-solid fa-arrow-right text-xl"></i></button>
+        </div>
+    </header>
+
+    <main class="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-4 max-w-[1400px] flex flex-col md:flex-row overflow-hidden gap-3 sm:gap-4 relative">
+        <div class="shrink-0 w-full md:w-64 lg:w-72 bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[40vh] md:max-h-full">
+            <div class="flex p-3 sm:p-4 gap-2 border-b border-slate-100 shrink-0">
+                <button onclick="switchMainTab('ly-thuyet')" id="btn-ly-thuyet" class="nav-main-btn active flex-1 py-2 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-1 text-center shadow-sm">
+                    <i class="fa-solid fa-book-open-reader text-base"></i> Bài học
+                </button>
+                <button onclick="switchMainTab('mo-phong')" id="btn-mo-phong" class="nav-main-btn bg-slate-50 text-slate-600 border-slate-200 flex-1 py-2 sm:py-2.5 rounded-lg font-bold text-xs sm:text-sm flex flex-col items-center justify-center gap-1 text-center shadow-sm">
+                    <i class="fa-regular fa-comments text-base"></i> Mô phỏng
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-2" id="sidebar-topic-list"></div>
+            <div class="p-3 sm:p-4 border-t border-slate-100 shrink-0 bg-slate-50/50">
+                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-brain text-lg"></i> Kiểm tra Kiến thức
+                </button>
+            </div>
+        </div>
+
+        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/80 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
+            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
+                <div class="shrink-0 px-4 sm:px-6 py-3 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-3">
+                    <div class="flex items-center gap-3">
+                        <span id="content-header-icon" class="text-xl sm:text-2xl text-orange-500">💡</span>
+                        <h2 id="content-header-title" class="text-base sm:text-xl font-bold text-slate-800 truncate">Tiêu đề</h2>
+                    </div>
+                    <div class="flex md:hidden gap-2">
+                        <button onclick="changeTopic(-1)" id="btn-prev-mobile" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center disabled:opacity-30"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button onclick="changeTopic(1)" id="btn-next-mobile" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center disabled:opacity-30"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="content-body" class="flex-1 overflow-y-auto custom-scrollbar relative flex flex-col bg-slate-50/30"></div>
+            </div>
+
+            <div id="sec-kiem-tra" class="hidden flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 bg-slate-50/50">
+                <div class="max-w-4xl mx-auto flex flex-col h-full relative w-full">
+                    <div class="text-center mb-6 shrink-0 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200">
+                        <div class="w-16 h-16 bg-orange-100 text-[#ea580c] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-inner border border-orange-200"><i class="fa-solid fa-brain"></i></div>
+                        <h2 class="text-xl sm:text-3xl font-black text-slate-800">Thử thách: Sự thật vs Lầm tưởng</h2>
+                        <p class="text-sm sm:text-base text-slate-500 mt-2 font-medium">Đọc kỹ các nhận định dưới đây và xác định xem nó là Đúng hay Sai nhé!</p>
+                    </div>
+                    <div id="quiz-container" class="space-y-4 sm:space-y-6 pb-20"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
+            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4"><i class="fa-solid fa-trophy"></i></div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">Tuyệt vời!</h3>
+            <p class="text-slate-600 mb-6 font-medium">Bạn đã hoàn thành bài kiểm tra với số điểm <br><strong class="text-3xl text-green-600 block mt-2" id="quiz-score-display">0/0</strong></p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeQuizPopup()" class="px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">Đóng lại</button>
+                <button onclick="resetQuiz()" class="px-6 py-2.5 bg-[#ea580c] text-white hover:opacity-90 font-bold rounded-xl transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            </div>
+        </div>
     </div>
-    <div id="dl-loading" class="hidden"><i class="fa-solid fa-circle-notch fa-spin text-4xl mb-3"></i><p class="font-bold">Đang tạo chứng nhận...</p></div>
 
-    <template id="tpl-title">
-        <div class="slide">
-            <div class="text-center max-w-lg md:max-w-4xl animate-fade-in-up w-full px-4 mx-auto">
-                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-600 text-5xl shadow-sm border-4 border-white">
-                    <i class="slide-icon"></i>
-                </div>
-                <h2 class="text-2xl md:text-4xl font-black text-blue-800 mb-2 slide-title leading-tight"></h2>
-                <p class="text-lg md:text-xl font-bold text-blue-600 mb-3 slide-subtitle hidden"></p>
-                <p class="text-slate-500 slide-desc text-sm md:text-lg">Bài học tương tác</p>
-                <div class="mt-8">
-                    <button onclick="navSlide(1)" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-blue-700 active:scale-95 transition text-sm md:text-base md:px-10 md:py-4">Bắt đầu ngay <i class="fa-solid fa-arrow-right ml-2"></i></button>
-                </div>
-            </div>
+    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 sm:p-8 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
+        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
+        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 sm:px-10 pointer-events-none z-40">
+            <button onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-12 h-12 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
+            <button onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-12 h-12 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
-    </template>
+        <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="event.stopPropagation();" />
+        <div class="absolute bottom-6 text-white/50 text-sm font-semibold pointer-events-none bg-black/50 px-4 py-1.5 rounded-full backdrop-blur-sm z-50">Sử dụng phím mũi tên ⬅ ➡ để chuyển ảnh</div>
+    </div>
 
-    <template id="tpl-intro"><div class="slide"><div class="text-center max-w-lg md:max-w-2xl animate-fade-in-up w-full px-4 mx-auto"><div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600 text-4xl shadow-sm border-4 border-white"><i class="fa-solid fa-hand-sparkles"></i></div><h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 intro-title">Chào mừng bạn!</h2><div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100 text-left space-y-4"><p class="text-slate-600 text-sm md:text-base leading-relaxed">Chào mừng bạn đến với học phần <span class="font-bold text-blue-600 course-name-span"></span>.</p><p class="text-slate-600 text-sm md:text-base leading-relaxed">Bên cạnh việc tự học qua <b>Tài liệu</b> và <b>Video Hướng dẫn sử dụng</b>, ứng dụng này mang đến một phương pháp học tập tương tác mới giúp bạn:</p><ul class="list-none space-y-3 mt-2"><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span><b>Hệ thống hóa</b> kiến thức sản phẩm một cách logic.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Làm quen với các <b>tình huống giả định</b> thực tế.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Nhận diện và xóa bỏ các <b>lầm tưởng thường gặp</b>.</span></li><li class="flex items-start gap-3 text-slate-700 text-sm md:text-base"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i><span>Hiểu rõ sự thật để <b>tư vấn khách hàng</b> hiệu quả nhất.</span></li></ul></div></div></div></template>
-    <template id="tpl-concept-single"><div class="slide"><div class="inner-content w-full px-4 flex flex-col items-center justify-center h-full"><div class="concept-card-single animate-fade-in-up"><div class="concept-header-single header-color-bg"><div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md text-xl icon-color"><i class="concept-icon"></i></div><h3 class="text-xl font-bold text-slate-800 concept-card-title"></h3></div><div class="concept-body-single"></div></div></div></div></template>
-    <template id="tpl-chat"><div class="slide"><div class="inner-content flex flex-col justify-center h-full w-full"><div class="space-y-6 chat-container w-full px-2 max-w-5xl mx-auto"></div></div></div></template>
-
-    <template id="tpl-card">
-        <div class="slide">
-            <div class="w-full h-full flex items-center justify-center p-4">
-                <div class="w-full max-w-[320px] aspect-[3/4] perspective-1000 relative">
-                    <div class="card-inner duration-500 w-full h-full shadow-2xl rounded-2xl relative">
-                        <div class="card-face bg-white border-2 border-slate-100 p-6 flex flex-col justify-between items-center text-center">
-                            <div class="hidden card-id">#</div>
-                            <div class="flex-1 flex flex-col justify-center w-full">
-                                <p class="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">Nhận định</p>
-                                <h3 class="text-lg font-medium text-slate-800 leading-snug card-question mb-6"></h3>
-                                <div class="grid grid-cols-2 gap-3 w-full mt-auto">
-                                    <button class="btn-true py-3 bg-green-50 text-green-600 border border-green-200 rounded-xl font-bold hover:bg-green-100 transition active:scale-95 shadow-sm text-sm"><i class="fa-solid fa-check mr-1"></i> ĐÚNG (1)</button>
-                                    <button class="btn-false py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold hover:bg-red-100 transition active:scale-95 shadow-sm text-sm"><i class="fa-solid fa-xmark mr-1"></i> SAI (2)</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-face card-back p-6 flex flex-col text-center">
-                            <div class="flex flex-col h-full overflow-y-auto">
-                                <div class="mb-4">
-                                    <div class="result-header text-lg font-bold flex items-center justify-center gap-2"></div>
-                                </div>
-                                <div class="text-left bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Nhận định:</p>
-                                    <p class="text-xs text-slate-600 italic card-original-q"></p>
-                                </div>
-                                <div class="text-left mb-3 bg-white border border-slate-100 p-2 rounded-lg shadow-sm">
-                                    <div class="flex justify-between items-center mb-1">
-                                        <span class="text-[10px] font-bold uppercase text-slate-500">Phương án bạn chọn:</span>
-                                        <span class="text-xs font-bold user-choice-label"></span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[10px] font-bold uppercase text-slate-500">Đáp án chính xác:</span>
-                                        <span class="text-xs font-bold correct-ans-label"></span>
-                                    </div>
-                                </div>
-                                <div class="text-left flex-1">
-                                    <p class="text-[10px] text-blue-600 font-bold uppercase mb-1"><i class="fa-solid fa-lightbulb mr-1"></i> Sự thật là:</p>
-                                    <p class="text-sm text-slate-700 font-medium leading-relaxed card-right-answer"></p>
-                                </div>
-                                <button class="btn-reset mt-auto text-xs uppercase tracking-wider p-3 rounded-xl border border-blue-100 bg-white text-blue-900 font-bold hover:bg-blue-50 transition shadow-sm"><i class="fa-solid fa-rotate-left mr-1"></i> Xem lại (0)</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <template id="tpl-comparison"><div class="slide"><div class="inner-content w-full px-1 h-full flex flex-col"><div class="text-center mb-4 pt-2"><span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Tổng kết</span><h3 class="text-lg font-bold text-slate-800 mt-2">Sự thật vs Lầm tưởng</h3><p class="text-[10px] text-slate-400 mt-1 italic">(Sử dụng mũi tên Lên/Xuống để cuộn)</p></div><div class="flex-1 overflow-y-auto bg-white rounded-xl shadow-sm border border-slate-200 relative comparison-scroll-area max-w-4xl mx-auto w-full"><table class="w-full text-left border-collapse"><thead class="bg-slate-50 sticky top-0 z-10 shadow-sm"><tr><th class="p-3 text-[10px] font-bold uppercase text-red-500 w-1/2 border-b border-slate-200 border-r text-center">Lầm tưởng (Sai)</th><th class="p-3 text-[10px] font-bold uppercase text-green-600 w-1/2 border-b border-slate-200 text-center">Sự thật (Đúng)</th></tr></thead><tbody class="text-xs text-slate-700 divide-y divide-slate-100 comp-tbody"></tbody></table></div></div></div></template>
-    <template id="tpl-game-start"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4"><div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl text-center w-full max-w-md border border-slate-100 mx-auto transition-all"><div class="inline-block p-4 rounded-full bg-orange-100 mb-4 animate-bounce"><i class="fa-solid fa-gamepad text-4xl text-orange-500"></i></div><h2 class="text-2xl font-black text-slate-800 mb-2">Quiz Game</h2><p class="text-sm text-slate-500 mb-6 italic px-4">Học xong mà không làm quiz ôn tập thì kiến thức đọng lại "Như muối bỏ bể", "Chớp mắt một cái" là quên luôn đấy!</p><div class="space-y-3 game-mode-buttons"></div></div></div></div></template>
-    <template id="tpl-game-play"><div class="slide"><div class="w-full max-w-sm md:max-w-3xl p-4 md:p-8 mx-auto"><div class="flex justify-between items-center mb-6"><span class="text-xs md:text-lg font-bold text-slate-400">Nhận định <span class="game-q-current">1</span>/<span class="game-q-total">10</span></span><span class="text-xs md:text-lg font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-100">Điểm: <span class="game-score">0</span></span></div><div class="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-12 min-h-[180px] md:min-h-[250px] flex items-center justify-center text-center mb-6 relative overflow-hidden"><h3 class="text-base md:text-2xl font-bold text-slate-800 game-question-text leading-relaxed"></h3></div><div class="grid grid-cols-2 gap-3 md:gap-6"><button onclick="answerGame(true)" class="game-btn btn-game-true py-4 md:py-8 rounded-2xl bg-white border-2 border-green-100 text-green-600 font-bold text-base md:text-2xl hover:bg-green-50 hover:border-green-500 transition active:scale-95 shadow-sm"><i class="fa-solid fa-check mr-1"></i> ĐÚNG (1)</button><button onclick="answerGame(false)" class="game-btn btn-game-false py-4 md:py-8 rounded-2xl bg-white border-2 border-red-100 text-red-600 font-bold text-base md:text-2xl hover:bg-red-50 hover:border-red-500 transition active:scale-95 shadow-sm"><i class="fa-solid fa-xmark mr-1"></i> SAI (2)</button></div></div></div></template>
-    <template id="tpl-winner-input"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4"><div class="bg-white p-8 rounded-3xl shadow-2xl text-center w-full max-w-md border border-blue-100 mx-auto"><div class="inline-block p-4 rounded-full bg-yellow-100 mb-4 animate-bounce"><i class="fa-solid fa-trophy text-4xl text-yellow-500"></i></div><h2 class="text-2xl font-black text-blue-900 mb-2">CHÚC MỪNG!</h2><p class="text-sm text-slate-600 mb-6">Bạn đã vượt qua bài kiểm tra với số điểm <span class="font-bold text-green-600 winner-score"></span>.<br>Vui lòng nhập thông tin để nhận chứng nhận.</p><div class="space-y-4 text-left"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase ml-1">Họ và Tên</label><input type="text" id="input-winner-name" placeholder="Đỗ Hoàng Sơn" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 font-bold"></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 uppercase ml-1">Bộ phận / Phòng ban</label><input type="text" id="input-winner-dept" placeholder="LND... / TSHNI... / DSSGN... / Customer Service..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"></div><button onclick="submitWinnerInfo()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 active:scale-95 transition mt-2">Nhận chứng nhận <i class="fa-solid fa-arrow-right ml-2"></i></button></div></div></div></div></template>
-    <template id="tpl-certificate"><div class="slide"><div class="inner-content flex flex-col items-center w-full px-2"><div id="cert-view" class="w-full aspect-[4/3] md:aspect-video bg-white shadow-xl flex overflow-hidden rounded-xl relative mb-6 border border-slate-200 max-w-sm md:max-w-3xl mx-auto"><div class="w-1/3 bg-blue-900 flex flex-col items-center justify-center text-white p-4 gap-4 relative"><i class="fa-solid fa-award text-4xl md:text-7xl text-yellow-400 mb-6 drop-shadow-md"></i><div class="text-center z-10"><p class="uppercase tracking-widest text-[8px] md:text-xs opacity-70 mb-2">Cấp bởi</p><p class="font-bold text-[10px] md:text-base tracking-wide">KiotViet LND</p></div><div class="absolute bottom-0 left-0 w-full h-1.5 bg-yellow-400"></div></div><div class="w-2/3 p-4 md:p-8 flex flex-col justify-center relative"><h1 class="text-lg md:text-3xl font-black text-blue-900 uppercase mb-2">GIẤY CHỨNG NHẬN</h1><p class="text-slate-500 italic text-[8px] md:text-sm mb-4 border-b border-slate-100 pb-2 cert-course-title"></p><div class="mb-4 flex flex-col justify-center"><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Học viên</p><h2 class="text-sm md:text-2xl font-bold text-blue-700 uppercase cert-name leading-normal py-1 truncate"></h2><p class="text-[8px] md:text-xs text-slate-500 font-medium cert-dept truncate mt-1 pb-2 leading-relaxed h-auto block"></p></div><div class="flex justify-between items-end mt-auto pt-4 border-t border-slate-50"><div><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold">Ngày cấp</p><p class="text-[9px] md:text-sm font-medium text-slate-600 cert-date"></p></div><div class="text-right"><p class="text-[8px] md:text-xs text-slate-400 uppercase font-bold">Điểm số</p><p class="text-lg md:text-3xl font-black text-green-600 cert-score"></p></div></div><div class="cert-fail-mark hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 text-2xl md:text-5xl font-black text-red-100 border-4 border-red-100 p-2 rounded-lg whitespace-nowrap">KHÔNG ĐẠT</div></div></div><div class="flex flex-col gap-3 w-full max-w-xs md:max-w-md"><button id="btn-download-cert" onclick="downloadCert()" class="w-full bg-blue-600 text-white border border-blue-600 px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition text-sm flex items-center justify-center gap-2 shadow-lg"><i class="fa-solid fa-download"></i> Tải chứng nhận</button><div class="grid grid-cols-2 gap-3"><button onclick="backToGameLogin()" class="bg-white border border-slate-200 text-slate-600 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition text-sm"><i class="fa-solid fa-rotate-right mr-2"></i> Chơi lại (0)</button><button onclick="goToReview()" class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-3 rounded-xl font-bold hover:bg-indigo-100 transition text-sm"><i class="fa-solid fa-list-check mr-2"></i> Xem chi tiết</button></div></div></div></template>
-    <template id="tpl-game-review"><div class="slide"><div class="inner-content w-full px-2 h-full flex flex-col"><div class="text-center mb-6 pt-2"><h3 class="text-xl font-bold text-slate-800">Chi tiết kết quả</h3><p class="text-xs text-slate-500 mt-1">Bảng tổng hợp đáp án</p></div><div class="flex-1 overflow-y-auto w-full max-w-4xl mx-auto pb-4"><table class="w-full text-left border-collapse rounded-xl overflow-hidden shadow-sm border border-slate-200"><thead class="bg-slate-50 text-slate-600 text-xs uppercase font-bold sticky top-0 shadow-sm"><tr><th class="p-4 w-1/2">Nhận định</th><th class="p-4 w-1/4 text-center">Đáp án chính xác</th><th class="p-4 w-1/4 text-center">Đáp án bạn chọn</th></tr></thead><tbody class="text-sm bg-white divide-y divide-slate-100 review-tbody"></tbody></table></div></div></div></template>
-    <template id="tpl-end-course"><div class="slide"><div class="w-full h-full flex items-center justify-center p-4 text-center"><div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-2xl border border-blue-50 relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div><div class="inline-block p-5 rounded-full bg-yellow-100 mb-6 animate-pulse"><i class="fa-solid fa-star text-5xl text-yellow-500"></i></div><h2 class="text-2xl md:text-3xl font-black text-slate-800 mb-4 end-course-title">Chúc mừng bạn đã hoàn thành học phần <span class="text-blue-600 course-name-end"></span>!</h2><p class="text-slate-600 text-sm md:text-base leading-relaxed mb-6 px-4">Nếu bạn đang tham gia khóa học trên hệ thống LMS, bạn có thể đóng ứng dụng E-Learning và đừng quên <span class="font-bold text-blue-700">làm nhiệm vụ trên LMS</span> để xác nhận hoàn thành học phần nhé!</p><div class="grid grid-cols-2 gap-3 w-full max-w-xl mx-auto mb-6"><button onclick="goToOverview()" class="bg-white border border-blue-200 text-blue-700 px-4 py-3 rounded-xl font-bold hover:bg-blue-50 transition text-sm"><i class="fa-solid fa-book-open mr-2"></i> Xem Cẩm nang</button><button onclick="goToComparison()" class="bg-purple-50 border border-purple-100 text-purple-700 px-4 py-3 rounded-xl font-bold hover:bg-purple-100 transition text-sm"><i class="fa-solid fa-table-columns mr-2"></i> Xem Bảng so sánh</button></div><div class="border-t border-slate-100 pt-6"><p class="text-slate-700 font-bold mb-1">Chúc bạn có trải nghiệm học tập hiệu quả và vui vẻ!</p><p class="text-slate-400 text-xs italic">From LND Team with <i class="fa-solid fa-heart text-red-400 mx-1"></i></p></div></div></div></div></template>
-    <template id="tpl-video"><div class="slide"><div class="inner-content w-full px-2 flex flex-col items-center justify-center h-full"><div class="w-full max-w-4xl bg-black rounded-xl overflow-hidden shadow-xl aspect-video relative border-4 border-slate-200"><iframe class="w-full h-full video-iframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div></div></template>
-    <template id="tpl-image"><div class="slide"><div class="inner-content w-full px-0 h-full flex flex-col justify-center items-center"><img src="" class="w-full h-auto max-h-full object-contain img-content shadow-lg rounded-lg"></div></div></template>
     <script>
-        // --- 1. DATA CONFIG (AI SẼ ĐIỀN VÀO ĐÂY) ---
-        const lessonData = {
-          "courseTitle": "Tổng quan",
-          "courseSubtitle": "Ngành Ăn uống, Giải trí",
-          "courseIcon": "fa-solid fa-graduation-cap",
-          "mediaModules": [
+        const unifiedData = [
             {
-              "type": "video",
-              "title": "Video hướng dẫn",
-              "src": "https://www.youtube.com/embed/UvXXsyd-W0U"
+                isIntro: true,
+                title: 'Giới thiệu chung',
+                icon: '💡',
+                description: 'Trang Tổng quan trên màn hình Quản lý cung cấp góc nhìn tập trung và tức thời về toàn bộ hoạt động kinh doanh. Tại đây, các dữ liệu quan trọng như doanh thu, đơn hàng, hiệu suất bàn, cơ cấu thực đơn và kênh bán hàng được tổng hợp và trực quan hóa trên một màn hình duy nhất, giúp bạn nhanh chóng trả lời 3 câu hỏi cốt lõi: Hôm nay bán có tốt không? Doanh thu đến từ đâu? Có việc gì cần làm ngay không?',
+                benefits: [
+                    { icon: 'fa-clock-rotate-left', title: 'Theo dõi thời gian thực', desc: 'Nắm bắt sức khỏe kinh doanh mà không cần mở từng báo cáo riêng lẻ.' },
+                    { icon: 'fa-bell', title: 'Phát hiện bất thường', desc: 'Nhận biết sớm các vấn đề như doanh thu giảm, tỷ lệ hủy món tăng, bàn trống nhiều...' },
+                    { icon: 'fa-lightbulb', title: 'Hỗ trợ quyết định nhanh', desc: 'Dễ dàng điều chỉnh nhân sự, thực đơn, và chiến lược kênh bán hàng kịp thời.' }
+                ],
+                updateInfo: 'Không có',
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041334/TQF_090526-1.jpg'],
+                video: null,
+                chat: [
+                    { r: 'customer', t: 'Trang Tổng quan này có lợi ích gì cho việc quản lý nhà hàng của tôi vậy?' },
+                    { r: 'consultant', t: 'Chào bạn, trang Tổng quan F&B của KiotViet được thiết kế để mang lại góc nhìn tập trung và tức thời về toàn bộ hoạt động kinh doanh, giúp bạn:<ul class="mb-2"><li class="mb-2">Theo dõi sức khỏe kinh doanh theo thời gian thực mà không cần mở từng báo cáo riêng lẻ.</li><li class="mb-2">Phát hiện sớm các dấu hiệu bất thường trong ngày như doanh thu giảm đột ngột, tỷ lệ hủy món tăng, hoặc bàn trống quá nhiều.</li><li class="mb-2">Hỗ trợ ra quyết định vận hành nhanh chóng, từ việc điều chỉnh nhân sự, tối ưu thực đơn đến xử lý các kênh bán hàng đang hoạt động kém hiệu quả.</li></ul>' }
+                ]
             },
             {
-              "type": "image",
-              "title": "Infographic",
-              "src": "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/05044832/BAO-CAO-TONG-QUAN.jpg"
-            }
-          ],
-          "overviewModules": [
-            {
-              "type": "concept",
-              "title": "Giới thiệu",
-              "data": [
-                {
-                  "title": "Doanh thu tạm tính",
-                  "icon": "fa-solid fa-info-circle",
-                  "color": "blue",
-                  "bullets": [
-                    "Khi truy cập màn hình Tổng quan ngành F&B, hệ thống sẽ hiển thị doanh thu tạm tính từ các phòng hoặc bàn đang được phục vụ để chủ quán có cái nhìn toàn diện về dòng tiền."
-                  ]
-                }
-              ]
+                title: 'Bố cục trang Tổng quan',
+                icon: '🗺️',
+                scenario: 'Khi truy cập trang Tổng quan, bạn muốn biết các thông tin được sắp xếp như thế nào.',
+                steps: [
+                    'Quan sát <strong>Thông tin bên trái</strong> để xem các số liệu thống kê chính về tình hình kinh doanh (doanh số, biểu đồ).',
+                    'Nhìn sang <strong>Phía trên bên phải</strong> để cập nhật các tính năng mới của phần mềm và các chương trình từ KiotViet.',
+                    'Kiểm tra <strong>Phía dưới bên phải</strong> để xem thông báo về sinh nhật khách hàng và các hoạt động gần đây của người dùng.'
+                ],
+                images: [
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09050737/TQF_090526-16.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09050733/TQF_090526-17.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09050729/TQF_090526-18.png'
+                ],
+                chat: [
+                    { r: 'customer', t: 'Tôi mới vào trang Tổng quan mà thấy nhiều thông tin quá. Các chỉ số được sắp xếp theo logic nào vậy?' },
+                    { r: 'consultant', t: 'Chào bạn, bố cục trang Tổng quan được thiết kế rất khoa học, bao gồm 3 phần chính. Bên trái là các số liệu kinh doanh cốt lõi, phía trên bên phải là các tính năng mới, còn phía dưới bên phải là thông báo và hoạt động hệ thống.' }
+                ]
             },
             {
-              "type": "concept",
-              "title": "Thao tác cơ bản",
-              "data": [
-                {
-                  "title": "Kết quả bán hàng",
-                  "icon": "fa-solid fa-chart-line",
-                  "color": "green",
-                  "bullets": [
-                    "Khi xem mục Kết quả bán hàng hôm nay trên Web, hệ thống tự động thống kê doanh số, số đơn hàng và so sánh các số liệu này với ngày hôm qua."
-                  ]
-                },
-                {
-                  "title": "Biểu đồ Doanh số",
-                  "icon": "fa-solid fa-chart-bar",
-                  "color": "green",
-                  "bullets": [
-                    "Khi thao tác với Biểu đồ Doanh số trên màn hình Tổng quan, người dùng có thể tùy chọn xem dữ liệu theo ngày, giờ hoặc thứ để nắm bắt xu hướng kinh doanh."
-                  ]
-                }
-              ]
+                title: 'Khối chỉ số Doanh thu & Đơn hàng',
+                icon: '💰',
+                scenario: 'Giữa ca bán hàng, bạn cần đánh giá nhanh tiền thu về thực tế là bao nhiêu và lượng khách có ổn định không.',
+                steps: [
+                    'Xem khối thông tin <strong>Doanh thu thuần hôm nay</strong> và <strong>Số lượng đơn hôm nay</strong>.',
+                    'Đọc các chỉ số như: Doanh thu thuần, % so sánh với hôm qua, Giảm giá, Trả hàng, Số lượng đơn, Trung bình đơn, Số khách/đơn.',
+                    'Đánh giá tình hình kinh doanh dựa trên các chỉ số đó để có hành động kịp thời.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041329/TQF_090526-2.png'],
+                chat: [
+                    { r: 'customer', t: 'Tôi muốn biết nhanh hôm nay bán được bao nhiêu tiền và có bao nhiêu đơn hàng mà không cần vào báo cáo chi tiết, có cách nào không?' },
+                    { r: 'consultant', t: 'Chắc chắn rồi ạ. Ngay trên trang Tổng quan, bạn chỉ cần nhìn vào khối thông tin "Doanh thu thuần hôm nay" và "Số lượng đơn hôm nay". Các chỉ số này sẽ cho bạn câu trả lời ngay lập tức.' }
+                ]
             },
             {
-              "type": "concept",
-              "title": "Mobile",
-              "data": [
-                {
-                  "title": "Top 10 hàng bán chạy",
-                  "icon": "fa-solid fa-mobile-screen",
-                  "color": "orange",
-                  "bullets": [
-                    "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng có thể xem biểu đồ Top 10 hàng hóa bán chạy được sắp xếp theo tiêu chí doanh thu hoặc số lượng."
-                  ]
-                },
-                {
-                  "title": "Kiểm soát Hủy món",
-                  "icon": "fa-solid fa-trash-can",
-                  "color": "orange",
-                  "bullets": [
-                    "Khi truy cập mục Hủy món trên ứng dụng mobile, người quản lý có thể xem chi tiết về giá trị món hủy, lý do hủy và danh sách nhân viên thực hiện thao tác hủy."
-                  ]
-                }
-              ]
+                title: 'Khối chỉ số Tỷ lệ phủ bàn',
+                icon: '🍽️',
+                scenario: 'Vào giờ cao điểm, bạn cần biết ngay quán còn bàn trống không và bếp có đang quá tải không.',
+                steps: [
+                    'Xem khối thông tin <strong>Tỷ lệ phủ bàn</strong>.',
+                    'Đọc các chỉ số: Tỷ lệ phủ bàn, Bàn đang sử dụng, Đơn đang phục vụ, Khách đang phục vụ.',
+                    'Đánh giá tình hình vận hành để điều phối nhân sự và sắp xếp khách hàng hợp lý.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041324/TQF_090526-3.png'],
+                chat: [
+                    { r: 'customer', t: 'Giờ cao điểm rồi, làm sao tôi biết nhanh quán còn bao nhiêu bàn trống để xếp khách và bếp có đang quá tải không?' },
+                    { r: 'consultant', t: 'Rất đơn giản ạ. Bạn chỉ cần xem khối "Tỷ lệ phủ bàn" trên trang Tổng quan. Nó sẽ cho bạn biết ngay số bàn đang sử dụng và tổng số đơn đang phục vụ.' }
+                ]
             },
             {
-              "type": "concept",
-              "title": "Thao tác nâng cao",
-              "data": [
-                {
-                  "title": "Lọc theo Chi nhánh",
-                  "icon": "fa-solid fa-filter",
-                  "color": "purple",
-                  "bullets": [
-                    "Khi cần xem số liệu của một cơ sở cụ thể, người dùng có thể sử dụng bộ lọc Chi nhánh trên màn hình Tổng quan để chuyển đổi dữ liệu giữa các chi nhánh hoặc xem toàn hệ thống."
-                  ]
-                }
-              ]
+                title: 'Biểu đồ Doanh thu thuần',
+                icon: '📊',
+                scenario: 'Bạn muốn biết khung giờ nào quán đông khách nhất để sắp xếp thêm nhân viên hoặc ngày nào trong tuần bán chậm để chạy khuyến mãi.',
+                steps: [
+                    'Chọn khoảng thời gian mong muốn tại góc trên bên phải biểu đồ (Hôm nay, 7 ngày qua,...).',
+                    'Tùy chọn xem biểu đồ theo <strong>Giờ/Ngàỳ/Thứ</strong>.',
+                    'Di chuột vào từng cột để xem chi tiết <strong>Doanh thu thuần</strong> và số lượng hóa đơn tương ứng.',
+                    'Đánh giá và xác định khung giờ cao điểm/thấp điểm để điều phối nhân sự và lên kế hoạch kinh doanh.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041319/TQF_090526-4.png'],
+                chat: [
+                    { r: 'customer', t: 'Tôi muốn xem doanh thu theo giờ hoặc theo ngày để biết lúc nào quán đông khách nhất, có xem được không?' },
+                    { r: 'consultant', t: 'Được chứ ạ. Biểu đồ "Doanh thu thuần" cho phép bạn xem dữ liệu theo giờ, ngày, hoặc thứ. Bạn có thể dễ dàng xác định các khung giờ cao điểm để tối ưu vận hành.' }
+                ]
             },
             {
-              "type": "comparison-link",
-              "title": "Tổng kết: Sự thật vs Lầm tưởng",
-              "data": null
-            }
-          ],
-          "comparison": [
-            {
-              "prob": "Khi truy cập màn hình Tổng quan ngành F&B, hệ thống chỉ hiển thị duy nhất doanh thu từ các đơn hàng đã thanh toán xong và không ghi nhận các bàn đang phục vụ.",
-              "sol": "Khi truy cập màn hình Tổng quan ngành F&B, hệ thống sẽ hiển thị doanh thu tạm tính từ các phòng hoặc bàn đang được phục vụ để chủ quán có cái nhìn toàn diện về dòng tiền."
+                title: 'Biểu đồ Lượng khách hàng',
+                icon: '👥',
+                scenario: 'Bạn cần phân bổ ca làm việc cho nhân viên hợp lý, tránh thừa người lúc vắng và thiếu người lúc đông.',
+                steps: [
+                    'Chọn khoảng thời gian cần phân tích (Hôm nay, 7 ngày qua,...).',
+                    'Xem biểu đồ cột hiển thị số <strong>lượt khách</strong> theo thời gian.',
+                    'Di chuột vào từng cột để xem chi tiết số lượt khách tương ứng.',
+                    'Dựa vào biểu đồ, xác định thời điểm đông khách và vắng khách để điều phối nhân sự hiệu quả.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041312/TQF_090526-5.png'],
+                chat: [
+                    { r: 'customer', t: 'Có cách nào để biết giờ nào quán tôi thường đông khách nhất để tôi xếp ca cho nhân viên không?' },
+                    { r: 'consultant', t: 'Có ạ. Biểu đồ "Lượng khách hàng" trên trang Tổng quan sẽ trực quan hóa số lượt khách theo từng khung giờ hoặc ngày. Dựa vào đó, bạn có thể xây dựng lịch làm việc tối ưu nhất.' }
+                ]
             },
             {
-              "prob": "Khi xem mục Kết quả bán hàng hôm nay trên Web, hệ thống chỉ hiển thị con số doanh thu hiện tại và yêu cầu người dùng tự mở báo cáo cũ để so sánh thủ công với ngày hôm qua.",
-              "sol": "Khi xem mục Kết quả bán hàng hôm nay trên Web, hệ thống tự động thống kê doanh số, số đơn hàng và so sánh các số liệu này với ngày hôm qua."
+                title: 'Biểu đồ Hiệu quả thực đơn',
+                icon: '🍔',
+                scenario: 'Bạn không biết nhóm món nào đang "gánh" doanh thu, món nào bán chậm cần cân nhắc loại bỏ.',
+                steps: [
+                    'Xem biểu đồ tròn để biết <strong>tỷ trọng doanh thu</strong> theo từng nhóm món hoặc loại thực đơn.',
+                    'Xem bảng <strong>Top 10 móm bán chạy</strong> để biết các món chủ lực.',
+                    'Sử dụng bộ lọc để xem top món chạy theo từng <strong>nhóm/loại</strong> cụ thể.',
+                    'Đánh giá và đưa ra quyết định: quảng bá món chủ lực, cải tiến hoặc loại bỏ món bán chậm.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041307/TQF_090526-6.png'],
+                chat: [
+                    { r: 'customer', t: 'Tôi muốn biết món nào đang bán chạy nhất và nhóm đồ ăn hay đồ uống đang mang lại doanh thu chính. Làm sao để xem?' },
+                    { r: 'consultant', t: 'Bạn hãy xem mục "Hiệu quả thực đơn" nhé. Nó sẽ hiển thị biểu đồ tỷ trọng doanh thu theo từng nhóm món và danh sách Top 10 món bán chạy nhất để bạn có dữ liệu tối ưu menu.' }
+                ]
             },
             {
-              "prob": "Khi thao tác với Biểu đồ Doanh số trên màn hình Tổng quan, người dùng chỉ có thể xem tổng doanh thu của cả tháng dưới dạng số liệu tĩnh mà không có biểu đồ phân tích theo giờ hay thứ.",
-              "sol": "Khi thao tác với Biểu đồ Doanh số trên màn hình Tổng quan, người dùng có thể tùy chọn xem dữ liệu theo ngày, giờ hoặc thứ để nắm bắt xu hướng kinh doanh."
+                title: 'Biểu đồ Tình trạng hủy món',
+                icon: '❌',
+                scenario: 'Bạn nghi ngờ có sự thất thoát từ việc hủy món không rõ lý do hoặc chất lượng phục vụ/bếp đang có vấn đề.',
+                steps: [
+                    'Xem các chỉ số tổng quan: <strong>Món bị hủy</strong>, <strong>Hóa đơn bị hủy</strong>, và <strong>Doanh thu bị hủy</strong>.',
+                    'Phân tích biểu đồ thanh ngang để xác định <strong>nguyên nhân</strong> hủy món nào chiếm tỷ trọng cao nhất.',
+                    'Dựa vào dữ liệu, xác định khâu đang có vấn đề (bếp, phục vụ, kiểm đồ) và đưa ra biện pháp khắc phục.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041250/TQF_090526-7.png'],
+                chat: [
+                    { r: 'customer', t: 'Dạo này tôi thấy nhân viên hủy món hơi nhiều, có cách nào kiểm soát và biết lý do không?' },
+                    { r: 'consultant', t: 'Chắc chắn rồi ạ. Biểu đồ "Tình trạng hủy món" sẽ thống kê tổng số món bị hủy, doanh thu bị ảnh hưởng và phân tích nguyên nhân hủy (sau báo bếp, sau in tạm tính...). Điều này giúp bạn xác định vấn đề và giảm thất thoát.' }
+                ]
             },
             {
-              "prob": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng chỉ có thể xem danh sách 10 hàng hóa mới nhập kho gần nhất chứ không xem được hàng bán chạy.",
-              "sol": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng có thể xem biểu đồ Top 10 hàng hóa bán chạy được sắp xếp theo tiêu chí doanh thu hoặc số lượng."
+                title: 'Thống kê Theo dõi nhân viên',
+                icon: '🧑‍💼',
+                scenario: 'Bạn cần theo dõi nhanh tình hình làm việc của nhân viên trong ngày để kịp thời điều chỉnh ca làm và xử lý các bất thường.',
+                steps: [
+                    'Xem các chỉ số tổng quan: <strong>Nhân viên đi làm</strong>, <strong>nghỉ làm</strong>, <strong>đi muộn</strong>, <strong>về sớm</strong>, <strong>làm thêm</strong>.',
+                    'Xem bảng <strong>Top 5 nhân viên làm nhiều giờ nhất</strong> để nhận diện nhân sự đang làm việc cường độ cao.',
+                    'Đánh giá và điều phối lại ca làm việc cho hợp lý, đảm bảo kỷ luật và tránh tình trạng quá tải.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041243/TQF_090526-8.png'],
+                chat: [
+                    { r: 'customer', t: 'Tôi muốn xem nhanh hôm nay có bao nhiêu nhân viên đi làm, có ai đi muộn về sớm không, xem ở đâu tiện nhất?' },
+                    { r: 'consultant', t: 'Bạn xem ngay khối "Theo dõi nhân viên" trên trang Tổng quan nhé. Nó thống kê đầy đủ các chỉ số như nhân viên đi làm, nghỉ làm, đi muộn, về sớm và top 5 nhân viên làm nhiều giờ nhất.' }
+                ]
             },
             {
-              "prob": "Khi truy cập mục Hủy món trên ứng dụng mobile, hệ thống chỉ hiển thị tổng số tiền bị hủy và không cho biết chi tiết ai là người đã thực hiện thao tác đó.",
-              "sol": "Khi truy cập mục Hủy món trên ứng dụng mobile, người quản lý có thể xem chi tiết về giá trị món hủy, lý do hủy và danh sách nhân viên thực hiện thao tác hủy."
+                title: 'Biểu đồ Kênh bán hàng',
+                icon: '🚚',
+                scenario: 'Nhà hàng của bạn bán trên nhiều nền tảng (Tại quán, Mang về, GrabFood,...) và bạn muốn đánh giá xem nên tập trung cho nền tảng nào.',
+                steps: [
+                    'Chọn khoảng thời gian cần phân tích.',
+                    'Xem biểu đồ để so sánh <strong>doanh thu thuần</strong> và <strong>số lượng đơn</strong> giữa các kênh bán hàng.',
+                    'Chuyển đổi giữa chế độ xem <strong>biểu đồ đường</strong> và <strong>biểu đồ tròn</strong> để có góc nhìn đa dạng.',
+                    'Đánh giá hiệu quả và điều chỉnh chiến lược kinh doanh cho từng kênh.'
+                ],
+                images: [
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041238/TQF_090526-9.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041228/TQF_090526-10.png'
+                ],
+                chat: [
+                    { r: 'customer', t: 'Tôi đang bán hàng trên cả GrabFood và ShopeeFood. Làm sao để biết kênh nào đang mang lại hiệu quả tốt hơn?' },
+                    { r: 'consultant', t: 'Bạn hãy xem "Biểu đồ Kênh bán hàng" nhé. Nó sẽ so sánh doanh thu và số lượng đơn hàng giữa các kênh, giúp bạn dễ dàng đánh giá và quyết định nên phân bổ ngân sách marketing vào đâu.' }
+                ]
             },
             {
-              "prob": "Khi cần xem số liệu của một cơ sở cụ thể, người dùng bắt buộc phải đăng xuất tài khoản hiện tại và đăng nhập lại vào tài khoản riêng của chi nhánh đó.",
-              "sol": "Khi cần xem số liệu của một cơ sở cụ thể, người dùng có thể sử dụng bộ lọc Chi nhánh trên màn hình Tổng quan để chuyển đổi dữ liệu giữa các chi nhánh hoặc xem toàn hệ thống."
-            }
-          ],
-          "practiceTopics": [
-            {
-              "title": "Tình huống Doanh thu tạm tính",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Chào em, anh mới mở quán ăn, nghe nói màn hình Tổng quan của KiotViet xem được cả doanh thu tạm tính của bàn đang ăn dở à?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ đúng rồi ạ. Màn hình Tổng quan ngành F&B giúp anh theo dõi cả doanh thu thực tế và doanh thu tạm tính từ các bàn đang phục vụ, giúp anh nắm bắt dòng tiền chính xác nhất ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi truy cập màn hình Tổng quan ngành F&B, hệ thống sẽ hiển thị doanh thu tạm tính từ các phòng hoặc bàn đang được phục vụ để chủ quán có cái nhìn toàn diện về dòng tiền.",
-                  "isTrue": true,
-                  "wrong": "Màn hình Tổng quan cung cấp cái nhìn khái quát về tình hình kinh doanh, bao gồm các số liệu thống kê doanh số, số hóa đơn và đặc biệt là doanh thu ước tính từ các bàn đang phục vụ (đối với ngành F&B).",
-                  "right": "Màn hình Tổng quan cung cấp cái nhìn khái quát về tình hình kinh doanh, bao gồm các số liệu thống kê doanh số, số hóa đơn và đặc biệt là doanh thu ước tính từ các bàn đang phục vụ (đối với ngành F&B)."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi truy cập màn hình Tổng quan ngành F&B, hệ thống chỉ hiển thị duy nhất doanh thu từ các đơn hàng đã thanh toán xong và không ghi nhận các bàn đang phục vụ.",
-                  "isTrue": false,
-                  "wrong": "Màn hình Tổng quan cung cấp cái nhìn khái quát về tình hình kinh doanh, bao gồm các số liệu thống kê doanh số, số hóa đơn và đặc biệt là doanh thu ước tính từ các bàn đang phục vụ (đối với ngành F&B).",
-                  "right": "Màn hình Tổng quan cung cấp cái nhìn khái quát về tình hình kinh doanh, bao gồm các số liệu thống kê doanh số, số hóa đơn và đặc biệt là doanh thu ước tính từ các bàn đang phục vụ (đối với ngành F&B)."
-                }
-              ]
+                title: 'Phân quyền tài khoản',
+                icon: '🔐',
+                scenario: 'Để bảo mật, bạn muốn quản lý chi nhánh nào chỉ được xem dữ liệu tổng quan của chi nhánh đó.',
+                steps: [
+                    'Vào màn hình <strong>Quản lý</strong> -> chọn <strong>Thiết lập</strong> -> <strong>Quản lý người dùng</strong>.',
+                    'Chọn tài khoản nhân viên cần phân quyền.',
+                    'Tại mục phân quyền, chọn từng chi nhánh và tích vào quyền <strong>Xem Tổng quan</strong> tương ứng.'
+                ],
+                images: ['https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041223/TQF_090526-11.png'],
+                chat: [
+                    { r: 'customer', t: 'Tôi có nhiều chi nhánh, tôi không muốn quản lý chi nhánh A xem được doanh thu của chi nhánh B. Có thiết lập được không?' },
+                    { r: 'consultant', t: 'Hoàn toàn được ạ. Bạn có thể vào phần Quản lý người dùng để phân quyền chi tiết. Bạn có thể cấp quyền cho mỗi tài khoản quản lý chỉ được phép "Xem Tổng quan" của đúng chi nhánh mà họ phụ trách.' }
+                ]
             },
             {
-              "title": "Tình huống Kết quả bán hàng",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Cô muốn xem nhanh doanh số hôm nay so với hôm qua thì nhìn ở đâu trên máy tính hả cháu?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ cô nhìn vào phần 'Kết quả bán hàng hôm nay' ở bên trái màn hình Tổng quan ạ. Hệ thống sẽ tự động so sánh số liệu với ngày hôm qua để cô tiện theo dõi mức tăng trưởng ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi xem mục Kết quả bán hàng hôm nay trên Web, hệ thống tự động thống kê doanh số, số đơn hàng và so sánh các số liệu này với ngày hôm qua.",
-                  "isTrue": true,
-                  "wrong": "Phần 'Kết quả bán hàng hôm nay' ghi nhận doanh số theo số lượng hóa đơn, số đơn hàng đang phục vụ, số lượng khách hàng trong ngày và tự động so sánh số liệu với ngày hôm qua.",
-                  "right": "Phần 'Kết quả bán hàng hôm nay' ghi nhận doanh số theo số lượng hóa đơn, số đơn hàng đang phục vụ, số lượng khách hàng trong ngày và tự động so sánh số liệu với ngày hôm qua."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi xem mục Kết quả bán hàng hôm nay trên Web, hệ thống chỉ hiển thị con số doanh thu hiện tại và yêu cầu người dùng tự mở báo cáo cũ để so sánh thủ công với ngày hôm qua.",
-                  "isTrue": false,
-                  "wrong": "Phần 'Kết quả bán hàng hôm nay' ghi nhận doanh số theo số lượng hóa đơn, số đơn hàng đang phục vụ, số lượng khách hàng trong ngày và tự động so sánh số liệu với ngày hôm qua.",
-                  "right": "Phần 'Kết quả bán hàng hôm nay' ghi nhận doanh số theo số lượng hóa đơn, số đơn hàng đang phục vụ, số lượng khách hàng trong ngày và tự động so sánh số liệu với ngày hôm qua."
-                }
-              ]
+                title: 'Phân biệt bộ lọc chi nhánh',
+                icon: '🔍',
+                scenario: 'Bạn đang quản lý chuỗi, muốn xem nhanh dữ liệu của chi nhánh A trên trang Tổng quan mà không cần đổi chi nhánh làm việc chính.',
+                steps: [
+                    'Để <strong>chỉ xem</strong> dữ liệu của chi nhánh khác trên trang này, sử dụng <strong>Bộ lọc chi nhánh</strong> ở góc phải đầu trang <strong>Tổng quan</strong>.',
+                    'Để <strong>thực sự đổi chi nhánh làm việc</strong> cho mọi thao tác, sử dụng chức năng đổi chi nhánh trong biểu tượng tài khoản ở góc trên cùng màn hình.'
+                ],
+                images: [
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041216/TQF_090526-12.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041211/TQF_090526-13.png'
+                ],
+                chat: [
+                    { r: 'customer', t: 'Tôi chỉ muốn xem nhanh báo cáo của chi nhánh khác thôi, nhưng mỗi lần đổi chi nhánh lại phải thao tác lại từ đầu, hơi bất tiện.' },
+                    { r: 'consultant', t: 'Chào bạn, trên trang Tổng quan có một bộ lọc chi nhánh riêng ở góc phải. Bạn dùng bộ lọc này thì chỉ dữ liệu trên trang Tổng quan thay đổi, còn chi nhánh làm việc chính của bạn vẫn được giữ nguyên.' }
+                ]
             },
             {
-              "title": "Tình huống Biểu đồ Doanh số",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Anh muốn biết quán mình thường đông khách vào khung giờ nào hoặc thứ mấy trong tuần để sắp xếp nhân viên, phần mềm có hỗ trợ không em?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ có ạ. Anh có thể xem Biểu đồ Doanh số trên màn hình Tổng quan, chọn xem theo 'Giờ' hoặc 'Thứ' để nắm bắt xu hướng khách hàng và phân bổ nhân sự hợp lý ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi thao tác với Biểu đồ Doanh số trên màn hình Tổng quan, người dùng có thể tùy chọn xem dữ liệu theo ngày, giờ hoặc thứ để nắm bắt xu hướng kinh doanh.",
-                  "isTrue": true,
-                  "wrong": "Hệ thống cung cấp các biểu đồ doanh số dạng cột, cho phép xem theo ngày, theo giờ và theo thứ. Nếu có nhiều chi nhánh, hệ thống còn cung cấp biểu đồ Doanh số theo chi nhánh.",
-                  "right": "Hệ thống cung cấp các biểu đồ doanh số dạng cột, cho phép xem theo ngày, theo giờ và theo thứ. Nếu có nhiều chi nhánh, hệ thống còn cung cấp biểu đồ Doanh số theo chi nhánh."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi thao tác với Biểu đồ Doanh số trên màn hình Tổng quan, người dùng chỉ có thể xem tổng doanh thu của cả tháng dưới dạng số liệu tĩnh mà không có biểu đồ phân tích theo giờ hay thứ.",
-                  "isTrue": false,
-                  "wrong": "Hệ thống cung cấp các biểu đồ doanh số dạng cột, cho phép xem theo ngày, theo giờ và theo thứ. Nếu có nhiều chi nhánh, hệ thống còn cung cấp biểu đồ Doanh số theo chi nhánh.",
-                  "right": "Hệ thống cung cấp các biểu đồ doanh số dạng cột, cho phép xem theo ngày, theo giờ và theo thứ. Nếu có nhiều chi nhánh, hệ thống còn cung cấp biểu đồ Doanh số theo chi nhánh."
-                }
-              ]
+                title: 'Cài đặt khung giờ ghi nhận doanh thu',
+                icon: '⚙️',
+                scenario: 'Quán của bạn hoạt động qua đêm và bạn muốn doanh thu sau 0h sáng được tính gộp vào ngày hôm trước để dễ đối soát.',
+                steps: [
+                    'Vào màn hình <strong>Quản lý</strong> -> <strong>Thiết lập</strong> -> <strong>Thiết lập cửa hàng</strong> -> chọn tab <strong>Giao dịch</strong>.',
+                    'Tìm mục <strong>Tùy chỉnh khung giờ tính doanh thu</strong> và bật tính năng.',
+                    'Thiết lập giờ chốt doanh thu theo nhu cầu vận hành của quán (ví dụ: 02:00).'
+                ],
+                images: [
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041205/TQF_090526-14.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/09041156/TQF_090526-15.png'
+                ],
+                chat: [
+                    { r: 'customer', t: 'Quán của tôi bán tới 2h sáng. Có cách nào để doanh thu từ 0h-2h được tính là của ngày hôm trước không?' },
+                    { r: 'consultant', t: 'Được ạ. Bạn vào Thiết lập cửa hàng -> Giao dịch và bật "Tùy chỉnh khung giờ tính doanh thu". Bạn có thể đặt giờ chốt doanh thu là 2h sáng, khi đó toàn bộ giao dịch trước mốc này sẽ được tính cho ngày hôm trước.' }
+                ]
             },
             {
-              "title": "Tình huống Top 10 hàng bán chạy",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Chú hay đi ra ngoài, xem báo cáo trên điện thoại thì có biết được món nào đang bán chạy nhất không?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ hoàn toàn được ạ. Trên ứng dụng KiotViet Quản lý, chú vào mục 'Top 10 hàng bán chạy' để xem danh sách món ăn được gọi nhiều nhất theo doanh thu hoặc số lượng ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng có thể xem biểu đồ Top 10 hàng hóa bán chạy được sắp xếp theo tiêu chí doanh thu hoặc số lượng.",
-                  "isTrue": true,
-                  "wrong": "Mục Top 10 hàng bán chạy cho phép người dùng chạm để thay đổi kiểu xem theo số lượng (để biết món nào phổ biến) hoặc theo doanh thu (để biết món nào mang lại lợi nhuận cao).",
-                  "right": "Mục Top 10 hàng bán chạy cho phép người dùng chạm để thay đổi kiểu xem theo số lượng (để biết món nào phổ biến) hoặc theo doanh thu (để biết món nào mang lại lợi nhuận cao)."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi sử dụng ứng dụng quản lý trên điện thoại, người dùng chỉ có thể xem danh sách 10 hàng hóa mới nhập kho gần nhất chứ không xem được hàng bán chạy.",
-                  "isTrue": false,
-                  "wrong": "Mục Top 10 hàng bán chạy cho phép người dùng chạm để thay đổi kiểu xem theo số lượng (để biết món nào phổ biến) hoặc theo doanh thu (để biết món nào mang lại lợi nhuận cao).",
-                  "right": "Mục Top 10 hàng bán chạy cho phép người dùng chạm để thay đổi kiểu xem theo số lượng (để biết món nào phổ biến) hoặc theo doanh thu (để biết món nào mang lại lợi nhuận cao)."
-                }
-              ]
-            },
-            {
-              "title": "Tình huống Kiểm soát Hủy món",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Chị lo nhất là nhân viên hủy món vô tội vạ gây thất thoát nguyên liệu. Trên app có kiểm soát được cái này không em?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ chị yên tâm ạ. Mục 'Hủy món' trên app sẽ báo cáo chi tiết giá trị hủy, lý do hủy và danh sách nhân viên thực hiện hủy để chị kiểm soát chặt chẽ ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi truy cập mục Hủy món trên ứng dụng mobile, người quản lý có thể xem chi tiết về giá trị món hủy, lý do hủy và danh sách nhân viên thực hiện thao tác hủy.",
-                  "isTrue": true,
-                  "wrong": "Mục Hủy món hiển thị tổng số món đã hủy, biểu đồ giá trị món hủy, top 5 nhân viên hủy món, lý do hủy và top 5 món hủy nhiều để giúp chủ quán giảm thiểu thất thoát.",
-                  "right": "Mục Hủy món hiển thị tổng số món đã hủy, biểu đồ giá trị món hủy, top 5 nhân viên hủy món, lý do hủy và top 5 món hủy nhiều để giúp chủ quán giảm thiểu thất thoát."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi truy cập mục Hủy món trên ứng dụng mobile, hệ thống chỉ hiển thị tổng số tiền bị hủy và không cho biết chi tiết ai là người đã thực hiện thao tác đó.",
-                  "isTrue": false,
-                  "wrong": "Mục Hủy món hiển thị tổng số món đã hủy, biểu đồ giá trị món hủy, top 5 nhân viên hủy món, lý do hủy và top 5 món hủy nhiều để giúp chủ quán giảm thiểu thất thoát.",
-                  "right": "Mục Hủy món hiển thị tổng số món đã hủy, biểu đồ giá trị món hủy, top 5 nhân viên hủy món, lý do hủy và top 5 món hủy nhiều để giúp chủ quán giảm thiểu thất thoát."
-                }
-              ]
-            },
-            {
-              "title": "Tình huống Lọc theo Chi nhánh",
-              "chat": [
-                {
-                  "r": "customer",
-                  "t": "Nhà hàng anh có 3 chi nhánh, làm sao để xem báo cáo riêng của từng cái hoặc xem gộp tất cả trên điện thoại?"
-                },
-                {
-                  "r": "consultant",
-                  "t": "Dạ anh chỉ cần dùng bộ lọc 'Chi nhánh' ở góc trên màn hình Tổng quan ạ. Anh có thể chọn xem cụ thể một chi nhánh hoặc xem toàn hệ thống rất linh hoạt ạ."
-                }
-              ],
-              "cards": [
-                {
-                  "id": 1,
-                  "question": "Khi cần xem số liệu của một cơ sở cụ thể, người dùng có thể sử dụng bộ lọc Chi nhánh trên màn hình Tổng quan để chuyển đổi dữ liệu giữa các chi nhánh hoặc xem toàn hệ thống.",
-                  "isTrue": true,
-                  "wrong": "Sử dụng các bộ lọc trên màn hình Tổng quan và các báo cáo chi tiết để chọn Thời gian (Hôm nay, Hôm qua, Tuần này…) và Chi nhánh muốn xem số liệu.",
-                  "right": "Sử dụng các bộ lọc trên màn hình Tổng quan và các báo cáo chi tiết để chọn Thời gian (Hôm nay, Hôm qua, Tuần này…) và Chi nhánh muốn xem số liệu."
-                },
-                {
-                  "id": 2,
-                  "question": "Khi cần xem số liệu của một cơ sở cụ thể, người dùng bắt buộc phải đăng xuất tài khoản hiện tại và đăng nhập lại vào tài khoản riêng của chi nhánh đó.",
-                  "isTrue": false,
-                  "wrong": "Sử dụng các bộ lọc trên màn hình Tổng quan và các báo cáo chi tiết để chọn Thời gian (Hôm nay, Hôm qua, Tuần này…) và Chi nhánh muốn xem số liệu.",
-                  "right": "Sử dụng các bộ lọc trên màn hình Tổng quan và các báo cáo chi tiết để chọn Thời gian (Hôm nay, Hôm qua, Tuần này…) và Chi nhánh muốn xem số liệu."
-                }
-              ]
+                title: 'Thao tác trên ứng dụng di động',
+                icon: '📱',
+                scenario: 'Là chủ quán hoặc quản lý, bạn thường xuyên di chuyển và cần nắm bắt tình hình kinh doanh của nhà hàng ngay trên điện thoại di động.',
+                steps: [
+                    'Mở ứng dụng <strong>KiotViet Quản lý Nhà hàng</strong>, chọn mục <strong>Tổng quan</strong>.',
+                    'Xem <strong>Doanh thu</strong> và <strong>Doanh thu ước tính</strong> (bao gồm cả các bàn đang phục vụ).',
+                    'Vuốt xuống để xem các <strong>biểu đồ</strong> về Doanh thu, Lượng khách, và so sánh giữa các chi nhánh.',
+                    'Kiểm tra nhanh giá trị <strong>Tồn kho</strong> và <strong>Top 10 hàng bán chạy</strong>.',
+                    'Chạm vào mục <strong>Hủy món</strong> để xem phân tích chi tiết về giá trị hủy, nhân viên hủy, và lý do hủy.',
+                    'Sử dụng <strong>bộ lọc</strong> ở trên cùng để xem dữ liệu theo thời gian hoặc chi nhánh mong muốn.'
+                ],
+                images: [
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/02040239/fnbTONGQUAN_N_-9.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/02040224/fnbTONGQUAN_N_-12.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/02040208/fnbTONGQUAN_N_-15.png',
+                    'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/02040150/fnbTONGQUAN_N_-17.png'
+                ],
+                chat: [
+                    { r: 'customer', t: 'Tôi hay đi ra ngoài, có cách nào xem nhanh doanh thu, tình trạng tồn kho, hủy món... của quán ngay trên điện thoại không?' },
+                    { r: 'consultant', t: 'Chắc chắn rồi ạ! Ứng dụng KiotViet Quản lý Nhà hàng trên điện thoại có trang Tổng quan rất mạnh mẽ, cung cấp đầy đủ thông tin từ doanh thu, tồn kho, top món bán chạy đến phân tích chi tiết tình trạng hủy món.' }
+                ]
             }
-          ]
-        };
-        // --- KẾT THÚC PHẦN DỮ LIỆU CỦA AI ---
+        ];
 
-        const { courseTitle, courseSubtitle, courseIcon, overviewModules, practiceTopics, mediaModules } = lessonData;
+        const quizData = [
+            { q: 'Trang Tổng quan F&B giúp chủ quán theo dõi sức khỏe kinh doanh theo thời gian thực mà không cần mở nhiều báo cáo riêng lẻ.', isTrue: true, explain: 'Trang Tổng quan được thiết kế để cung cấp góc nhìn tức thời về hoạt động kinh doanh, giúp bạn nắm bắt tình hình và ra quyết định nhanh chóng ngay trong ngày.' },
+            { q: 'Trang Tổng quan F&B chỉ hiển thị dữ liệu của ngày hôm qua, không có dữ liệu thời gian thực.', isTrue: false, explain: 'Trang Tổng quan được thiết kế để cung cấp góc nhìn tức thời về hoạt động kinh doanh, giúp bạn nắm bắt tình hình và ra quyết định nhanh chóng ngay trong ngày.' },
+            { q: 'Bố cục trang Tổng quan gồm 3 phần: bên trái là số liệu kinh doanh, bên phải trên là cập nhật KiotViet, bên phải dưới là hoạt động hệ thống và khách hàng.', isTrue: true, explain: 'Bố cục trang Tổng quan được chia thành 3 khu vực rõ rệt để người dùng dễ dàng theo dõi: số liệu kinh doanh chính ở bên trái, cập nhật từ KiotViet ở trên bên phải và hoạt động hệ thống/khách hàng ở dưới bên phải.' },
+            { q: 'Toàn bộ thông tin về doanh thu, khách hàng và cập nhật tính năng mới đều được gộp chung ở cột bên trái màn hình.', isTrue: false, explain: 'Bố cục trang Tổng quan được chia thành 3 khu vực rõ rệt để người dùng dễ dàng theo dõi: số liệu kinh doanh chính ở bên trái, cập nhật từ KiotViet ở trên bên phải và hoạt động hệ thống/khách hàng ở dưới bên phải.' },
+            { q: '"Doanh thu thuần" trên trang Tổng quan được tính bằng cách lấy Tổng tiền hàng trừ đi VAT, Giảm giá hóa đơn và Giá trị trả hàng.', isTrue: true, explain: 'Công thức tính Doanh thu thuần là: Tổng tiền hàng − VAT − Giảm giá hóa đơn − Giá trị trả hàng. Điều này giúp phản ánh chính xác kết quả kinh doanh thực tế trong ngày.' },
+            { q: '"Doanh thu thuần" trên trang Tổng quan chỉ đơn giản là tổng tiền hàng thu về, không trừ các khoản giảm giá hay trả hàng.', isTrue: false, explain: 'Công thức tính Doanh thu thuần là: Tổng tiền hàng − VAT − Giảm giá hóa đơn − Giá trị trả hàng. Điều này giúp phản ánh chính xác kết quả kinh doanh thực tế trong ngày.' },
+            { q: 'Chỉ số "Tỷ lệ phủ bàn" giúp chủ quán đánh giá hiệu suất sử dụng mặt bằng tại thời điểm xem.', isTrue: true, explain: '"Tỷ lệ phủ bàn" là chỉ số hiệu suất sử dụng mặt bằng, bao gồm tất cả các bàn đang có khách, kể cả các đơn phục vụ tại chỗ, mang về, giao đi và từ ứng dụng giao đồ ăn.' },
+            { q: 'Chỉ số "Tỷ lệ phủ bàn" chỉ đếm số bàn có khách ngồi ăn tại chỗ, không bao gồm các đơn mang về hay giao đi.', isTrue: false, explain: '"Tỷ lệ phủ bàn" là chỉ số hiệu suất sử dụng mặt bằng, bao gồm tất cả các bàn đang có khách, kể cả các đơn phục vụ tại chỗ, mang về, giao đi và từ ứng dụng giao đồ ăn.' },
+            { q: 'Biểu đồ Doanh thu thuần cho phép lọc dữ liệu theo nhiều khoảng thời gian và xem theo giờ, ngày hoặc thứ.', isTrue: true, explain: 'Biểu đồ Doanh thu thuần rất linh hoạt, cho phép bạn chọn các mốc thời gian khác nhau (Hôm nay, Hôm qua, 7 ngày qua...) và thay đổi góc nhìn (theo Giờ/Ngày/Thứ) để phân tích sâu hơn.' },
+            { q: 'Biểu đồ Doanh thu thuần chỉ hiển thị dữ liệu của 7 ngày gần nhất và không thể thay đổi cách xem.', isTrue: false, explain: 'Biểu đồ Doanh thu thuần rất linh hoạt, cho phép bạn chọn các mốc thời gian khác nhau (Hôm nay, Hôm qua, 7 ngày qua...) và thay đổi góc nhìn (theo Giờ/Ngày/Thứ) để phân tích sâu hơn.' },
+            { q: 'Biểu đồ Lượng khách hàng giúp người quản lý xác định các khung giờ cao điểm để bố trí đủ nhân sự phục vụ.', isTrue: true, explain: 'Biểu đồ Lượng khách hàng thống kê tổng số lượt khách trên các hóa đơn đã hoàn thành trong khoảng thời gian đã chọn, giúp bạn nắm được xu hướng và phân bổ nhân sự hợp lý.' },
+            { q: 'Biểu đồ Lượng khách hàng chỉ đếm số khách hàng mới, không tính khách hàng quay lại.', isTrue: false, explain: 'Biểu đồ Lượng khách hàng thống kê tổng số lượt khách trên các hóa đơn đã hoàn thành trong khoảng thời gian đã chọn, giúp bạn nắm được xu hướng và phân bổ nhân sự hợp lý.' },
+            { q: 'Biểu đồ Hiệu quả thực đơn giúp xác định các nhóm món ăn, đồ uống đóng góp nhiều nhất vào doanh thu.', isTrue: true, explain: 'Tính năng này cung cấp cả hai góc nhìn: biểu đồ tròn cho thấy tỷ trọng doanh thu của từng nhóm món/loại, và bảng Top 10 liệt kê các món cụ thể bán chạy nhất.' },
+            { q: 'Biểu đồ Hiệu quả thực đơn chỉ hiển thị Top 10 món bán chạy nhất mà không phân tích theo nhóm món.', isTrue: false, explain: 'Tính năng này cung cấp cả hai góc nhìn: biểu đồ tròn cho thấy tỷ trọng doanh thu của từng nhóm món/loại, và bảng Top 10 liệt kê các món cụ thể bán chạy nhất.' },
+            { q: 'Biểu đồ Tình trạng hủy món giúp quản lý xác định được khâu nào trong quy trình vận hành (bếp, phục vụ,...) đang gây ra nhiều sai sót dẫn đến hủy món.', isTrue: true, explain: 'Biểu đồ này cung cấp thông tin toàn diện, bao gồm cả số lượng món hủy, số hóa đơn hủy và tổng giá trị doanh thu bị hủy, giúp bạn đánh giá chính xác mức độ ảnh hưởng.' },
+            { q: 'Biểu đồ Tình trạng hủy món chỉ đếm số lượng món bị hủy chứ không thống kê được doanh thu bị thất thoát.', isTrue: false, explain: 'Biểu đồ này cung cấp thông tin toàn diện, bao gồm cả số lượng món hủy, số hóa đơn hủy và tổng giá trị doanh thu bị hủy, giúp bạn đánh giá chính xác mức độ ảnh hưởng.' },
+            { q: 'Khối "Theo dõi nhân viên" cung cấp các chỉ số nhanh về tình hình chấm công trong ngày như đi muộn, về sớm, làm thêm.', isTrue: true, explain: 'Tính năng này được thiết kế để cung cấp một cái nhìn tổng quan nhanh về kỷ luật và tình hình nhân sự trong ngày, bao gồm cả các chỉ số quan trọng như đi muộn, về sớm, làm thêm giờ.' },
+            { q: 'Khối "Theo dõi nhân viên" chỉ hiển thị danh sách nhân viên đi làm chứ không có cảnh báo về việc đi muộn, về sớm.', isTrue: false, explain: 'Tính năng này được thiết kế để cung cấp một cái nhìn tổng quan nhanh về kỷ luật và tình hình nhân sự trong ngày, bao gồm cả các chỉ số quan trọng như đi muộn, về sớm, làm thêm giờ.' },
+            { q: 'Biểu đồ Kênh bán hàng giúp so sánh hiệu quả doanh thu giữa các nền tảng khác nhau như ăn tại quán, mang về, và các ứng dụng giao đồ ăn.', isTrue: true, explain: 'Biểu đồ này tổng hợp dữ liệu từ tất cả các kênh bán hàng bạn đã thiết lập (Tại quán, Mang về, Giao hàng, GrabFood, ShopeeFood...), giúp bạn có cái nhìn toàn cảnh về hiệu quả kinh doanh.' },
+            { q: 'Biểu đồ Kênh bán hàng chỉ thống kê doanh thu từ kênh bán tại quán.', isTrue: false, explain: 'Biểu đồ này tổng hợp dữ liệu từ tất cả các kênh bán hàng bạn đã thiết lập (Tại quán, Mang về, Giao hàng, GrabFood, ShopeeFood...), giúp bạn có cái nhìn toàn cảnh về hiệu quả kinh doanh.' },
+            { q: 'KiotViet cho phép chủ cửa hàng phân quyền chi tiết, giúp giới hạn quyền xem trang Tổng quan của nhân viên theo từng chi nhánh cụ thể.', isTrue: true, explain: 'Tính năng phân quyền là một công cụ bảo mật quan trọng, cho phép chủ gian hàng kiểm soát chặt chẽ quyền truy cập dữ liệu kinh doanh nhạy cảm theo từng vai trò và chi nhánh.' },
+            { q: 'Bất kỳ tài khoản nhân viên nào cũng có thể xem trang Tổng quan của tất cả các chi nhánh.', isTrue: false, explain: 'Tính năng phân quyền là một công cụ bảo mật quan trọng, cho phép chủ gian hàng kiểm soát chặt chẽ quyền truy cập dữ liệu kinh doanh nhạy cảm theo từng vai trò và chi nhánh.' },
+            { q: 'Bộ lọc chi nhánh trên trang Tổng quan chỉ thay đổi dữ liệu hiển thị trên trang đó, không ảnh hưởng đến chi nhánh làm việc mặc định của tài khoản.', isTrue: true, explain: 'KiotViet cung cấp 2 cách xem dữ liệu: bộ lọc nhanh tại trang Tổng quan (chỉ xem) và chức năng chuyển đổi chi nhánh (thay đổi môi trường làm việc), giúp người dùng linh hoạt trong thao tác.' },
+            { q: 'Sử dụng bộ lọc chi nhánh trên trang Tổng quan sẽ tự động chuyển chi nhánh làm việc chính cho mọi tính năng khác.', isTrue: false, explain: 'KiotViet cung cấp 2 cách xem dữ liệu: bộ lọc nhanh tại trang Tổng quan (chỉ xem) và chức năng chuyển đổi chi nhánh (thay đổi môi trường làm việc), giúp người dùng linh hoạt trong thao tác.' },
+            { q: 'KiotViet cho phép tùy chỉnh khung giờ chốt doanh thu trong ngày, phù hợp với các mô hình kinh doanh qua đêm.', isTrue: true, explain: 'Tính năng tùy chỉnh khung giờ ghi nhận doanh thu giúp báo cáo tài chính phản ánh đúng theo ca/ngày làm việc thực tế của cửa hàng, đặc biệt hữu ích cho các quán bar, pub, nhà hàng mở cửa qua đêm.' },
+            { q: 'Hệ thống KiotViet luôn tự động chốt doanh thu vào lúc 23:59:59 mỗi ngày và không thể thay đổi.', isTrue: false, explain: 'Tính năng tùy chỉnh khung giờ ghi nhận doanh thu giúp báo cáo tài chính phản ánh đúng theo ca/ngày làm việc thực tế của cửa hàng, đặc biệt hữu ích cho các quán bar, pub, nhà hàng mở cửa qua đêm.' },
+            { q: 'Ứng dụng KiotViet Quản lý Nhà hàng cho phép xem "Doanh thu ước tính", bao gồm cả giá trị từ các đơn hàng đang được phục vụ.', isTrue: true, explain: 'Một trong những ưu điểm của ứng dụng di động cho F&B là khả năng cung cấp "Doanh thu ước tính", giúp chủ quán có cái nhìn toàn diện hơn về dòng tiền tiềm năng tại bất kỳ thời điểm nào.' },
+            { q: 'Ứng dụng di động chỉ hiển thị doanh thu từ các hóa đơn đã hoàn thành, giống hệt phiên bản web.', isTrue: false, explain: 'Một trong những ưu điểm của ứng dụng di động cho F&B là khả năng cung cấp "Doanh thu ước tính", giúp chủ quán có cái nhìn toàn diện hơn về dòng tiền tiềm năng tại bất kỳ thời điểm nào.' }
+        ];
 
-        const audioCtx = new(window.AudioContext || window.webkitAudioContext)(); 
-        let isMuted = false;
-        let slides = []; 
-        let currentSlideIndex = 0; 
-        let gameQuestions = []; 
-        let gameScore = 0; 
-        let gameCurrentQIndex = 0; 
-        let gameStartSlideIndex = 0;
-        let userGameHistory = []; 
-        let overviewStartIndex = 1; 
-        let comparisonSlideIndex = 0;
+        let currentTopic = 0; let currentLocalSlideIdx = 0; let activeMainTab = 'ly-thuyet';
+        window.quizScore = 0; window.quizAnswered = 0;
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            const btn = document.getElementById('btn-mute');
-            btn.innerHTML = isMuted ? '<i class="fa-solid fa-volume-xmark text-lg"></i>' : '<i class="fa-solid fa-volume-high text-lg"></i>';
-            btn.classList.toggle('text-red-500', isMuted);
-            btn.classList.toggle('text-slate-400', !isMuted);
-        }
-
-        function playSound(type) {
-            if (isMuted || audioCtx.state === 'suspended') {
-                audioCtx.resume();
-                if(isMuted) return;
-            }
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.connect(g);
-            g.connect(audioCtx.destination);
-            const n = audioCtx.currentTime;
-            
-            if(type === 'pop'){
-                o.type='sine';
-                o.frequency.setValueAtTime(800,n);
-                o.frequency.exponentialRampToValueAtTime(300,n+0.1);
-                g.gain.setValueAtTime(0.3,n);
-                g.gain.exponentialRampToValueAtTime(0.01,n+0.1);
-            } else if(type === 'correct'){
-                o.type='sine';
-                o.frequency.setValueAtTime(600,n);
-                o.frequency.exponentialRampToValueAtTime(1200,n+0.1);
-                g.gain.setValueAtTime(0.3,n);
-                g.gain.exponentialRampToValueAtTime(0.01,n+0.3);
-            } else if(type === 'incorrect'){
-                o.type='sawtooth';
-                o.frequency.setValueAtTime(200,n);
-                o.frequency.linearRampToValueAtTime(150,n+0.2);
-                g.gain.setValueAtTime(0.3,n);
-                g.gain.linearRampToValueAtTime(0.01,n+0.2);
-            } else if(type === 'win'){
-                const t=[523.25,659.25,783.99,1046.5];
-                let e=n;
-                t.forEach((t,i)=>{
-                    const s=audioCtx.createOscillator();
-                    const a=audioCtx.createGain();
-                    s.connect(a);
-                    a.connect(audioCtx.destination);
-                    s.type='triangle';
-                    s.frequency.setValueAtTime(t,e);
-                    a.gain.setValueAtTime(0.2,e);
-                    a.gain.linearRampToValueAtTime(0,e+0.5);
-                    s.start(e);
-                    s.stop(e+0.5);
-                    e+=i===t.length-2?0.3:0.15;
-                });
-                return;
-            } else if(type === 'fail'){
-                o.type='sawtooth';
-                o.frequency.setValueAtTime(300,n);
-                o.frequency.linearRampToValueAtTime(150,n+0.8);
-                g.gain.setValueAtTime(0.3,n);
-                g.gain.linearRampToValueAtTime(0,n+0.8);
-            }
-            o.start();
-            o.stop(n + (type==='pop' ? 0.1 : type==='correct' ? 0.3 : type==='incorrect' ? 0.2 : 0.8));
-        }
-
-        function initApp() {
-            slides = [];
-            const sidebarContent = document.getElementById('sidebar-content');
-            sidebarContent.innerHTML = '';
-            
-            slides.push({ type: 'title', section: 'Mở đầu' });
-            slides.push({ type: 'intro', section: 'Mở đầu' });
-            
-            const createSidebarGroup = (t) => {
-                const d = document.createElement('div');
-                d.className = "text-sm font-bold text-slate-700 bg-slate-100 p-3 rounded-lg mt-4 mb-2 shadow-sm uppercase";
-                d.innerText = t;
-                sidebarContent.appendChild(d);
-            };
-            
-            const createSidebarButton = (t, i, c, o) => {
-                const b = document.createElement('button');
-                b.className = `w-full text-left px-4 py-2 rounded-lg hover:bg-${c}-50 text-sm font-medium text-slate-600 hover:text-${c}-600 flex items-center gap-3 transition`;
-                b.innerHTML = `<i class="${i} w-4 text-center text-${c}-500"></i><span class="truncate">${t}</span>`;
-                b.onclick = () => { o(); toggleSidebar(); };
-                sidebarContent.appendChild(b);
-            };
-            
-            overviewStartIndex = slides.length;
-
-            if(mediaModules && mediaModules.length > 0) {
-                const grpTitle = "Tài liệu đa phương tiện";
-                createSidebarGroup(grpTitle);
-                mediaModules.forEach(m => {
-                    const s = slides.length;
-                    if(m.type === 'video') slides.push({ type: 'video', data: m.src, title: m.title, section: grpTitle });
-                    else if(m.type === 'image') slides.push({ type: 'image', data: m.src, title: m.title, section: grpTitle });
-                    
-                    const icon = m.type === 'video' ? 'fa-brands fa-youtube' : 'fa-solid fa-image';
-                    createSidebarButton(m.title, icon, "red", () => { currentSlideIndex = s; renderSlide(); });
-                });
-            }
-
-            if(overviewModules && overviewModules.length > 0){
-                overviewModules.forEach(m => {
-                    const grpTitle = m.title;
-                    createSidebarGroup(grpTitle);
-                    if (m.type === 'concept') {
-                        if(Array.isArray(m.data)){
-                            m.data.forEach((item) => {
-                                const sIndex = slides.length;
-                                slides.push({ type: 'concept-single', data: item, title: item.title, section: grpTitle });
-                                createSidebarButton(item.title, item.icon, item.color, () => { currentSlideIndex = sIndex; renderSlide(); });
-                            });
-                        }
-                    } else if (m.type === 'comparison-link') {
-                        // Skip
-                    } else {
-                        const s = slides.length;
-                        slides.push({ type: m.type, data: m.data, title: m.title, section: grpTitle });
-                        createSidebarButton("Xem Cẩm nang", "fa-solid fa-book-open", "blue", () => { currentSlideIndex = s; renderSlide(); });
-                    }
-                });
-            }
-            
-            if(practiceTopics && practiceTopics.length > 0){
-                const grpTitle = "2. Tìm hiểu chi tiết";
-                createSidebarGroup(grpTitle);
-                practiceTopics.forEach(t => {
-                    let s = slides.length;
-                    if(t.chat){
-                        for(let i = 0; i < t.chat.length; i += 2){
-                            slides.push({type:'chat', data: t.chat.slice(i, i+2), title: t.title, section: grpTitle});
-                        }
-                    }
-                    if(t.cards){
-                        t.cards.forEach(c => slides.push({type:'card', data: c, title: t.title, section: grpTitle}));
-                    }
-                    createSidebarButton(t.title, "fa-solid fa-comment-dots", "slate", () => { currentSlideIndex = s; renderSlide(); });
-                });
-            }
-            
-            const reviewTitle = "3. Tổng kết & Đánh giá";
-            createSidebarGroup(reviewTitle);
-            
-            comparisonSlideIndex = slides.length;
-            slides.push({type:'comparison', title: "Bảng so sánh", section: reviewTitle});
-            createSidebarButton("Bảng so sánh", "fa-solid fa-table-columns", "purple", () => { currentSlideIndex = comparisonSlideIndex; renderSlide(); });
-            
-            gameStartSlideIndex = slides.length;
-            slides.push({type:'game-start', title: "Quiz Game", section: reviewTitle});
-            slides.push({type:'game-play', title: "Đang chơi...", section: reviewTitle});
-            slides.push({type:'winner-input', title: "Nhận thưởng", section: reviewTitle});
-            slides.push({type:'certificate', title: "Chứng nhận", section: reviewTitle});
-            slides.push({type:'game-review', title: "Chi tiết kết quả", section: reviewTitle});
-            slides.push({type:'end-course', title: "Kết thúc", section: reviewTitle});
-
-            createSidebarButton("Quiz Game", "fa-solid fa-gamepad", "orange", () => { currentSlideIndex = gameStartSlideIndex; renderSlide(); });
-            
-            renderSlide();
-        }
-
-        function renderSlide() {
-            const c = document.getElementById('app-container');
-            const s = slides[currentSlideIndex];
-            
-            document.getElementById('header-section-title').innerText = s.section || "Bài học";
-            let subTitle = s.title ? ` • ${s.title}` : "";
-            if(s.type === 'title') subTitle = "";
-            document.getElementById('slide-indicator').innerText = `${currentSlideIndex+1}/${slides.length}${subTitle}`;
-            document.getElementById('progress-bar').style.width = `${((currentSlideIndex+1)/slides.length)*100}%`;
-            
-            const btnPrev = document.getElementById('btn-prev');
-            const btnNext = document.getElementById('btn-next');
-            btnPrev.disabled = currentSlideIndex === 0;
-            
-            let disableNext = false;
-            if (currentSlideIndex >= slides.length - 1) disableNext = true;
-            if (s.type === 'game-start') disableNext = true;
-            if (s.type === 'game-play') disableNext = true;
-            if (s.type === 'winner-input') disableNext = true;
-            btnNext.disabled = disableNext;
-
-            const tpl = document.getElementById(`tpl-${s.type}`);
-            if(!tpl) { console.error("Template not found:", s.type); return; }
-
-            const t = tpl.content.cloneNode(true);
-            const e = t.querySelector('.slide');
-            
-            if(s.type === 'title'){
-                e.querySelector('.slide-title').innerText = courseTitle;
-                e.querySelector('.slide-icon').className = courseIcon + " slide-icon";
-                
-                const subEl = e.querySelector('.slide-subtitle');
-                if(lessonData.courseSubtitle) {
-                    subEl.innerText = lessonData.courseSubtitle;
-                    subEl.classList.remove('hidden');
-                }
-            }
-            else if(s.type === 'intro'){
-                e.querySelector('.course-name-span').innerText = courseTitle;
-            }
-            else if(s.type === 'end-course'){
-                e.querySelector('.end-course-title').innerText = "Chúc mừng bạn đã hoàn thành học phần " + courseTitle + "!";
-            }
-            else if(s.type === 'video'){
-                let vidSrc = s.data;
-                // FIX YOUTUBE LINKS
-                if (vidSrc.includes('youtube.com/watch?v=')) {
-                    vidSrc = vidSrc.replace('watch?v=', 'embed/');
-                    if(vidSrc.includes('&')) vidSrc = vidSrc.split('&')[0];
-                } else if (vidSrc.includes('youtu.be/')) {
-                    vidSrc = vidSrc.replace('youtu.be/', 'www.youtube.com/embed/');
-                }
-                e.querySelector('.video-iframe').src = vidSrc;
-            }
-            else if(s.type === 'image'){
-                e.querySelector('.img-content').src = s.data;
-            }
-            else if(s.type === 'concept-single'){
-                e.querySelector('.concept-card-single').classList.add(`border-${s.data.color}-200`);
-                e.querySelector('.concept-header-single').classList.add(`bg-${s.data.color}-50`, `text-${s.data.color}-700`);
-                e.querySelector('.concept-icon').className = `${s.data.icon} text-2xl`;
-                e.querySelector('.concept-card-title').innerText = s.data.title;
-                const body = e.querySelector('.concept-body-single');
-                
-                if(s.data.comparison) {
-                    body.innerHTML = `
-                        <div class="comp-grid">
-                            <div class="comp-col">
-                                <div class="comp-item comp-item-prob">
-                                    <div class="comp-label prob-label"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Vấn đề / Nỗi đau</div>
-                                    ${s.data.comparison.map(i => `<div class="mb-4 pb-4 border-b border-red-200 last:border-0 last:pb-0 last:mb-0"><p class="comp-text">${i.prob}</p></div>`).join('')}
-                                </div>
-                            </div>
-                            <div class="comp-col">
-                                <div class="comp-item comp-item-sol">
-                                    <div class="comp-label sol-label"><i class="fa-solid fa-circle-check mr-1"></i> Giải pháp KiotViet</div>
-                                    ${s.data.comparison.map(i => `<div class="mb-4 pb-4 border-b border-blue-200 last:border-0 last:pb-0 last:mb-0"><p class="comp-text">${i.sol}</p></div>`).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    const bullets = Array.isArray(s.data.bullets) ? s.data.bullets : [];
-                    body.innerHTML = bullets.map(b => `<div class="concept-item-single"><i class="fa-solid fa-circle text-[8px] mt-2 text-${s.data.color}-500"></i><span>${b}</span></div>`).join('');
-                }
-            }
-            else if(s.type === 'chat'){
-                const iconCustomer = '<div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 flex-shrink-0 shadow-sm border border-gray-300"><i class="fa-solid fa-user"></i></div>';
-                const iconConsultant = '<div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white flex-shrink-0 shadow-sm border border-blue-700"><i class="fa-solid fa-headset"></i></div>';
-
-                e.querySelector('.chat-container').innerHTML = s.data.map((m, i) => {
-                    const role = m.r || m.type || (m.role ? m.role : 'consultant');
-                    const txt = m.t || m.text || m.content || '';
-                    const isCust = (role === 'customer' || role === 'user');
-                    
-                    return `
-                    <div class="flex w-full gap-2 items-end ${isCust ? 'flex-row' : 'flex-row-reverse'}" style="animation-delay:${i * 0.2}s">
-                        ${isCust ? iconCustomer : iconConsultant}
-                        <div class="chat-bubble ${isCust ? 'chat-bubble-customer' : 'chat-bubble-consultant'}">
-                            <div class="text-[9px] font-bold uppercase mb-1 opacity-60">${isCust ? 'Chủ cửa hàng/Nhân viên' : 'Chuyên viên KiotViet'}</div>
-                            ${txt}
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-            }
-            else if(s.type === 'card'){
-                e.querySelector('.card-id').innerText = s.data.id;
-                e.querySelector('.card-question').innerHTML = s.data.question;
-                e.querySelector('.card-original-q').innerHTML = s.data.question;
-                e.querySelector('.card-right-answer').innerHTML = s.data.right;
-                const bT = e.querySelector('.btn-true');
-                const bF = e.querySelector('.btn-false');
-                const bR = e.querySelector('.btn-reset');
-                bT.onclick = ev => { ev.stopPropagation(); flipCardCheck(e, true, s.data.isTrue); };
-                bF.onclick = ev => { ev.stopPropagation(); flipCardCheck(e, false, s.data.isTrue); };
-                bR.onclick = ev => { ev.stopPropagation(); resetCardFlip(e); };
-            }
-            else if(s.type === 'comparison'){
-                const y = e.querySelector('.comp-tbody');
-                let comps = [];
-                if(lessonData.comparison) comps = lessonData.comparison;
-                y.innerHTML = comps.map(c => `<tr><td class="p-3 align-top border-r border-slate-100 bg-red-50/20 text-red-800">${c.prob}</td><td class="p-3 align-top bg-green-50/20 text-green-800">${c.sol}</td></tr>`).join('');
-            }
-            else if(s.type === 'game-start'){
-                let totalQ = 0;
-                practiceTopics.forEach(t => { if(t.cards) totalQ += t.cards.length; });
-                
-                const btnContainer = e.querySelector('.game-mode-buttons');
-                if(totalQ < 10) {
-                     btnContainer.innerHTML = `<button onclick="startGame('promax')" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2 group"><i class="fa-solid fa-rocket"></i> <span>Qua nốt màn này là ngon luôn ;)</span> <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Enter]</span></button>
-                     <p class="text-[10px] text-slate-400 mt-2 md:hidden">(Nhấn Enter hoặc Space để bắt đầu)</p>`;
-                } else {
-                     btnContainer.innerHTML = `
-                        <button onclick="startGame('standard')" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:bg-blue-700 active:scale-95 transition flex items-center justify-center gap-2"><span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span> Tiêu chuẩn (5 câu) <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Phím 1]</span></button>
-                        <button onclick="startGame('promax')" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-base shadow-lg hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-2"><span class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span> Promax (Toàn bộ) <span class="hidden md:inline-block bg-white/20 px-2 py-0.5 rounded text-[10px] ml-1">[Phím 2]</span></button>
-                     `;
-                }
-            }
-            else if(s.type === 'game-play'){
-                const q = gameQuestions[gameCurrentQIndex];
-                if(q){
-                    e.querySelector('.game-q-current').innerText = gameCurrentQIndex + 1;
-                    e.querySelector('.game-q-total').innerText = gameQuestions.length;
-                    e.querySelector('.game-score').innerText = gameScore;
-                    e.querySelector('.game-question-text').innerHTML = q.question;
-                } else {
-                    e.querySelector('.game-question-text').innerText = "Vui lòng chọn chế độ!";
-                    e.querySelectorAll('.game-btn').forEach(b => b.disabled = true);
-                }
-            }
-            else if(s.type === 'winner-input'){
-                const total = gameQuestions.length;
-                const pct = total > 0 ? Math.round((gameScore / total) * 100) : 0;
-                e.querySelector('.winner-score').innerText = pct + "%";
-                setTimeout(() => {
-                    const inp = document.getElementById('input-winner-name');
-                    if(inp) inp.focus();
-                }, 500);
-            }
-            else if(s.type === 'certificate'){
-                 const name = localStorage.getItem('kv_player_name');
-                 const dept = localStorage.getItem('kv_player_dept');
-                 const score = localStorage.getItem('kv_player_score');
-                 const passed = (parseInt(score) || 0) >= 80;
-                 
-                 if(name) e.querySelector('.cert-name').innerText = name;
-                 if(dept) e.querySelector('.cert-dept').innerText = dept;
-                 if(score) e.querySelector('.cert-score').innerText = score + "%";
-                 
-                 e.querySelector('.cert-course-title').innerText = `Hoàn thành khóa học ${courseTitle}`;
-                 const d = new Date();
-                 e.querySelector('.cert-date').innerText = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-                 
-                 const failMark = e.querySelector('.cert-fail-mark');
-                 const dlBtn = e.querySelector('#btn-download-cert');
-                 const certView = e.querySelector('#cert-view');
-
-                 if(passed){
-                    failMark.classList.add('hidden');
-                    certView.classList.remove('grayscale');
-                    if(dlBtn) dlBtn.classList.remove('hidden');
-                 } else {
-                    failMark.classList.remove('hidden');
-                    certView.classList.add('grayscale');
-                    if(dlBtn) dlBtn.classList.add('hidden');
-                    e.querySelector('.cert-name').innerText = "---";
-                    e.querySelector('.cert-dept').innerText = "";
-                 }
-            }
-            else if(s.type === 'game-review'){
-                const tbody = e.querySelector('.review-tbody');
-                if(userGameHistory.length === 0){
-                    tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-slate-400">Chưa có dữ liệu. Hãy chơi Quiz Game trước!</td></tr>';
-                } else {
-                    tbody.innerHTML = userGameHistory.map(item => {
-                        const correctAnsText = item.qObj.isTrue ? "Đúng" : "Sai";
-                        const yourAnsText = item.yourChoiceVal ? "Đúng" : "Sai";
-                        
-                        const rowClass = item.isCorrect ? "bg-green-50/30" : "bg-red-50/30";
-                        const statusClass = item.isCorrect ? "text-green-600 font-bold" : "text-red-600 font-bold";
-                        
-                        return `<tr class="${rowClass} border-b border-slate-50 last:border-0">
-                            <td class="p-4 align-top text-slate-800">${item.q}</td>
-                            <td class="p-4 align-top text-center font-bold text-slate-600">${correctAnsText}</td>
-                            <td class="p-4 align-top text-center ${statusClass}">${yourAnsText}</td>
-                        </tr>`;
-                    }).join('');
-                }
-            }
-            
-            c.innerHTML = '';
-            e.classList.add('active');
-            c.appendChild(e);
-        }
-
-        function navSlide(dir){
-            const next = currentSlideIndex + dir;
-            if(next >= 0 && next < slides.length){
-                if(slides[currentSlideIndex].type === 'game-start' && dir === 1) return;
-                if(slides[currentSlideIndex].type === 'game-play' && dir > 0) return;
-                if(slides[currentSlideIndex].type === 'winner-input' && dir > 0) return;
-                playSound('pop');
-                currentSlideIndex = next;
-                renderSlide();
-            }
-        }
-
-        function toggleSidebar(){
-            const sb = document.getElementById('sidebar');
-            const ov = document.getElementById('sidebar-overlay');
-            sb.classList.toggle('sidebar-closed');
-            sb.classList.toggle('sidebar-open');
-            ov.classList.toggle('hidden');
-        }
-
-        function flipCardCheck(slideEl, userChoice, isCorrectValue){
-            const cardInner = slideEl.querySelector('.card-inner');
-            const isUserCorrect = (userChoice === isCorrectValue);
-            const cardBack = slideEl.querySelector('.card-back');
-            const resultHeader = cardBack.querySelector('.result-header');
-            
-            // Inject User Choice & Correct Answer
-            const userChoiceLabel = cardBack.querySelector('.user-choice-label');
-            const correctAnsLabel = cardBack.querySelector('.correct-ans-label');
-            
-            if(userChoiceLabel) {
-                userChoiceLabel.innerText = userChoice ? "ĐÚNG" : "SAI";
-                userChoiceLabel.className = `text-xs font-bold user-choice-label ml-2 ${userChoice === isCorrectValue ? 'text-green-600' : 'text-red-600'}`;
-            }
-            
-            if(correctAnsLabel) {
-                correctAnsLabel.innerText = isCorrectValue ? "ĐÚNG" : "SAI";
-                correctAnsLabel.className = "text-xs font-bold correct-ans-label ml-2 text-blue-600";
-            }
-            
-            playSound(isUserCorrect ? 'correct' : 'incorrect');
-            
-            if(isUserCorrect){
-                resultHeader.innerHTML = `<i class="fa-solid fa-check-circle text-green-500"></i><span class="text-green-600">CHÍNH XÁC!</span>`;
-                cardBack.className = 'card-face card-back p-6 flex flex-col text-center border-2 border-green-200 bg-green-50/20';
-                confetti({particleCount: 30, spread: 50, origin: {y: 0.6}});
-            } else {
-                resultHeader.innerHTML = `<i class="fa-solid fa-times-circle text-red-500"></i><span class="text-red-600">CHƯA ĐÚNG!</span>`;
-                cardBack.className = 'card-face card-back p-6 flex flex-col text-center border-2 border-red-200 bg-red-50/20';
-            }
-            cardInner.classList.add('flipped');
-        }
-
-        function resetCardFlip(slideEl){
-            playSound('pop');
-            slideEl.querySelector('.card-inner').classList.remove('flipped');
-        }
-
-        function startGame(mode){
-            let allQ = [];
-            practiceTopics.forEach(t => { if(t.cards) allQ = [...allQ, ...t.cards] });
-            allQ.sort(() => 0.5 - Math.random());
-            gameQuestions = mode === 'standard' ? allQ.slice(0, Math.min(5, allQ.length)) : allQ;
-            gameScore = 0;
-            gameCurrentQIndex = 0;
-            userGameHistory = [];
-            const next = currentSlideIndex + 1;
-            if(next < slides.length){
-                playSound('pop');
-                currentSlideIndex = next;
-                renderSlide();
-            }
-        }
-
-        function answerGame(choice){
-            const q = gameQuestions[gameCurrentQIndex];
-            if(!q) return;
-            const isCorrect = (choice === q.isTrue);
-            userGameHistory.push({
-                q: q.question,
-                qObj: q,
-                isCorrect: isCorrect,
-                yourChoiceVal: choice
-            });
-            playSound(isCorrect ? 'correct' : 'incorrect');
-            if(isCorrect){
-                gameScore++;
-                confetti({particleCount: 50, spread: 60, origin: {y: 0.7}});
-            } else {
-                const qt = document.querySelector('.game-question-text');
-                if(qt){
-                    qt.parentElement.classList.add('animate-shake');
-                    setTimeout(() => qt.parentElement.classList.remove('animate-shake'), 400);
-                }
-            }
-            document.querySelectorAll('.game-btn').forEach(b => b.disabled = true);
-            setTimeout(() => {
-                gameCurrentQIndex++;
-                if(gameCurrentQIndex < gameQuestions.length){
-                    renderSlide();
-                } else {
-                    finishGame();
-                }
-            }, isCorrect ? 500 : 800);
-        }
-
-        function finishGame(){
-            const total = gameQuestions.length;
-            const pct = total > 0 ? Math.round((gameScore / total) * 100) : 0;
-            localStorage.setItem('kv_player_score', pct);
-            if(pct >= 80){
-                currentSlideIndex++; // To winner-input
-                renderSlide();
-                playSound('win');
-                confetti({particleCount: 100, spread: 100, origin: {y: 0.6}});
-            } else {
-                currentSlideIndex += 2; // Skip winner-input, go to cert
-                renderSlide();
-                playSound('fail');
-            }
-        }
-
-        function submitWinnerInfo(){
-            const name = document.getElementById('input-winner-name').value.trim();
-            const dept = document.getElementById('input-winner-dept').value.trim();
-            if(!name){ alert("Vui lòng nhập Họ tên!"); return; }
-            localStorage.setItem('kv_player_name', name);
-            localStorage.setItem('kv_player_dept', dept);
-            currentSlideIndex++; // Go to cert
-            renderSlide();
-            playSound('win');
-            confetti({particleCount: 200, spread: 120, origin: {y: 0.6}});
-        }
-
-        function backToGameLogin(){ currentSlideIndex = gameStartSlideIndex; renderSlide(); }
-
-        function goToReview(){
-            const idx = slides.findIndex(s => s.type === 'game-review');
-            if(idx !== -1) {
-                currentSlideIndex = idx;
-                renderSlide();
-            }
-        }
-
-        function goToOverview(){ currentSlideIndex = overviewStartIndex; renderSlide(); }
-        function goToComparison(){ currentSlideIndex = comparisonSlideIndex; renderSlide(); }
-
-        function downloadCert(){
-            const originalCert = document.getElementById('cert-view');
-            const loading = document.getElementById('dl-loading');
-            loading.classList.remove('hidden');
-            const clone = originalCert.cloneNode(true);
-            clone.style.width = "1024px";
-            clone.style.height = "auto";
-            clone.style.aspectRatio = "16/9";
-            clone.style.position = "fixed";
-            clone.style.top = "0";
-            clone.style.left = "-9999px";
-            clone.style.zIndex = "-1";
-            clone.classList.remove("shadow-xl", "rounded-xl");
-            document.body.appendChild(clone);
-            html2canvas(clone, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'chung-nhan-kiotviet.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                document.body.removeChild(clone);
-                loading.classList.add('hidden');
-            }).catch(err => {
-                console.error(err);
-                alert("Lỗi khi tạo ảnh. Vui lòng thử lại!");
-                loading.classList.add('hidden');
-                document.body.removeChild(clone);
-            });
-        }
-
-        document.addEventListener('keydown', e => {
-            const s = document.querySelector('.slide.active');
-            if(!s || !slides[currentSlideIndex]) return;
-            const t = slides[currentSlideIndex].type;
-            if(e.key === 'ArrowRight') navSlide(1);
-            else if(e.key === 'ArrowLeft') navSlide(-1);
-            
-            if(t === 'card'){
-                if(e.key === '1') s.querySelector('.btn-true')?.click();
-                else if(e.key === '2') s.querySelector('.btn-false')?.click();
-                else if(e.key === '0') s.querySelector('.btn-reset')?.click();
-            } else if(t === 'game-start'){
-                let totalQ = 0;
-                practiceTopics.forEach(t => { if(t.cards) totalQ += t.cards.length; });
-                if (totalQ < 10) {
-                    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') startGame('promax');
-                } else {
-                    if (e.key === '1') startGame('standard');
-                    else if (e.key === '2') startGame('promax');
-                }
-            } else if(t === 'game-play'){
-                if(e.key === '1') s.querySelector('.btn-game-true:not(:disabled)')?.click();
-                else if(e.key === '2') s.querySelector('.btn-game-false:not(:disabled)')?.click();
-            } else if(t === 'certificate' && e.key === '0') backToGameLogin();
-            else if(t === 'comparison'){
-                const a = s.querySelector('.comparison-scroll-area');
-                if(e.key === 'ArrowUp') a.scrollTop -= 50;
-                else if(e.key === 'ArrowDown') a.scrollTop += 50;
-            } else if(t === 'winner-input' && e.key === 'Enter'){
-                submitWinnerInfo();
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            if(unifiedData.length > 0) { renderSidebarList(); switchMainTab('ly-thuyet'); }
         });
 
-        document.addEventListener('DOMContentLoaded', initApp);
-    </script></body></html>
+        function switchMainTab(tab) {
+            activeMainTab = tab;
+            const btnLyThuyet = document.getElementById('btn-ly-thuyet');
+            const btnMoPhong = document.getElementById('btn-mo-phong');
+            const btnKiemTra = document.getElementById('btn-kiem-tra');
+            
+            [btnLyThuyet, btnMoPhong].forEach(btn => {
+                if(btn) {
+                    btn.classList.remove('active', 'bg-[#ea580c]', 'text-white', 'shadow-md', 'border-[#c2410c]');
+                    btn.classList.add('bg-slate-50', 'text-slate-600', 'border-slate-200');
+                }
+            });
+            if(btnKiemTra) btnKiemTra.classList.remove('active');
+
+            if (tab === 'kiem-tra') {
+                if(btnKiemTra) btnKiemTra.classList.add('active');
+            } else if (tab === 'ly-thuyet') {
+                if(btnLyThuyet) {
+                    btnLyThuyet.classList.add('active', 'bg-[#ea580c]', 'text-white', 'shadow-md', 'border-[#c2410c]');
+                    btnLyThuyet.classList.remove('bg-slate-50', 'text-slate-600', 'border-slate-200');
+                }
+            } else if (tab === 'mo-phong') {
+                if(btnMoPhong) {
+                    btnMoPhong.classList.add('active', 'bg-[#ea580c]', 'text-white', 'shadow-md', 'border-[#c2410c]');
+                    btnMoPhong.classList.remove('bg-slate-50', 'text-slate-600', 'border-slate-200');
+                }
+            }
+
+            const learningWrapper = document.getElementById('learning-content-wrapper');
+            const quizSec = document.getElementById('sec-kiem-tra');
+            const topicList = document.getElementById('sidebar-topic-list');
+            
+            if (activeMainTab === 'kiem-tra') {
+                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
+                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
+                topicList.classList.add('opacity-50', 'pointer-events-none'); 
+                document.getElementById('content-header-title').innerText = "Kiểm tra kiến thức";
+                if(document.getElementById('quiz-container').children.length === 0) renderQuiz();
+            } else {
+                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
+                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
+                topicList.classList.remove('opacity-50', 'pointer-events-none');
+                if(unifiedData.length > 0) updateContentArea(); 
+            }
+        }
+
+        function renderSidebarList() {
+            const list = document.getElementById('sidebar-topic-list');
+            list.innerHTML = '';
+            unifiedData.forEach((item, idx) => {
+                const btn = document.createElement('button');
+                const isActive = idx === currentTopic;
+                const activeClasses = isActive 
+                    ? 'active bg-slate-100 text-[#ea580c] border-[#ea580c] font-bold' 
+                    : 'border-transparent text-slate-700 hover:bg-orange-50';
+                
+                btn.className = `topic-item w-full text-left px-3 py-3 mb-1 font-semibold text-sm rounded-lg flex items-center gap-3 border-l-4 ${activeClasses}`;
+                btn.innerHTML = `<span class="w-5 text-center text-slate-400 shrink-0">${item.icon}</span> <span class="truncate leading-snug">${item.title}</span>`;
+                btn.onclick = () => { selectTopic(idx); };
+                list.appendChild(btn);
+            });
+
+            const prevMob = document.getElementById('btn-prev-mobile');
+            const nextMob = document.getElementById('btn-next-mobile');
+            if(prevMob) prevMob.disabled = currentTopic === 0;
+            if(nextMob) nextMob.disabled = currentTopic === unifiedData.length - 1;
+        }
+
+        function changeTopic(dir) {
+            const newIndex = currentTopic + dir;
+            if (newIndex >= 0 && newIndex < unifiedData.length) selectTopic(newIndex);
+        }
+
+        function selectTopic(index) {
+            currentTopic = index; currentLocalSlideIdx = 0;
+            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
+            renderSidebarList(); updateContentArea();
+        }
+
+        function updateContentArea() {
+            const data = unifiedData[currentTopic];
+            document.getElementById('content-header-icon').innerHTML = activeMainTab === 'mo-phong' ? '<i class="fa-regular fa-comments text-[#ea580c]"></i>' : data.icon;
+            document.getElementById('content-header-title').innerText = data.title;
+            const body = document.getElementById('content-body');
+            body.innerHTML = '';
+            if (activeMainTab === 'ly-thuyet') {
+                body.innerHTML = buildTheoryHTML(data); updateLocalSliderView();
+            } else if (activeMainTab === 'mo-phong') {
+                body.innerHTML = buildChatHTML(data);
+            }
+        }
+
+        function buildTheoryHTML(data) {
+            if (data.isIntro) {
+                let benefitsHtml = '';
+                if(data.benefits && data.benefits.length > 0) {
+                    benefitsHtml = `
+                        <div>
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-base"><i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${data.benefits.map(b => `
+                                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl text-center shadow-sm">
+                                        <i class="fa-solid ${b.icon || 'fa-layer-group'} text-3xl text-[#ea580c] mb-3 block"></i>
+                                        <h5 class="font-bold text-slate-800 mb-1 text-sm">${b.title}</h5>
+                                        <p class="text-xs text-slate-500">${b.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let updateInfoHtml = '';
+                if (data.updateInfo && data.updateInfo !== 'Không có') {
+                    updateInfoHtml = `
+                        <div class="bg-orange-50 border border-orange-200 p-5 rounded-2xl shadow-sm mt-2 fade-in">
+                            <h4 class="font-bold text-orange-800 mb-2 flex items-center gap-2 text-base"><i class="fa-solid fa-triangle-exclamation text-orange-600"></i> Lưu ý về Cập nhật</h4>
+                            <p class="text-sm text-orange-900/90 leading-relaxed">${data.updateInfo}</p>
+                        </div>
+                    `;
+                }
+
+                let comparisonHtml = '';
+                if (data.comparison) {
+                    comparisonHtml = `
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mt-2">
+                            <h4 class="font-bold text-slate-800 mb-4 text-center uppercase tracking-wider text-xs flex justify-center items-center gap-2"><i class="fa-solid fa-code-compare text-slate-400"></i> Sự khác biệt cốt lõi</h4>
+                            <div class="flex flex-col md:flex-row justify-between items-stretch gap-6 mb-4">
+                                <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl text-center w-full md:w-1/2 relative pt-8">
+                                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[10px] px-3 py-1 rounded-full font-bold whitespace-nowrap">${data.comparison.leftTitle}</div>
+                                    <div class="font-black text-slate-800 text-sm mb-1 text-left md:text-center">${data.comparison.leftDesc}</div>
+                                </div>
+                                <div class="text-xl text-slate-300 hidden md:flex items-center"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                                <div class="bg-orange-50 border border-orange-200 p-5 rounded-xl text-center w-full md:w-1/2 relative pt-8">
+                                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ea580c] text-white text-[10px] px-3 py-1 rounded-full font-bold whitespace-nowrap">${data.comparison.rightTitle}</div>
+                                    <div class="font-black text-orange-800 text-sm mb-1 text-left md:text-center">${data.comparison.rightDesc}</div>
+                                </div>
+                            </div>
+                            ${data.comparison.intersection ? `
+                                <div class="bg-slate-100 border border-slate-200 p-4 rounded-xl flex items-start gap-4">
+                                    <div class="text-2xl mt-0.5 text-slate-600"><i class="fa-solid fa-link"></i></div>
+                                    <div class="text-slate-700 text-xs leading-relaxed">
+                                        <strong class="block uppercase tracking-wide text-[10px] text-slate-600 mb-0.5">Giao thoa</strong>
+                                        ${data.comparison.intersection}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+                
+                let videoHtml = data.video ? `<div class="w-full aspect-video rounded-2xl overflow-hidden shadow-sm border border-slate-200 mb-6"><iframe src="${data.video}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>` : '';
+
+                return `
+                    <div class="p-4 sm:p-6 lg:p-8 fade-in w-full max-w-5xl mx-auto flex flex-col gap-6 pb-20">
+                        ${data.images && data.images[0] ? `
+                        <div>
+                            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2"><i class="fa-solid fa-sitemap"></i> Infographic Tổng quan</div>
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-2 relative group w-full cursor-zoom-in hover:border-orange-300 transition-colors" onclick="openLightbox(unifiedData[0].images, 0)">
+                                <img src="${data.images[0]}" alt="Infographic" class="w-full aspect-[16/9] object-contain bg-slate-50 rounded-lg">
+                                <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/10 transition-colors flex items-center justify-center rounded-2xl">
+                                    <div class="bg-white/95 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-bold text-[#ea580c] opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to sơ đồ</div>
+                                </div>
+                            </div>
+                        </div>` : ''}
+                        
+                        ${videoHtml}
+                        
+                        <div class="bg-orange-50 border border-orange-200 p-5 rounded-2xl shadow-sm">
+                            <h4 class="font-bold text-orange-800 mb-2 flex items-center gap-2 text-base"><i class="fa-solid fa-bullseye text-[#ea580c]"></i> Mô tả tính năng</h4>
+                            <p class="text-sm text-orange-900/80 leading-relaxed">${data.description || 'Chưa có mô tả tính năng.'}</p>
+                        </div>
+                        
+                        ${benefitsHtml}
+                        ${updateInfoHtml}
+                        ${comparisonHtml}
+                    </div>
+                `;
+            }
+
+            let leftCol = `
+                <div class="w-full lg:w-5/12 bg-orange-50/70 p-5 rounded-2xl border border-orange-100 shadow-inner flex flex-col gap-3">
+                    <strong class="text-orange-900 block text-[11px] uppercase tracking-wider border-b border-orange-200 pb-2"><i class="fa-solid fa-clipboard-user text-[#ea580c] mr-1"></i> Tình huống:</strong>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-orange-100 flex gap-3 items-start relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#ea580c]"></div><span class="text-2xl mt-0.5">🙋🏻‍♂️</span><p class="text-slate-700 text-[14px] font-medium leading-relaxed">${data.scenario || 'Chưa có tình huống.'}</p>
+                    </div>
+                </div>
+            `;
+
+            let stepsHtml = data.steps && data.steps.length > 0 ? data.steps.map((step, i) => `
+                <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex gap-3 items-start hover:-translate-y-0.5 transition-transform">
+                    <div class="w-1 absolute left-0 top-0 bottom-0 bg-[#ea580c]"></div>
+                    <div class="bg-orange-100 text-[#ea580c] font-black w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs mt-0.5 shadow-sm border border-orange-200">${i+1}</div>
+                    <div class="text-slate-700 leading-relaxed text-sm flex-1">${step}</div>
+                </div>
+            `).join('') : '<p class="text-sm text-slate-500 italic">Chưa có hướng dẫn chi tiết.</p>';
+
+            let rightCol = `<div class="w-full lg:w-7/12 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3"><strong class="text-slate-800 block text-[11px] uppercase tracking-wider border-b border-slate-100 pb-2"><i class="fa-solid fa-list-check text-slate-400 mr-1"></i> Hướng dẫn thao tác:</strong><div class="flex flex-col gap-3">${stepsHtml}</div></div>`;
+
+            let bottomRowHtml = '';
+            if (data.images && data.images.length > 0) {
+                let navigationHtml = '';
+                if (data.images.length > 1) {
+                    navigationHtml = `
+                        <div class="flex justify-center items-center gap-4 mt-4">
+                            <button onclick="changeLocalSlide(-1)" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-[#ea580c] hover:text-white hover:border-[#ea580c] flex items-center justify-center transition-all shadow-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span id="local-slider-counter" class="text-sm font-bold text-[#ea580c] px-4 py-1.5 bg-orange-50 rounded-full border border-orange-200">1 / ${data.images.length}</span>
+                            <button onclick="changeLocalSlide(1)" class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-[#ea580c] hover:text-white hover:border-[#ea580c] flex items-center justify-center transition-all shadow-sm"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    `;
+                }
+
+                bottomRowHtml = `
+                    <div class="w-full fade-in" style="animation-delay: 0.1s; animation-fill-mode: both;">
+                        <h3 class="font-bold text-slate-800 uppercase text-xs tracking-wider mb-3 ml-1 flex items-center gap-2 border-b border-slate-200 pb-2"><i class="fa-regular fa-image text-slate-400"></i> Hình ảnh minh họa</h3>
+                        <div class="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-slate-100/50 border border-slate-200 flex items-center justify-center shadow-inner">
+                            <img id="local-slider-img" src="${data.images[0]}" class="w-full h-full object-contain cursor-zoom-in bg-white" onclick="openLightbox(unifiedData[currentTopic].images, currentLocalSlideIdx)">
+                        </div>
+                        ${navigationHtml}
+                    </div>
+                `;
+            }
+
+            return `<div class="p-4 sm:p-6 lg:p-8 fade-in flex flex-col gap-6 max-w-5xl mx-auto w-full pb-20"><div class="flex flex-col lg:flex-row gap-4 sm:gap-6">${leftCol}${rightCol}</div>${bottomRowHtml}</div>`;
+        }
+
+        function changeLocalSlide(dir) {
+            const data = unifiedData[currentTopic];
+            if (!data || !data.images || data.images.length <= 1) return;
+            const total = data.images.length;
+            currentLocalSlideIdx = (currentLocalSlideIdx + dir + total) % total;
+            updateLocalSliderView();
+        }
+
+        function updateLocalSliderView() {
+            const data = unifiedData[currentTopic];
+            if (!data || !data.images || data.images.length <= 1) return;
+            const imgEl = document.getElementById('local-slider-img');
+            const counter = document.getElementById('local-slider-counter');
+            if (imgEl) { imgEl.src = data.images[currentLocalSlideIdx]; }
+            if (counter) counter.innerText = `${currentLocalSlideIdx + 1} / ${data.images.length}`;
+        }
+
+        function buildChatHTML(data) {
+            if (!data.chat || data.chat.length === 0) return `<div class="p-10 flex-1 flex items-center justify-center fade-in"><div class="text-center text-slate-400 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm max-w-md w-full"><i class="fa-regular fa-message text-5xl mb-4 text-slate-300"></i><h3 class="font-bold text-lg text-slate-600 mb-1">Chưa có dữ liệu</h3></div></div>`;
+            const userMsg = data.chat.find(m => m.r === 'customer');
+            const kvMsg = data.chat.find(m => m.r === 'consultant');
+            let chatHtml = `<div class="w-full max-w-3xl flex flex-col gap-5 bg-transparent pt-4" id="chat-simulation-container">`;
+            if (userMsg) {
+                chatHtml += `<div class="flex gap-3 items-start w-[90%] sm:w-[85%] fade-in"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white flex items-center justify-center text-sm sm:text-base shrink-0 shadow-sm border border-slate-200"><i class="fa-regular fa-user text-slate-400"></i></div><div class="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl rounded-tl-none text-sm sm:text-[15px] text-slate-700 shadow-sm leading-relaxed relative">${userMsg.t}</div></div>`;
+            }
+            if (kvMsg) {
+                chatHtml += `<div id="bot-typing" class="flex gap-3 items-start flex-row-reverse w-[90%] sm:w-[85%] self-end fade-in"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#ea580c] flex items-center justify-center text-sm sm:text-base text-white shrink-0 shadow-sm"><i class="fa-solid fa-headset"></i></div><div class="bg-orange-50 border border-orange-200 p-3 sm:p-4 rounded-2xl rounded-tr-none shadow-sm flex items-center h-12 typing-indicator"><span></span><span></span><span></span></div></div><div id="bot-response" class="hidden gap-3 items-start flex-row-reverse w-[90%] sm:w-[85%] self-end fade-in"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#ea580c] flex items-center justify-center text-sm sm:text-base text-white shrink-0 shadow-sm"><i class="fa-solid fa-headset"></i></div><div class="bg-orange-50 border border-orange-200 p-3 sm:p-4 rounded-2xl rounded-tr-none text-sm sm:text-[15px] text-orange-900 shadow-sm leading-relaxed"><div class="chat-content">${kvMsg.t}</div></div></div>`;
+            }
+            chatHtml += `</div>`;
+            setTimeout(() => {
+                const typing = document.getElementById('bot-typing');
+                const response = document.getElementById('bot-response');
+                if(typing && response) { typing.classList.add('hidden'); typing.classList.remove('flex'); response.classList.remove('hidden'); response.classList.add('flex'); }
+                const chatContent = document.querySelectorAll('.chat-content ul');
+                chatContent.forEach(ul => { ul.classList.add('chat-list'); });
+            }, 1000);
+            return `<div class="p-4 sm:p-6 lg:p-8 fade-in w-full h-full flex justify-center bg-slate-200/50 shadow-inner pb-20">${chatHtml}</div>`;
+        }
+
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        let lbImages = []; let lbIndex = 0;
+        function openLightbox(imgArray, index) { lbImages = imgArray; lbIndex = index; lightboxImg.src = lbImages[lbIndex]; lightbox.classList.remove('hidden'); lightbox.classList.add('flex'); setTimeout(() => { lightbox.classList.remove('opacity-0'); lightboxImg.classList.remove('scale-95'); lightboxImg.classList.add('scale-100'); }, 10); }
+        function closeLightbox(e) { if(e) e.preventDefault(); lightbox.classList.add('opacity-0'); lightboxImg.classList.remove('scale-100'); lightboxImg.classList.add('scale-95'); setTimeout(() => { lightbox.classList.add('hidden'); lightbox.classList.remove('flex'); }, 300); }
+        function changeLightboxImg(dir) { if (lbImages.length <= 1) return; lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; lightboxImg.src = lbImages[lbIndex]; }
+
+        // --- QUIZ LOGIC ---
+        function renderQuiz() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = '';
+            if(quizData.length === 0) { quizContainer.innerHTML = '<p class="text-center text-slate-500">Chưa có dữ liệu bài kiểm tra.</p>'; return; }
+            quizData.forEach((quiz, qIndex) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = "quiz-card bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition-shadow relative overflow-hidden";
+                qDiv.innerHTML = `<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-400"></div><div class="bg-orange-50/50 p-4 rounded-xl border border-orange-100 mb-5"><h3 class="font-bold text-sm sm:text-base text-slate-800 leading-relaxed flex items-start gap-2"><span class="text-[#ea580c] mt-0.5 shrink-0"><i class="fa-regular fa-circle-question"></i></span><span><span class="text-orange-700 mr-1">Nhận định ${qIndex + 1}:</span> ${quiz.q}</span></h3></div><div class="flex gap-3 btn-container pl-0 sm:pl-4"><button onclick="checkTF(this, ${qIndex}, true)" class="tf-btn flex-1 py-2 sm:py-3 rounded-lg border-2 border-slate-200 bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 flex items-center justify-center gap-2"><i class="fa-solid fa-check text-lg"></i> ĐÚNG</button><button onclick="checkTF(this, ${qIndex}, false)" class="tf-btn flex-1 py-2 sm:py-3 rounded-lg border-2 border-slate-200 bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 flex items-center justify-center gap-2"><i class="fa-solid fa-xmark text-lg"></i> SAI</button></div><div class="explain-box hidden mt-4 ml-0 sm:ml-4 p-4 rounded-xl text-sm fade-in shadow-inner"></div>`;
+                quizContainer.appendChild(qDiv);
+            });
+        }
+
+        function checkTF(btn, qIndex, selectedAnswer) {
+            const card = btn.closest('.quiz-card');
+            const isCorrect = quizData[qIndex].isTrue === selectedAnswer;
+            const explainBox = card.querySelector('.explain-box');
+            card.classList.add('card-solved'); 
+            const btns = card.querySelectorAll('.tf-btn');
+            btns.forEach(b => { b.className = "tf-btn flex-1 py-2 sm:py-3 rounded-lg border-2 border-slate-200 bg-slate-100 text-slate-400 font-bold flex items-center justify-center gap-2 pointer-events-none"; });
+
+            if (isCorrect) {
+                btn.className = "tf-btn flex-1 py-2 sm:py-3 rounded-lg border-2 border-green-500 bg-green-500 text-white font-bold flex items-center justify-center gap-2 pointer-events-none shadow-md";
+                explainBox.className = "explain-box mt-4 ml-0 sm:ml-4 p-4 rounded-xl bg-green-50 border border-green-200 text-sm text-green-900 fade-in shadow-inner";
+                explainBox.innerHTML = `<strong class="block mb-1 text-green-700"><i class="fa-solid fa-circle-check"></i> Chính xác!</strong> ${quizData[qIndex].explain}`;
+                window.quizScore = (window.quizScore || 0) + 1;
+            } else {
+                btn.className = "tf-btn flex-1 py-2 sm:py-3 rounded-lg border-2 border-red-500 bg-red-500 text-white font-bold flex items-center justify-center gap-2 pointer-events-none shadow-md";
+                explainBox.className = "explain-box mt-4 ml-0 sm:ml-4 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-900 fade-in shadow-inner";
+                explainBox.innerHTML = `<strong class="block mb-1 text-red-700"><i class="fa-solid fa-triangle-exclamation"></i> Rất tiếc, chưa đúng!</strong> ${quizData[qIndex].explain}`;
+                const correctBtnIdx = quizData[qIndex].isTrue ? 0 : 1;
+                btns[correctBtnIdx].classList.add('border-green-400', 'text-green-600', 'bg-green-50');
+            }
+            explainBox.classList.remove('hidden');
+            window.quizAnswered = (window.quizAnswered || 0) + 1;
+            if(window.quizAnswered === quizData.length) { setTimeout(() => showQuizResultPopup(), 600); }
+        }
+
+        function showQuizResultPopup() { const popup = document.getElementById('quiz-result-popup'); const scoreDisplay = document.getElementById('quiz-score-display'); const content = document.getElementById('quiz-popup-content'); scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; popup.classList.remove('hidden'); popup.classList.add('flex'); setTimeout(() => { popup.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10); }
+        function closeQuizPopup() { const popup = document.getElementById('quiz-result-popup'); const content = document.getElementById('quiz-popup-content'); popup.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95'); setTimeout(() => { popup.classList.add('hidden'); popup.classList.remove('flex'); }, 300); }
+        function resetQuiz() { closeQuizPopup(); window.quizScore = 0; window.quizAnswered = 0; renderQuiz(); document.getElementById('sec-kiem-tra').scrollTop = 0; }
+    </script>
+</body>
+</html>
