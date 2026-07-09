@@ -157,12 +157,21 @@
         .filter-btn { color: #64748b; transition: all 0.3s; }
         .filter-btn.active { background: linear-gradient(135deg, #0ea5e9, #1e40af); color: #ffffff; font-weight: 700; box-shadow: 0 4px 15px -3px rgba(14, 165, 233, 0.3); }
 
-        /* Modal Iframe */
-        #iframe-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); opacity: 0; transition: opacity 0.3s ease; }
-        #iframe-modal.open { display: flex; align-items: center; justify-content: center; opacity: 1; }
-        .modal-window { width: 96%; height: 94vh; max-width: 1400px; background-color: rgba(255, 255, 255, 0.95); border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease; }
+        /* Modal Iframe Fullscreen & Cinematic */
+        #iframe-modal { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background-color: #000000; opacity: 0; transition: opacity 0.2s ease; }
+        #iframe-modal.open { display: flex !important; align-items: center; justify-content: center; opacity: 1; }
+        .modal-window { width: 100%; height: 100%; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.98); transition: transform 0.2s ease; }
         #iframe-modal.open .modal-window { transform: scale(1); }
         
+        /* Smooth transitions & animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         /* Chat AI Styles */
         .user-bubble { background-color: #f0f9ff; color: #0369a1; border-radius: 16px 16px 0 16px; align-self: flex-end; max-width: 85%; padding: 12px 16px; margin-left: auto; font-weight: 500; border: 1px solid #bae6fd; font-size: 13.5px; }
         .bot-bubble { background-color: white; color: #334155; border-radius: 16px 16px 16px 0; align-self: flex-start; max-width: 95%; padding: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); line-height: 1.6; font-size: 13.5px; opacity: 0; animation: aiFadeInText 0.5s ease-out forwards; }
@@ -568,21 +577,21 @@
         <img id="lightbox-img" class="w-auto h-auto max-w-[98vw] max-h-[98vh] shadow-2xl cursor-default object-contain bg-white rounded-md" src="" alt="Ảnh minh họa" onclick="event.stopPropagation()">
     </div>
 
-    <!-- IFRAME MODAL (POPUP WEB/VIDEO) -->
-    <div id="iframe-modal">
-        <div class="modal-window">
-            <div class="px-5 py-3 bg-white border-b border-slate-200 flex justify-between items-center h-[60px] shrink-0">
-                <h3 id="modal-title" class="font-bold text-[15px] text-slate-800 truncate pr-4">Nội dung chi tiết</h3>
-                <div class="flex items-center gap-2">
-                    <a id="open-new-tab-btn" href="#" target="_blank" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-sky-50 hover:text-sky-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold">
+    <!-- IFRAME MODAL (FULLSCREEN & IMMERSIVE) -->
+    <div id="iframe-modal" class="hidden fixed inset-0 z-[9999] bg-black">
+        <div class="modal-window bg-slate-950 flex flex-col w-full h-full overflow-hidden">
+            <div class="px-5 py-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center h-[60px] shrink-0 text-white">
+                <h3 id="modal-title" class="font-bold text-[14px] sm:text-[15px] text-slate-200 truncate pr-4">Nội dung chi tiết</h3>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="open-new-tab-btn" href="#" target="_blank" class="px-3 py-1.5 bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white rounded-lg transition-colors flex items-center gap-2 text-xs font-semibold">
                         <span>Mở thẻ mới</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a>
-                    <button onclick="closeIframeModal()" class="text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors rounded-lg flex items-center justify-center w-8 h-8">
+                    <button onclick="closeIframeModal()" class="text-slate-400 hover:bg-red-600 hover:text-white transition-colors rounded-lg flex items-center justify-center w-8 h-8">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
             </div>
-            <div class="flex-grow bg-slate-50 relative w-full h-full">
+            <div class="flex-grow bg-black relative w-full h-[calc(100vh-60px)]">
                 <iframe id="course-iframe" class="w-full h-full border-none" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
         </div>
@@ -660,6 +669,25 @@
         let modalLessons = [];
         const allowedCourses = ["Hotel 01", "Hotel 02"];
 
+        // Hàm kiểm soát khóa cuộn trang (Scroll Lock Manager) tập trung và nhất quán
+        function updateScrollLock() {
+            const isIframeOpen = document.getElementById('iframe-modal') && document.getElementById('iframe-modal').classList.contains('open');
+            const isAllTopicsOpen = document.getElementById('allTopicsModal') && !document.getElementById('allTopicsModal').classList.contains('hidden');
+            const isAiOpen = document.getElementById('ai-modal') && !document.getElementById('ai-modal').classList.contains('translate-x-full');
+
+            if (isIframeOpen || isAllTopicsOpen || isAiOpen) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Hàm xử lý định dạng đường dẫn liên kết
+        function formatLink(url) {
+            if (!url) return '';
+            return url.trim();
+        }
+
         function removeVietnameseTones(str) {
             if (!str) return '';
             return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
@@ -707,7 +735,7 @@
                 const target = "Tổng quan các bước làm quen KiotViet";
                 if (sInput) sInput.value = target;
                 let match = lessonsData.find(item => removeVietnameseTones(`${item.noiDung} ${item.moTa}`).includes(removeVietnameseTones(target))) || lessonsData[0];
-                if (match) selectLesson(match, false);
+                if (match) selectLesson(match, false, false); // Tắt hiệu ứng ở lượt tải đầu tiên để khử chớp giật
             }
         }
 
@@ -727,13 +755,13 @@
             sugList.innerHTML = '';
 
             if (filtered.length > 0) {
-                sugList.classList.remove('hidden'); selectLesson(filtered[0], false);
+                sugList.classList.remove('hidden'); selectLesson(filtered[0], false, true);
                 filtered.slice(0, 8).forEach((item, index) => {
                     const activeStyle = index === 0 ? 'bg-sky-50 border-l-4 border-sky-500' : '';
                     const option = document.createElement('div');
                     option.className = `px-4 py-2.5 hover:bg-sky-50 cursor-pointer text-sm text-slate-700 flex justify-between items-center ${activeStyle}`;
                     option.innerHTML = `<div class="truncate pr-4"><span class="font-semibold">${item.noiDung}</span><div class="text-xs text-slate-400 truncate">${item.moTa || 'Chưa có mô tả'}</div></div><span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-bold shrink-0">${cleanCourseName(item.khoaHoc)}</span>`;
-                    option.addEventListener('mousedown', () => selectLesson(item, true));
+                    option.addEventListener('mousedown', () => selectLesson(item, true, true));
                     sugList.appendChild(option);
                 });
             } else {
@@ -747,7 +775,7 @@
             if (container) container.innerHTML = `<div class="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 text-[13px]"><i class="fa-solid fa-circle-info text-slate-300 text-xl mb-2 block"></i>Vui lòng nhập từ khóa tìm kiếm...</div>`;
         }
 
-        function selectLesson(item, shouldClose = false) {
+        function selectLesson(item, shouldClose = false, animate = true) {
             const sInput = document.getElementById('searchInput');
             const sugList = document.getElementById('suggestionsList');
             if (shouldClose && sInput && sugList) { sInput.value = item.noiDung; sugList.classList.add('hidden'); }
@@ -764,8 +792,10 @@
                 img = `<div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 relative group cursor-pointer" onclick="openLightbox('${item.infographic.trim()}')"><img src="${item.infographic.trim()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform"><div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><span class="text-xs text-white font-bold">Xem Infographic</span></div></div>`;
             }
 
+            const animClass = animate ? 'animate-fade-in' : '';
+
             container.innerHTML = `
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 md:grid-cols-2 gap-6 ${animClass}">
                     ${img}
                     <div class="flex flex-col justify-between">
                         <div>
@@ -797,7 +827,7 @@
                 const btn = document.createElement('button');
                 btn.className = "w-full text-left px-4 py-3 hover:bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between gap-4";
                 btn.innerHTML = `<div class="truncate"><span class="font-bold text-slate-800 text-[13px] block">${item.noiDung}</span><span class="text-[11px] text-slate-400 block truncate">${item.moTa || 'Chưa có mô tả'}</span></div><span class="text-[10px] font-black uppercase px-2 py-0.5 rounded shrink-0 bg-blue-100 text-blue-700">${cleanCourseName(item.khoaHoc)}</span>`;
-                btn.onclick = () => { selectLesson(item, true); closeAllTopicsModal(); };
+                btn.onclick = () => { selectLesson(item, true, true); closeAllTopicsModal(); };
                 listContainer.appendChild(btn);
             });
         }
@@ -808,42 +838,55 @@
         }
 
         function openAllTopicsModal() {
-            document.getElementById('allTopicsModal').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+            document.getElementById('allTopicsModal').classList.remove('hidden'); 
             if(document.getElementById('modalSearchInput')) document.getElementById('modalSearchInput').value = '';
             populateModalTopics();
+            updateScrollLock();
         }
         function closeAllTopicsModal() {
             document.getElementById('allTopicsModal').classList.add('hidden');
-            if (!document.getElementById('iframe-modal').classList.contains('open') && !document.getElementById('ai-modal').classList.contains('translate-x-0')) document.body.style.overflow = '';
+            updateScrollLock();
         }
 
         // Modals & UI interactions
         function openIframeModal(url, title) {
             if (!url) return;
-            document.getElementById('course-iframe').src = formatLink(url);
+            const formattedUrl = formatLink(url);
+            document.getElementById('course-iframe').src = formattedUrl;
             if(title) document.getElementById('modal-title').textContent = title;
-            document.getElementById('open-new-tab-btn').href = formatLink(url);
-            document.getElementById('iframe-modal').classList.add('open');
-            document.body.style.overflow = 'hidden';
+            document.getElementById('open-new-tab-btn').href = formattedUrl;
+            
+            const modal = document.getElementById('iframe-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('open');
+            updateScrollLock();
         }
         function closeIframeModal() {
-            document.getElementById('iframe-modal').classList.remove('open');
-            setTimeout(() => document.getElementById('course-iframe').src = '', 300);
-            document.body.style.overflow = '';
+            const modal = document.getElementById('iframe-modal');
+            modal.classList.remove('open');
+            modal.classList.add('hidden');
+            setTimeout(() => { document.getElementById('course-iframe').src = ''; }, 300);
+            updateScrollLock();
         }
-        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.replace('hidden', 'flex'); document.body.style.overflow = 'hidden'; }
-        function closeLightbox() { document.getElementById('lightbox').classList.replace('flex', 'hidden'); setTimeout(()=> document.getElementById('lightbox-img').src='', 300); document.body.style.overflow = ''; }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox').classList.replace('hidden', 'flex'); updateScrollLock(); }
+        function closeLightbox() { document.getElementById('lightbox').classList.replace('flex', 'hidden'); setTimeout(()=> document.getElementById('lightbox-img').src='', 300); updateScrollLock(); }
 
         // AI Logic
         function openAiModal() {
             document.getElementById('ai-modal-backdrop').classList.replace('hidden', 'block');
-            setTimeout(() => { document.getElementById('ai-modal-backdrop').classList.remove('opacity-0'); document.getElementById('ai-modal').classList.remove('translate-x-full'); }, 10);
-            document.body.style.overflow = 'hidden';
+            setTimeout(() => { 
+                document.getElementById('ai-modal-backdrop').classList.remove('opacity-0'); 
+                document.getElementById('ai-modal').classList.remove('translate-x-full'); 
+                updateScrollLock();
+            }, 10);
         }
         function closeAiModal() {
-            document.getElementById('ai-modal-backdrop').classList.add('opacity-0'); document.getElementById('ai-modal').classList.add('translate-x-full');
-            setTimeout(() => document.getElementById('ai-modal-backdrop').classList.replace('block', 'hidden'), 300);
-            document.body.style.overflow = '';
+            document.getElementById('ai-modal-backdrop').classList.add('opacity-0'); 
+            document.getElementById('ai-modal').classList.add('translate-x-full');
+            setTimeout(() => { 
+                document.getElementById('ai-modal-backdrop').classList.replace('block', 'hidden'); 
+                updateScrollLock();
+            }, 300);
         }
         
         let clickedOpt1 = false;
