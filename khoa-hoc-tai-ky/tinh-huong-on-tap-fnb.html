@@ -1,1 +1,396 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cẩm Nang Ôn Tập - Lộ Trình FNB</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; 
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            color: #334155; 
+            background-color: #cbd5e1; /* Nền xám sẫm giúp làm bật khung trắng của Tình huống */
+            overflow-x: hidden;
+        }
+
+        /* Nền phát sáng chuyển động mờ */
+        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: #cbd5e1; }
+        .glow-blob-1, .glow-blob-2 { 
+            position: absolute; width: 50vw; height: 50vw; filter: blur(140px); border-radius: 50%; 
+            transition: background 1.5s ease-in-out; will-change: background, transform;
+        }
+        .glow-blob-1 { top: -15%; left: -10%; background: rgba(37, 99, 235, 0.05); } 
+        .glow-blob-2 { bottom: -15%; right: -10%; background: rgba(16, 185, 129, 0.05); }
+
+        /* Tấm kính mờ sẫm Navy Blue tươi sáng */
+        .glass-panel-dark {
+            background: rgba(27, 54, 93, 0.98); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -8px 0 24px rgba(27, 54, 93, 0.2);
+        }
+
+        /* Tùy chỉnh thanh cuộn sẫm màu */
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    </style>
+</head>
+<body class="text-slate-600 antialiased font-normal">
+
+    <!-- Nền sáng chuyển động mờ -->
+    <div class="tech-bg">
+        <div class="glow-blob-1" id="blob-1"></div>
+        <div class="glow-blob-2" id="blob-2"></div>
+    </div>
+
+    <!-- Bố cục Container chia 2 cột: Main bên trái & Sidebar Navy tươi sáng bên phải -->
+    <div class="min-h-screen flex flex-col md:flex-row-reverse bg-slate-300">
+
+        <!-- THANH SIDEBAR TỐI NAVY BLUE TƯƠI SÁNG (BÊN PHẢI) -->
+        <aside class="w-full md:w-[380px] shrink-0 glass-panel-dark text-slate-100 border-t md:border-t-0 md:border-l border-blue-900/50 flex flex-col h-auto md:h-screen md:sticky md:top-0 z-10">
+            
+            <!-- Phân khu Bộ lọc chọn Ngày học (Đã loại bỏ hoàn toàn bộ chọn Lộ trình học) -->
+            <div class="p-5 border-b border-blue-900/50 space-y-4 flex-shrink-0 bg-[#122543]/40 pt-6">
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-bold text-blue-200 tracking-wider uppercase block">
+                        <i class="fa-solid fa-calendar mr-1"></i> Ngày học phần (Lộ Trình F&B)
+                    </span>
+                    <div class="flex gap-1 bg-[#122543]/40 p-1 rounded-xl">
+                        <button onclick="switchSubTab('day1')" id="sub-tab-day1" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg text-slate-300 transition-all bg-orange-500 text-white shadow-sm flex items-center justify-center gap-1">
+                            NGÀY 1
+                        </button>
+                        <button onclick="switchSubTab('day2')" id="sub-tab-day2" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg text-slate-300 transition-all flex items-center justify-center gap-1">
+                            NGÀY 2
+                        </button>
+                        <button onclick="switchSubTab('day3')" id="sub-tab-day3" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg text-slate-300 transition-all flex items-center justify-center gap-1">
+                            NGÀY 3
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phân khu Danh sách tất cả tình huống cùng phiên (Giãn dòng tốt, dễ nhìn hơn) -->
+            <div class="flex-1 overflow-y-auto custom-scroll p-5 space-y-3 bg-[#122543]/20">
+                <span class="text-[10px] font-bold text-blue-200 tracking-wider uppercase block">
+                    <i class="fa-solid fa-list-ul mr-1"></i> Danh sách tình huống cùng phiên
+                </span>
+                
+                <!-- Nơi chứa danh sách kết xuất động -->
+                <div id="all-scenarios-list" class="space-y-2.5"></div>
+            </div>
+        </aside>
+
+        <!-- KHU VỰC CHÍNH BÊN TRÁI -->
+        <main class="flex-grow p-6 lg:p-8 flex flex-col w-full mx-auto justify-start space-y-5">
+
+            <!-- Thanh chức năng & Thao tác nhanh -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0">
+                <span class="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-desktop text-blue-600"></i> Không gian thực hành phản xạ
+                </span>
+                <button onclick="triggerRandomScenario()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-all shadow hover:shadow-lg flex items-center gap-2 self-start">
+                    <i class="fa-solid fa-dice"></i> Chọn ngẫu nhiên tình huống khác
+                </button>
+            </div>
+
+            <!-- Khung hiển thị chi tiết tình huống trọng tâm -->
+            <div id="random-scenario-box" class="flex-grow"></div>
+
+        </main>
+    </div>
+
+    <!-- Script điều hướng & xử lý tải dữ liệu từ Google Sheets -->
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyTOCaMQaVouAwWX4QvWtzvGPPcIxRnIG8woZjWRNM3vDqcxJrFOt9ot_kJmVGOC4-FXA/exec";
+        const SECURITY_TOKEN = "KIOT_RENEWAL_Q3_2026";
+
+        let scenariosData = {};
+        let currentDay = 'day1';
+        const currentRoadmap = 'FNB'; // Cố định lộ trình FNB cho trang này
+        let currentRandomScenario = null;
+
+        // Cẩm nang dự phòng offline dành riêng cho F&B
+        const fallbackScenarios = {
+            day1: [
+                { id: 1, type: "morning", roadmap: "FNB", title: "Tình huống 1: Nhà hàng F&B hoãn gia hạn vì muốn tự quản lý thủ công", question: 'Khách hàng kinh doanh nhà hàng chuẩn bị hết hạn hợp đồng bảo: "Em ơi, giờ quán chị quản lý bằng sổ tay hoặc file Excel cũng được, quán nhỏ không cần tốn chi phí gia hạn phần mềm KiotViet hàng năm làm gì." Em hãy thuyết phục khách gia hạn.' }
+            ],
+            day2: [],
+            day3: []
+        };
+
+        window.onload = function() {
+            loadScenariosFromSheet();
+        };
+
+        // Hàm lấy danh sách tình huống từ API Google Sheet
+        function loadScenariosFromSheet() {
+            const box = document.getElementById('random-scenario-box');
+            box.innerHTML = `
+                <div class="text-center py-16 text-slate-500 bg-white rounded-2xl border border-slate-200/80 shadow-md">
+                    <i class="fa-solid fa-spinner animate-spin text-2xl text-blue-600 block mb-2"></i>
+                    Đang tải danh sách dữ liệu học tập...
+                </div>
+            `;
+
+            fetch(`${API_URL}?token=${SECURITY_TOKEN}&action=getScenarios`)
+            .then(res => res.json())
+            .then(response => {
+                if (response.status === "success" && response.data && response.data.length > 0) {
+                    scenariosData = { day1: [], day2: [], day3: [] };
+                    
+                    response.data.forEach(item => {
+                        if (
+                            !item.Day || 
+                            item.Day.toString().trim().toLowerCase() === "day" || 
+                            item.Title.toString().trim().toLowerCase() === "title"
+                        ) {
+                            return; 
+                        }
+
+                        const dayKey = item.Day.toString().trim();
+                        if (scenariosData[dayKey]) {
+                            scenariosData[dayKey].push({
+                                id: item.id || Math.random().toString(36).substr(2, 9),
+                                type: item.Type ? item.Type.toString().trim() : "",
+                                title: item.Title,
+                                question: item.Question,
+                                roadmap: item.Roadmap ? item.Roadmap.toString().trim() : ""
+                            });
+                        }
+                    });
+                    
+                    switchSubTab('day1');
+                } else {
+                    useFallbackData("Lỗi cấu trúc hoặc tệp rỗng. Kích hoạt chế độ dự phòng.");
+                }
+            })
+            .catch(err => {
+                console.warn("API load scenarios failed, loading offline handbook:", err);
+                useFallbackData("Lỗi kết nối. Kích hoạt cẩm nang offline.");
+            });
+        }
+
+        function useFallbackData(logMessage) {
+            scenariosData = fallbackScenarios;
+            switchSubTab('day1');
+            console.info(logMessage);
+        }
+
+        function formatSentences(text) {
+            if (!text) return "";
+            const sentences = text.split(/(?<!\b\d+\.)(?<=[.?!])\s+/);
+            return sentences
+                .map(s => s.trim())
+                .filter(s => s.length > 0)
+                .join('<br><br>');
+        }
+
+        // Chuyển đổi Ngày học
+        function switchSubTab(day) {
+            currentDay = day;
+            const tabs = ['day1', 'day2', 'day3'];
+            const blob1 = document.getElementById('blob-1');
+            const blob2 = document.getElementById('blob-2');
+
+            const bgGlows = {
+                day1: ["rgba(37, 99, 235, 0.05)", "rgba(16, 185, 129, 0.05)"],
+                day2: ["rgba(249, 115, 22, 0.05)", "rgba(37, 99, 235, 0.05)"],
+                day3: ["rgba(16, 185, 129, 0.05)", "rgba(249, 115, 22, 0.05)"]
+            };
+
+            if (blob1 && blob2 && bgGlows[day]) {
+                blob1.style.background = bgGlows[day][0];
+                blob2.style.background = bgGlows[day][1];
+            }
+            
+            tabs.forEach(item => {
+                const button = document.getElementById(`sub-tab-${item}`);
+                if (button) {
+                    if (item === day) {
+                        button.classList.add('bg-orange-500', 'text-white', 'shadow-sm');
+                        button.classList.remove('text-slate-300');
+                    } else {
+                        button.classList.remove('bg-orange-500', 'text-white', 'shadow-sm');
+                        button.classList.add('text-slate-300');
+                    }
+                }
+            });
+
+            renderAllScenarios(day);
+            triggerRandomScenario();
+        }
+
+        function triggerRandomScenario() {
+            const list = scenariosData[currentDay] 
+                ? scenariosData[currentDay].filter(item => item.roadmap === currentRoadmap) 
+                : [];
+
+            if (!list || list.length === 0) {
+                currentRandomScenario = null;
+                renderActiveScenario();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * list.length);
+            currentRandomScenario = list[randomIndex];
+            renderActiveScenario();
+        }
+
+        function selectScenario(id) {
+            const list = scenariosData[currentDay] 
+                ? scenariosData[currentDay].filter(item => item.roadmap === currentRoadmap) 
+                : [];
+            
+            const selected = list.find(item => item.id.toString() === id.toString());
+            if (selected) {
+                currentRandomScenario = selected;
+                renderActiveScenario();
+            }
+        }
+
+        function renderActiveScenario() {
+            const box = document.getElementById('random-scenario-box');
+
+            if (!currentRandomScenario) {
+                box.innerHTML = `
+                    <div class="text-center py-16 text-slate-400 bg-white border border-slate-200/60 rounded-2xl shadow-md">
+                        <i class="fa-solid fa-circle-question text-xl block mb-2"></i>
+                        Lộ trình học phần này chưa có dữ liệu tình huống ôn tập.
+                    </div>
+                `;
+                return;
+            }
+
+            const isMorning = currentRandomScenario.type === 'morning';
+            
+            const colorClass = isMorning 
+                ? 'border-emerald-100 bg-emerald-50/40' 
+                : 'border-blue-100 bg-blue-50/40';
+            const icon = isMorning 
+                ? '<i class="fa-solid fa-sun text-emerald-600"></i>' 
+                : '<i class="fa-solid fa-moon text-blue-600"></i>';
+            const textTheme = isMorning ? 'text-emerald-800' : 'text-blue-800';
+            const typeLabel = isMorning ? 'Học Phần Sáng' : 'Học Phần Chiều';
+
+            box.innerHTML = `
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden animate-fade">
+                    <div class="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between ${colorClass}">
+                        <span class="text-[10px] font-bold tracking-wider uppercase flex items-center gap-1.5 ${textTheme}">
+                            ${icon} ${typeLabel} - Tình huống thực tế (F&B)
+                        </span>
+                        <span class="text-[9px] font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-500 border border-slate-200/40 uppercase tracking-wide">
+                            Đang hiển thị
+                        </span>
+                    </div>
+                    
+                    <div class="p-6 lg:p-8 space-y-5">
+                        <h4 class="font-bold text-sm lg:text-base text-slate-800 leading-relaxed tracking-tight">
+                            ${escapeHtml(currentRandomScenario.title)}
+                        </h4>
+                        
+                        <div class="space-y-2">
+                            <strong class="text-slate-400 text-[9px] font-bold uppercase tracking-widest block">Yêu cầu tình huống:</strong> 
+                            <div class="text-slate-700 leading-relaxed bg-slate-50/50 p-5 lg:p-6 rounded-xl border border-slate-200/40 text-sm font-normal">
+                                ${formatSentences(escapeHtml(currentRandomScenario.question))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            highlightActiveScenarioItem(currentRandomScenario.id);
+        }
+
+        function renderAllScenarios(day) {
+            const container = document.getElementById('all-scenarios-list');
+            const list = scenariosData[day] 
+                ? scenariosData[day].filter(item => item.roadmap === currentRoadmap) 
+                : [];
+
+            if (!list || list.length === 0) {
+                container.innerHTML = `<p class="text-xs text-blue-200/60 py-4 text-center">Chưa có dữ liệu tình huống ôn tập nào.</p>`;
+                return;
+            }
+
+            const morningTitle = `
+                <div class="text-[9px] font-bold text-emerald-300 tracking-widest uppercase mb-1.5 mt-3 flex items-center gap-1">
+                    <i class="fa-solid fa-sun text-emerald-400"></i> Sáng (Lý thuyết & Tính năng)
+                </div>`;
+
+            const afternoonTitle = `
+                <div class="text-[9px] font-bold text-blue-300 tracking-widest uppercase mb-1.5 mt-4 flex items-center gap-1">
+                    <i class="fa-solid fa-moon text-blue-400"></i> Chiều (Phản xạ tình huống)
+                </div>`;
+
+            const morningItems = list.filter(item => item.type === 'morning');
+            const afternoonItems = list.filter(item => item.type === 'afternoon');
+
+            let htmlContent = "";
+
+            if (morningItems.length > 0) {
+                htmlContent += morningTitle;
+                htmlContent += `<div class="space-y-2.5">` + morningItems.map(item => `
+                    <button id="scen-item-${item.id}" onclick="selectScenario('${item.id}')" class="w-full text-left p-3.5 rounded-lg border border-blue-900/50 bg-blue-950/20 hover:border-blue-700/50 hover:bg-blue-900/30 transition-all text-xs font-medium flex items-start gap-2.5 text-slate-300 group">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0 animate-pulse"></span>
+                        <span class="text-slate-300 group-hover:text-white leading-relaxed transition-colors">${escapeHtml(item.title)}</span>
+                    </button>
+                `).join('') + `</div>`;
+            }
+
+            if (afternoonItems.length > 0) {
+                htmlContent += afternoonTitle;
+                htmlContent += `<div class="space-y-2.5">` + afternoonItems.map(item => `
+                    <button id="scen-item-${item.id}" onclick="selectScenario('${item.id}')" class="w-full text-left p-3.5 rounded-lg border border-blue-900/50 bg-blue-950/20 hover:border-blue-700/50 hover:bg-blue-900/30 transition-all text-xs font-medium flex items-start gap-2.5 text-slate-300 group">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0 animate-pulse"></span>
+                        <span class="text-slate-300 group-hover:text-white leading-relaxed transition-colors">${escapeHtml(item.title)}</span>
+                    </button>
+                `).join('') + `</div>`;
+            }
+
+            container.innerHTML = htmlContent;
+        }
+
+        function highlightActiveScenarioItem(activeId) {
+            const items = document.querySelectorAll('[id^="scen-item-"]');
+            items.forEach(item => {
+                item.classList.remove('border-blue-400', 'bg-blue-500/20', 'text-white', 'ring-1', 'ring-blue-400/40');
+                item.classList.add('border-blue-900/50', 'bg-blue-950/20', 'text-slate-300');
+            });
+
+            const activeItem = document.getElementById(`scen-item-${activeId}`);
+            if (activeItem) {
+                activeItem.classList.remove('border-blue-900/50', 'bg-blue-950/20', 'text-slate-300');
+                activeItem.classList.add('border-blue-400', 'bg-blue-500/20', 'text-white', 'ring-1', 'ring-blue-400/40');
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function toggleAllScenarios() {}
+
+        function escapeHtml(string) {
+            if (!string) return "";
+            return String(string)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+    </script>
+</body>
+</html>
