@@ -240,7 +240,7 @@
         <div id="main-scroll-area" class="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-8 relative bg-slate-50">
             <div id="welcome-section" class="transition-opacity duration-500 mb-8 fade-in-stagger" style="animation-delay: 0.1s">
                 
-                <!-- Expanded Glass Ultra Welcome Banner with 2-Column Tech Design -->
+                <!-- Expanded Glass Ultra Welcome Banner -->
                 <div class="glass-panel-ultra rounded-2xl shadow-sm p-8 relative overflow-hidden mb-8 group">
                     <div class="absolute right-0 bottom-0 w-80 h-80 bg-white/40 rounded-full blur-3xl pointer-events-none"></div>
                     <div class="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
@@ -253,7 +253,7 @@
                             </h2>
                             <p class="text-slate-600 text-sm leading-relaxed mb-6 font-medium">Trang Web này là phần mở rộng trực quan của khóa học trên LMS, hỗ trợ tra cứu và luyện tập tình huống. Việc học song song trên trang web và LMS giúp bạn hệ thống hóa kiến thức bài bản nhất. Hãy thực hiện đúng quy trình học tập 3 bước theo hướng dẫn bên dưới.</p>
                             <div class="flex flex-wrap gap-3">
-                                <button onclick="window.filterSection('bat-dau-kiotviet')" class="px-5 py-2.5 bg-themeAccent hover:bg-themeAccentHover text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-blue-500/10">
+                                <button onclick="window.filterSection('all'); if(window.trainingData[0]) window.filterSection(window.trainingData[0].id);" class="px-5 py-2.5 bg-themeAccent hover:bg-themeAccentHover text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-blue-500/10">
                                     Bắt đầu học ngay <i class="fa-solid fa-arrow-right ml-2"></i>
                                 </button>
                                 <a href="https://daotao.kiotviet.vn/khoa-hoc/sales-dao-tao-san-pham-retail-kv1/" target="_blank" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition-all flex items-center gap-2 shadow-sm">
@@ -281,7 +281,7 @@
                                     <h4 class="text-sm font-bold text-slate-800 mb-1">Tham gia học tập</h4>
                                     <p class="text-xs text-slate-500 leading-relaxed mb-4">Mỗi bài học bao gồm các Infographic tổng hợp kiến thức; Hướng dẫn thao tác kèm hình ảnh; Quiz kiểm tra đánh giá kiến thức. Học viên học lần lượt từng bài học từ trên xuống dưới theo thanh danh mục bên trái. Sau khi hoàn thành mỗi bài học, học viên nhấn nút "Đã hiểu bài" cuối mỗi bài để hệ thống lưu lại tiến trình cá nhân.</p>
                                 </div>
-                                <button onclick="window.filterSection('bat-dau-kiotviet')" class="text-xs font-bold text-kvBlue hover:text-kvBlueHover inline-flex items-center gap-1 mt-auto self-start">
+                                <button onclick="if(window.trainingData[0]) window.filterSection(window.trainingData[0].id);" class="text-xs font-bold text-kvBlue hover:text-kvBlueHover inline-flex items-center gap-1 mt-auto self-start">
                                     Bắt đầu học ngay <i class="fa-solid fa-chevron-right text-[10px]"></i>
                                 </button>
                             </div>
@@ -349,7 +349,7 @@
 
     <div id="floating-menu" class="lg:hidden fixed bottom-4 left-4 right-4 z-40 glass shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-2 rounded-2xl flex flex-row gap-2 overflow-x-auto no-scrollbar justify-start border border-slate-200"></div>
 
-    <!-- Redesigned Full-Screen Modal with Navy Accent and Centered Navigation Alignment -->
+    <!-- Modal Popup Player -->
     <div id="learning-modal">
         <div class="modal-content bg-white" id="modal-box">
             <div class="modal-header bg-[#1e3a8a] text-white flex justify-between items-center p-4 shrink-0 border-b border-white/10">
@@ -378,36 +378,121 @@
         </div>
     </div>
 
-    <!-- SCRIPT INFRASTRUCTURE -->
+    <!-- SCRIPT INFRASTRUCTURE & GVIZ DATA INTEGRATION -->
     <script>
-        window.trainingData = [];
+        // CONFIGURATION PARAMETERS
+        window.SHEET_ID = '1qofU1zM9WJ9fDrxxrmziBUHiMQ0K9BQxh5fKthGrKYI';
+        window.SHEET_GID = '6265069';
+        window.COURSE_FILTER = 'Retail 01';
+        window.LOCAL_STORAGE_PREFIX = 'kv_retail_01_v2026_';
 
+        window.trainingData = [];
+        window.scenarioData = {}; 
+        window.currentScenarioIndex = {};
+
+        // Helper slugify function for section IDs
+        window.slugify = function(str) {
+            if (!str) return '';
+            str = str.toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/[^a-z0-9 -]/g, '')
+                     .replace(/\s+/g, '-')
+                     .replace(/-+/g, '-');
+            return str;
+        };
+
+        // GVIZ API READER
         async function loadTrainingData() {
             try {
-                const response = await fetch('dao-tao-chuyen-nganh-retail.json');
+                const url = `https://docs.google.com/spreadsheets/d/${window.SHEET_ID}/gviz/tq?tqx=out:json&gid=${window.SHEET_GID}`;
+                const response = await fetch(url);
                 if (!response.ok) throw new Error(`Mã phản hồi HTTP: ${response.status}`);
-                window.trainingData = await response.json();
+                
+                const text = await response.text();
+                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const gvizData = JSON.parse(jsonString);
+
+                if (!gvizData.table || !gvizData.table.rows) {
+                    throw new Error("Không lấy được dữ liệu bảng từ Google Sheet.");
+                }
+
+                const rows = gvizData.table.rows;
+                const categoriesMap = new Map();
+
+                rows.forEach((row, index) => {
+                    const c = row.c;
+                    if (!c) return;
+
+                    // Col 2: Khóa học
+                    const courseName = c[2]?.v ? String(c[2].v).trim() : '';
+                    if (courseName !== window.COURSE_FILTER) return;
+
+                    // Extract values according to standard column mapping
+                    const stt = c[1]?.v ? String(c[1].v).trim() : (index + 1);
+                    const title = c[3]?.v ? String(c[3].v).trim() : '';
+                    const hdsdLink = c[4]?.v && c[4].v !== '#N/A' ? String(c[4].v).trim() : '';
+                    const infographicLink = c[5]?.v && c[5].v !== '#N/A' ? String(c[5].v).trim() : '';
+                    const youtubeLink = c[6]?.v && c[6].v !== '#N/A' ? String(c[6].v).trim() : '';
+                    const lessonLink = c[7]?.v && c[7].v !== '#N/A' ? String(c[7].v).trim() : '';
+                    const description = c[8]?.v && c[8].v !== '#N/A' ? String(c[8].v).trim() : '';
+                    const rawScenario = c[9]?.v && c[9].v !== '#N/A' ? String(c[9].v).trim() : '';
+                    const categoryName = c[10]?.v && c[10].v !== '#N/A' ? String(c[10].v).trim() : 'Chuyên đề chung';
+
+                    if (!title) return; // Skip invalid entries without title
+
+                    const sectionId = window.slugify(categoryName) || `chuyen-de-${index}`;
+                    const articleId = `rtl1-art-${stt}`;
+
+                    if (!categoriesMap.has(sectionId)) {
+                        categoriesMap.set(sectionId, {
+                            id: sectionId,
+                            category: categoryName,
+                            articles: [],
+                            scenarios: []
+                        });
+                    }
+
+                    const sectionObj = categoriesMap.get(sectionId);
+
+                    sectionObj.articles.push({
+                        id: articleId,
+                        title: title,
+                        hdsdLink: hdsdLink,
+                        infographicLink: infographicLink,
+                        youtubeLink: youtubeLink,
+                        lessonLink: lessonLink,
+                        description: description
+                    });
+
+                    if (rawScenario && !sectionObj.scenarios.includes(rawScenario)) {
+                        sectionObj.scenarios.push(rawScenario);
+                    }
+                });
+
+                window.trainingData = Array.from(categoriesMap.values());
                 return true;
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu bài học:", error);
+                console.error("Lỗi khi tải dữ liệu Google Sheet:", error);
                 document.getElementById('content-area').innerHTML = `
                     <div class="text-center py-12 px-6 bg-white border border-red-100 rounded-2xl shadow-sm max-w-lg mx-auto my-8">
                         <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto mb-4 border border-red-100 shadow-sm">
                             <i class="fa-solid fa-circle-exclamation"></i>
                         </div>
-                        <h3 class="text-base font-bold text-slate-800 mb-2">Không thể tải dữ liệu đào tạo</h3>
+                        <h3 class="text-base font-bold text-slate-800 mb-2">Không thể tải dữ liệu bài học</h3>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Hệ thống không tìm thấy hoặc không thể đọc được nội dung tệp <strong>dao-tao-chuyen-nganh-retail.json</strong>. 
+                            Không thể đọc dữ liệu từ Google Sheet (GID: ${window.SHEET_GID}). Hãy đảm bảo Google Sheet đã mở quyền chia sẻ "Bất kỳ ai có liên kết".
                         </p>
                         <p class="text-[10px] text-slate-400 font-mono bg-slate-50 p-3 rounded border border-slate-100 text-left break-words overflow-x-auto">${error.message}</p>
                     </div>`;
                 return false;
             }
         }
-
-        window.scenarioData = {}; 
-        window.currentScenarioIndex = {};
-        window.LOCAL_STORAGE_PREFIX = 'kv_elearning_v2026_';
 
         window.toggleQuickSelect = (event) => {
             if (event) event.stopPropagation();
@@ -517,7 +602,6 @@
 
         window.isImageUrl = (url) => { if (!url) return false; return url.match(/\.(jpeg|jpg|gif|png|webp|svg)/i) !== null || url.includes('wp-content/uploads'); };
         
-        // Robust YouTube regex parser matching regular, short, embed, query, and tracking parameters
         window.formatLink = (url) => { 
             if (!url) return ''; 
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]{11})/;
@@ -562,7 +646,6 @@
             }
             window.updateActiveNavigationState(sectionId);
 
-            // Dynamic background light updates depending on loaded content category
             const blob1 = document.querySelector('.glow-blob-1');
             const blob2 = document.querySelector('.glow-blob-2');
             if (blob1 && blob2) {
@@ -630,9 +713,9 @@
                                 <i class="fa-solid fa-book-open-reader mr-2"></i> Bài học lý thuyết <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
                             </button>
                             
-                            <!-- Custom reactive Checkbox block (Cleaned from any emoji-status or emojis) -->
+                            <!-- Custom reactive Checkbox block with autocomplete="off" fix -->
                             <label class="tech-checkbox flex items-center justify-center gap-3 cursor-pointer bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 transition-all hover:border-green-400 shadow-sm w-full sm:w-auto select-none">
-                                <input type="checkbox" class="hidden" onchange="window.toggleProgress('${art.id}', this)" id="check-${art.id}">
+                                <input type="checkbox" autocomplete="off" class="hidden" onchange="window.toggleProgress('${art.id}', this)" id="check-${art.id}" ${isCompleted ? 'checked' : ''}>
                                 <div class="w-4 h-4 rounded border border-slate-300 flex items-center justify-center bg-white shrink-0 transition-colors">
                                     <svg class="hidden w-2.5 h-2.5 text-white fill-current pointer-events-none" viewBox="0 0 20 20">
                                         <path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/>
@@ -777,17 +860,27 @@
             window.highlightNextLesson();
         };
 
+        // STRICT TWO-WAY SYNC FOR PROGRESS STATE
         window.loadProgress = () => {
             window.trainingData.forEach(s => s.articles.forEach(a => {
                 const c = document.getElementById(`check-${a.id}`);
                 const dot = document.querySelector(`[data-dot-id="${a.id}"]`);
                 const card = document.querySelector(`[data-id="${a.id}"]`);
-                if (localStorage.getItem(`${window.LOCAL_STORAGE_PREFIX}${a.id}`) === 'true') {
-                    if (c) c.checked = true;
+                const isDone = localStorage.getItem(`${window.LOCAL_STORAGE_PREFIX}${a.id}`) === 'true';
+
+                if (c) c.checked = isDone; // Explicit boolean sync
+
+                if (isDone) {
                     if (card) card.classList.add('completed');
                     if (dot) {
                         dot.className = "roadmap-dot absolute -left-[35px] top-6 w-5 h-5 rounded-full bg-green-500 border-4 border-green-200 z-10 flex items-center justify-center transition-all shadow-sm";
                         dot.innerHTML = `<i class="fa-solid fa-check text-[8px] text-white"></i>`;
+                    }
+                } else {
+                    if (card) card.classList.remove('completed');
+                    if (dot) {
+                        dot.className = "roadmap-dot absolute -left-[35px] top-6 w-5 h-5 rounded-full bg-white border-4 border-slate-300 group-hover:border-kvBlue z-10 flex items-center justify-center transition-all shadow-sm";
+                        dot.innerHTML = `<div class="w-1.5 h-1.5 bg-slate-300 group-hover:bg-kvBlue rounded-full"></div>`;
                     }
                 }
             }));
@@ -816,7 +909,7 @@
                 const countBadge = document.getElementById(`nav-count-${section.id}`);
                 if (countBadge) {
                     countBadge.innerText = `${secCompleted}/${secTotal}`;
-                    if (secCompleted === secTotal) countBadge.className = "text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full font-bold tabular-nums";
+                    if (secCompleted === secTotal && secTotal > 0) countBadge.className = "text-[10px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded-full font-bold tabular-nums";
                     else countBadge.className = "text-[10px] bg-white/10 text-sky-200 px-1.5 py-0.5 rounded-full font-bold tabular-nums";
                 }
             });
@@ -872,7 +965,7 @@
             ];
 
             window.trainingData.forEach((s, i) => {
-                const config = styleConfigs[i] || { icon: 'fa-layer-group', bg: 'bg-blue-50 text-kvBlue border-blue-100' };
+                const config = styleConfigs[i % styleConfigs.length] || { icon: 'fa-layer-group', bg: 'bg-blue-50 text-kvBlue border-blue-100' };
                 const parsedName = s.category.includes(':') ? s.category.split(':').slice(1).join(':').trim() : s.category;
                 let lessonBulletsHtml = '';
                 s.articles.forEach(art => {
