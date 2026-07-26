@@ -83,7 +83,7 @@
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         </div>
 
-                        <!-- DANH SÁCH TÌNH HUỐNG -->
+                        <!-- DANH SÁCH TÌNH HUỐNG (ACCORDION) -->
                         <div id="scenarios-checkbox-list" class="flex-grow overflow-y-auto custom-scroll space-y-3 pr-1">
                             <!-- JS Render danh sách câu hỏi -->
                         </div>
@@ -113,7 +113,7 @@
 
         let scenariosData = {};
         let currentDay = 'day1';
-        const currentRoadmap = 'Retail'; // Khóa cứng cấu hình mặc định là Retail
+        const currentRoadmap = 'Retail'; // Khóa mặc định là Retail
         let currentSelectedLesson = null;
 
         window.onload = function() { loadScenariosFromSheet(); };
@@ -255,7 +255,7 @@
             renderLessonSidebar();
         }
 
-        // ================= XỬ LÝ DANH SÁCH TÌNH HUỐNG =================
+        // ================= XỬ LÝ DANH SÁCH TÌNH HUỐNG (ACCORDION) =================
         function renderScenariosCheckboxList() {
             const container = document.getElementById('scenarios-checkbox-list');
             let list = scenariosData[currentDay] ? scenariosData[currentDay].filter(item => item.roadmap === currentRoadmap) : [];
@@ -277,13 +277,21 @@
                 const questionHtml = formatQuestionText(item.question);
 
                 return `
-                    <div class="scenario-card border border-slate-200 rounded-2xl bg-white p-5 shadow-sm hover:border-blue-300 transition-all space-y-3" data-search="${escapeHtml((item.title + ' ' + item.question).toLowerCase())}">
-                        <div class="border-b pb-2.5 border-slate-100">
-                            <span class="text-xs font-bold text-blue-600 block">${escapeHtml(parts.code || item.title)}</span>
-                            <h4 class="text-sm font-bold text-slate-800 mt-1">${escapeHtml(parts.scenario || item.title)}</h4>
+                    <div class="scenario-card border border-slate-200 rounded-2xl bg-white hover:border-blue-300 transition-all overflow-hidden" data-search="${escapeHtml((item.title + ' ' + item.question).toLowerCase())}">
+                        <!-- Tiêu đề Accordion -->
+                        <div onclick="toggleAccordion(this)" class="flex items-center justify-between cursor-pointer p-4 select-none">
+                            <div class="pr-2">
+                                <span class="text-[10px] font-bold text-blue-600 tracking-wide block uppercase">${escapeHtml(parts.code || '')}</span>
+                                <h4 class="text-xs sm:text-sm font-bold text-slate-800 transition-colors">${escapeHtml(parts.scenario || item.title)}</h4>
+                            </div>
+                            <div class="shrink-0">
+                                <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 accordion-icon"></i>
+                            </div>
                         </div>
-                        <div class="space-y-2 text-xs">
-                            <div class="text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 leading-relaxed text-sm">
+                        
+                        <!-- Nội dung tình huống (Mặc định ẩn) -->
+                        <div class="scenario-content hidden border-t border-slate-100 p-4 bg-slate-50/50 rounded-b-2xl">
+                            <div class="text-slate-700 leading-relaxed text-sm">
                                 <strong class="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">Tình huống ôn tập:</strong>
                                 ${questionHtml}
                             </div>
@@ -293,13 +301,63 @@
             }).join('');
         }
 
+        function toggleAccordion(headerElement) {
+            const card = headerElement.closest('.scenario-card');
+            const content = card.querySelector('.scenario-content');
+            const isAlreadyOpen = !content.classList.contains('hidden');
+
+            document.querySelectorAll('.scenario-content').forEach(el => {
+                if (el !== content) {
+                    el.classList.add('hidden');
+                    const otherCard = el.closest('.scenario-card');
+                    otherCard.classList.remove('border-blue-400');
+                    otherCard.classList.add('border-slate-200');
+                    const otherIcon = otherCard.querySelector('.accordion-icon');
+                    if (otherIcon) {
+                        otherIcon.className = 'fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 accordion-icon';
+                    }
+                }
+            });
+
+            if (isAlreadyOpen) {
+                content.classList.add('hidden');
+                card.classList.remove('border-blue-400');
+                card.classList.add('border-slate-200');
+                const icon = card.querySelector('.accordion-icon');
+                if (icon) {
+                    icon.className = 'fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 accordion-icon';
+                }
+            } else {
+                content.classList.remove('hidden');
+                card.classList.remove('border-slate-200');
+                card.classList.add('border-blue-400');
+                const icon = card.querySelector('.accordion-icon');
+                if (icon) {
+                    icon.className = 'fa-solid fa-chevron-up text-blue-600 text-xs transition-transform duration-200 accordion-icon';
+                }
+            }
+        }
+
         function filterAllScenarios(keyword) {
             const lowerKey = keyword.toLowerCase().trim();
             const cards = document.querySelectorAll('.scenario-card');
             cards.forEach(card => {
                 const searchStr = card.getAttribute('data-search');
-                if (searchStr.includes(lowerKey)) card.classList.remove('hidden');
-                else card.classList.add('hidden');
+                if (searchStr.includes(lowerKey)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                    const content = card.querySelector('.scenario-content');
+                    if (content && !content.classList.contains('hidden')) {
+                        content.classList.add('hidden');
+                        card.classList.remove('border-blue-400');
+                        card.classList.add('border-slate-200');
+                        const icon = card.querySelector('.accordion-icon');
+                        if (icon) {
+                            icon.className = 'fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 accordion-icon';
+                        }
+                    }
+                }
             });
         }
     </script>
