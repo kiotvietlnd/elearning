@@ -419,9 +419,9 @@
                 const gvizData = JSON.parse(jsonText);
                 
                 const rows = gvizData.table.rows;
-                const categoryMap = new Map();
+                const tempData = [];
                 
-                let globalIndex = 0;
+                // Thu thập tất cả data
                 rows.forEach((row) => {
                     const c = row.c;
                     if (!c) return;
@@ -429,7 +429,7 @@
                     const courseVal = c[2] && c[2].v ? String(c[2].v).trim() : '';
                     if (courseVal.toLowerCase() !== targetCourse.toLowerCase()) return;
                     
-                    const stt = c[1] && c[1].v !== null ? c[1].v : globalIndex + 1;
+                    const stt = c[1] && c[1].v !== null ? c[1].v : null;
                     const title = c[3] && c[3].v ? String(c[3].v).trim() : '';
                     if (!title || title === '#N/A') return;
                     
@@ -440,28 +440,42 @@
                     const description = c[8] && c[8].v && c[8].v !== '#N/A' ? String(c[8].v).trim() : '';
                     const categoryName = c[10] && c[10].v && c[10].v !== '#N/A' ? String(c[10].v).trim() : 'Chuyên đề chung';
                     
-                    const catId = window.slugify(categoryName);
-                    
-                    if (!categoryMap.has(catId)) {
-                        categoryMap.set(catId, {
-                            id: catId,
-                            category: categoryName,
-                            articles: []
-                        });
-                    }
-                    
+                    tempData.push({ stt, title, description, hdsdLink, infographicLink, youtubeLink, lessonLink, categoryName });
+                });
+                
+                // Lấy danh mục duy nhất và sắp xếp
+                let uniqueCategories = [...new Set(tempData.map(item => item.categoryName))];
+                uniqueCategories.sort((a, b) => a.localeCompare(b, 'vi')); 
+                
+                // Gán bộ Slug tuỳ chỉnh lần lượt: 1a, 1b, 2a, 2b
+                const customSlugs = ['1a', '1b', '2a', '2b'];
+                const categoryMap = new Map();
+                
+                uniqueCategories.forEach((cat, index) => {
+                    const catId = customSlugs[index] || `section-${index + 1}`; 
+                    categoryMap.set(cat, {
+                        id: catId,
+                        category: cat,
+                        articles: []
+                    });
+                });
+                
+                // Phân bổ nội dung bài viết
+                let globalIndex = 0;
+                tempData.forEach(item => {
                     globalIndex++;
+                    const catInfo = categoryMap.get(item.categoryName);
                     const artId = `rtl-tk-art-${globalIndex}`;
                     
-                    categoryMap.get(catId).articles.push({
+                    catInfo.articles.push({
                         id: artId,
-                        stt: stt,
-                        title: title,
-                        description: description,
-                        hdsdLink: hdsdLink,
-                        infographicLink: infographicLink,
-                        youtubeLink: youtubeLink,
-                        lessonLink: lessonLink
+                        stt: item.stt || globalIndex,
+                        title: item.title,
+                        description: item.description,
+                        hdsdLink: item.hdsdLink,
+                        infographicLink: item.infographicLink,
+                        youtubeLink: item.youtubeLink,
+                        lessonLink: item.lessonLink
                     });
                 });
                 
@@ -601,11 +615,19 @@
             
             const blob1 = document.getElementById('glow-1');
             const blob2 = document.getElementById('glow-2');
-            if (blob1 && blob2) {
-                if (sectionId === 'all') {
+            
+            // Xử lý ghi URL Hash
+            if (sectionId === 'all') { 
+                history.replaceState(null, null, ' '); // Xoá # khỏi URL
+                if (blob1 && blob2) {
                     blob1.style.backgroundColor = '#1e3a8a';
                     blob2.style.backgroundColor = '#38bdf8';
-                } else {
+                }
+                welcome.style.display = 'block'; 
+                sections.forEach(sec => sec.style.display = 'none'); 
+            } else { 
+                history.replaceState(null, null, `#${sectionId}`); // Gắn #1a, #1b... vào URL
+                if (blob1 && blob2) {
                     const idx = window.trainingData.findIndex(s => s.id === sectionId);
                     const colors = [
                         { b1: '#0d9488', b2: '#10b981' }, 
@@ -617,12 +639,6 @@
                     blob1.style.backgroundColor = set.b1;
                     blob2.style.backgroundColor = set.b2;
                 }
-            }
-
-            if (sectionId === 'all') { 
-                welcome.style.display = 'block'; 
-                sections.forEach(sec => sec.style.display = 'none'); 
-            } else { 
                 welcome.style.display = 'none'; 
                 sections.forEach(sec => {
                     if (sec.id === `section-${sectionId}`) sec.style.display = 'block';
@@ -875,7 +891,14 @@
                 window.renderDynamicFilters();
                 window.renderContent();
                 window.renderQuickSelect();
-                window.filterSection('all');
+                
+                // Đọc URL hash nếu có để tự động chuyển tab
+                const hash = window.location.hash.replace('#', '');
+                if (['1a', '1b', '2a', '2b'].includes(hash) || window.trainingData.some(s => s.id === hash)) {
+                    window.filterSection(hash);
+                } else {
+                    window.filterSection('all');
+                }
             }
             document.addEventListener('click', (e) => {
                 if(!e.target.closest('#search-container')) document.getElementById('search-dropdown')?.classList.add('hidden');
