@@ -242,9 +242,9 @@
                             <h2 class="text-3xl font-black tracking-tight text-slate-900 mb-2">
                                 <span class="cyber-text-gradient">Đào tạo Sản phẩm cơ bản<br>Buổi 2 - KiotViet Retail</span>
                             </h2>
-                            <p class="text-slate-600 text-sm leading-relaxed mb-6 font-medium">Trang Web này là phần mở rộng trực quan của khóa học trên LMS, hỗ trợ tra cứu và luyện tập tình huống. Việc học song song trên trang web và LMS giúp bạn hệ thống hóa kiến thức bài bản nhất. Hãy thực hiện đúng quy trình học tập 3 bước theo hướng dẫn bên dưới.</p>
+                            <p class="text-slate-600 text-sm leading-relaxed mb-6 font-medium">Trang Web này là phần mở rộng trực quan của khóa học trên LMS, hỗ trợ tra cứu và luyện tập tình huống. Việc học song song trên trang web và LMS giúp bạn hệ thống hóa kiến thức bài bản nhất.</p>
                             <div class="flex flex-wrap gap-3">
-                                <button onclick="window.filterSection('man-hinh-ban-hang')" class="px-5 py-2.5 bg-themeAccent hover:bg-themeAccentHover text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-cyan-500/10">
+                                <button onclick="window.filterSection('all'); if(window.trainingData[0]) window.filterSection(window.trainingData[0].id);" class="px-5 py-2.5 bg-themeAccent hover:bg-themeAccentHover text-white font-bold text-xs rounded-xl transition-all shadow-lg shadow-cyan-500/10">
                                     Bắt đầu học ngay <i class="fa-solid fa-arrow-right ml-2"></i>
                                 </button>
                                 <a href="https://daotao.kiotviet.vn/khoa-hoc/sales-dao-tao-san-pham-co-ban-02" target="_blank" class="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs rounded-xl transition-all flex items-center gap-2 shadow-sm">
@@ -317,7 +317,7 @@
     <!-- Mobile Sidebar Menu (Aviation Navy Theme) -->
     <div id="mobile-sidebar" class="fixed inset-y-0 left-0 w-[280px] bg-[#1e3a8a] text-white z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col shadow-2xl">
         <div class="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-[#172554]">
-            <span class="text-sm font-bold tracking-tight">Đào tạo Sản phẩm cơ bản - Buổi 2 - KiotViet Retail</span>
+            <span class="text-sm font-bold tracking-tight">Đào tạo SP Cơ bản - Buổi 2</span>
             <button onclick="window.toggleSidebar()" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white">
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
@@ -357,21 +357,124 @@
         </div>
     </div>
 
-    <!-- SCRIPT INFRASTRUCTURE -->
+    <!-- SCRIPT INFRASTRUCTURE & OPTIMIZED GVIZ DATA READER -->
     <script>
+        // CONFIGURATION PARAMETERS (ĐÃ TỐI ƯU CƠ CHẾ NẠP DỮ LIỆU GOOGLE SHEET)
+        window.SHEET_ID = '1qofU1zM9WJ9fDrxxrmziBUHiMQ0K9BQxh5fKthGrKYI';
+        window.SHEET_NAME = 'CB2 Retail';
+        window.COURSE_FILTER = 'CB2 Retail';
+        window.LOCAL_STORAGE_PREFIX = 'kv_cb2_retail_v2026_';
+
         window.trainingData = [];
         window.scenarioData = {}; 
         window.currentScenarioIndex = {};
-        window.LOCAL_STORAGE_PREFIX = 'course_retail_b2_v26_';
 
+        // Helper slugify function for section IDs
+        window.slugify = function(str) {
+            if (!str) return '';
+            str = str.toLowerCase();
+            str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
+            str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, "e");
+            str = str.replace(/ì|í|ị|ỉ|ĩ/g, "i");
+            str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, "o");
+            str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, "u");
+            str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, "y");
+            str = str.replace(/đ/g, "d");
+            str = str.replace(/[^a-z0-9 -]/g, '')
+                     .replace(/\s+/g, '-')
+                     .replace(/-+/g, '-');
+            return str;
+        };
+
+        // GVIZ API READER (ĐÃ KHẮC PHỤC HOÀN TOÀN LỖI 0/0 BÀI HỌC)
         async function loadTrainingData() {
             try {
-                const response = await fetch('dao-tao-san-pham-co-ban-b2.json');
+                // Thử tải bằng Sheet Name
+                let url = `https://docs.google.com/spreadsheets/d/${window.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(window.SHEET_NAME)}`;
+                let response = await fetch(url);
+                
+                // Fallback nếu Sheet Name bị chặn hoặc sai mã mã hóa
+                if (!response.ok) {
+                    url = `https://docs.google.com/spreadsheets/d/${window.SHEET_ID}/gviz/tq?tqx=out:json`;
+                    response = await fetch(url);
+                }
+
                 if (!response.ok) throw new Error(`Mã phản hồi HTTP: ${response.status}`);
-                window.trainingData = await response.json();
-                return true;
+                
+                const text = await response.text();
+                const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const gvizData = JSON.parse(jsonString);
+
+                if (!gvizData.table || !gvizData.table.rows) {
+                    throw new Error("Không lấy được dữ liệu bảng từ Google Sheet.");
+                }
+
+                const rows = gvizData.table.rows;
+                const categoriesMap = new Map();
+
+                const filterClean = window.COURSE_FILTER.toLowerCase().replace(/\s+/g, '');
+
+                rows.forEach((row, index) => {
+                    const c = row.c;
+                    if (!c) return;
+
+                    // Col 3 (index 3): Tiêu đề bài học
+                    const title = c[3]?.v ? String(c[3].v).trim() : '';
+                    if (!title || title.toLowerCase() === 'tên bài học' || title.toLowerCase() === 'bài học') return;
+
+                    // Col 2 (index 2): Khóa học
+                    const courseName = c[2]?.v ? String(c[2].v).trim() : '';
+                    const courseClean = courseName.toLowerCase().replace(/\s+/g, '');
+
+                    // Lọc linh hoạt: Nếu Cột C có chứa từ khóa lọc HOẶC khi đã query trực tiếp Tab "CB2 Retail"
+                    if (courseName && courseClean !== '' && !courseClean.includes(filterClean) && !filterClean.includes(courseClean) && courseName !== '#N/A') {
+                        // Nếu Cột C có tên khóa học khác hẳn thì mới qua (đề phòng Sheet chứa nhiều khóa học chung)
+                        return;
+                    }
+
+                    const stt = c[1]?.v ? String(c[1].v).trim() : (index + 1);
+                    const hdsdLink = c[4]?.v && c[4].v !== '#N/A' ? String(c[4].v).trim() : '';
+                    const infographicLink = c[5]?.v && c[5].v !== '#N/A' ? String(c[5].v).trim() : '';
+                    const youtubeLink = c[6]?.v && c[6].v !== '#N/A' ? String(c[6].v).trim() : '';
+                    const lessonLink = c[7]?.v && c[7].v !== '#N/A' ? String(c[7].v).trim() : '';
+                    const description = c[8]?.v && c[8].v !== '#N/A' ? String(c[8].v).trim() : '';
+                    const rawScenario = c[9]?.v && c[9].v !== '#N/A' ? String(c[9].v).trim() : '';
+                    const categoryName = c[10]?.v && c[10].v !== '#N/A' ? String(c[10].v).trim() : 'Chuyên đề chung';
+
+                    const sectionId = window.slugify(categoryName) || `chuyen-de-${index}`;
+                    const articleId = `cb2-art-${stt}`;
+
+                    if (!categoriesMap.has(sectionId)) {
+                        categoriesMap.set(sectionId, {
+                            id: sectionId,
+                            category: categoryName,
+                            articles: [],
+                            scenarios: [],
+                            objectives: []
+                        });
+                    }
+
+                    const sectionObj = categoriesMap.get(sectionId);
+
+                    sectionObj.articles.push({
+                        id: articleId,
+                        title: title,
+                        hdsdLink: hdsdLink,
+                        infographicLink: infographicLink,
+                        youtubeLink: youtubeLink,
+                        lessonLink: lessonLink,
+                        description: description
+                    });
+
+                    if (rawScenario && !sectionObj.scenarios.includes(rawScenario)) {
+                        sectionObj.scenarios.push(rawScenario);
+                    }
+                });
+
+                window.trainingData = Array.from(categoriesMap.values());
+                return window.trainingData.length > 0;
             } catch (error) {
-                console.error("Lỗi khi tải dữ liệu bài học:", error);
+                console.error("Lỗi khi tải dữ liệu Google Sheet:", error);
                 document.getElementById('content-area').innerHTML = `
                     <div class="text-center py-12 px-6 bg-white border border-red-100 rounded-2xl shadow-sm max-w-lg mx-auto my-8">
                         <div class="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xl mx-auto mb-4 border border-red-100 shadow-sm">
@@ -379,7 +482,7 @@
                         </div>
                         <h3 class="text-base font-bold text-slate-800 mb-2">Không thể tải dữ liệu đào tạo</h3>
                         <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                            Hệ thống không tìm thấy hoặc không thể đọc được nội dung tệp <strong>dao-tao-san-pham-co-ban-b2.json</strong>. 
+                            Không thể đọc dữ liệu từ Google Sheet (Sheet: <strong>${window.SHEET_NAME}</strong>). Hãy đảm bảo Google Sheet đã mở quyền "Bất kỳ ai có liên kết".
                         </p>
                         <p class="text-[10px] text-slate-400 font-mono bg-slate-50 p-3 rounded border border-slate-100 text-left break-words overflow-x-auto">${error.message}</p>
                     </div>`;
@@ -560,7 +663,6 @@
             }
             window.updateActiveNavigationState(sectionId);
             
-            // Shift glow blobs colors dynamically based on active category
             const glow1 = document.getElementById('glow-1');
             const glow2 = document.getElementById('glow-2');
             if (glow1 && glow2) {
@@ -654,11 +756,12 @@
         window.renderContent = (data = window.trainingData, isFocusMode = false) => {
             const container = document.getElementById('content-area');
             let html = '';
-            if(data.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-500"><p>Không tìm thấy nội dung bài giảng.</p></div>'; return; }
+            if(!data || data.length === 0) { container.innerHTML = '<div class="text-center py-10 text-slate-500"><p>Không tìm thấy nội dung bài giảng.</p></div>'; return; }
 
             data.forEach((section) => {
                 let headerHtml = isFocusMode ? '' : `<div class="flex items-center gap-3 mb-6"><div class="h-6 w-1 bg-[#166def] rounded-full"></div><h2 class="text-lg font-black text-slate-800 uppercase tracking-tight">${section.category}</h2></div>`;
-                let objectivesHtml = isFocusMode ? '' : `
+                
+                let objectivesHtml = (isFocusMode || !section.objectives || section.objectives.length === 0) ? '' : `
                     <div class="mb-6 glass-panel-ultra border border-slate-200/50 rounded-xl p-5">
                         <h4 class="text-xs font-bold text-themeAccent mb-3 flex items-center gap-2 uppercase tracking-wide">
                             <i class="fa-solid fa-bullseye text-sm"></i> Mục tiêu chuyên đề:
@@ -672,6 +775,7 @@
                             `).join('')}
                         </ul>
                     </div>`;
+
                 let articlesHtml = `<div class="roadmap-container pl-6 space-y-6 ml-3 my-4" id="roadmap-${section.id}">${section.articles.map((article, index) => window.renderArticle(article, index + 1)).join('')}</div>`;
                 
                 window.scenarioData[section.id] = section.scenarios || [];
@@ -888,7 +992,7 @@
             ];
 
             window.trainingData.forEach((s, i) => {
-                const config = styleConfigs[i] || { icon: 'fa-layer-group', bg: 'bg-blue-50 text-kvBlue border-blue-100' };
+                const config = styleConfigs[i % styleConfigs.length];
                 const parsedName = s.category.includes(':') ? s.category.split(':').slice(1).join(':').trim() : s.category;
                 let lessonBulletsHtml = '';
                 s.articles.forEach(art => {
