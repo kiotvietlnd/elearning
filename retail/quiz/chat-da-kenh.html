@@ -1,1396 +1,990 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Chat đa kênh (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Chat đa kênh</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Chat đa kênh</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Chat đa kênh</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs bg-[#166def]">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>BÁN LẺ / BÁN BUÔN</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <!-- SIDEBAR RỘNG HƠN (w-72 / w-80) & TIÊU ĐỀ TỰ ĐỘNG XUỐNG DÒNG -->
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0 text-[#166def]"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (&lt;)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs bg-[#166def]">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (&gt;)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 border-[#166def]/40">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight text-[#166def]">Chat đa kênh</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng Chat đa kênh trên KiotViet là công cụ quản lý bán hàng toàn diện, được xây dựng trên hệ thống hợp nhất, cho phép gộp tất cả các cuộc trò chuyện từ Facebook, Instagram, Shopee, Zalo OA và Zalo cá nhân về một giao diện duy nhất.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/17012210/CDKR_170726.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <i class="fa-solid fa-cubes text-xl text-[#166def]"></i>
+                            <h4 class="font-bold text-xs sm:text-sm text-slate-800">Quản lý tất cả trong một</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Hợp nhất tin nhắn, bình luận từ Facebook, Instagram, Shopee, Zalo OA và Zalo cá nhân vào 1 màn hình duy nhất.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <i class="fa-solid fa-bolt text-xl text-[#166def]"></i>
+                            <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tối ưu tốc độ phản hồi</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tạo mẫu tin nhắn trả lời nhanh, đáp ứng tiêu chuẩn về tỉ lệ phản hồi chuẩn của sàn TMĐT.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <i class="fa-solid fa-chart-line text-xl text-[#166def]"></i>
+                            <h4 class="font-bold text-xs sm:text-sm text-slate-800">Nâng cao hiệu quả bán hàng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Phân công hội thoại, gắn nhãn phân loại khách hàng và lên đơn hàng trực tiếp ngay trong khung chat.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900">1. Chat đa kênh (Omnichannel Chat)</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Hệ thống gộp và quản lý tập trung tin nhắn, bình luận từ nhiều nền tảng (Facebook, Instagram, Shopee, Zalo OA & Zalo cá nhân) tại một giao diện KiotViet duy nhất.</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900">2. Zalo OA (Official Account)</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Tài khoản Zalo Doanh nghiệp được xác thực, cho phép kết nối để tư vấn và chăm sóc khách hàng hàng loạt chuyên nghiệp.</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900">3. Facebook Catalog</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Danh mục hàng hóa đồng bộ trực tiếp với Meta, cho phép chọn và gửi thẻ thông tin sản phẩm đã duyệt trực tiếp trong khung chat Messenger.</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900">4. Kho hình ảnh</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Thư viện lưu trữ ảnh tập trung của gian hàng, giúp quản lý phân loại theo thư mục và tái sử dụng mẫu ảnh sản phẩm khi chèn vào tin nhắn.</p>
+                    </div>
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900">5. Trợ lý AI (Gợi ý hàng hóa)</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Tính năng thông minh tự động đọc ngữ cảnh đoạn hội thoại để đề xuất chính xác các sản phẩm phù hợp với nhu cầu khách đang nhắn tin.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng Chat đa kênh.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 17</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 34</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- FULL JAVASCRIPT DATA & ENGINE V18.0 -->
     <script>
-        const unifiedData = [
+        const BASIC_LESSONS = [
             {
-                isIntro: true,
-                icon: "💡",
-                title: "Giới thiệu chung",
-                description: "Tính năng Chat đa kênh trên KiotViet là một công cụ quản lý bán hàng toàn diện, được xây dựng trên một hệ thống hợp nhất, cho phép bạn gộp tất cả các cuộc trò chuyện từ nhiều nền tảng phổ biến như Facebook, Instagram, Shopee, Zalo OA và Zalo cá nhân về một giao diện duy nhất. Với giao diện được làm mới trẻ trung và năng động hơn, tính năng này giúp bạn xử lý tập trung toàn bộ tin nhắn, bình luận và quản lý tương tác khách hàng một cách chuyên nghiệp.",
-                benefits: [
-                    { icon: "fa-star", title: "Quản lý tất cả trong một", desc: "Hợp nhất tin nhắn, bình luận từ Facebook Fanpage, Instagram, Shopee Chat, Zalo OA và Zalo cá nhân vào một màn hình duy nhất." },
-                    { icon: "fa-bolt", title: "Tối ưu tốc độ phản hồi", desc: "Tạo và sử dụng các mẫu tin nhắn trả lời nhanh, đáp ứng các tiêu chuẩn về tỉ lệ phản hồi của sàn TMĐT." },
-                    { icon: "fa-chart-line", title: "Nâng cao hiệu quả bán hàng", desc: "Phân công hội thoại, gắn nhãn khách hàng, tạo đơn hàng trực tiếp từ khung chat." },
-                    { icon: "fa-wand-magic-sparkles", title: "Trải nghiệm người dùng cải tiến", desc: "Giao diện trực quan với đầy đủ công cụ lọc, sắp xếp và tìm kiếm thông minh." }
-                ],
-                updateInfo: "Giao diện mới tối ưu mượt mà và trực quan hơn.",
-                youtubeUrl: "",
-                images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/17012210/CDKR_170726.jpg"]
-            },
-            {
-                icon: "💻",
-                title: "Kết nối kênh bán hàng trên Web",
-                scenario: "BẠN CẦN KẾT NỐI TRANG FACEBOOK, INSTAGRAM, SHOPEE HOẶC ZALO VỚI KIOTVIET ĐỂ PHẦN MỀM CÓ THỂ TRUY CẬP VÀ ĐỒNG BỘ TIN NHẮN.",
+                title: "Kết nối kênh bán",
+                situation: "Cửa hàng của anh/chị kinh doanh trên nhiều kênh như Facebook Fanpage, Instagram, Shopee, Zalo OA và Zalo cá nhân. Anh/chị cần kết nối tất cả các tài khoản này với KiotViet để hệ thống gộp tin nhắn về một nơi xử lý.",
                 steps: [
-                    "Tại màn hình <strong>Quản lý</strong>, từ menu <strong>Bán online</strong> → <strong>Bán online</strong>, bạn chọn <strong>Chat đa kênh</strong>.",
-                    "Tại đây, bạn nhấn vào các **Biểu tượng kênh bán** trên giao diện chat để thêm kênh tương ứng.",
-                    "Thực hiện đăng nhập tài khoản có quyền quản lý, làm theo các hướng dẫn cấp quyền trên màn hình và bấm **Lưu** hoặc **Kết nối**."
+                    { text: "Tại màn hình <strong>Quản lý</strong>, chọn menu <strong>Bán online</strong> → chọn <strong>Chat đa kênh</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085833/CDKR_090626-2.png" },
+                    { text: "Bấm vào các biểu tượng kênh bán trên giao diện chat (Facebook, Instagram, Zalo OA, Zalo cá nhân, Shopee Chat) để bắt đầu thêm trang tương ứng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085837/CDKR_090626-3.png" },
+                    { text: "Đối với Facebook & Instagram: Đăng nhập tài khoản Facebook quản trị Fanpage → chọn các trang cần tích hợp → nhấn <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085853/CDKR_090626-4.png" },
+                    { text: "Đối với Zalo OA / Zalo cá nhân: Đăng nhập tài khoản Zalo cá nhân → quét mã QR xác thực trên màn hình → cấp quyền truy cập.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090004/CDKR_090626-12.png" },
+                    { text: "Đối với Shopee Chat: Nhấn <strong>Thêm gian hàng</strong> → đăng nhập tài khoản nhà bán Shopee và xác nhận ủy quyền kết nối.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090058/CDKR_090626-20.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085833/CDKR_090626-2.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085837/CDKR_090626-3.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085853/CDKR_090626-4.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085954/CDKR_090626-10.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09085959/CDKR_090626-11.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090025/CDKR_090626-16.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090058/CDKR_090626-20.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Làm sao để liên kết tài khoản Facebook hay Zalo cá nhân của mình vào phần mềm KiotViet vậy em?" },
-                    { r: "consultant", t: "Dạ cực kỳ đơn giản! Anh/chị chỉ cần truy cập vào mục <strong>Bán online</strong> -> <strong>Chat đa kênh</strong>, click chọn biểu tượng của kênh bán muốn liên kết (Facebook, Shopee, Zalo...) rồi tiến hành đăng nhập, cấp quyền cho hệ thống KiotViet là xong ngay ạ." }
-                ]
+                flashcard: {
+                    situation: "Khách hỏi: 'Shop em có nhiều Fanpage với Zalo cá nhân bán buôn, kết nối KiotViet thế này có bị mất lịch sử tin cũ hay gián đoạn không em?'",
+                    advice: "Dạ anh/chị yên tâm! KiotViet gộp tối đa 50 trang vào một màn hình duy nhất. Sau khi kết nối Zalo cá nhân, phần mềm đồng bộ 30 ngày tương tác gần nhất giúp nhân viên nắm luồng chat ngay mà không làm gián đoạn hội thoại ạ."
+                },
+                quiz: {
+                    question: "Sau khi kết nối Zalo cá nhân thành công, KiotViet sẽ tự động kéo lại toàn bộ lịch sử tin nhắn từ nhiều năm trước của tài khoản Zalo đó.",
+                    answer: false,
+                    explanation: "Hệ thống chỉ đồng bộ danh sách hội thoại có tương tác trong 30 ngày gần nhất (tối đa 300 hội thoại) và ghi nhận tin nhắn mới từ thời điểm chuyển sang trạng thái Đã kết nối trở đi."
+                }
             },
             {
-                icon: "💻",
-                title: "Chọn trang hiển thị & Lọc, tìm kiếm hội thoại",
-                scenario: "BẠN MUỐN CHỌN CỤ THỂ CÁC TRANG SẼ HIỂN THỊ TRÊN MÀN HÌNH CHAT VÀ LỌC NHANH NHỮNG HỘI THOẠI CHƯA ĐỌC ĐỂ XỬ LÝ.",
+                title: "Chọn trang hiển thị",
+                situation: "Chủ cửa hàng muốn tùy chọn các Fanpage hoặc gian hàng Shopee cụ thể để hiển thị hội thoại trên màn hình làm việc của nhân viên.",
                 steps: [
-                    "Ở khu vực chọn kênh hiển thị (góc trên bên phải), nhấn vào để mở danh sách các trang đã kết nối và tích chọn tối đa 50 trang rồi bấm **Áp dụng**.",
-                    "Sử dụng các **Bộ lọc** ở thanh công cụ phía trên danh sách để phân loại hội thoại theo tiêu chí mong muốn (Chưa đọc, Số điện thoại, Nhãn, Thời gian...).",
-                    "Nhập từ khóa thông tin vào **Ô tìm kiếm** để hệ thống tự động trả về kết quả chứa thông tin tương ứng."
+                    { text: "Tại khu vực chọn kênh hiển thị (góc trên bên phải màn hình), nhấn để mở danh sách các trang đã kết nối.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090120/CDKR_090626-23.png" },
+                    { text: "Tích chọn các trang hoặc gian hàng muốn quản lý chung (tối đa 50 trang) → nhấn <strong>Áp dụng</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090120/CDKR_090626-23.png" },
+                    { text: "Khi gộp nhiều kênh, avatar hội thoại xuất hiện thêm logo nền tảng (Facebook, Shopee, Zalo...) để dễ phân biệt nguồn khách.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090120/CDKR_090626-23.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090120/CDKR_090626-23.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090133/CDKR_090626-24.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090138/CDKR_090626-25.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090215/CDKR_090626-32.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090220/CDKR_090626-33.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Khách nhắn tin dồn dập quá, làm sao anh lọc ra những người đã để lại số điện thoại để gọi chốt đơn trước?" },
-                    { r: "consultant", t: "Anh sử dụng ngay bộ lọc <strong>Điện thoại</strong> rồi chọn <strong>Có số điện thoại</strong> nha. Hệ thống sẽ tự lọc riêng các hội thoại có SĐT giúp anh gọi chốt nhanh không lo bỏ sót!" }
-                ]
+                flashcard: {
+                    situation: "Khách lo lắng: 'Shop có tới 10 Fanpage bán hàng, xem chung một chỗ thế này có bị nhầm lẫn giữa khách Facebook và Shopee không?'",
+                    advice: "Dạ không lo nhầm đâu anh/chị! Trên mỗi avatar hội thoại, KiotViet đều gắn logo nhỏ rõ ràng của Facebook, Instagram, Shopee hay Zalo kèm tên trang đại diện, giúp nhân viên phân biệt nguồn khách tức thì ạ."
+                },
+                quiz: {
+                    question: "Hệ thống Chat đa kênh KiotViet cho phép tích chọn và hiển thị gộp tối đa 50 trang/gian hàng đã kết nối trên cùng một màn hình.",
+                    answer: true,
+                    explanation: "KiotViet hỗ trợ chọn gộp tối đa 50 trang để quản lý tập trung và phân biệt nguồn khách dễ dàng qua logo nền tảng."
+                }
             },
             {
-                icon: "💻",
-                title: "Thao tác xử lý hội thoại (Ghi chú, Gán nhãn, Phân công)",
-                scenario: "BẠN MUỐN ĐÁNH DẤU TRẠNG THÁI KHÁCH HÀNG, THÊM GHI CHÚ NỘI BỘ HOẶC GIAO VIỆC CHO NHÂN VIÊN PHỤ TRÁCH CHAT.",
+                title: "Lọc, sắp xếp và tìm kiếm hội thoại",
+                situation: "Nhân viên tư vấn cần tìm kiếm nhanh khách hàng cũ hoặc lọc riêng các tin nhắn chưa đọc, có số điện thoại để ưu tiên gọi điện chốt đơn.",
                 steps: [
-                    "Bấm chọn một hội thoại, nhấp nút **Chọn nhân viên** để giao nhiệm vụ chăm sóc khách cho nhân viên cụ thể.",
-                    "Nhấn vào mục **Ghi chú** → nhập nội dung và nhấn **Enter** để lưu lại các lưu ý nội bộ.",
-                    "Chọn mục **Nhãn khách hàng** hoặc **Nhãn hội thoại** để gán nhãn phân nhóm quản lý trực quan."
+                    { text: "Dùng bộ lọc để chọn phân loại: Lọc <strong>Loại</strong> (Tin nhắn/Bình luận), lọc <strong>Chưa đọc</strong>, lọc <strong>Số điện thoại</strong> hay <strong>Nhãn hội thoại</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090133/CDKR_090626-24.png" },
+                    { text: "Sắp xếp danh sách hội thoại theo thứ tự ưu tiên <strong>Chưa đọc</strong> hoặc <strong>Mới nhất</strong> bằng nút mũi tên 2 chiều.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090215/CDKR_090626-32.png" },
+                    { text: "Nhập từ khóa tên khách, SĐT hoặc nội dung chat vào ô Tìm kiếm để tra cứu tức thì.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090220/CDKR_090626-33.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090225/CDKR_090626-34.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090231/CDKR_090626-35.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090242/CDKR_090626-37.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090253/CDKR_090626-39.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090334/CDKR_090626-43.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Làm thế nào để phân việc cho nhân viên chat và đánh dấu khách này đã chốt hay chưa chốt đơn để người ca sau nắm được?" },
-                    { r: "consultant", t: "Bạn sử dụng tính năng <strong>Phân công hội thoại</strong> chọn tên nhân viên phụ trách trực tiếp, đồng thời dùng tính năng <strong>Gán nhãn hội thoại</strong> (ví dụ: Chờ xác nhận, Đã chốt đơn) để ghi nhận trạng thái xử lý rõ ràng nhé." }
-                ]
+                flashcard: {
+                    situation: "Khách than phiền: 'Mỗi ngày shop nhận hàng trăm tin nhắn, làm sao để nhân viên không bỏ sót các tin nhắn chưa đọc hay khách đã để lại SĐT?'",
+                    advice: "Dạ anh/chị chỉ cần bấm bộ lọc 'Chưa đọc' kết hợp lọc 'Có số điện thoại'. Ngay lập tức danh sách các khách đang chờ chốt đơn sẽ hiện ra đầu tiên để sale xử lý ngay ạ!"
+                },
+                quiz: {
+                    question: "Thanh tìm kiếm trên Chat đa kênh cho phép tìm kiếm hội thoại theo cả tên khách hàng, số điện thoại lẫn nội dung đoạn chat.",
+                    answer: true,
+                    explanation: "Hệ thống hỗ trợ cơ chế tìm kiếm thông minh tự động trả về kết quả khớp với tên khách, số điện thoại hoặc nội dung trao đổi."
+                }
             },
             {
-                icon: "💻",
-                title: "Gửi tin nhắn, bình luận & Liên kết Facebook Catalog",
-                scenario: "BẠN MUỐN GỬI NHANH THÔNG TIN SẢN PHẨM TRỰC TIẾP TỪ DANH MỤC HÀNG HÓA LÊN KHUNG CHAT SANG FACEBOOK CHO KHÁCH HÀNG.",
+                title: "Thao tác xử lý hội thoại",
+                situation: "Người quản lý muốn phân công công việc trực tiếp cho nhân viên trực chat, đánh dấu trạng thái xử lý và ghi chú thông tin nội bộ.",
                 steps: [
-                    "Tại khung chat, nhấp chọn biểu tượng **Facebook Catalog** và tiến hành kết nối theo các hướng dẫn trên màn hình.",
-                    "Vào màn hình Facebook Catalog, nhấn **Đăng hàng hóa** để đẩy các sản phẩm lên và chờ Meta phê duyệt.",
-                    "Sau khi hàng hóa ở trạng thái **Hoạt động**, nhấn biểu tượng Catalog ở khung chat, tích chọn sản phẩm và bấm **Gửi**."
+                    { text: "Để phân công: Trong hội thoại, nhấn <strong>Chọn nhân viên</strong> → chọn tên nhân viên được giao phụ trách khách.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090253/CDKR_090626-39.png" },
+                    { text: "Đánh dấu <strong>Chưa đọc</strong> (nếu cần xử lý sau) hoặc nhấn <strong>Đã xử lý</strong> để xuất hiện dấu tích xanh hoàn tất.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090231/CDKR_090626-35.png" },
+                    { text: "Thêm <strong>Ghi chú nội bộ</strong> hoặc gán <strong>Nhãn hội thoại</strong> (VD: 'Đã chốt đơn', 'Chờ chuyển khoản') để theo dõi.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090242/CDKR_090626-37.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090404/CDKR_090626-49.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090415/CDKR_090626-51.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090524/CDKR_090626-58.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090648/CDKR_090626-65.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090715/CDKR_090626-67.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Shop gửi giúp mình ảnh và giá của mẫu váy đầm đang bán chạy được không?" },
-                    { r: "consultant", t: "Bạn chỉ cần kết nối <strong>Facebook Catalog</strong>, sau khi Meta duyệt sản phẩm, bạn nhấn biểu tượng Catalog ngay tại khung chat để tích chọn mẫu và gửi trực tiếp thông tin chuyên nghiệp sang cho khách nha!" }
-                ]
+                flashcard: {
+                    situation: "Khách hỏi: 'Ghi chú trên Chat đa kênh này khách hàng nhắn tin với shop có nhìn thấy không em?'",
+                    advice: "Dạ hoàn toàn không anh/chị nhé! Mục Ghi chú và Phân công nhân viên chỉ hiển thị nội bộ để các bạn sale phối hợp làm việc với nhau, khách hàng hoàn toàn không thấy ạ."
+                },
+                quiz: {
+                    question: "Nội dung ghi chú được tạo trong cửa sổ Chat đa kênh sẽ hiển thị công khai cho cả khách hàng nhìn thấy.",
+                    answer: false,
+                    explanation: "Ghi chú trong hội thoại là thông tin bảo mật nội bộ, chỉ hiển thị cho nhân viên trong gian hàng KiotViet theo dõi."
+                }
             },
             {
-                icon: "💻",
-                title: "Thao tác phụ với Bình luận / Tin nhắn trên Web",
-                scenario: "BẠN MUỐN ẨN, LIKE, XOÁ BÌNH LUẬN SPAM HOẶC LƯU NHANH THÔNG TIN SĐT, ĐỊA CHỈ TỪ TIN NHẮN KHÁCH HÀNG.",
+                title: "Gửi tin nhắn, bình luận và Facebook Catalog",
+                situation: "Nhân viên tư vấn cần gửi mẫu tin nhắn nhanh, hình ảnh sản phẩm từ thiết bị hoặc catalog mặt hàng trực tiếp qua khung chat Facebook.",
                 steps: [
-                    "Đối với bình luận của khách, nhấp vào các nút **Like**, **Ẩn**, **Xóa** tương ứng dưới dòng bình luận để xử lý.",
-                    "Nhấp trực tiếp vào biểu tượng **Cập nhật số điện thoại** cạnh bình luận/tin nhắn chứa SĐT để cập nhật nhanh hồ sơ.",
-                    "Chạm vào biểu tượng **Địa điểm** để thêm nhanh thông tin địa chỉ giao hàng của khách mà không cần nhập tay."
+                    { text: "Nhập văn bản, chọn biểu tượng chèn Hình ảnh, Tệp tin đính kèm, Emoji hoặc chọn mẫu <strong>Tin nhắn nhanh</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090404/CDKR_090626-49.png" },
+                    { text: "Gửi hàng hóa qua <strong>Facebook Catalog</strong>: Kết nối Catalog → Chọn Đăng hàng hóa lên Catalog (Meta duyệt trong 24h).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090524/CDKR_090626-58.png" },
+                    { text: "Tại khung chat Messenger, nhấn biểu tượng Catalog → tích chọn mặt hàng đã kích hoạt → nhấn <strong>Gửi</strong> cho khách.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090715/CDKR_090626-67.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090727/CDKR_090626-68.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090746/CDKR_090626-69.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090802/CDKR_090626-71.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090814/CDKR_090626-72.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090837/CDKR_090626-74.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Mình lấy cái này nha, giao về địa chỉ: 123 Nguyễn Trãi, SĐT: 090xxxxxxx." },
-                    { r: "consultant", t: "Dạ tuyệt vời! Nhân viên shop chỉ cần rê chuột vào tin nhắn chứa SĐT/Địa chỉ của bạn, click biểu tượng điện thoại hoặc bản đồ để hệ thống tự động điền thông tin vào hồ sơ giao hàng của bạn luôn, cực kỳ tiện lợi ạ!" }
-                ]
+                flashcard: {
+                    situation: "Khách hỏi: 'Gửi sản phẩm qua tin nhắn Facebook bằng tính năng Catalog có lợi gì hơn gửi ảnh chụp thông thường?'",
+                    advice: "Dạ khi gửi qua Facebook Catalog, sản phẩm hiển thị dưới dạng thẻ thông tin chuyên nghiệp gồm tên, giá và nút bấm mua hàng. Khách bấm vào xem là tin tưởng chốt đơn ngay ạ!"
+                },
+                quiz: {
+                    question: "KiotViet hỗ trợ chèn và gửi kho hình ảnh lên đến 50 hình trong một lần gửi tin nhắn.",
+                    answer: true,
+                    explanation: "Người dùng có thể tích chọn tối đa 50 hình ảnh từ Kho hình ảnh để chèn và gửi cho khách hàng trong một lần thao tác."
+                }
             },
             {
-                icon: "💻",
                 title: "Tạo đơn hàng trực tiếp từ khung chat",
-                scenario: "BẠN MUỐN LÊN LUÔN ĐƠN HÀNG HOẶC ĐƠN ĐẶT HÀNG CHO KHÁCH NGAY TRÊN GIAO DIỆN CHAT ĐA KÊNH MÀ KHÔNG CẦN CHUYỂN TRANG BÁN HÀNG.",
+                situation: "Khách hàng đồng ý chốt mua 2 sản phẩm qua chat. Nhân viên cần lập đơn hàng ngay tại khung chat mà không phải rời sang màn hình Bán hàng.",
                 steps: [
-                    "Trong cửa sổ hội thoại với khách, nhấp nút **Tạo đơn**.",
-                    "Tùy chọn tạo **Hóa đơn** hoặc **Đặt hàng**, gõ tìm kiếm và click thêm sản phẩm vào đơn hàng.",
-                    "Bật công tắc **Giao hàng**, nhập thông tin giảm giá, chọn dịch vụ đối tác vận chuyển phù hợp rồi bấm **Tạo đơn**."
+                    { text: "Trong cửa sổ hội thoại với khách, nhấn nút <strong>Tạo đơn</strong> góc phải.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090937/CDKR_090626-78.png" },
+                    { text: "Chọn hình thức <strong>Hóa đơn</strong> hoặc <strong>Đặt hàng</strong> → Tìm và thêm hàng hóa vào đơn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090944/CDKR_090626-79.png" },
+                    { text: "Thiết lập Giao hàng, đối tác vận chuyển, gửi mã QR thanh toán (nếu có) → nhấn <strong>Tạo đơn</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090944/CDKR_090626-79.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090937/CDKR_090626-78.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090944/CDKR_090626-79.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09090950/CDKR_090626-80.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091007/CDKR_090626-82.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Mình chốt lấy 2 sản phẩm này nhé. Giao gấp giúp mình." },
-                    { r: "consultant", t: "Dạ shop đã nhận thông tin! Em sẽ bấm nút <strong>Tạo đơn</strong> ngay bên cạnh khung chat, chọn sản phẩm, đơn vị giao hàng và xuất đơn trực tiếp gửi hóa đơn điện tử cho mình kiểm tra ngay lập tức mà không cần tắt khung chat ạ." }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Quản lý khách hàng, địa chỉ & Chặn khách",
-                scenario: "BẠN MUỐN LIÊN KẾT HỒ SƠ KHÁCH HÀNG KHI ĐANG CHAT HOẶC CHẶN NHỮNG TÀI KHOẢN SPAM QUẢNG CÁO.",
-                steps: [
-                    "Tại cột thông tin bên phải màn hình chat, nhấp nút **+ Thêm** ở mục Khách hàng.",
-                    "Tìm kiếm hồ sơ khách hàng có sẵn hoặc điền thông tin thêm mới khách hàng rồi nhấn **Lưu**.",
-                    "Nếu gặp tài khoản spam phá rối, click trực tiếp vào nút **Chặn** trên thanh hội thoại để ngắt tương tác."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091334/CDKR_090626-100.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091351/CDKR_090626-102.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091425/CDKR_090626-107.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091443/CDKR_090626-110.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091503/CDKR_090626-113.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091509/CDKR_090626-114.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Mình là khách quen bên shop nè, kiểm tra lịch sử mua hàng gần nhất giúp mình với." },
-                    { r: "consultant", t: "Dạ vâng ạ! Em chỉ cần nhấn nút <strong>+ Thêm</strong> ở cột bên phải, tìm kiếm tên anh/chị trên hệ thống KiotViet để liên kết là xem được ngay toàn bộ lịch sử đơn hàng cũ, số dư công nợ của mình để tư vấn chuẩn xác luôn ạ." }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Các tác vụ với hàng hóa, tin nhắn nhanh & Liên kết sản phẩm",
-                scenario: "BẠN MUỐN TRA CỨU HÀNG HÓA VÀ GỬI NHANH TIN NHẮN MẪU HOẶC ĐƯỜNG LINK WEBVIEW SẢN PHẨM CHO KHÁCH.",
-                steps: [
-                    "Tại cột thông tin bên phải màn hình chat, chọn tab **Hàng hóa** để tra cứu nhanh tồn kho, giá bán của các sản phẩm.",
-                    "Click nút **Gửi** bên cạnh hàng hóa → chọn **Tin nhắn nhanh** để dán nhanh nội dung tư vấn sản phẩm đã tạo.",
-                    "Hoặc chọn **Liên kết sản phẩm** để gửi đường link Webview chi tiết của sản phẩm sang khung chat cho khách chọn thuộc tính."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091515/CDKR_090626-115.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091521/CDKR_090626-116.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091622/CDKR_090626-124.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091709/CDKR_090626-130.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Cái áo thun này có những màu gì, size gì hả shop? Cho mình xin link xem chi tiết với." },
-                    { r: "consultant", t: "Dạ anh/chị chờ chút! Shop sẽ gửi ngay một <strong>Liên kết sản phẩm</strong> cực kỳ trực quan, anh/chị chỉ cần click vào link là tự chọn thuộc tính màu sắc, kích cỡ và xem hình ảnh thực tế rõ ràng luôn ạ." }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Trợ lý AI - Gợi ý hàng hóa thông minh",
-                scenario: "BẠN MUỐN TIẾT KIỆM THỜI GIAN TRA CỨU MÃ HÀNG KHI KHÁCH ĐANG HỎI VỀ MỘT SẢN PHẨM CỤ THỂ BẰNG TRỢ LÝ AI.",
-                steps: [
-                    "Tại cột thông tin bên phải màn hình chat, nhấp bật xanh tính năng **Trợ lý AI**.",
-                    "Khi phát hiện khách hàng có nhu cầu hỏi mua sản phẩm cụ thể, nút **Gợi ý hàng hóa** ở góc dưới khung chat sẽ sáng lên.",
-                    "Nhấp vào nút **Gợi ý hàng hóa** để mở tab hàng hóa **Khách quan tâm** do AI đề xuất để gửi nhanh cho khách."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091721/CDKR_090626-132.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091727/CDKR_090626-133.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091733/CDKR_090626-134.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091740/CDKR_090626-135.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Shop ơi mình muốn mua chiếc váy hoa nhí dáng dài màu xanh biển." },
-                    { r: "consultant", t: "Chào bạn, Trợ lý AI đã phát hiện nhu cầu của khách và tự động tìm kiếm chiếc 'Váy hoa nhí dáng dài xanh biển' trong kho hàng KiotViet của bạn. Bạn chỉ cần click nút <strong>Gợi ý hàng hóa</strong> để lấy thông tin tư vấn nhanh cho khách trong 1 giây!" }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Sử dụng & Quản lý Kho hình ảnh",
-                scenario: "BẠN MUỐN TẢI LÊN, QUẢN LÝ TẬP TRUNG FILE ẢNH MẪU HOẶC SẮP XẾP THƯ MỤC ẢNH ĐỂ SỬ DỤNG NHANH KHI CHAT.",
-                steps: [
-                    "Tại chi tiết hội thoại, click biểu tượng hình ảnh để mở **Kho hình ảnh**.",
-                    "Nhấn **Tải ảnh lên** để chọn ảnh từ máy tính hoặc kéo thả ảnh trực tiếp, ảnh tải lên được lưu ở thư mục Ảnh đã tải lên.",
-                    "Tại mục Thư mục của bạn, nhấn **Thêm** để tạo mới các thư mục quản lý ảnh, di chuột vào ảnh để chọn Yêu thích hoặc Xóa."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091754/CDKR_090626-136.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091814/CDKR_090626-137.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091832/CDKR_090626-140.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091917/CDKR_090626-144.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091930/CDKR_090626-146.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Cho mình xin ảnh chụp thật của mẫu đầm đỏ và feedback của các khách đã mua trước đó nhé." },
-                    { r: "consultant", t: "Dạ được chứ ạ! Em click chọn biểu tượng <strong>Kho hình ảnh</strong> ngay khung chat, mở thư mục ảnh tự tạo rồi tích chọn loạt ảnh mẫu và feedback gửi liền cho anh/chị xem trong tích tắc ạ!" }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Zalo cá nhân - Kết bạn và Quản lý lời mời",
-                scenario: "BẠN MUỐN CHỦ ĐỘNG GỬI YÊU CẦU KẾT BẠN HOẶC PHÊ DUYỆT LỜI MỜI KẾT BẠN ZALO NGAY TRÊN KIOTVIET.",
-                steps: [
-                    "Trong hội thoại với khách hàng chưa là bạn bè Zalo, click nút **Kết bạn** trực tiếp trên banner thông báo.",
-                    "Hoặc bấm biểu tượng điện thoại **Cuộc trò chuyện mới** → nhập SĐT của khách hàng và bấm **Kết bạn**.",
-                    "Chọn tab **Lời mời kết bạn** để quản lý: Nhấn **Đồng ý / Từ chối** (ở mục Đã nhận) hoặc **Thu hồi** lời mời (ở mục Đã gửi)."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093300/CDKR_160726-17.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093233/CDKR_160726-15.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093157/CDKR_160726-12.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093130/CDKR_160726-10.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Shop kết bạn Zalo với mình qua số điện thoại này nhé để có mẫu mới mình dễ xem." },
-                    { r: "consultant", t: "Dạ sẵn lòng ạ! Bạn nhân viên chỉ cần click vào biểu tượng <strong>Cuộc trò chuyện mới</strong> (hình điện thoại), nhập số điện thoại của bạn rồi nhấn nút <strong>Kết bạn</strong> trực tiếp trên KiotViet cực nhanh mà không cần cầm vào điện thoại của shop luôn ạ!" }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Zalo cá nhân - Quản lý Nhóm chat",
-                scenario: "BẠN MUỐN TẠO MỚI MỘT NHÓM CHAT ZALO SỈ HOẶC QUẢN LÝ, RỜI NHÓM, GIẢI TÁN NHÓM TRỰC TIẾP TRÊN KIOTVIET.",
-                steps: [
-                    "Nhấp biểu tượng hình điện thoại **Cuộc trò chuyện mới** → chọn **Tạo nhóm mới**.",
-                    "Nhập tên nhóm, tích chọn tối thiểu 2 thành viên từ danh sách bạn bè Zalo cá nhân và nhấn **Tạo nhóm**.",
-                    "Để xóa thành viên, click dấu 3 chấm cạnh tên tài khoản ở cột bên phải → chọn **Xóa khỏi nhóm**; để xóa hoàn toàn nhóm, chọn **Giải tán nhóm**."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093112/CDKR_160726-8.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093048/CDKR_160726-6.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093021/CDKR_160726-4.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16092955/CDKR_160726-2.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Shop gom tụi mình vào một nhóm Zalo chung để cập nhật nhanh giá sỉ hàng tuần nhé." },
-                    { r: "consultant", t: "Dạ vâng! Em sẽ bấm nút <strong>Tạo nhóm mới</strong> ngay trên KiotViet, đặt tên nhóm và tích chọn mọi người vào nhóm trong 3 giây. Shop mình giữ quyền Trưởng nhóm để kiểm soát gửi tin sỉ an toàn luôn ạ!" }
-                ]
-            },
-            {
-                icon: "📱",
-                title: "[App Mobile] Kết nối kênh bán hàng",
-                scenario: "BẠN ĐANG ĐI NGOÀI ĐƯỜNG VÀ MUỐN KẾT NỐI NHANH CÁC KÊNH BÁN HÀNG NGAY TRÊN APP ĐIỆN THOẠI KIOTVIET.",
-                steps: [
-                    "Mở ứng dụng di động **KiotViet**, truy cập menu **Nhiều hơn** → chọn **Hội thoại**.",
-                    "Chạm chọn nền tảng muốn kết nối (Facebook, Instagram hoặc Shopee).",
-                    "Đăng nhập tài khoản tương ứng, chấp nhận các điều khoản liên kết, tích chọn trang muốn sử dụng và nhấn **Áp dụng**."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092024/CDKR_090626-152.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092037/CDKR_090626-153.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092124/CDKR_090626-155.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Điện thoại mình có kết nối được trang bán hàng để nhận tin nhắn trực tiếp không em?" },
-                    { r: "consultant", t: "Dạ được chứ ạ! Anh/chị mở ứng dụng KiotViet trên điện thoại, vào phần <strong>Hội thoại</strong> rồi bấm đăng nhập Facebook/Shopee để đồng bộ tin nhắn ngay lập tức ạ!" }
-                ]
-            },
-            {
-                icon: "📱",
-                title: "[App Mobile] Quản lý & Lọc tìm hội thoại",
-                scenario: "BẠN MUỐN DÙNG CÔNG CỤ LỌC, SẮP XẾP VÀ TÌM KIẾM HỘI THOẠI CỦA KHÁCH TRỰC TIẾP TRÊN APP DI ĐỘNG.",
-                steps: [
-                    "Chạm vào biểu tượng **Kính lúp** trên danh sách hội thoại, gõ từ khóa tìm kiếm (tên khách hàng, SĐT hoặc mã đơn hàng cũ).",
-                    "Nhấp chọn nút **Lọc hội thoại** để phân loại tin nhắn theo nguồn kênh, thẻ nhãn hoặc trạng thái chưa đọc.",
-                    "Chọn biểu tượng mũi tên 2 chiều để thực hiện **Sắp xếp** danh sách theo hội thoại chưa đọc hoặc mới nhất."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092200/CDKR_090626-158.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092207/CDKR_090626-159.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092213/CDKR_090626-160.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092219/CDKR_090626-161.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Hôm trước mình có đặt đơn bên bạn, mã đơn hình như là HD000021, kiểm tra giúp mình nhắn tin từ nick nào với." },
-                    { r: "consultant", t: "Chào anh! Em chỉ cần mở mục <strong>Tìm kiếm</strong> trên app điện thoại, gõ mã đơn hàng <strong>HD000021</strong> là hệ thống tự truy vết ra chính xác cuộc trò chuyện cũ để em kiểm tra và trả lời anh ngay ạ!" }
-                ]
-            },
-            {
-                icon: "📱",
-                title: "[App Mobile] Thao tác xử lý tin nhắn & Chặn khách",
-                scenario: "BẠN MUỐN GỬI TIN NHẮN NHANH, GẮN NHÃN PHÂN LOẠI HOẶC CHẶN KHÁCH HÀNG SPAM KHI ĐANG SỬ DỤNG ĐIỆN THOẠI.",
-                steps: [
-                    "Chạm vào biểu tượng tin nhắn mẫu để gửi nhanh các mẫu tin soạn sẵn, hoặc nhấn **+ Nhãn hội thoại** để đánh dấu khách.",
-                    "Nhấn và giữ trực tiếp vào tin nhắn/bình luận của khách để chọn nhanh các tác vụ như **Lưu địa chỉ** hoặc **Cập nhật SĐT**.",
-                    "Nếu gặp khách phá rối, nhấn biểu tượng 3 chấm ở góc hội thoại → chạm **Chặn khách hàng** và xác nhận."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092233/CDKR_090626-162.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092254/CDKR_090626-164.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092322/CDKR_090626-167.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092334/CDKR_090626-169.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092352/CDKR_090626-172.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Mình chỉ nhận hàng được sau 6h tối nha shop." },
-                    { r: "consultant", t: "Dạ em đã nhận thông tin! Em sẽ nhấn giữ tin nhắn của anh/chị trên app, thêm nhanh <strong>Ghi chú</strong> lưu ý thời gian giao sau 18h và gắn nhãn <strong>Cần chú ý</strong> để bưu tá đi đơn chuẩn xác ạ!" }
-                ]
-            },
-            {
-                icon: "📱",
-                title: "[App Mobile] Tạo đơn hàng & Quản lý gộp trang",
-                scenario: "BẠN MUỐN LÊN ĐƠN GIAO HÀNG VÀ GỘP CÁC TRANG BÁN HÀNG HIỂN THỊ CHUNG ĐỂ CHĂM SÓC KHÁCH NGAY TRÊN ĐIỆN THOẠI.",
-                steps: [
-                    "Trong màn hình hội thoại của khách, chạm nút **Tạo đơn** để hệ thống tự chuyển đổi thông tin khách sang màn hình lên đơn bán hàng.",
-                    "Chạm vào thông tin trang ở đầu danh sách, tích chọn các trang muốn hiển thị hội thoại chung và nhấn **Áp dụng**.",
-                    "Sau khi gộp trang, avatar của mỗi khách hàng sẽ hiển thị thêm logo nhỏ của nền tảng tương ứng (Facebook, Shopee, Instagram...) để phân biệt."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092445/CDKR_090626-178.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092503/CDKR_090626-179.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092543/CDKR_090626-181.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092638/CDKR_090626-183.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Cho mình đặt chiếc quần jean size L giao về Quận 1 nha." },
-                    { r: "consultant", t: "Dạ vâng! Em click nút <strong>Tạo đơn</strong> ngay trong màn hình chat của app di động, hệ thống sẽ tự đồng bộ thông tin khách hàng sang app bán hàng để em lên đơn chốt gửi bưu tá xử lý giao ngay Quận 1 cho mình ạ!" }
-                ]
+                flashcard: {
+                    situation: "Khách thắc mắc: 'Khi tạo đơn trực tiếp trên khung chat thì thông tin địa chỉ và SĐT của khách có tự động lấy sang không em?'",
+                    advice: "Dạ có ạ! Hệ thống tự động điền Tên, SĐT và Địa chỉ giao hàng đã lưu trong cuộc trò chuyện sang phiếu đơn hàng, giúp anh/chị chốt đơn chỉ trong 5 giây mà không cần gõ tay ạ!"
+                },
+                quiz: {
+                    question: "Tính năng tạo đơn hàng trực tiếp trong khung chat chỉ tạo được Hóa đơn bán lẻ chứ không hỗ trợ tạo Phiếu đặt hàng.",
+                    answer: false,
+                    explanation: "Tại cửa sổ tạo đơn từ Chat đa kênh, người dùng có thể linh hoạt lựa chọn tạo Hóa đơn hoặc Phiếu đặt hàng tùy theo nhu cầu."
+                }
             }
         ];
 
-        const quizData = [
-            // Bài 0
+        const ADVANCED_LESSONS = [
             {
-                q: "Tính năng Chat đa kênh của KiotViet cho phép bạn quản lý tin nhắn, bình luận từ những nền tảng nào về một màn hình duy nhất?",
-                isTrue: true,
-                explain: "Tính năng Chat đa kênh trên KiotViet hỗ trợ hợp nhất toàn bộ tin nhắn, bình luận từ Facebook, Instagram, Shopee Chat, Zalo OA và cả Zalo cá nhân về một giao diện quản trị duy nhất."
+                category: 'feature',
+                title: "Quản lý và làm mới kết nối kênh bán",
+                situation: "Cửa hàng cần hủy kết nối các trang cũ, ngắt kết nối Zalo cá nhân hoặc thực hiện làm mới token truy cập khi kết nối Facebook/Zalo bị hết hạn.",
+                steps: [
+                    { text: "Trên màn hình Chat đa kênh, nhấn biểu tượng 3 chấm → chọn <strong>Thiết lập Hội thoại MXH</strong> (hoặc Hội thoại sàn).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091022/CDKR_090626-84.png" },
+                    { text: "Với Facebook/Instagram: Chọn <strong>Làm mới</strong> tài khoản nếu bị hết hạn token hoặc nhấn <strong>Xóa kết nối trang</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091101/CDKR_090626-87.png" },
+                    { text: "Với Zalo OA / Zalo cá nhân: Nhấn <strong>Hủy kết nối</strong> hoặc chọn <strong>Kết nối lại</strong> và quét QR mã để khôi phục luồng tin.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091208/CDKR_090626-91.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Thi thoảng tài khoản Facebook bị đứt kết nối tin nhắn thì chị phải làm sao để sửa nhanh?'",
+                    advice: "Dạ rất đơn giản ạ! Chị chỉ cần vào Thiết lập hội thoại MXH → bấm nút 'Làm mới' ở mục Tài khoản là hệ thống tự động đăng nhập lại và khôi phục ngay luồng tin nhắn ạ."
+                },
+                quiz: {
+                    question: "Sau khi bấm Hủy kết nối Zalo cá nhân trên KiotViet, toàn bộ lịch sử trò chuyện trước đây của tài khoản đó sẽ bị xóa sạch khỏi phần mềm.",
+                    answer: false,
+                    explanation: "Sau khi hủy kết nối, phần mềm chỉ ngừng nhận tin nhắn mới, toàn bộ lịch sử hội thoại đã đồng bộ trước đó vẫn được lưu lại để tra cứu."
+                }
             },
             {
-                q: "Tính năng Chat đa kênh bắt buộc bạn phải liên kết chung tất cả các trang bán hàng vào một tài khoản mạng xã hội duy nhất thì mới hiển thị được?",
-                isTrue: false,
-                explain: "Tính năng Chat đa kênh trên KiotViet hỗ trợ hợp nhất toàn bộ tin nhắn, bình luận từ Facebook, Instagram, Shopee Chat, Zalo OA và cả Zalo cá nhân về một giao diện quản trị duy nhất."
-            },
-            // Bài 1
-            {
-                q: "Mỗi tài khoản Zalo cá nhân chỉ có thể kết nối với một gian hàng KiotViet duy nhất tại một thời điểm?",
-                isTrue: true,
-                explain: "Quy định bảo mật của Zalo cá nhân chỉ cho phép tài khoản liên kết với duy nhất 1 gian hàng KiotViet trong cùng một thời điểm. Nếu liên kết sang gian hàng mới, hệ thống cũ sẽ hiển thị cảnh báo ngắt kết nối."
-            },
-            {
-                q: "Bạn có thể kết nối một tài khoản Zalo cá nhân vào đồng thời 5 gian hàng KiotViet khác nhau để đồng bộ tin nhắn cùng lúc?",
-                isTrue: false,
-                explain: "Quy định bảo mật của Zalo cá nhân chỉ cho phép tài khoản liên kết với duy nhất 1 gian hàng KiotViet trong cùng một thời điểm. Nếu liên kết sang gian hàng mới, hệ thống cũ sẽ hiển thị cảnh báo ngắt kết nối."
-            },
-            // Bài 2
-            {
-                q: "Hệ thống KiotViet cho phép người dùng lựa chọn và gộp hiển thị tin nhắn tối đa lên tới 50 trang đã kết nối cùng lúc?",
-                isTrue: true,
-                explain: "Trong màn hình làm việc của Chat đa kênh, bạn có thể tích chọn gộp tối đa 50 trang (Fanpage/Shop Shopee) khác nhau để theo dõi tập trung trên một giao diện."
+                category: 'feature',
+                title: "Quản lý thông tin và địa chỉ giao hàng của khách",
+                situation: "Khách hàng nhắn tin qua Facebook. Nhân viên muốn liên kết nick Facebook này với hồ sơ khách hàng đã có trên KiotViet để xem công nợ và thêm địa chỉ giao mới.",
+                steps: [
+                    { text: "Tại cột thông tin bên phải, nhấn <strong>+ Thêm khách hàng</strong> → Tìm hồ sơ có sẵn trên KiotViet hoặc tạo mới → Nhấn <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091334/CDKR_090626-100.png" },
+                    { text: "Xem tổng số hóa đơn, tổng bán, công nợ và lịch sử đơn mua cũ ngay tại màn hình chat.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091351/CDKR_090626-102.png" },
+                    { text: "Quản lý <strong>Địa chỉ giao hàng</strong>: Nhấn Thêm địa chỉ mới hoặc gán <strong>Nhãn khách hàng</strong> (Bom hàng, Cần chú ý, Không nghe máy).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091437/CDKR_090626-109.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Shop chị gặp nhiều khách 'bom hàng' trên Facebook, KiotViet có cách nào cảnh báo cho nhân viên biết không?'",
+                    advice: "Dạ có ạ! Anh/chị chỉ cần gắn 'Nhãn khách hàng' là 'Bom hàng' cho nick đó. Lần sau khách nhắn tin tới, nhãn đỏ cảnh báo sẽ hiện ngay góc màn hình để nhân viên yêu cầu cọc trước khi giao ạ!"
+                },
+                quiz: {
+                    question: "Người dùng có thể gán các nhãn cảnh báo như 'Bom hàng', 'Không nghe máy' trực tiếp cho hồ sơ khách hàng ngay tại giao diện chat.",
+                    answer: true,
+                    explanation: "KiotViet hỗ trợ gán nhãn khách hàng trực tiếp để giúp cửa hàng dễ dàng nhận biết các đối tượng khách hàng đặc biệt."
+                }
             },
             {
-                q: "Kênh Shopee Chat và Zalo cá nhân trên KiotViet hỗ trợ cả hai hình thức lọc tin nhắn và lọc bình luận bài viết giống hệt như Facebook?",
-                isTrue: false,
-                explain: "Do đặc thù nền tảng, Shopee Chat, Zalo OA và Zalo cá nhân chỉ hỗ trợ hội thoại dạng tin nhắn (Inbox) trực tiếp và lọc tin chưa đọc, không hỗ trợ dạng bình luận công khai (Comment) giống Facebook và Instagram."
-            },
-            // Bài 3
-            {
-                q: "Trường thông tin 'Ghi chú hội thoại' trong Chat đa kênh chỉ hiển thị nội bộ cho các nhân viên trong shop xem và khách hàng không nhìn thấy?",
-                isTrue: true,
-                explain: "Mục Ghi chú hội thoại giúp các nhân viên trực ca lưu trữ thông tin nội bộ của khách hàng mà không làm lộ tin nhắn ra bên ngoài, đảm bảo khách hàng hoàn toàn không nhìn thấy."
-            },
-            {
-                q: "Khi bạn nhập ghi chú vào hội thoại, hệ thống sẽ tự động gửi một tin nhắn SMS trực tiếp đến số điện thoại của khách hàng để thông báo?",
-                isTrue: false,
-                explain: "Mục Ghi chú hội thoại giúp các nhân viên trực ca lưu trữ thông tin nội bộ của khách hàng mà không làm lộ tin nhắn ra bên ngoài, đảm bảo khách hàng hoàn toàn không nhìn thấy."
-            },
-            // Bài 4
-            {
-                q: "Hàng hóa sau khi đồng bộ lên Facebook Catalog cần chờ quá trình phê duyệt tự động của Meta (tối đa 24 giờ) mới có thể gửi cho khách hàng?",
-                isTrue: true,
-                explain: "Sản phẩm được đẩy lên Facebook Catalog bắt buộc phải ở trạng thái 'Hoạt động' sau khi được Meta phê duyệt thành công thì mới có thể lựa chọn và gửi trực tiếp cho khách hàng từ khung chat."
+                category: 'feature',
+                title: "Các tác vụ tra cứu và gửi thông tin hàng hóa",
+                situation: "Trong lúc nhắn tin tư vấn, nhân viên cần kiểm tra tồn kho chính xác của sản phẩm tại các chi nhánh và gửi Webview link hàng hóa cho khách xem.",
+                steps: [
+                    { text: "Mở tab <strong>Hàng hóa</strong> bên cột phải → Xem tồn kho chi nhánh hiện tại và tồn kho ở các chi nhánh khác.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091515/CDKR_090626-115.png" },
+                    { text: "Gửi <strong>Tin nhắn nhanh hàng hóa</strong>: Nhấn Gửi → dán đoạn tin văn bản đính kèm biến Tên hàng, Giá hàng giới thiệu cho khách.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091622/CDKR_090626-124.png" },
+                    { text: "Gửi <strong>Liên kết sản phẩm</strong>: Chọn Gửi → Liên kết sản phẩm để gửi đường dẫn Webview hiển thị chi tiết thuộc tính sản phẩm.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091715/CDKR_090626-131.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Nhân viên trực chat của shop thường xuyên phải hỏi kho xem còn hàng không. Tính năng này giúp gì cho shop?'",
+                    advice: "Dạ ngay tại tab Hàng hóa bên cạnh khung chat, nhân viên bấm xem là thấy ngay số lượng tồn kho thực tế ở từng chi nhánh. Không cần chạy đi hỏi kho, chốt đơn cực nhanh ạ!"
+                },
+                quiz: {
+                    question: "Tab Hàng hóa trên giao diện Chat đa kênh chỉ cho phép xem giá bán chứ không xem được số lượng tồn kho ở các chi nhánh khác.",
+                    answer: false,
+                    explanation: "Tab Hàng hóa hiển thị đầy đủ ảnh, giá bán và số lượng tồn kho thực tế tại chi nhánh hiện tại lẫn các chi nhánh khác trong cùng hệ thống."
+                }
             },
             {
-                q: "Hàng hóa khi vừa đẩy lên Facebook Catalog từ KiotViet sẽ tự động chuyển sang trạng thái Hoạt động ngay lập tức mà không cần Meta kiểm duyệt?",
-                isTrue: false,
-                explain: "Sản phẩm được đẩy lên Facebook Catalog bắt buộc phải ở trạng thái 'Hoạt động' sau khi được Meta phê duyệt thành công thì mới có thể lựa chọn và gửi trực tiếp cho khách hàng từ khung chat."
-            },
-            // Bài 5
-            {
-                q: "Bạn có thể cập nhật nhanh số điện thoại và địa chỉ giao hàng của khách bằng cách nhấp biểu tượng icon tắt ngay bên cạnh nội dung tin nhắn/bình luận?",
-                isTrue: true,
-                explain: "Tính năng hỗ trợ bóc tách nhanh SĐT và Địa chỉ trực tiếp từ tin nhắn của khách, cho phép click vào phím tắt biểu tượng điện thoại/địa điểm để cập nhật nhanh vào hồ sơ khách hàng mà không cần gõ tay."
-            },
-            {
-                q: "Để lưu địa chỉ giao hàng của khách nhắn trên khung chat, nhân viên bắt buộc phải copy, mở danh mục Khách hàng và điền tay thủ công?",
-                isTrue: false,
-                explain: "Tính năng hỗ trợ bóc tách nhanh SĐT và Địa chỉ trực tiếp từ tin nhắn của khách, cho phép click vào phím tắt biểu tượng điện thoại/địa điểm để cập nhật nhanh vào hồ sơ khách hàng mà không cần gõ tay."
-            },
-            // Bài 6
-            {
-                q: "Đối với đơn đặt hàng được tạo từ khung chat, nhân viên có thể nhấp trực tiếp nút 'Xử lý đơn' ngay tại khung chat để chuyển thành hóa đơn?",
-                isTrue: true,
-                explain: "Quy trình xử lý đơn đặt hàng đã chốt từ khung chat được tối ưu hóa khép kín, nhân viên bán hàng chỉ cần nhấp nút 'Xử lý đơn' tại khung chat để tạo hóa đơn bán hàng nhanh chóng."
+                category: 'feature',
+                title: "Trợ lý AI (Gợi ý hàng hóa)",
+                situation: "Nhà bán hàng muốn bật tính năng AI thông minh tự động đọc nội dung câu hỏi của khách để gợi ý chính xác mã hàng phù hợp trong danh mục.",
+                steps: [
+                    { text: "Tại cột thông tin bên phải màn hình Chat đa kênh, gạt bật xanh tính năng <strong>Trợ lý AI</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091721/CDKR_090626-132.png" },
+                    { text: "Khi phát hiện khách nhắn tin hỏi về mẫu sản phẩm, nút <strong>Gợi ý hàng hóa</strong> góc dưới khung chat sẽ sáng lên.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091733/CDKR_090626-134.png" },
+                    { text: "Nhấn vào nút để mở danh sách <strong>Khách quan tâm</strong> do AI đề xuất → Bấm gửi hoặc thêm nhanh vào đơn hàng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091740/CDKR_090626-135.png" }
+                ],
+                flashcard: {
+                    situation: "Khách tò mò: 'Trợ lý AI gợi ý hàng hóa hoạt động như thế nào và có chính xác không em?'",
+                    advice: "Dạ AI sẽ phân tích các từ khóa khách nhắn (VD: 'cho mình xem áo sơ mi trắng size M'). Ngay lập tức AI lọc ra đúng mẫu áo sơ mi trắng còn tồn kho để sale chọn gửi chỉ trong 1 cú nhấp chuột ạ!"
+                },
+                quiz: {
+                    question: "Khi tính năng Trợ lý AI được bật, hệ thống sẽ xuất hiện nhóm 'Khách quan tâm' tại tab Hàng hóa để gợi ý sản phẩm phù hợp.",
+                    answer: true,
+                    explanation: "Trợ lý AI tự động nhận diện nhu cầu mua sắm từ nội dung chat và hiển thị gợi ý sản phẩm tại nhóm Khách quan tâm."
+                }
             },
             {
-                q: "Khi khách hàng chốt đơn qua khung chat, nhân viên bắt buộc phải thoát màn hình Chat đa kênh và truy cập vào màn hình Bán hàng chính để lên đơn?",
-                isTrue: false,
-                explain: "Quy trình xử lý đơn đặt hàng đã chốt từ khung chat được tối ưu hóa khép kín, nhân viên bán hàng chỉ cần nhấp nút 'Xử lý đơn' tại khung chat để tạo hóa đơn bán hàng nhanh chóng."
-            },
-            // Bài 7
-            {
-                q: "Do các chính sách bảo mật, các cuộc trò chuyện đến từ kênh Shopee Chat trên KiotViet sẽ không hỗ trợ hiển thị tab thông tin hồ sơ 'Khách hàng'?",
-                isTrue: true,
-                explain: "Do quy định bảo mật thông tin người mua của Shopee, KiotViet không hỗ trợ liên kết sâu hồ sơ khách hàng hoặc hiển thị tab Khách hàng đối với hội thoại Shopee Chat."
-            },
-            {
-                q: "Tất cả các kênh chat bao gồm cả Zalo OA và Shopee Chat đều hỗ trợ đầy đủ tính năng 'Gán nhãn khách hàng' và 'Chặn khách hàng' ngay trên KiotViet?",
-                isTrue: false,
-                explain: "Do quy định bảo mật thông tin người mua của Shopee, KiotViet không hỗ trợ liên kết sâu hồ sơ khách hàng hoặc hiển thị tab Khách hàng đối với hội thoại Shopee Chat."
-            },
-            // Bài 8
-            {
-                q: "Tính năng gửi 'Liên kết sản phẩm' cho phép khách hàng tự mở Webview trên điện thoại để xem trực quan các thuộc tính màu sắc, kích thước và tồn kho?",
-                isTrue: true,
-                explain: "Khi gửi liên kết sản phẩm, khách hàng sẽ nhận được một đường link Webview trực quan, tự do click chọn size, màu sắc, đơn vị tính dễ dàng giúp nâng cao tỷ lệ chốt đơn."
+                category: 'feature',
+                title: "Quản lý và khai thác Kho hình ảnh tập trung",
+                situation: "Cửa hàng cần dọn dẹp kho ảnh, tạo các thư mục ảnh theo dòng sản phẩm ('Áo khoác', 'Váy hè') và chèn ảnh mẫu nhanh khi tư vấn khách.",
+                steps: [
+                    { text: "Mở <strong>Kho hình ảnh</strong> từ khung chat → Nhấn <strong>Tải ảnh lên</strong> (Hỗ trợ kéo thả, tối đa 8MB/file, dung lượng kho 2GB).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091814/CDKR_090626-137.png" },
+                    { text: "Tạo và quản lý <strong>Thư mục</strong>: Nhấn Thêm thư mục (tối đa 50 thư mục) → Kéo thả ảnh vào thư mục để phân loại.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09091930/CDKR_090626-146.png" },
+                    { text: "Chèn ảnh từ <strong>Ảnh hàng hóa</strong>: Vào thư mục Ảnh hàng hóa lấy trực tiếp hình đã đăng trên phần mềm mà không tốn dung lượng kho.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092007/CDKR_090626-151.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Tải nhiều ảnh mẫu lên Kho hình ảnh KiotViet thế này có lo bị đầy dung lượng gian hàng không?'",
+                    advice: "Dạ gian hàng được hỗ trợ tới 2GB dung lượng lưu trữ ảnh tải lên. Ngoài ra, nếu dùng thư mục 'Ảnh hàng hóa' có sẵn từ KiotViet thì hoàn toàn không tốn 1MB dung lượng nào đâu ạ!"
+                },
+                quiz: {
+                    question: "Việc sử dụng hình ảnh từ thư mục 'Ảnh hàng hóa' trong Kho hình ảnh sẽ làm tiêu tốn thêm dung lượng lưu trữ kho ảnh 2GB của gian hàng.",
+                    answer: false,
+                    explanation: "Ảnh hàng hóa lấy trực tiếp từ dữ liệu danh mục hệ thống KiotViet nên không làm phát sinh hay tiêu tốn dung lượng của Kho hình ảnh."
+                }
             },
             {
-                q: "Liên kết sản phẩm khi gửi qua khung chat chỉ hiển thị dưới dạng một đường link text thô sơ và không hỗ trợ giao diện xem thuộc tính?",
-                isTrue: false,
-                explain: "Khi gửi liên kết sản phẩm, khách hàng sẽ nhận được một đường link Webview trực quan, tự do click chọn size, màu sắc, đơn vị tính dễ dàng giúp nâng cao tỷ lệ chốt đơn."
-            },
-            // Bài 9
-            {
-                q: "Trợ lý AI của KiotViet tự động nhận diện nhu cầu mua sắm dựa trên nội dung trò chuyện và hiển thị danh sách sản phẩm gợi ý tại tab 'Khách quan tâm'?",
-                isTrue: true,
-                explain: "Khi bật tính năng Trợ lý AI trên Facebook/Instagram, hệ thống tự động quét từ khóa nhu cầu của khách để gợi ý sản phẩm phù hợp tại tab Khách quan tâm giúp nhân viên tư vấn cực nhanh."
-            },
-            {
-                q: "Tính năng thông minh 'Trợ lý AI' (Gợi ý hàng hóa) hiện tại đã được hỗ trợ đồng bộ hoàn hảo trên cả 2 phiên bản máy tính và điện thoại cho kênh Shopee?",
-                isTrue: false,
-                explain: "Khi bật tính năng Trợ lý AI trên Facebook/Instagram, hệ thống tự động quét từ khóa nhu cầu của khách để gợi ý sản phẩm phù hợp tại tab Khách quan tâm giúp nhân viên tư vấn cực nhanh."
-            },
-            // Bài 10
-            {
-                q: "Dung lượng lưu trữ tối đa của Kho hình ảnh dành cho mỗi gian hàng là 2GB và kích thước tệp tối đa không quá 8MB/ảnh?",
-                isTrue: true,
-                explain: "Kho hình ảnh quy định định dạng hỗ trợ gồm JPG, JPEG, PNG, GIF, BMP; dung lượng tối đa 8MB/file và tổng dung lượng cả gian hàng không vượt quá 2GB."
+                category: 'feature',
+                title: "Kết bạn Zalo cá nhân trên KiotViet",
+                situation: "Nhà bán hàng muốn chủ động gửi lời mời kết bạn Zalo với khách hàng mới nhắn tin hoặc tìm kết bạn qua số điện thoại ngay trên KiotViet.",
+                steps: [
+                    { text: "Cách 1 - Từ hội thoại: Tại banner gợi ý trên cửa sổ chat với khách chưa là bạn bè → nhấn nút <strong>Kết bạn</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093300/CDKR_160726-17.png" },
+                    { text: "Cách 2 - Qua SĐT: Nhấn icon <strong>Cuộc trò chuyện mới</strong> → Nhập SĐT khách → Bấm <strong>Kết bạn</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093217/CDKR_160726-14.png" },
+                    { text: "Quản lý lời mời: Vào Cuộc trò chuyện mới → Lời mời kết bạn → Phê duyệt <strong>Đồng ý/Từ chối</strong> lời mời nhận được hoặc <strong>Thu hồi</strong> lời mời đã gửi.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093130/CDKR_160726-10.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Kết bạn Zalo ngay trên KiotViet thế này có cần cầm điện thoại mở app Zalo lên bấm nữa không em?'",
+                    advice: "Dạ hoàn toàn không cần mở điện thoại đâu ạ! Anh/chị bấm 'Kết bạn' hoặc duyệt lời mời trực tiếp trên KiotViet là tài khoản Zalo tự động kết nối bạn bè ngay ạ!"
+                },
+                quiz: {
+                    question: "Người dùng có thể thu hồi lời mời kết bạn Zalo đã gửi đi trực tiếp tại màn hình Quản lý lời mời kết bạn trên KiotViet.",
+                    answer: true,
+                    explanation: "Màn hình Quản lý lời mời kết bạn hỗ trợ phân loại khối 'Đã nhận' (Đồng ý/Từ chối) và khối 'Đã gửi' (cho phép Thu hồi lời mời)."
+                }
             },
             {
-                q: "Dữ liệu hình ảnh chèn từ thư mục mặc định 'Ảnh hàng hóa' của hệ thống sẽ tự động trừ trực tiếp vào dung lượng giới hạn 2GB của Kho hình ảnh?",
-                isTrue: false,
-                explain: "Kho hình ảnh quy định định dạng hỗ trợ gồm JPG, JPEG, PNG, GIF, BMP; dung lượng tối đa 8MB/file và tổng dung lượng cả gian hàng không vượt quá 2GB."
-            },
-            // Bài 11
-            {
-                q: "Bạn có thể gửi yêu cầu kết bạn, đồng ý hoặc từ chối lời mời kết bạn Zalo cá nhân của khách hàng trực tiếp ngay trên giao diện KiotViet?",
-                isTrue: true,
-                explain: "Hệ thống tích hợp sâu với Zalo cá nhân, cho phép quản lý lời mời Đã nhận, lời mời Đã gửi hoặc chủ động gửi kết bạn bằng SĐT khách ngay trên KiotViet mà không cần mở điện thoại."
-            },
-            {
-                q: "Hệ thống KiotViet hoàn toàn không can thiệp được vào các thao tác danh bạ Zalo cá nhân nên bạn bắt buộc phải cầm điện thoại để kết bạn với khách?",
-                isTrue: false,
-                explain: "Hệ thống tích hợp sâu với Zalo cá nhân, cho phép quản lý lời mời Đã nhận, lời mời Đã gửi hoặc chủ động gửi kết bạn bằng SĐT khách ngay trên KiotViet mà không cần mở điện thoại."
-            },
-            // Bài 12
-            {
-                q: "Khi bạn là Trưởng nhóm chat Zalo cá nhân, bạn có quyền giải tán nhóm chat hoặc chặn thành viên phá rối tham gia lại nhóm ngay trên KiotViet?",
-                isTrue: true,
-                explain: "Nếu tài khoản Zalo cá nhân kết nối giữ vai trò Trưởng nhóm, KiotViet hỗ trợ đầy đủ các tính năng quản trị nhóm nâng cao như rời nhóm, xóa thành viên, chặn tham gia lại hoặc giải tán nhóm."
+                category: 'feature',
+                title: "Tạo và quản lý nhóm chat Zalo cá nhân",
+                situation: "Chủ shop muốn lập nhóm Zalo chăm sóc tệp khách mua sỉ, phân quyền thành viên và thực hiện kích tài khoản rác ra khỏi nhóm.",
+                steps: [
+                    { text: "Nhấn icon <strong>Cuộc trò chuyện mới</strong> → Chọn <strong>Tạo nhóm mới</strong> → Nhập Tên nhóm → Tích chọn tối thiểu 2 bạn bè → Nhấn <strong>Tạo nhóm</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093100/CDKR_160726-7.png" },
+                    { text: "Quản lý thành viên: Tại danh sách bên phải, bấm 3 chấm ở tên thành viên → Chọn <strong>Xóa khỏi nhóm</strong> (Tích chọn Chặn khỏi nhóm nếu muốn chặn vĩnh viễn).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16093008/CDKR_160726-3.png" },
+                    { text: "Rời nhóm hoặc <strong>Giải tán nhóm</strong>: Trưởng nhóm chọn Giải tán nhóm để xóa sổ hoàn bộ nhóm chat khi sự kiện kết thúc.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/16092944/CDKR_160726-1.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Khi giải tán nhóm Zalo trên KiotViet thì lịch sử tin nhắn cũ trong nhóm có bị mất hết không?'",
+                    advice: "Dạ khi giải tán nhóm, các thành viên khác sẽ bị đưa ra ngoài, nhưng toàn bộ lịch sử trao đổi cũ vẫn được KiotViet lưu giữ cẩn thận để anh/chị tra cứu lại bất cứ lúc nào ạ!"
+                },
+                quiz: {
+                    question: "Để khởi tạo một nhóm chat Zalo mới trên KiotViet, người dùng cần tích chọn tối thiểu 5 thành viên từ danh sách bạn bè.",
+                    answer: false,
+                    explanation: "Quy định tạo nhóm Zalo chỉ yêu cầu đặt tên nhóm và tích chọn tối thiểu 2 thành viên từ danh sách bạn bè."
+                }
             },
             {
-                q: "Nhóm chat Zalo sau khi tạo trên KiotViet chỉ là nhóm tạm thời và các thao tác như giải tán hay xóa thành viên bắt buộc phải thực hiện trên ứng dụng Zalo?",
-                isTrue: false,
-                explain: "Nếu tài khoản Zalo cá nhân kết nối giữ vai trò Trưởng nhóm, KiotViet hỗ trợ đầy đủ các tính năng quản trị nhóm nâng cao như rời nhóm, xóa thành viên, chặn tham gia lại hoặc giải tán nhóm."
-            },
-            // Bài 13
-            {
-                q: "Để tránh phát sinh lỗi đăng nhập xác thực mạng xã hội trên App Mobile KiotViet, bạn cần bật quyền 'Cho phép ứng dụng theo dõi' trong cài đặt điện thoại?",
-                isTrue: true,
-                explain: "Cài đặt bảo mật hệ điều hành yêu cầu người dùng phải cấp quyền theo dõi liên kết ứng dụng để trình duyệt nhúng hoạt động chính xác khi kết nối Facebook/Shopee trên App Mobile."
-            },
-            {
-                q: "App Mobile KiotViet chỉ dùng để đọc tin nhắn, còn thao tác kết nối tài khoản mới bắt buộc 100% phải thực hiện trên máy tính?",
-                isTrue: false,
-                explain: "Cài đặt bảo mật hệ điều hành yêu cầu người dùng phải cấp quyền theo dõi liên kết ứng dụng để trình duyệt nhúng hoạt động chính xác khi kết nối Facebook/Shopee trên App Mobile."
-            },
-            // Bài 14
-            {
-                q: "Thanh tìm kiếm hội thoại trên App Mobile KiotViet hỗ trợ người dùng tìm kiếm cực nhanh bằng cách gõ trực tiếp mã đơn hàng cũ?",
-                isTrue: true,
-                explain: "Module Hội thoại trên App Mobile hỗ trợ cơ chế tìm kiếm đa dạng, bạn có thể tìm theo tên khách hàng, số điện thoại hoặc mã đơn hàng cũ đã liên kết để truy vết cực nhanh."
+                category: 'mobile',
+                title: "Đăng nhập và kết nối kênh bán trên App KiotViet",
+                situation: "Nhân viên di chuyển bên ngoài cần kết nối các Fanpage Facebook, Instagram hoặc cửa hàng Shopee trực tiếp trên ứng dụng di động KiotViet.",
+                steps: [
+                    { text: "Mở ứng dụng KiotViet trên điện thoại → Vào menu <strong>Nhiều hơn</strong> → Chọn <strong>Hội thoại</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092024/CDKR_090626-152.png" },
+                    { text: "Chọn nền tảng muốn kết nối (Facebook, Instagram, Shopee Shop) → Đăng nhập tài khoản và cấp quyền.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092037/CDKR_090626-153.png" },
+                    { text: "Tích chọn danh sách các Fanpage hoặc Shop muốn sử dụng → Nhấn <strong>Áp dụng</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092142/CDKR_090626-156.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Trực chat trên điện thoại iPhone có cần lưu ý cài đặt gì đặc biệt không em?'",
+                    advice: "Dạ trên ứng dụng iOS, anh/chị lưu ý bật cài đặt 'Cho phép ứng dụng theo dõi' đối với App KiotViet để đảm bảo trình duyệt Facebook đăng nhập mượt mà không bị lỗi nhé ạ!"
+                },
+                quiz: {
+                    question: "Tính năng Chat đa kênh trên ứng dụng Mobile KiotViet cho phép chọn và gộp nhiều Fanpage để quản lý hội thoại.",
+                    answer: true,
+                    explanation: "Trên App KiotViet di động, người dùng hoàn toàn có thể tích chọn nhiều trang để gộp hiển thị danh sách hội thoại tập trung."
+                }
             },
             {
-                q: "App di động KiotViet hoàn toàn không có bộ lọc hội thoại theo thời gian tương tác mà chỉ hiển thị cố định tin nhắn của 7 ngày gần nhất?",
-                isTrue: false,
-                explain: "Module Hội thoại trên App Mobile hỗ trợ cơ chế tìm kiếm đa dạng, bạn có thể tìm theo tên khách hàng, số điện thoại hoặc mã đơn hàng cũ đã liên kết để truy vết cực nhanh."
-            },
-            // Bài 15
-            {
-                q: "Thao tác nhấn giữ (Long-press) trực tiếp vào tin nhắn của khách trên App Mobile sẽ kích hoạt menu phím tắt sao chép, cập nhật SĐT hoặc lưu địa chỉ?",
-                isTrue: true,
-                explain: "Để tối ưu trải nghiệm chạm trên điện thoại, hành vi nhấn giữ tin nhắn sẽ mở ra bảng phím tắt nhanh giúp cập nhật ngay SĐT hoặc Địa chỉ giao hàng vào hồ sơ khách."
-            },
-            {
-                q: "App Mobile KiotViet không hỗ trợ chức năng ghi chú hội thoại nội bộ mà chỉ có chức năng gửi tin nhắn phản hồi trực tiếp cho khách?",
-                isTrue: false,
-                explain: "Để tối ưu trải nghiệm chạm trên điện thoại, hành vi nhấn giữ tin nhắn sẽ mở ra bảng phím tắt nhanh giúp cập nhật ngay SĐT hoặc Địa chỉ giao hàng vào hồ sơ khách."
-            },
-            // Bài 16
-            {
-                q: "Khi gộp nhiều trang bán hàng trên App Mobile, avatar của khách hàng sẽ có thêm biểu tượng logo nhỏ của nền tảng (Facebook, Shopee...) để dễ dàng phân biệt nguồn khách?",
-                isTrue: true,
-                explain: "Tính năng gộp trang trên di động hỗ trợ chèn logo nền tảng trực quan ngay góc avatar của khách, giúp người bán dễ dàng nhận biết khách hàng đang nhắn tin tới từ kênh nào."
+                category: 'mobile',
+                title: "Quản lý và xử lý hội thoại trên ứng dụng Mobile",
+                situation: "Chủ shop trả lời tin nhắn của khách, gửi ảnh mẫu, dùng tin nhắn nhanh và phân công công việc ngay trên điện thoại di động.",
+                steps: [
+                    { text: "Truy cập danh sách Hội thoại → Dùng bộ lọc (Tin nhắn/Bình luận, Chưa đọc, SĐT, Nhãn...) hoặc icon Kính lúp để tìm kiếm.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092200/CDKR_090626-158.png" },
+                    { text: "Xử lý hội thoại: Nhập tin nhắn, gõ ký tự '/' chọn tin mẫu, đính kèm hình ảnh hoặc tệp từ thiết bị di động.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092239/CDKR_090626-163.png" },
+                    { text: "Nhấn biểu tượng 3 chấm để <strong>Phân công nhân viên</strong>, <strong>Ghi chú</strong>, <strong>Đánh dấu chưa đọc/đã xử lý</strong> hoặc <strong>Chặn khách hàng</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092334/CDKR_090626-169.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Muốn dùng tin nhắn trả lời nhanh trên điện thoại thì thao tác thế nào cho lẹ em?'",
+                    advice: "Dạ trong khung chat mobile, chị chỉ cần gõ ký tự '/' là danh sách các mẫu tin phản hồi tự động hiện lên. Chị chạm chọn 1 cái là gửi ngay lập tức ạ!"
+                },
+                quiz: {
+                    question: "Trên ứng dụng Mobile, gõ ký tự '/' trong khung chat là phím tắt để mở nhanh danh sách mẫu tin nhắn trả lời.",
+                    answer: true,
+                    explanation: "Ký tự '/' là cú pháp phím tắt thông minh giúp mở danh sách mẫu tin nhắn nhanh trên cả giao diện Web và App Mobile."
+                }
             },
             {
-                q: "Đơn hàng tạo từ nút 'Tạo đơn' trong khung chat trên App Mobile sẽ không liên kết thông tin khách hàng mà bắt buộc bạn phải gõ lại từ đầu?",
-                isTrue: false,
-                explain: "Tính năng gộp trang trên di động hỗ trợ chèn logo nền tảng trực quan ngay góc avatar của khách, giúp người bán dễ dàng nhận biết khách hàng đang nhắn tin tới từ kênh nào."
+                category: 'mobile',
+                title: "Tạo đơn hàng trực tiếp từ hội thoại trên Mobile",
+                situation: "Nhân viên trực chat qua điện thoại chốt đơn và lên phiếu Đặt hàng/Hóa đơn tức thì cho khách mà không phải thoát app.",
+                steps: [
+                    { text: "Trong màn hình chi tiết hội thoại trên App KiotViet, nhấn nút <strong>Tạo đơn</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092445/CDKR_090626-178.png" },
+                    { text: "Ứng dụng tự động chuyển sang giao diện Bán hàng Mobile với thông tin khách hàng đã được điền sẵn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092445/CDKR_090626-178.png" },
+                    { text: "Chọn sản phẩm, thiết lập giảm giá/vận chuyển → Bấm <strong>Hoàn thành</strong> để lưu đơn và quay lại cuộc trò chuyện.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/09092503/CDKR_090626-179.png" }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: 'Sau khi hoàn thành tạo đơn trên điện thoại thì app có báo xác nhận lại vào khung chat không?'",
+                    advice: "Dạ có chứ ạ! Vừa nhấn Hoàn thành xong, màn hình tự động quay lại khung chat kèm thông báo tạo đơn thành công để anh/chị gửi chi tiết xác nhận cho khách yên tâm ạ!"
+                },
+                quiz: {
+                    question: "Sau khi nhấn Hoàn thành tạo đơn trên giao diện Bán hàng Mobile, người dùng phải tự tìm mở lại cuộc trò chuyện với khách hàng.",
+                    answer: false,
+                    explanation: "Hệ thống tự động điều hướng quay trở lại đúng màn hình hội thoại với khách kèm thông báo tạo đơn thành công."
+                }
             }
         ];
 
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
 
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
-            }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
-
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
-                }
-
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        // INITIALIZE APP
+        window.addEventListener('DOMContentLoaded', () => {
+            renderOverviewLists();
+            navSelectTab('guide');
+        });
     </script>
 </body>
 </html>
