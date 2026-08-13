@@ -1,1115 +1,865 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Áp dụng địa bàn hành chính mới (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Áp dụng địa bàn hành chính mới</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">ÁP DỤNG ĐỊA BÀN HÀNH CHÍNH MỚI</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Áp dụng địa bàn hành chính mới</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs bg-[#166def]">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>BÁN LẺ</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <!-- SIDEBAR RỘNG HƠN & TIÊU ĐỀ TỰ ĐỘNG XUỐNG DÒNG -->
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0 text-[#166def]"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (<)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 bg-[#166def] hover:bg-[#1259c7] text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (>)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-[#166def]/40 shadow-xs space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight text-[#166def]">Áp dụng địa bàn hành chính mới</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng này cho phép cửa hàng quản lý địa chỉ theo chuẩn địa bàn hành chính mới 2 cấp (Tỉnh/Thành phố - Phường/Xã) theo quy định mới, đồng thời vẫn hỗ trợ song song địa chỉ cũ 3 cấp (Tỉnh/Thành phố - Quận/Huyện - Phường/Xã) để đảm bảo hoạt động kinh doanh diễn ra liên tục, không bị gián đoạn.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033903/DBHCR_121225-1.png" alt="Infographic Hướng dẫn địa bàn hành chính mới" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Tuân thủ quy định pháp luật</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Giúp đảm bảo thông tin địa chỉ trên hóa đơn điện tử và chứng từ chính xác theo quy định, hạn chế rủi ro pháp lý.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Không gián đoạn vận hành</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Linh hoạt xử lý giao dịch với cả địa chỉ cũ và mới, đặc biệt hữu ích khi đối tác vận chuyển hoặc bản đồ chưa cập nhật đồng bộ.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Chuyển đổi linh hoạt</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Cho phép cập nhật dữ liệu từ từ theo lộ trình cửa hàng, hỗ trợ gợi ý chuyển đổi thông minh không bắt buộc thay đổi ngay.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 9</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <!-- POPUP HOÀN THÀNH NÂNG CAO -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 18</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- JAVASCRIPT DATA & ENGINE V18.0 HOÀN CHỈNH -->
     <script>
-        const unifiedData = [
+        const GLOSSARY_ITEMS = [
             {
-                isIntro: true,
-                icon: "💡",
-                title: "Giới thiệu chung",
-                description: "Tính năng này cho phép cửa hàng quản lý địa chỉ theo chuẩn địa bàn hành chính mới 2 cấp (Tỉnh/Thành phố - Phường/Xã) theo quy định mới, đồng thời vẫn hỗ trợ song song địa chỉ cũ 3 cấp (Tỉnh/Thành phố - Quận/Huyện - Phường/Xã) để đảm bảo hoạt động kinh doanh diễn ra liên tục.",
-                benefits: [
-                    { icon: "fa-gavel", title: "Tuân thủ quy định pháp luật", desc: "Giúp đảm bảo thông tin địa chỉ trên hóa đơn điện tử chính xác, hạn chế rủi ro pháp lý." },
-                    { icon: "fa-repeat", title: "Không gián đoạn vận hành", desc: "Linh hoạt xử lý giao dịch với cả địa chỉ cũ và mới khi đối tác vận chuyển chưa cập nhật." },
-                    { icon: "fa-arrows-rotate", title: "Chuyển đổi linh hoạt", desc: "Hỗ trợ gợi ý chuyển đổi thông minh, cập nhật dữ liệu từ từ theo lộ trình của cửa hàng." }
-                ],
-                updateInfo: "Tài liệu được cập nhật mới nhất ngày 12/12/2025.",
-                youtubeUrl: "",
-                images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033903/DBHCR_121225-1.png"]
+                term: "Địa bàn hành chính mới (2 cấp)",
+                def: "Mô hình địa bàn hành chính gồm 2 cấp quản lý: Tỉnh/Thành phố và Phường/Xã (đã bỏ bớt cấp trung gian Quận/Huyện)."
             },
             {
-                icon: "💻",
-                title: "Nhập địa chỉ mới khi thêm mới đối tượng",
-                scenario: "BẠN ĐANG THÊM MỚI MỘT KHÁCH HÀNG HOẶC NHÀ CUNG CẤP VÀ MUỐN SỬ DỤNG ĐỊA CHỈ MỚI 2 CẤP.",
+                term: "Địa bàn hành chính cũ (3 cấp)",
+                def: "Mô hình địa bàn hành chính truyền thống gồm 3 cấp quản lý: Tỉnh/Thành phố, Quận/Huyện và Phường/Xã."
+            },
+            {
+                term: "Gợi ý chuyển đổi thông minh",
+                def: "Tính năng tự động của KiotViet nhận diện địa chỉ 3 cấp cũ và đề xuất cập nhật chính xác sang địa chỉ 2 cấp mới."
+            },
+            {
+                term: "Đồng nhất chuẩn địa chỉ giao nhận",
+                def: "Quy định tính cước vận chuyển bắt buộc Địa chỉ lấy hàng (Kho) và Địa chỉ nhận hàng (Khách) phải cùng 1 chuẩn định dạng (cùng 2 cấp mới hoặc cùng 3 cấp cũ)."
+            }
+        ];
+
+        const BASIC_LESSONS = [
+            {
+                title: "Nhập địa chỉ MỚI khi thêm mới đối tượng",
+                situation: "Bạn muốn thêm mới thông tin khách hàng, nhà cung cấp hoặc chi nhánh theo chuẩn địa bàn hành chính 2 cấp mới ngay từ đầu.",
                 steps: [
-                    "Tại ô <strong>Khu vực</strong>, nhập từ khóa tìm kiếm để <strong>Chọn Tỉnh/Thành phố</strong> (Ví dụ: 'Hà Nội').",
-                    "Chọn giá trị chỉ chứa tên Tỉnh/Thành phố từ danh sách gợi ý (Ví dụ: 'Thành phố Hà Nội').",
-                    "Tại ô <strong>Phường/Xã</strong>, hệ thống tự động tải danh sách 2 cấp mới. Nhập từ khóa để <strong>Chọn Phường/Xã</strong> phù hợp.",
-                    "Điền đầy đủ thông tin còn lại rồi nhấn <strong>Lưu</strong> để hoàn tất."
+                    { text: "Trên màn hình thêm mới, tại ô <b>Khu vực</b>, nhập từ khóa tìm kiếm Tỉnh/Thành phố (ví dụ: 'Hà Nội').", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033920/DBHCR_121225-2.png" },
+                    { text: "Chọn giá trị chỉ có tên Tỉnh/Thành phố (ví dụ: 'Thành phố Hà Nội' - hiển thị đầu tiên, không kèm Quận/Huyện).", img: null },
+                    { text: "Tại ô <b>Phường/Xã</b>, hệ thống tự động tải danh sách chuẩn 2 cấp mới, nhập từ khóa và chọn Phường/Xã phù hợp.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033931/DBHCR_121225-3.png" },
+                    { text: "Điền các thông tin còn lại và nhấn <b>Lưu</b> để hoàn tất.", img: null }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033920/DBHCR_121225-2.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033931/DBHCR_121225-3.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi muốn thêm một khách hàng mới theo chuẩn địa bàn 2 cấp thì làm sao?" },
-                    { r: "consultant", t: "Ở ô <strong>Khu vực</strong>, bạn chỉ cần chọn tên Tỉnh/Thành phố (ví dụ: Thành phố Hà Nội), hệ thống sẽ lọc trực tiếp các <strong>Phường/Xã</strong> tương ứng mà không yêu cầu nhập Quận/Huyện." }
-                ]
+                flashcard: {
+                    situation: "Khách hàng mới yêu cầu ghi thông tin địa chỉ 2 cấp mới trên hóa đơn bán hàng, em nhập thế nào trên KiotViet?",
+                    advice: "Anh/Chị chỉ cần chọn Tỉnh/Thành phố ở ô Khu vực, sau đó chọn thẳng Phường/Xã mới. Hệ thống chuẩn hóa 2 cấp giúp xuất hóa đơn chuẩn quy định thuế ngay tức thì!"
+                },
+                quiz: {
+                    question: "Khi nhập địa chỉ theo chuẩn mới 2 cấp trên KiotViet, người dùng chỉ cần chọn Tỉnh/Thành phố và Phường/Xã mà không cần thông qua bước chọn Quận/Huyện.",
+                    answer: true,
+                    explanation: "Theo chuẩn địa bàn hành chính mới 2 cấp, hệ thống tự động tải danh sách Phường/Xã trực thuộc Tỉnh/Thành phố đã chọn mà không cần qua cấp Quận/Huyện."
+                }
             },
             {
-                icon: "💻",
-                title: "Nhập địa chỉ cũ và sử dụng gợi ý chuyển đổi",
-                scenario: "BẠN QUEN VỚI CÁCH NHẬP ĐỊA CHỈ CŨ CÓ QUẬN HUYỆN VÀ MUỐN HỆ THỐNG TỰ ĐỘNG GỢI Ý CHUYỂN ĐỔI SANG CHUẨN MỚI.",
+                title: "Nhập địa chỉ CŨ và sử dụng gợi ý chuyển đổi",
+                situation: "Bạn nhập địa chỉ đối tác theo thói quen cũ (có kèm Quận/Huyện) và muốn KiotViet tự động gợi ý chuyển đổi sang chuẩn mới.",
                 steps: [
-                    "Tại ô <strong>Khu vực</strong>, nhập từ khóa và chọn định dạng cũ kèm Quận/Huyện (Ví dụ: 'Hà Nội - Quận Hoàn Kiếm').",
-                    "Chọn <strong>Phường/Xã</strong> tương ứng theo định dạng cũ.",
-                    "Nhìn thông báo gợi ý màu xanh: 'Địa điểm này đã cập nhật thành...'.",
-                    "Nhấn <strong>Cập nhật</strong> để hệ thống tự điền địa chỉ mới, rồi nhấn <strong>Lưu</strong>."
+                    { text: "Tại ô <b>Khu vực</b> trên màn hình thêm mới, chọn giá trị kèm Quận/Huyện theo thói quen cũ (ví dụ: 'Hà Nội - Quận Hoàn Kiếm').", img: null },
+                    { text: "Chọn <b>Phường/Xã</b> tương ứng theo chuẩn 3 cấp cũ.", img: null },
+                    { text: "Hệ thống lập tức hiển thị thông báo gợi ý địa chỉ mới tương ứng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033945/DBHCR_121225-4.png" },
+                    { text: "Kiểm tra địa điểm gợi ý, nhấn <b>Cập nhật</b> để hệ thống tự động chọn địa chỉ 2 cấp mới.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034002/DBHCR_121225-5.png" },
+                    { text: "Nhấn <b>Lưu</b> để hoàn tất lưu trữ.", img: null }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12033945/DBHCR_121225-4.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034002/DBHCR_121225-5.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi quen gõ cả Quận Huyện rồi, hệ thống có hỗ trợ chuyển nhanh không?" },
-                    { r: "consultant", t: "Hoàn toàn có! Bạn cứ nhập địa chỉ cũ, hệ thống phát hiện sẽ hiển thị một dòng gợi ý chuẩn mới màu xanh lá. Chỉ cần nhấn nút <strong>Cập nhật</strong> là xong." }
-                ]
+                flashcard: {
+                    situation: "Nhân viên em quen gõ địa chỉ 3 cấp cũ gồm cả Quận/Huyện, liệu có phải học lại từ đầu không?",
+                    advice: "Anh/Chị hoàn toàn yên tâm! Nhân viên cứ nhập theo thói quen cũ, KiotViet sẽ tự bật gợi ý chuyển đổi sang địa chỉ mới 2 cấp. Chỉ cần bấm 'Cập nhật' là chuẩn hóa ngay, không lo nhập sai."
+                },
+                quiz: {
+                    question: "Khi người dùng nhập địa chỉ theo 3 cấp cũ, KiotViet sẽ tự động thông báo gợi ý địa chỉ mới tương ứng để chọn Cập nhật.",
+                    answer: true,
+                    explanation: "Hệ thống tự động nhận diện địa chỉ 3 cấp cũ và hiển thị cửa sổ gợi ý chuyển đổi thông minh giúp người dùng chuẩn hóa dữ liệu dễ dàng."
+                }
             },
             {
-                icon: "💻",
                 title: "Cập nhật địa chỉ từ cũ sang mới cho dữ liệu có sẵn",
-                scenario: "BẠN MUỐN RÀ SOÁT DANH SÁCH ĐỐI TÁC CŨ ĐỂ CHUYỂN TOÀN BỘ ĐỊA CHỈ SANG CHUẨN MỚI 2 CẤP.",
+                situation: "Bạn rà soát hồ sơ đối tác cũ và muốn chuyển đổi thông tin địa chỉ 3 cấp đang lưu trữ sang chuẩn mới 2 cấp.",
                 steps: [
-                    "Mở xem chi tiết đối tượng có sẵn (Khách hàng, Nhà cung cấp...).",
-                    "Hệ thống tự động phát hiện địa chỉ cũ và hiển thị gợi ý chuyển đổi thông minh ngay tại khu vực thông tin địa chỉ.",
-                    "Kiểm tra lại kỹ thông tin địa chỉ mới vừa được gợi ý.",
-                    "Nhấn nút <strong>Cập nhật</strong> để áp dụng chuẩn mới, sau đó lưu lại."
+                    { text: "Mở xem thông tin chi tiết đối tác (Khách hàng, Nhà cung cấp, Đối tác giao hàng, Bác sĩ...).", img: null },
+                    { text: "Hệ thống tự động kiểm tra và hiển thị khu vực gợi ý chuyển đổi ngay tại dòng địa chỉ đối tác.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034024/DBHCR_121225-6.png" },
+                    { text: "Kiểm tra địa chỉ mới gợi ý và nhấn <b>Cập nhật</b> để hoàn tất chuyển đổi.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034040/DBHCR_121225-7.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034024/DBHCR_121225-6.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034040/DBHCR_121225-7.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Khách hàng cũ đã lưu từ trước thì có cách nào nâng cấp nhanh sang 2 cấp không?" },
-                    { r: "consultant", t: "Bạn chỉ cần mở chi tiết khách hàng đó, hệ thống sẽ tự quét và hiển thị gợi ý. Bạn chỉ cần nhấn nút <strong>Cập nhật</strong> là địa chỉ đổi sang chuẩn mới ngay lập tức." }
-                ]
-            },
+                flashcard: {
+                    situation: "Cửa hàng em có hàng nghìn khách hàng cũ lưu địa chỉ cũ, có phải xóa đi nhập lại từng người không?",
+                    advice: "Không cần tạo mới đâu ạ! Mỗi khi anh/chị mở chi tiết khách hàng cũ, KiotViet tự gợi ý sẵn địa chỉ chuẩn mới. Anh/Chị chỉ cần bấm 'Cập nhật' 1 giây là xong, giữ nguyên toàn bộ lịch sử mua hàng."
+                },
+                quiz: {
+                    question: "Thao tác cập nhật địa chỉ từ cũ sang mới cho đối tác có sẵn sẽ làm mất toàn bộ lịch sử giao dịch và công nợ cũ.",
+                    answer: false,
+                    explanation: "Cập nhật địa chỉ chỉ thay đổi thông tin hành chính, toàn bộ lịch sử bán hàng, công nợ và voucher của đối tác được giữ nguyên 100%."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Lọc và Tìm kiếm theo địa bàn hành chính",
-                scenario: "BẠN CẦN LỌC DANH SÁCH ĐƠN HÀNG HOẶC KHÁCH HÀNG THEO KHU VỰC ĐỂ LÊN KẾ HOẠCH GIAO HÀNG.",
+                situation: "Bạn cần lọc danh sách đơn hàng hoặc khách hàng theo khu vực địa lý để lên kế hoạch giao hàng, bao gồm cả dữ liệu địa chỉ cũ và mới.",
                 steps: [
-                    "Tại bộ lọc <strong>Khu vực giao hàng/Địa chỉ</strong> trên các màn hình danh sách, bạn nhập từ khóa khu vực cần lọc.",
-                    "Hệ thống cho phép bạn tùy chọn lọc theo địa chỉ mới (Ví dụ: 'Thành phố Hà Nội') hoặc địa chỉ cũ (Ví dụ: 'Hà Nội - Huyện Ba Ba').",
-                    "Màn hình sẽ hiển thị kết quả lọc chính xác tương ứng với định dạng bạn chọn."
+                    { text: "Tại bộ lọc <b>Khu vực giao hàng / Địa chỉ</b> trên các màn hình danh sách, gõ từ khóa tìm kiếm.", img: null },
+                    { text: "Lựa chọn tiêu chí lọc theo địa chỉ mới (ví dụ: 'Thành phố Hà Nội') hoặc địa chỉ cũ (ví dụ: 'Hà Nội - Huyện Ba Vì').", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034101/DBHCR_121225-8.png" },
+                    { text: "Hệ thống trả về danh sách đối tượng khớp chính xác với tiêu chí địa bàn đã chọn.", img: null }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034101/DBHCR_121225-8.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Lúc lọc danh sách khách hàng để gửi ship, tôi có lọc được cả người dùng địa chỉ cũ và mới không?" },
-                    { r: "consultant", t: "Có nhé bạn! Bộ lọc cho phép tìm kiếm song song cả từ khóa của địa bàn cũ và mới, giúp bạn quản lý đơn hàng theo khu vực vô cùng thuận tiện." }
-                ]
+                flashcard: {
+                    situation: "Cửa hàng em lọc danh sách giao hàng mà vừa có khách dùng địa chỉ cũ, vừa có khách dùng địa chỉ mới thì lọc thế nào?",
+                    advice: "Dạ bộ lọc KiotViet hỗ trợ song song cả 2 chuẩn! Anh/Chị gõ tìm theo tên Tỉnh/Thành mới hay Quận/Huyện cũ hệ thống đều lọc chuẩn xác, không lo bỏ sót đơn hàng nào."
+                },
+                quiz: {
+                    question: "Bộ lọc địa chỉ trên KiotViet cho phép người dùng lọc tìm kiếm dữ liệu theo cả định dạng địa chỉ cũ (3 cấp) và địa chỉ mới (2 cấp).",
+                    answer: true,
+                    explanation: "KiotViet hỗ trợ song song cả 2 định dạng bộ lọc địa chỉ giúp việc tìm kiếm, phân loại dữ liệu không bị gián đoạn."
+                }
             },
             {
-                icon: "💻",
-                title: "Xử lý khi một địa chỉ cũ tách thành nhiều địa chỉ mới",
-                scenario: "ĐỊA BÀN HÀNH CHÍNH CŨ BỊ CHIA TÁCH PHỨC TẠP KHIẾN HỆ THỐNG GỢI Ý NHIỀU PHƯƠNG ÁN ĐỊA CHỈ MỚI.",
+                category: 'feature',
+                title: "Xử lý khi địa chỉ cũ chia tách thành nhiều địa chỉ mới",
+                situation: "Địa bàn cũ bị sáp nhập hoặc chia tách phức tạp khiến một địa chỉ cũ có thể tương ứng với nhiều địa bàn mới khác nhau.",
                 steps: [
-                    "Khi nhấn chỉnh sửa đối tác ở vùng bị chia tách, hệ thống hiển thị danh sách các phương án địa chỉ mới tương ứng.",
-                    "Tiến hành <strong>đối chiếu kỹ</strong> thông tin địa chỉ thực tế của khách hàng.",
-                    "Chọn phương án địa chỉ chuẩn xác nhất từ danh sách rồi nhấn <strong>Lưu</strong>."
+                    { text: "Khi chỉnh sửa thông tin đối tượng thuộc địa bàn chia tách, hệ thống sẽ bật gợi ý các phương án địa chỉ mới.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034115/DBHCR_121225-9.png" },
+                    { text: "Đối chiếu kỹ thông tin thực tế địa chỉ của khách hàng/đối tác.", img: null },
+                    { text: "Lựa chọn đúng phương án địa chỉ mới chính xác trước khi nhấn <b>Lưu</b>.", img: null }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034115/DBHCR_121225-9.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Trường hợp xã cũ của khách bị chia đôi thành 2 phường mới, hệ thống gợi ý thế nào?" },
-                    { r: "consultant", t: "Hệ thống sẽ liệt kê các phương án địa chỉ mới khả thi. Bạn chỉ cần hỏi rõ thông tin của khách rồi chọn đúng phương án chính xác trước khi Lưu." }
-                ]
+                flashcard: {
+                    situation: "Một số phường cũ chỗ em bị tách làm 2 phường mới, hệ thống tự đổi nhầm phường thì sao?",
+                    advice: "Đối với địa bàn chia tách phức tạp, KiotViet sẽ đưa ra các phương án gợi ý. Anh/Chị chỉ cần đối chiếu thực tế địa chỉ khách và chọn đúng tên phường mới là đảm bảo chính xác 100%!"
+                },
+                quiz: {
+                    question: "Khi một địa chỉ cũ tách thành nhiều địa bàn mới, người dùng cần đối chiếu thông tin thực tế và chủ động chọn phương án chính xác trước khi lưu.",
+                    answer: true,
+                    explanation: "Đối với các địa bàn chia tách, kiểm tra thủ công và chọn đúng phương án địa chỉ phù hợp là cần thiết để tránh sai lệch thông tin giao nhận."
+                }
             },
             {
-                icon: "💻",
-                title: "Tạo vận đơn giao hàng (Máy tính/Web)",
-                scenario: "BẠN CẦN TẠO VẬN ĐƠN GIAO HÀNG QUA ĐỐI TÁC VẬN CHUYỂN VÀ ĐẢM BẢO TÍNH CƯỚC CHÍNH XÁC.",
+                category: 'feature',
+                title: "Tạo vận đơn giao hàng & Kiểm tra tính đồng nhất địa chỉ",
+                situation: "Tạo vận đơn qua các hãng vận chuyển (GHN, GHTK, Viettel Post, KShip...) và kiểm tra điều kiện đồng nhất địa chỉ gửi - nhận.",
                 steps: [
-                    "Kiểm tra định dạng <strong>Địa chỉ lấy hàng</strong> và <strong>Địa chỉ nhận hàng</strong> xem có đồng nhất hay không (cùng cũ hoặc cùng mới).",
-                    "Nếu lệch định dạng, hệ thống hiển thị cảnh báo lỗi không tương thích. Nhấn sửa địa chỉ để đồng bộ.",
-                    "Với giao hàng loạt qua KShip, hệ thống chỉ cho phép xem trước phí và tạo vận đơn đối với các đơn hàng có địa chỉ nhận hàng đồng nhất định dạng với địa chỉ lấy hàng."
+                    { text: "Kiểm tra định dạng <b>Địa chỉ lấy hàng</b> (Kho) và <b>Địa chỉ nhận hàng</b> (Khách) - bắt buộc cùng 1 chuẩn 2 cấp mới hoặc 3 cấp cũ.", img: null },
+                    { text: "Nếu 2 địa chỉ lệch định dạng hoặc hãng bay không hỗ trợ, hệ thống hiển thị cảnh báo yêu cầu cập nhật.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034138/DBHCR_121225-10.png" },
+                    { text: "Xem thông báo lỗi định dạng không tương thích với đối tác vận chuyển để điều chỉnh.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034207/DBHCR_121225-12.png" },
+                    { text: "Nếu tạo vận đơn hàng loạt qua KShip, hệ thống cảnh báo rõ số lượng đơn khác định dạng để phân loại xử lý.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034220/DBHCR_121225-13.png" },
+                    { text: "Tra cước và bấm tạo vận đơn thành công cho các đơn đã đồng nhất chuẩn địa chỉ.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034238/DBHCR_121225-14.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034138/DBHCR_121225-10.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034207/DBHCR_121225-12.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034220/DBHCR_121225-13.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034238/DBHCR_121225-14.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tại sao tôi tra cước vận chuyển giao hàng hệ thống cứ báo lỗi địa chỉ không tương thích?" },
-                    { r: "consultant", t: "Đó là vì <strong>Địa chỉ lấy hàng</strong> và <strong>Địa chỉ nhận hàng</strong> đang bị lệch định dạng. Bạn chỉ cần sửa lại cho đồng nhất (cùng 2 cấp mới hoặc cùng 3 cấp cũ) là tra cước bình thường nhé." }
-                ]
+                flashcard: {
+                    situation: "Tại sao em tạo vận đơn đẩy hãng giao hàng lại bị báo lỗi không tra được cước?",
+                    advice: "Dạ các hãng vận chuyển yêu cầu Địa chỉ lấy hàng và Địa chỉ nhận hàng phải CÙNG ĐỊNH DẠNG (cùng 2 cấp hoặc cùng 3 cấp). Anh/Chị chỉ cần chuẩn hóa địa chỉ khách theo đúng cấp với kho lấy hàng là đẩy đơn vèo vèo!"
+                },
+                quiz: {
+                    question: "Để tra cước và tạo vận đơn thành công, Địa chỉ lấy hàng và Địa chỉ nhận hàng bắt buộc phải cùng một định dạng (cùng 2 cấp mới hoặc cùng 3 cấp cũ).",
+                    answer: true,
+                    explanation: "Các hãng giao hàng quy định địa chỉ gửi và nhận phải đồng nhất chuẩn định dạng để hệ thống tính cước chính xác và phân tuyến vận chuyển."
+                }
             },
             {
-                icon: "💻",
-                title: "Import và Xuất file dữ liệu",
-                scenario: "BẠN CẦN NHẬP FILE EXCEL KHÁCH HÀNG HÀNG LOẠT HOẶC XUẤT FILE BÁO CÁO ĐỂ QUẢN LÝ.",
+                category: 'feature',
+                title: "Import và Xuất file dữ liệu theo chuẩn địa chỉ",
+                situation: "Nhập hàng loạt hồ sơ đối tác từ file Excel hoặc xuất danh sách báo cáo ra file Excel.",
                 steps: [
-                    "Khi import, chuẩn bị file Excel có định dạng cột địa chỉ chính xác theo chuẩn cũ hoặc chuẩn mới.",
-                    "Hệ thống tự động nhận diện thông minh, lưu trữ đúng định dạng địa chỉ được nhập.",
-                    "Khi xuất file Excel, hệ thống giữ nguyên định dạng địa chỉ đang được lưu trữ trong cơ sở dữ liệu (đối tượng nào lưu cũ ra cũ, mới ra mới)."
+                    { text: "Khi <b>Import</b>: chuẩn bị file Excel ghi địa chỉ đúng chuẩn (3 cấp cũ hoặc 2 cấp mới). Hệ thống tự động nhận diện và lưu trữ đúng định dạng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034259/DBHCR_121225-15.png" },
+                    { text: "Khi <b>Export</b>: xuất file dữ liệu ra Excel, hệ thống giữ nguyên định dạng địa chỉ đang được lưu trữ (cũ ra cũ, mới ra mới).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034317/DBHCR_121225-16.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034259/DBHCR_121225-15.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034317/DBHCR_121225-16.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi export file khách hàng ra excel thì các thông tin địa chỉ cũ có bị ép đổi sang địa chỉ mới không?" },
-                    { r: "consultant", t: "Không nhé bạn! Khi xuất file Excel, hệ thống giữ nguyên trạng loại địa chỉ đang được lưu trữ của từng khách hàng để đảm bảo tính đồng bộ dữ liệu." }
-                ]
+                flashcard: {
+                    situation: "File Excel khách hàng cũ của em ghi địa chỉ 3 cấp, import lên hệ thống có bị lỗi không em?",
+                    advice: "Dạ không đâu ạ! KiotViet tự thông minh nhận diện được file Excel chứa địa chỉ 3 cấp hay 2 cấp để lưu trữ chính xác. Anh/Chị chỉ cần giữ đúng file Excel là import ngon lành!"
+                },
+                quiz: {
+                    question: "Khi xuất file dữ liệu từ KiotViet ra Excel, hệ thống sẽ tự động ép tất cả địa chỉ cũ thành địa chỉ mới 2 cấp.",
+                    answer: false,
+                    explanation: "Khi xuất file (Export), KiotViet giữ nguyên chuẩn định dạng địa chỉ đang lưu trữ trong cơ sở dữ liệu (cũ ra cũ, mới ra mới)."
+                }
             },
             {
-                icon: "📱",
-                title: "Tạo vận đơn giao hàng trên điện thoại (App Mobile)",
-                scenario: "BẠN SỬ DỤNG APP KIOTVIET TRÊN ĐIỆN THOẠI ĐỂ TẠO ĐƠN GIAO HÀNG CHO KHÁCH.",
+                category: 'mobile',
+                title: "Tạo vận đơn giao hàng trên ứng dụng điện thoại (Mobile App)",
+                situation: "Tạo vận đơn giao hàng trực tiếp trên thiết bị di động bằng ứng dụng KiotViet.",
                 steps: [
-                    "Mở màn hình tạo đơn giao hàng trên ứng dụng di động KiotViet.",
-                    "Kiểm tra định dạng <strong>Địa chỉ lấy hàng</strong> và <strong>Địa chỉ nhận hàng</strong>.",
-                    "Nếu hệ thống báo lỗi không đồng nhất, chạm vào địa chỉ để chỉnh sửa và đồng bộ hóa loại địa chỉ nhằm thực hiện tra cước mượt mà."
+                    { text: "Mở App KiotViet trên điện thoại, chọn đơn hàng cần giao.", img: null },
+                    { text: "Kiểm tra định dạng Địa chỉ lấy hàng và Địa chỉ nhận hàng. Nếu lệch chuẩn, ứng dụng sẽ hiện cảnh báo yêu cầu đồng bộ.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034330/DBHCR_121225-17.png" },
+                    { text: "Nếu địa chỉ không tương thích đối tác vận chuyển, điều chỉnh địa chỉ theo cảnh báo để chọn đối tác giao hàng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034346/DBHCR_121225-18.png" },
+                    { text: "Xác nhận tạo vận đơn thành công.", img: null }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034330/DBHCR_121225-17.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/12034346/DBHCR_121225-18.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi dùng app trên điện thoại có bị lỗi tính cước nếu địa chỉ lấy và nhận lệch chuẩn không?" },
-                    { r: "consultant", t: "Có bạn nhé! Quy tắc giao vận áp dụng chung cho mọi nền tảng. Bạn vui lòng đồng bộ định dạng địa chỉ lấy và nhận trên app điện thoại để tính cước chính xác." }
-                ]
+                flashcard: {
+                    situation: "Bán hàng qua ứng dụng điện thoại có kiểm tra được định dạng địa chỉ giao hàng không?",
+                    advice: "Dạ có ạ! App Mobile KiotViet cũng tự động cảnh báo ngay lập tức nếu Địa chỉ lấy và Địa chỉ giao chưa đồng nhất chuẩn, giúp nhân viên xử lý ngay trước khi bấm đẩy vận đơn!"
+                },
+                quiz: {
+                    question: "Ứng dụng KiotViet trên điện thoại hỗ trợ cảnh báo khi Địa chỉ lấy hàng và Địa chỉ nhận hàng khác định dạng trong quá trình tạo vận đơn.",
+                    answer: true,
+                    explanation: "Trên ứng dụng di động, hệ thống chủ động kiểm tra tính đồng nhất của chuẩn địa chỉ gửi - nhận giúp hạn chế tối đa lỗi phát sinh cước vận chuyển."
+                }
             }
         ];
 
-        const quizData = [
-            {
-                q: "Hệ thống KiotViet cho phép quản lý song song địa chỉ cũ 3 cấp và địa chỉ mới 2 cấp để đảm bảo không gián đoạn vận hành?",
-                isTrue: true,
-                explain: "KiotViet hỗ trợ song song hai loại địa chỉ để tránh làm gián đoạn vận hành, giúp người dùng chủ động chuyển đổi từ từ theo lộ trình phù hợp với cửa hàng và đối tác liên kết."
-            },
-            {
-                q: "KiotViet bắt buộc toàn bộ cửa hàng phải chuyển đổi ngay lập tức tất cả dữ liệu sang địa chỉ mới 2 cấp và ngừng hoàn toàn hỗ trợ địa chỉ cũ?",
-                isTrue: false,
-                explain: "KiotViet hỗ trợ song song hai loại địa chỉ để tránh làm gián đoạn vận hành, giúp người dùng chủ động chuyển đổi từ từ theo lộ trình phù hợp với cửa hàng và đối tác liên kết."
-            },
-            {
-                q: "Khi nhập địa chỉ theo chuẩn mới 2 cấp, tại ô Khu vực bạn chỉ cần chọn tên Tỉnh/Thành phố, sau đó ô Phường/Xã sẽ tự động tải danh sách trực thuộc phù hợp?",
-                isTrue: true,
-                explain: "Ở chuẩn địa bàn hành chính mới 2 cấp, hệ thống tối giản hóa chỉ còn Tỉnh/Thành phố trực tiếp đến Phường/Xã, giúp giảm thao tác nhập liệu trung gian một cách tối đa."
-            },
-            {
-                q: "Khi nhập địa chỉ mới 2 cấp, bạn vẫn bắt buộc phải điền thủ công một ô Quận/Huyện riêng biệt rồi mới chọn được Phường/Xã?",
-                isTrue: false,
-                explain: "Ở chuẩn địa bàn hành chính mới 2 cấp, hệ thống tối giản hóa chỉ còn Tỉnh/Thành phố trực tiếp đến Phường/Xã, giúp giảm thao tác nhập liệu trung gian một cách tối đa."
-            },
-            {
-                q: "Nếu người dùng quen nhập địa chỉ cũ (3 cấp), hệ thống sẽ hiển thị một thông báo gợi ý chuyển đổi thông minh để người dùng cập nhật chỉ bằng một cú click chuột?",
-                isTrue: true,
-                explain: "Hệ thống tôn trọng lựa chọn của bạn và chỉ thực hiện chuyển đổi khi bạn xác nhận nhấn vào nút Cập nhật trên thông báo gợi ý, giúp tránh sai lệch thông tin ngoài ý muốn."
-            },
-            {
-                q: "Hệ thống sẽ tự động cưỡng chế chuyển đổi địa chỉ cũ sang mới mà không cần hiển thị thông báo hay hỏi ý kiến người dùng khi lưu thông tin?",
-                isTrue: false,
-                explain: "Hệ thống tôn trọng lựa chọn của bạn và chỉ thực hiện chuyển đổi khi bạn xác nhận nhấn vào nút Cập nhật trên thông báo gợi ý, giúp tránh sai lệch thông tin ngoài ý muốn."
-            },
-            {
-                q: "Khi mở xem chi tiết một đối tác đang lưu địa chỉ cũ, hệ thống sẽ tự động rà soát và hiển thị hộp gợi ý chuyển đổi địa bàn hành chính ngay tại vùng thông tin địa chỉ?",
-                isTrue: true,
-                explain: "KiotViet hỗ trợ cập nhật trực tiếp ngay trên trang chi tiết đối tác thông qua tính năng gợi ý thông minh, giúp giữ nguyên toàn bộ lịch sử giao dịch và thông tin cũ."
-            },
-            {
-                q: "Để cập nhật địa chỉ cũ của một đối tác sang mới, bạn buộc phải xóa đối tác đó đi và tạo mới lại hoàn toàn từ đầu?",
-                isTrue: false,
-                explain: "KiotViet hỗ trợ cập nhật trực tiếp ngay trên trang chi tiết đối tác thông qua tính năng gợi ý thông minh, giúp giữ nguyên toàn bộ lịch sử giao dịch và thông tin cũ."
-            },
-            {
-                q: "Bộ lọc khu vực của KiotViet hỗ trợ tìm kiếm và phân loại rõ ràng cả định dạng địa chỉ cũ (3 cấp) lẫn địa chỉ mới (2 cấp)?",
-                isTrue: true,
-                explain: "Bộ lọc được thiết kế song song để bạn dễ dàng quản lý tệp dữ liệu chuyển tiếp, hỗ trợ lọc chính xác theo cả hai chuẩn địa chỉ."
-            },
-            {
-                q: "Hệ thống chỉ cho phép lọc danh sách theo chuẩn địa bàn mới 2 cấp, không thể tìm kiếm hay lọc theo địa bàn cũ nữa?",
-                isTrue: false,
-                explain: "Bộ lọc được thiết kế song song để bạn dễ dàng quản lý tệp dữ liệu chuyển tiếp, hỗ trợ lọc chính xác theo cả hai chuẩn địa chỉ."
-            },
-            {
-                q: "Khi địa bàn cũ bị chia tách phức tạp, người dùng cần đối chiếu kỹ thông tin thực tế trước khi chọn phương án chuyển đổi chính xác nhất từ danh sách gợi ý?",
-                isTrue: true,
-                explain: "Để đảm bảo tính chính xác tối đa cho vận hành và giao hàng, hệ thống sẽ cung cấp các lựa chọn và yêu cầu người dùng đối chiếu để chọn phương án chuẩn nhất."
-            },
-            {
-                q: "Hệ thống sẽ tự động chọn ngẫu nhiên một địa chỉ mới bất kỳ khi địa bàn cũ bị chia tách mà không cần người dùng xác nhận lựa chọn?",
-                isTrue: false,
-                explain: "Để đảm bảo tính chính xác tối đa cho vận hành và giao hàng, hệ thống sẽ cung cấp các lựa chọn và yêu cầu người dùng đối chiếu để chọn phương án chuẩn nhất."
-            },
-            {
-                q: "Địa chỉ lấy hàng và Địa chỉ nhận hàng bắt buộc phải cùng một định dạng (cùng chuẩn cũ hoặc cùng chuẩn mới) để đối tác vận chuyển có thể tra cước và tạo vận đơn thành công?",
-                isTrue: true,
-                explain: "Sự không tương thích giữa hai chuẩn định dạng địa chỉ lấy và giao sẽ khiến hệ thống của đối tác vận chuyển không thể tính toán cước phí chính xác, do đó KiotViet sẽ đưa ra cảnh báo yêu cầu đồng bộ hóa."
-            },
-            {
-                q: "Bạn có thể thoải mái tạo vận đơn khi địa chỉ lấy hàng là chuẩn mới 2 cấp còn địa chỉ nhận hàng là chuẩn cũ 3 cấp mà không lo bị lỗi hệ thống hay lệch cước?",
-                isTrue: false,
-                explain: "Sự không tương thích giữa hai chuẩn định dạng địa chỉ lấy và giao sẽ khiến hệ thống của đối tác vận chuyển không thể tính toán cước phí chính xác, do đó KiotViet sẽ đưa ra cảnh báo yêu cầu đồng bộ hóa."
-            },
-            {
-                q: "Khi xuất file Excel từ KiotViet, hệ thống sẽ giữ nguyên định dạng địa chỉ thực tế đang lưu trữ của từng đối tượng (cũ ra cũ, mới ra mới)?",
-                isTrue: true,
-                explain: "KiotViet giữ nguyên định dạng đang được lưu trữ trong cơ sở dữ liệu khi xuất file để đảm bảo dữ liệu khớp chính xác với những gì hiển thị trên màn hình quản lý của bạn."
-            },
-            {
-                q: "Khi xuất file Excel, hệ thống sẽ tự động ép buộc tất cả địa chỉ cũ chuyển đổi thành địa chỉ mới 2 cấp trong file tải về?",
-                isTrue: false,
-                explain: "KiotViet giữ nguyên định dạng đang được lưu trữ trong cơ sở dữ liệu khi xuất file để đảm bảo dữ liệu khớp chính xác với những gì hiển thị trên màn hình quản lý của bạn."
-            },
-            {
-                q: "Trên ứng dụng di động KiotViet, quy tắc đồng nhất định dạng địa chỉ lấy và nhận hàng vẫn được áp dụng nghiêm ngặt để đảm bảo khả năng tra cước vận chuyển?",
-                isTrue: true,
-                explain: "Quy tắc vận hành của đối tác giao vận là đồng nhất trên mọi nền tảng, do đó app di động cũng sẽ hiển thị cảnh báo yêu cầu người dùng chủ động kiểm tra và đồng bộ định dạng địa chỉ."
-            },
-            {
-                q: "Trên app di động, hệ thống tự động sửa lỗi lệch định dạng địa chỉ mà không cần người dùng thao tác hay cảnh báo gì?",
-                isTrue: false,
-                explain: "Quy tắc vận hành của đối tác giao vận là đồng nhất trên mọi nền tảng, do đó app di động cũng sẽ hiển thị cảnh báo yêu cầu người dùng chủ động kiểm tra và đồng bộ định dạng địa chỉ."
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
+
+        function renderGlossaryList() {
+            const container = document.getElementById('glossary-list');
+            if (container && GLOSSARY_ITEMS) {
+                container.innerHTML = GLOSSARY_ITEMS.map((item, idx) => `
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="font-black text-slate-800 text-xs sm:text-sm flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-900 text-[11px] flex items-center justify-center">${idx + 1}</span>
+                            ${item.term}
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-7">${item.def}</p>
+                    </div>
+                `).join('');
             }
-        ];
+        }
 
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
-
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
-            }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
-
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
-                }
-
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN (ROUNDED-2XL CHUẨN VIỀN, MÀU NHẠT TƯƠI SÁNG) -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC (NỀN SÁNG CHỮ ĐEN) -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            renderGlossaryList();
+            renderOverviewLists();
+            navSelectTab('guide');
+        });
     </script>
 </body>
 </html>
