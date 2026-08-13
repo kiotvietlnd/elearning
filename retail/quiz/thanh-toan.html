@@ -1,1205 +1,992 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Thanh toán (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Thanh toán</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Nghiệp vụ Thanh toán</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Thanh toán</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>RETAIL / BÁN LẺ</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <!-- SIDEBAR RỘNG HƠN (w-72 / w-80) & TIÊU ĐỀ TỰ ĐỘNG XUỐNG DÒNG -->
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (<)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (>)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Thanh toán</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng Thanh toán là một nghiệp vụ quan trọng giúp hoàn tất giao dịch bán hàng một cách nhanh chóng, chính xác và chuyên nghiệp trên mọi nền tảng của KiotViet.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/07103431/THANH-TOAN-1.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-video-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                            <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/pDiFvF0zcqg?si=Rk1LERrDPPk-MX34" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black">
+                                <i class="fa-solid fa-bolt"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Thanh toán nhanh chóng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Giúp thu ngân xử lý giao dịch trong vài giây nhờ giao diện tinh giản, phím tắt và gợi ý tiền thừa tự động.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black">
+                                <i class="fa-solid fa-wallet"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Đa dạng phương thức</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Linh hoạt kết hợp Tiền mặt, Thẻ, VietQR, Ví điện tử, Điểm tích lũy và Voucher trong cùng một giao dịch.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black">
+                                <i class="fa-solid fa-[#166def]"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Tự động hóa chính xác</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tự động nhận thông báo biến động dư tiền về tức thì, loại bỏ đối chiếu thủ công và gian lận thu ngân.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3">
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 uppercase">1. Thanh toán đơn phương thức</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed">Khách hàng sử dụng duy nhất một hình thức thanh toán (Tiền mặt, Chuyển khoản, Thẻ hoặc Ví điện tử) để chi trả cho toàn bộ hóa đơn.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 uppercase">2. Thanh toán đa phương thức</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed">Việc chia nhỏ tổng giá trị đơn hàng để thanh toán bằng nhiều hình thức khác nhau trong cùng một giao dịch (ví dụ vừa trả tiền mặt, vừa chuyển khoản).</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 uppercase">3. Mã QR động</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed">Mã QR được hệ thống tự động tạo ra cho từng đơn hàng cụ thể, chứa sẵn thông tin tài khoản ngân hàng, chính xác số tiền và nội dung chuyển khoản.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 uppercase">4. Mã QR cửa hàng (QR tĩnh)</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed">Mã QR cố định được in/tải để đặt tại quầy thu ngân của từng chi nhánh, cho phép khách hàng chủ động quét mã và nhập số tiền chuyển khoản.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 uppercase">5. Khớp thanh toán QR</h3>
+                        <p class="text-xs text-slate-700 leading-relaxed">Thao tác xác nhận và nối biến động dư tiền về tài khoản ngân hàng với một đơn hàng tạm đang chờ xử lý trên phần mềm KiotViet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 12</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <!-- POPUP HOÀN THÀNH NÂNG CAO -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 24</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- DATA & ENGINE JAVASCRIPT ENGINE V18.0 -->
     <script>
-        const unifiedData = [
-          {
-            isIntro: true,
-            icon: "💡",
-            title: "Giới thiệu chung",
-            description: "Tính năng Thanh toán là một nghiệp vụ quan trọng giúp hoàn tất giao dịch bán hàng một cách nhanh chóng, chính xác và chuyên nghiệp trên mọi nền tảng của KiotViet.",
-            benefits: [
-              { icon: "fa-bolt", title: "Thanh toán nhanh chóng & tiện lợi", desc: "Xử lý giao dịch trong vài giây nhờ giao diện tinh giản, hỗ trợ phím tắt và tự động tính tiền thừa." },
-              { icon: "fa-credit-card", title: "Đa dạng phương thức", desc: "Linh hoạt thanh toán qua Tiền mặt, Thẻ, VietQR, Ví điện tử, Điểm tích lũy, Voucher." },
-              { icon: "fa-[#166def]", title: "Tự động hóa & quản lý chính xác", desc: "Loại bỏ đối chiếu thủ công, giảm sai sót nhờ tính năng tự động nhận thông báo tiền về." }
-            ],
-            updateInfo: "Hỗ trợ nhận thông báo tiền về tự động và thanh toán đa phương thức linh hoạt",
-            youtubeUrl: "https://www.youtube.com/embed/pDiFvF0zcqg?si=Rk1LERrDPPk-MX34",
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/07103431/THANH-TOAN-1.jpg"],
-            chat: [
-              { r: "customer", t: "Tính năng Thanh toán trên KiotViet mang lại lợi ích gì cho cửa hàng?" },
-              { r: "consultant", t: "Chào bạn, tính năng Thanh toán giúp mang lại các giá trị cốt lõi:<ul class=\"chat-list\"><li class=\"mb-2\"><strong>Thanh toán nhanh chóng & tiện lợi:</strong> Xử lý giao dịch trong vài giây với gợi ý tiền thừa, phím tắt linh hoạt.</li><li class=\"mb-2\"><strong>Đa dạng phương thức:</strong> Hỗ trợ Tiền mặt, Thẻ, VietQR, Ví điện tử, Điểm tích lũy, Voucher.</li><li class=\"mb-2\"><strong>Tự động hóa chính xác:</strong> Tự động nhận thông báo giao dịch tiền về, giảm bớt thao tác kiểm tra thủ công.</li></ul>" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thanh toán bằng một phương thức",
-            scenario: "Khách hàng thanh toán toàn bộ hóa đơn bằng một hình thức duy nhất như tiền mặt hoặc chuyển khoản.",
-            steps: [
-              "Sau khi thêm hàng hóa, tại khu vực thanh toán, nhập số tiền khách trả vào ô <strong>Khách thanh toán</strong> (hoặc nhấn phím <strong>F8</strong>).",
-              "Chọn phương thức thanh toán tương ứng như <strong>Tiền mặt</strong>, <strong>Chuyển khoản</strong>, <strong>Thẻ</strong>, <strong>Ví</strong>.",
-              "Hệ thống sẽ tự động tính toán <strong>Tiền thừa trả khách</strong> (nếu có).",
-              "Nhấn <strong>Thanh toán</strong> (hoặc nhấn phím <strong>F9</strong>) để hoàn tất giao dịch."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071132/TTR_011025-1.png"],
-            chat: [
-              { r: "customer", t: "Khách trả toàn bộ bằng tiền mặt thì thao tác thu ngân thế nào cho nhanh?" },
-              { r: "consultant", t: "Bạn chỉ cần nhập số tiền khách đưa vào ô <strong>Khách thanh toán</strong> (hoặc nhấn F8), chọn phương thức <strong>Tiền mặt</strong> rồi bấm <strong>Thanh toán</strong> (hoặc F9) là xong." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thanh toán bằng nhiều phương thức",
-            scenario: "Khách hàng muốn chia nhỏ số tiền và thanh toán bằng nhiều hình thức khác nhau như vừa tiền mặt vừa chuyển khoản.",
-            steps: [
-              "Tại khu vực thanh toán, nhấn vào <strong>Biểu tượng đa phương thức</strong>.",
-              "Một cửa sổ sẽ hiện ra, cho phép bạn nhập số tiền tương ứng cho từng hình thức thanh toán -> nhấn <strong>Xong</strong>.",
-              "Nhấn <strong>Thanh toán</strong> (F9) để kết thúc giao dịch."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071145/TTR_011025-2.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071154/TTR_011025-3.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071645/TTR_011025-4-1.png"
-            ],
-            chat: [
-              { r: "customer", t: "Khách muốn trả một nửa tiền mặt, một nửa chuyển khoản thì nhập thế nào?" },
-              { r: "consultant", t: "Tại khu vực thanh toán, bạn bấm vào biểu tượng <strong>Đa phương thức</strong>, sau đó phân bổ số tiền tương ứng cho từng hình thức rồi chọn <strong>Xong</strong> và bấm <strong>Thanh toán</strong>." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thanh toán bằng quét mã QR",
-            scenario: "Cung cấp cho khách hàng phương thức thanh toán không dùng tiền mặt, quét mã QR chuyển khoản nhanh chóng và chính xác.",
-            steps: [
-              "Chọn phương thức thanh toán là <strong>Chuyển khoản</strong> qua tài khoản ngân hàng/ví điện tử đã lưu.",
-              "Hệ thống tự động tạo <strong>Mã QR động</strong> chứa đầy đủ thông tin số tiền và nội dung chuyển khoản.",
-              "Cho khách quét mã trực tiếp trên màn hình, <strong>In mã QR</strong> hoặc hiển thị qua <strong>Thiết bị KiotViet QR</strong>.",
-              "Màn hình tự động hiển thị <strong>Xác nhận giao dịch thành công</strong> khi tiền về tài khoản."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071211/TTR_011025-5.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071218/TTR_011025-6.png"
-            ],
-            chat: [
-              { r: "customer", t: "Làm sao để khách quét mã QR chuyển khoản mà không bị nhập sai số tiền?" },
-              { r: "consultant", t: "Bạn chọn phương thức <strong>Chuyển khoản</strong>, hệ thống sẽ tự động tạo một <strong>Mã QR động</strong> chứa chính xác số tiền và nội dung chuyển khoản để khách quét." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thanh toán bằng Điểm, Coupon, Voucher",
-            scenario: "Áp dụng các chương trình ưu đãi cho khách hàng thành viên, cho phép dùng điểm tích lũy hoặc voucher để thanh toán.",
-            steps: [
-              "Chọn <strong>Khách hàng thành viên</strong> có điểm tích lũy vào hóa đơn.",
-              "<strong>Bật xanh nút Điểm</strong> -> hệ thống gợi ý số tiền tối đa được trừ (có thể chỉnh sửa).",
-              "Nhập mã vào ô <strong>Nhập mã coupon</strong> hoặc chọn Voucher trong mục <strong>Thanh toán đa phương thức</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071231/TTR_011025-7.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071243/TTR_011025-8.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi muốn trừ điểm tích lũy của khách hàng thành viên vào hóa đơn thì làm thế nào?" },
-              { r: "consultant", t: "Bạn chọn Khách hàng thành viên trên hóa đơn, sau đó <strong>Bật xanh nút Điểm</strong>. Hệ thống sẽ tự động gợi ý số tiền tương ứng được trừ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thông báo bằng âm thanh",
-            scenario: "Phát ra âm thanh 'Ting ting' kèm số tiền nhận được qua loa thiết bị khi khách quét mã chuyển khoản thành công.",
-            steps: [
-              "Tại màn hình Bán hàng, vào <strong>Tùy chọn hiển thị</strong> -> chọn <strong>Khác</strong>.",
-              "Bật tiện ích <strong>Đọc số tiền khách thanh toán qua loa thiết bị</strong>.",
-              "Khi khách chuyển khoản thành công, thiết bị sẽ phát âm thanh <strong>'Ting ting'</strong> kèm số tiền đã chuyển."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071249/TTR_011025-9.png"],
-            chat: [
-              { r: "customer", t: "Có cách nào biết tiền về tài khoản mà không cần nhìn vào màn hình máy tính không?" },
-              { r: "consultant", t: "Bạn hãy vào <strong>Tùy chọn hiển thị</strong> -> <strong>Khác</strong> và bật tính năng <strong>Đọc số tiền khách thanh toán qua loa thiết bị</strong>. Phần mềm sẽ phát âm thanh 'Ting ting' kèm số tiền vừa nhận." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Tự động hoàn thành đơn hàng khi quét QR",
-            scenario: "Tăng tốc độ thanh toán bằng cách tự động kết thúc giao dịch ngay khi nhận thông báo chuyển khoản thành công.",
-            steps: [
-              "Vào <strong>Tùy chọn hiển thị</strong> -> chọn <strong>Khác</strong>.",
-              "Bật tính năng <strong>Tự động hoàn thành đơn hàng khi quét QR thành công</strong>.",
-              "Khi tiền chuyển khoản về tài khoản, phần mềm tự động kết thúc đơn hàng mà không cần ấn Thanh toán."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071256/TTR_011025-10.png"],
-            chat: [
-              { r: "customer", t: "Làm sao để phần mềm tự động chốt đơn ngay khi khách quét mã chuyển khoản thành công?" },
-              { r: "consultant", t: "Trong <strong>Tùy chọn hiển thị</strong> -> <strong>Khác</strong>, bạn bật tính năng <strong>Tự động hoàn thành đơn hàng khi quét QR thành công</strong> là được." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thiết lập thông báo QR cửa hàng (QR tĩnh)",
-            scenario: "Cấu hình nhận thông báo biến động số dư khi khách quét mã QR tĩnh dán tại quầy thu ngân.",
-            steps: [
-              "Tại màn hình Bán hàng, nhấn biểu tượng <strong>QR</strong> (cạnh ô Khách thanh toán) -> chọn <strong>Xem mã QR</strong>.",
-              "Chọn <strong>Tạo mã QR</strong> hoặc <strong>Xem chi tiết</strong> tại tài khoản ngân hàng tương ứng.",
-              "Bật <strong>Thông báo tiền về khi khách quét QR cửa hàng</strong> -> bấm <strong>Tải QR</strong> hoặc <strong>In QR</strong>.",
-              "Chọn <strong>Xong</strong> để ghi nhận cài đặt."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043559/TTR_201125-1.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043609/TTR_201125-2.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043619/TTR_201125-3.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043634/TTR_201125-4.png"
-            ],
-            chat: [
-              { r: "customer", t: "Cửa hàng tôi dán bảng QR cố định ở quầy thì làm sao nhận thông báo tiền về trên phần mềm?" },
-              { r: "consultant", t: "Bạn chọn biểu tượng <strong>QR</strong> -> <strong>Xem mã QR</strong> -> bấm <strong>Tạo mã QR</strong> tại tài khoản ngân hàng và bật <strong>Thông báo tiền về khi khách quét QR cửa hàng</strong>." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Khớp thanh toán QR tĩnh với đơn tạm",
-            scenario: "Khớp giao dịch tiền về từ mã QR tĩnh tại quầy với hóa đơn tạm đang mở trong giờ cao điểm.",
-            steps: [
-              "Nhấp vào biểu tượng <strong>QR</strong> có <strong>Chấm đỏ</strong> trên màn hình Bán hàng để mở pop-up <strong>Thông báo thanh toán QR</strong>.",
-              "Tìm giao dịch ở trạng thái <strong>Chưa khớp</strong> trong 24h qua -> nhấn <strong>Khớp</strong>.",
-              "Hệ thống tự động ghi nhận số tiền vào đơn tạm và chuyển trạng thái sang <strong>Đang khớp</strong>/<strong>Đã khớp</strong>.",
-              "Nhấn <strong>Thanh toán</strong> (F9) để hoàn tất."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20044606/TTR_201125.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043644/TTR_201125-5.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043654/TTR_201125-6.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043707/TTR_201125-7.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043716/TTR_201125-8.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tiền về mã QR tĩnh rồi thì làm thế nào để gán số tiền đó vào đơn hàng đang mở?" },
-              { r: "consultant", t: "Bạn bấm vào biểu tượng <strong>QR có chấm đỏ</strong> trên màn hình, chọn giao dịch tiền về chưa khớp rồi nhấn nút <strong>Khớp</strong> là số tiền sẽ tự động đưa vào đơn tạm." }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Thanh toán trên App Mobile",
-            scenario: "Thu ngân thực hiện thanh toán hóa đơn bằng ứng dụng KiotViet trên điện thoại di động.",
-            steps: [
-              "Trực tiếp trên app KiotViet, sau khi chọn hàng, chạm vào <strong>Thanh toán</strong>.",
-              "Nhập số tiền khách trả và chọn phương thức. Chạm vào <strong>Dấu 3 chấm</strong> để mở màn hình chia đa phương thức.",
-              "Bật công tắc <strong>Điểm</strong> nếu muốn áp dụng điểm tích lũy.",
-              "Chạm <strong>Hoàn thành</strong> để kết thúc giao dịch."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071306/TTR_011025-12.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071318/TTR_011025-13.png"
-            ],
-            chat: [
-              { r: "customer", t: "Dùng app KiotViet trên điện thoại có thanh toán bằng điểm hoặc chia nhiều phương thức được không?" },
-              { r: "consultant", t: "Có đầy đủ bạn nhé. Bạn bấm nút <strong>Thanh toán</strong>, chạm vào <strong>biểu tượng 3 chấm</strong> để chọn đa phương thức hoặc bật công tắc <strong>Điểm</strong>." }
-            ]
-          },
-          {
-            icon: "📟",
-            title: "Thanh toán phương thức trên Máy POS",
-            scenario: "Thao tác thu tiền khách hàng bằng một hoặc nhiều phương thức trên máy POS cảm ứng Android.",
-            steps: [
-              "Trên ứng dụng KiotViet Máy bán hàng, chọn xong hàng hóa rồi chạm nút <strong>Thanh toán</strong>.",
-              "Nhập số tiền khách trả, chọn phương thức hoặc <strong>Bật xanh nút Điểm</strong>.",
-              "Để chia nhỏ thanh toán, chạm vào <strong>Biểu tượng đa phương thức</strong>.",
-              "Chạm <strong>Hoàn thành</strong> để hoàn tất."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071325/TTR_011025-14.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071338/TTR_011025-15.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071342/TTR_011025-16.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/10072803/TTR_101125.png"
-            ],
-            chat: [
-              { r: "customer", t: "Thao tác thanh toán kết hợp điểm tích lũy trên máy POS Android làm như thế nào?" },
-              { r: "consultant", t: "Sau khi chọn hàng trên máy POS, bạn bấm <strong>Thanh toán</strong>, bật xanh ô <strong>Điểm</strong> hoặc chạm vào biểu tượng <strong>Đa phương thức</strong> để chia tiền." }
-            ]
-          },
-          {
-            icon: "📟",
-            title: "Thanh toán quét mã QR trên Máy POS",
-            scenario: "Khách hàng quét mã QR động trực tiếp trên màn hình cảm ứng của máy POS Android.",
-            steps: [
-              "Khi thanh toán trên máy POS, chọn phương thức <strong>Chuyển khoản</strong>.",
-              "Màn hình máy POS hiển thị mã QR động. Bấm vào <strong>Xem mã QR</strong> để phóng to cho khách quét.",
-              "Khi tiền về, màn hình máy POS tự động xác nhận và hoàn thành đơn hàng."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071405/TTR_011025-18.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071417/TTR_011025-19.png"
-            ],
-            chat: [
-              { r: "customer", t: "Máy POS Android có hiện được mã QR trực tiếp cho khách quét không?" },
-              { r: "consultant", t: "Có bạn nhé, khi chọn phương thức <strong>Chuyển khoản</strong>, màn hình máy POS sẽ hiện mã QR động. Bạn có thể bấm <strong>Xem mã QR</strong> để phóng to mã." }
-            ]
-          }
-        ];
-
-        const quizData = [
-          {
-            q: "KiotViet hỗ trợ đa dạng hình thức thanh toán như Tiền mặt, Thẻ, VietQR, Ví điện tử, Điểm tích lũy và Voucher?",
-            isTrue: true,
-            explain: "KiotViet linh hoạt hỗ trợ nhiều phương thức thanh toán khác nhau giúp thu ngân xử lý giao dịch nhanh chóng và đáp ứng mọi nhu cầu của khách hàng."
-          },
-          {
-            q: "Phần mềm KiotViet chỉ cho phép thanh toán duy nhất bằng hình thức tiền mặt hoặc chuyển khoản ngân hàng?",
-            isTrue: false,
-            explain: "KiotViet linh hoạt hỗ trợ nhiều phương thức thanh toán khác nhau giúp thu ngân xử lý giao dịch nhanh chóng và đáp ứng mọi nhu cầu của khách hàng."
-          },
-          {
-            q: "Thu ngân có thể dùng phím tắt F8 để nhập số tiền khách trả và phím F9 để hoàn tất thanh toán nhanh?",
-            isTrue: true,
-            explain: "Giao diện KiotViet hỗ trợ các phím tắt tiện lợi như F8 (vào ô Khách thanh toán) và F9 (bấm Thanh toán) để thu ngân thao tác cực kỳ nhanh chóng."
-          },
-          {
-            q: "Người dùng bắt buộc phải dùng chuột kích vào nút Thanh toán chứ không thể sử dụng bàn phím hoặc phím tắt?",
-            isTrue: false,
-            explain: "Giao diện KiotViet hỗ trợ các phím tắt tiện lợi như F8 (vào ô Khách thanh toán) và F9 (bấm Thanh toán) để thu ngân thao tác cực kỳ nhanh chóng."
-          },
-          {
-            q: "Một hóa đơn bán hàng có thể chia nhỏ số tiền để thanh toán kết hợp nhiều phương thức khác nhau?",
-            isTrue: true,
-            explain: "KiotViet cho phép thanh toán đa phương thức, giúp thu ngân linh hoạt chia nhỏ số tiền cần thu theo yêu cầu thực tế của khách hàng."
-          },
-          {
-            q: "Mỗi hóa đơn hàng bán ra trên KiotViet chỉ được phép chọn duy nhất một phương thức thanh toán?",
-            isTrue: false,
-            explain: "KiotViet cho phép thanh toán đa phương thức, giúp thu ngân linh hoạt chia nhỏ số tiền cần thu theo yêu cầu thực tế của khách hàng."
-          },
-          {
-            q: "Mã QR động do KiotViet tạo ra đã tự động bao gồm đầy đủ số tiền hóa đơn và nội dung chuyển khoản?",
-            isTrue: true,
-            explain: "QR động trên KiotViet tự động mã hóa chuẩn xác số tiền và nội dung giao dịch, loại bỏ rủi ro khách chuyển nhầm số tiền."
-          },
-          {
-            q: "Khách hàng quét mã QR động vẫn phải tự nhập số tiền và nội dung chuyển khoản thủ công trên app ngân hàng?",
-            isTrue: false,
-            explain: "QR động trên KiotViet tự động mã hóa chuẩn xác số tiền và nội dung giao dịch, loại bỏ rủi ro khách chuyển nhầm số tiền."
-          },
-          {
-            q: "Thu ngân có thể bật tính năng Điểm để trừ điểm tích lũy thành tiền thanh toán cho khách hàng thành viên?",
-            isTrue: true,
-            explain: "KiotViet hỗ trợ quy đổi trực tiếp điểm tích lũy thành số tiền thanh toán ngay trên giao diện hóa đơn bán hàng."
-          },
-          {
-            q: "Điểm tích lũy của khách hàng thành viên chỉ dùng để xếp hạng chứ không thể đổi ra tiền để trừ vào hóa đơn?",
-            isTrue: false,
-            explain: "KiotViet hỗ trợ quy đổi trực tiếp điểm tích lũy thành số tiền thanh toán ngay trên giao diện hóa đơn bán hàng."
-          },
-          {
-            q: "KiotViet có thể phát âm thanh thông báo 'Ting ting' kèm số tiền đã nhận ngay khi khách chuyển khoản thành công?",
-            isTrue: true,
-            explain: "Tính năng thông báo âm thanh qua loa giúp thu ngân xác nhận giao dịch tức thì mà không cần xao nhãng việc thu ngân."
-          },
-          {
-            q: "Thu ngân luôn luôn phải mở màn hình máy tính hoặc kiểm tra app ngân hàng trên điện thoại mới biết tiền quét QR đã về chưa?",
-            isTrue: false,
-            explain: "Tính năng thông báo âm thanh qua loa giúp thu ngân xác nhận giao dịch tức thì mà không cần xao nhãng việc thu ngân."
-          },
-          {
-            q: "Khi bật tính năng tự động hoàn thành đơn, hệ thống sẽ tự kết thúc giao dịch ngay khi nhận thông báo tiền về từ QR?",
-            isTrue: true,
-            explain: "Cài đặt tự động hoàn thành giúp giảm bớt thao tác bấm tay thủ công, đẩy nhanh tốc độ phục vụ tại quầy."
-          },
-          {
-            q: "Dù đã nhận thông báo tiền về thành công, thu ngân vẫn bắt buộc phải bấm nút Thanh toán thủ công thì đơn mới hoàn thành?",
-            isTrue: false,
-            explain: "Cài đặt tự động hoàn thành giúp giảm bớt thao tác bấm tay thủ công, đẩy nhanh tốc độ phục vụ tại quầy."
-          },
-          {
-            q: "Mỗi chi nhánh cửa hàng có thể thiết lập mã QR tĩnh độc lập để nhận thông báo tiền về đúng chi nhánh đó?",
-            isTrue: true,
-            explain: "Mã QR tĩnh cửa hàng hoạt động độc lập theo từng chi nhánh, giúp thông báo tiền về đúng địa điểm phát sinh giao dịch."
-          },
-          {
-            q: "Mã QR tĩnh cửa hàng áp dụng chung cho tất cả các chi nhánh và không phân biệt thông báo theo từng nơi?",
-            isTrue: false,
-            explain: "Mã QR tĩnh cửa hàng hoạt động độc lập theo từng chi nhánh, giúp thông báo tiền về đúng địa điểm phát sinh giao dịch."
-          },
-          {
-            q: "Hệ thống cho phép khớp các giao dịch tiền về từ mã QR tĩnh với hóa đơn tạm đang mở trong vòng 24 giờ gần nhất?",
-            isTrue: true,
-            explain: "Pop-up Thông báo thanh toán QR hiển thị các giao dịch chưa khớp trong 24h gần nhất để thu ngân chọn Khớp chính xác vào đơn tạm."
-          },
-          {
-            q: "Các giao dịch chuyển khoản qua mã QR tĩnh tại quầy không thể đối chiếu hay khớp với hóa đơn tạm trên KiotViet?",
-            isTrue: false,
-            explain: "Pop-up Thông báo thanh toán QR hiển thị các giao dịch chưa khớp trong 24h gần nhất để thu ngân chọn Khớp chính xác vào đơn tạm."
-          },
-          {
-            q: "Trên ứng dụng KiotViet điện thoại, thu ngân vẫn có thể phân bổ thanh toán đa phương thức bằng cách nhấn vào biểu tượng 3 chấm?",
-            isTrue: true,
-            explain: "App KiotViet Mobile hỗ trợ đầy đủ các tính năng thanh toán một/nhiều phương thức, dùng điểm và voucher tương tự như bản máy tính."
-          },
-          {
-            q: "Ứng dụng KiotViet trên điện thoại di động bị giới hạn chỉ thanh toán được bằng duy nhất tiền mặt?",
-            isTrue: false,
-            explain: "App KiotViet Mobile hỗ trợ đầy đủ các tính năng thanh toán một/nhiều phương thức, dùng điểm và voucher tương tự như bản máy tính."
-          },
-          {
-            q: "Giao diện trên máy POS Android cho phép chọn nhanh phương thức thanh toán và bật điểm tích lũy ngay trên màn hình cảm ứng?",
-            isTrue: true,
-            explain: "Máy POS tích hợp đầy đủ các tiện ích thanh toán bao gồm điểm tích lũy và đa phương thức trực quan."
-          },
-          {
-            q: "Máy POS Android của KiotViet không hỗ trợ phương thức thanh toán bằng điểm tích lũy của khách hàng?",
-            isTrue: false,
-            explain: "Máy POS tích hợp đầy đủ các tiện ích thanh toán bao gồm điểm tích lũy và đa phương thức trực quan."
-          },
-          {
-            q: "Máy POS Android có thể hiển thị mã QR động trên màn hình cảm ứng để khách hàng quét mã chuyển khoản trực tiếp?",
-            isTrue: true,
-            explain: "Màn hình cảm ứng máy POS hiển thị mã QR động trực tiếp và hỗ trợ nút bấm phóng to tiện lợi cho khách hàng thao tác."
-          },
-          {
-            q: "Máy POS không thể tạo mã QR động mà bắt buộc phải in mã QR ra giấy mới quét được?",
-            isTrue: false,
-            explain: "Màn hình cảm ứng máy POS hiển thị mã QR động trực tiếp và hỗ trợ nút bấm phóng to tiện lợi cho khách hàng thao tác."
-          }
-        ];
-
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
-
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
+        const BASIC_LESSONS = [
+            {
+                title: "Thanh toán bằng một phương thức",
+                situation: "Khi khách hàng thanh toán toàn bộ hóa đơn bằng một hình thức duy nhất như tiền mặt, thẻ ngân hàng hoặc chuyển khoản.",
+                steps: [
+                    {
+                        text: "Sau khi thêm hàng hóa, tại khu vực thanh toán, nhập số tiền khách trả vào ô <b>Khách thanh toán</b> (hoặc nhấn phím F8).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071132/TTR_011025-1.png"
+                    },
+                    { text: "Chọn phương thức thanh toán tương ứng như <b>Tiền mặt, Chuyển khoản, Thẻ, Ví</b>.", img: null },
+                    { text: "Hệ thống sẽ tự động tính toán <b>Tiền thừa trả khách</b> (nếu có).", img: null },
+                    { text: "Nhấn <b>Thanh toán</b> (hoặc nhấn phím F9) để hoàn tất giao dịch.", img: null }
+                ],
+                flashcard: {
+                    situation: "Khách hỏi: Cửa hàng em có chấp nhận quét mã VietQR chuyển khoản hay quẹt thẻ không, hay chỉ nhận tiền mặt?",
+                    advice: "Em chào anh/chị, KiotViet hỗ trợ đầy đủ các phương thức thanh toán như VietQR, quẹt thẻ, ví điện tử hay tiền mặt ạ. Thu ngân chỉ cần chạm chọn phương thức tương ứng trên màn hình là phần mềm tự động ghi nhận chính xác và tính tiền thừa, giúp anh/chị chốt đơn cho khách trong vài giây và loại bỏ hoàn toàn sai sót thu ngân ạ."
+                },
+                quiz: {
+                    question: "Khi thanh toán bằng một phương thức, thu ngân có thể nhấn phím F8 để nhập tiền khách trả và phím F9 để hoàn tất giao dịch.",
+                    answer: true,
+                    explanation: "Phím F8 được mặc định làm phím tắt nhảy nhanh vào ô Khách thanh toán, và F9 dùng để thực hiện lệnh Thanh toán chốt hóa đơn trên giao diện Bán hàng KiotViet."
+                }
+            },
+            {
+                title: "Thanh toán bằng nhiều phương thức",
+                situation: "Khi khách hàng muốn chia nhỏ số tiền và thanh toán bằng nhiều hình thức khác nhau, ví dụ một phần bằng tiền mặt, một phần chuyển khoản.",
+                steps: [
+                    {
+                        text: "Tại khu vực thanh toán, nhấn vào biểu tượng đa phương thức.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071145/TTR_011025-2.png"
+                    },
+                    {
+                        text: "Một cửa sổ sẽ hiện ra, cho phép bạn nhập số tiền tương ứng cho từng hình thức thanh toán ➔ nhấn <b>Xong</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071154/TTR_011025-3.png"
+                    },
+                    {
+                        text: "Nhấn <b>Thanh toán</b> (F9) để kết thúc giao dịch.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071645/TTR_011025-4-1.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách mua hàng chia sẻ: Ví chị còn ít tiền lẻ, chị đưa 100k tiền mặt còn lại 250k chị chuyển khoản được không em?",
+                    advice: "Em chào chị, hoàn toàn được ạ! Thu ngân chỉ cần bấm vào nút đa phương thức, gõ 100k Tiền mặt và 250k Chuyển khoản là xong. Hệ thống tự cộng gộp ghi nhận đủ thu cho hóa đơn, giúp anh/chị phục vụ khách linh hoạt mà sổ sách doanh thu vẫn cực kỳ minh bạch ạ."
+                },
+                quiz: {
+                    question: "Tính năng thanh toán nhiều phương thức trên KiotViet chỉ cho phép kết hợp tối đa 2 hình thức thanh toán trên cùng một đơn hàng.",
+                    answer: false,
+                    explanation: "KiotViet hỗ trợ chia nhỏ thanh toán và kết hợp linh hoạt nhiều hình thức cùng lúc (Tiền mặt, Chuyển khoản, Thẻ, Ví, Voucher, Điểm...) không giới hạn ở mức 2 hình thức."
+                }
             }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
+        ];
 
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Thanh toán bằng quét mã QR",
+                situation: "Cung cấp cho khách hàng phương thức thanh toán hiện đại không dùng tiền mặt, chỉ cần quét mã QR động để chuyển khoản chính xác tuyệt đối.",
+                steps: [
+                    { text: "Chọn phương thức thanh toán là <b>Chuyển khoản</b> qua một tài khoản ngân hàng/ví điện tử đã lưu thông tin.", img: null },
+                    { text: "Hệ thống sẽ tự động tạo một mã QR động, chứa đầy đủ thông tin số tiền và nội dung chuyển khoản.", img: null },
+                    {
+                        text: "Cho khách quét mã trực tiếp trên màn hình, in mã QR, hoặc hiển thị mã qua thiết bị KiotViet QR.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071211/TTR_011025-5.png"
+                    },
+                    {
+                        text: "Nếu gian hàng đã đăng ký dịch vụ nhận thông báo qua tài khoản ngân hàng/ví điện tử liên kết, màn hình sẽ tự động hiển thị xác nhận khi giao dịch thành công.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071218/TTR_011025-6.png"
                     }
+                ],
+                flashcard: {
+                    situation: "Chủ cửa hàng e ngại: Dùng QR tĩnh tự nhập tiền, khách hay chuyển nhầm số tiền hoặc gõ sai nội dung chuyển khoản lắm em!",
+                    advice: "Dạ anh/chị yên tâm, mã QR động của KiotViet tự động mã hóa sẵn 100% số tiền hóa đơn và nội dung giao dịch. Khách chỉ cần mở ứng dụng ngân hàng quét là chính xác tuyệt đối, thu ngân không lo kiểm tra từng dòng hay bị khách chuyển thiếu tiền ạ."
+                },
+                quiz: {
+                    question: "Mã QR động được tạo tự động trên KiotViet đã chứa sẵn thông tin tài khoản, chính xác số tiền và nội dung chuyển khoản của hóa đơn đó.",
+                    answer: true,
+                    explanation: "Mã QR động tự động mã hóa số tiền đơn hàng và mã giao dịch để khách hàng quét chuyển khoản nhanh chóng và chính xác."
                 }
+            },
+            {
+                category: 'feature',
+                title: "Thanh toán bằng Điểm, Coupon, Voucher",
+                situation: "Áp dụng các chương trình ưu đãi cho khách hàng thành viên, cho phép họ dùng điểm tích lũy hoặc các mã giảm giá để thanh toán.",
+                steps: [
+                    { text: "Chọn khách hàng thành viên có điểm tích lũy vào hóa đơn.", img: null },
+                    {
+                        text: "Bật xanh <b>Điểm</b> ➔ hệ thống gợi ý số tiền tối đa tương đương với điểm được thanh toán trên đơn. Bạn có thể chỉnh sửa lại theo thực tế.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071231/TTR_011025-7.png"
+                    },
+                    {
+                        text: "Để dùng Coupon, nhập mã vào ô <b>Nhập mã coupon</b> và nhấn Enter. Với Voucher, bạn cần chọn trong mục thanh toán đa phương thức.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071243/TTR_011025-8.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách hàng thắc mắc: Chương trình tích điểm thanh toán này có giúp cửa hàng giữ chân khách quen hiệu quả không em?",
+                    advice: "Dạ vô cùng hiệu quả anh/chị ạ! Khi khách mua hàng tích điểm, lần sau quay lại thu ngân chỉ cần chọn tên khách là KiotViet gợi ý trừ điểm quy đổi ra tiền ngay. Việc này gia tăng trải nghiệm hài lòng và kích thích khách hàng quay lại cửa hàng nhiều lần hơn ạ."
+                },
+                quiz: {
+                    question: "Thu ngân có thể chỉnh sửa lại số tiền thanh toán bằng điểm so với số tiền tối đa mà hệ thống gợi ý.",
+                    answer: true,
+                    explanation: "KiotViet gợi ý số tiền tối đa có thể quy đổi từ điểm hiện có, tuy nhiên thu ngân hoàn toàn có thể tùy chỉnh lại theo nguyện vọng thực tế của khách hàng."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Thông báo bằng âm thanh",
+                situation: "Giúp thu ngân xác nhận tiền đã về tài khoản tức thì thông qua âm thanh phát ra từ loa thiết bị mà không cần nhìn màn hình.",
+                steps: [
+                    { text: "Vào <b>Tùy chọn hiển thị</b> ➔ <b>Khác</b>, kích hoạt tiện ích: <b>Đọc số tiền khách thanh toán qua loa thiết bị</b>.", img: null },
+                    {
+                        text: "Khi khách chuyển khoản thành công qua QR, thiết bị sẽ phát âm thanh thông báo ('Ting ting') kèm số tiền vừa nhận được.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071249/TTR_011025-9.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chủ shop chia sẻ: Giờ cao điểm thu ngân nhà chị vừa gói hàng vừa phải ngó điện thoại xem tiền về chưa, rất bất tiện.",
+                    advice: "Dạ với tính năng loa thông báo âm thanh của KiotViet, ngay khi tiền về tài khoản, loa sẽ đọc rõ 'Ting ting nhận thành công [số tiền]'. Thu ngân nghe tiếng là yên tâm giao hàng cho khách ngay, không tốn thời gian chụp ảnh màn hình hay check app ngân hàng anh/chị nhé."
+                },
+                quiz: {
+                    question: "Tính năng đọc số tiền thanh toán giúp thu ngân chủ động xác nhận giao dịch thành công mà không cần rà soát điện thoại.",
+                    answer: true,
+                    explanation: "Âm thanh thông báo ting ting kèm số tiền giúp nhân viên thu ngân nhận biết giao dịch chuyển khoản thành công ngay lập tức."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Tự động hoàn thành đơn hàng khi quét QR thành công",
+                situation: "Tăng tốc độ thanh toán và giảiải tỏa hàng chờ bằng cách tự động kết thúc giao dịch ngay khi nhận tín hiệu chuyển khoản thành công.",
+                steps: [
+                    { text: "Vào <b>Tùy chọn hiển thị</b> ➔ <b>Khác</b>.", img: null },
+                    {
+                        text: "Bật tính năng <b>Tự động hoàn thành đơn hàng khi quét QR thành công</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071256/TTR_011025-10.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách hàng hỏi: Có cách nào giảm bớt bớt thao tác nhấn nút của thu ngân khi khách chuyển khoản xong không?",
+                    advice: "Dạ anh/chị bật tính năng tự động hoàn thành đơn QR. Khi tiền về, phần mềm tự chốt đơn và in hóa đơn luôn mà thu ngân không cần bấm thêm nút Thanh toán, giúp giảm 50% thời gian xử lý tại quầy thu ngân ạ."
+                },
+                quiz: {
+                    question: "Khi bật tính năng này, thu ngân vẫn phải bấm nút Thanh toán (F9) thủ công để hoàn tất hóa đơn.",
+                    answer: false,
+                    explanation: "Hệ thống sẽ tự động chốt đơn và hoàn thành giao dịch ngay khi nhận thông báo tiền về thành công từ ngân hàng/ví điện tử."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Thiết lập thông báo thanh toán QR cửa hàng (QR tĩnh)",
+                situation: "Cấu hình mã QR tĩnh đặt cố định tại quầy thu ngân cho từng chi nhánh và kích hoạt nhận thông báo tiền về tự động.",
+                steps: [
+                    {
+                        text: "Trên màn hình Bán hàng, nhấn biểu tượng <b>QR</b> (cạnh Khách thanh toán) ➔ <b>Xem mã QR</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043559/TTR_201125-1.png"
+                    },
+                    {
+                        text: "Trên tài khoản ngân hàng, chọn <b>Tạo mã QR</b> hoặc <b>Xem chi tiết</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043609/TTR_201125-2.png"
+                    },
+                    {
+                        text: "Hệ thống mặc định bật <b>Thông báo tiền về khi khách quét QR cửa hàng</b>. Chọn <b>Tải QR</b> hoặc <b>In QR</b> để đặt tại quầy.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043619/TTR_201125-3.png"
+                    },
+                    {
+                        text: "Chọn <b>Xong</b> để ghi nhận thông tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043634/TTR_201125-4.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chủ cửa hàng thắc mắc: Cửa hàng chị có 3 chi nhánh cùng dùng 1 số tài khoản ngân hàng thì QR tĩnh có bị thông báo nhầm chi nhánh không?",
+                    advice: "Dạ không lo nhầm đâu anh/chị! KiotViet quản lý QR tĩnh riêng biệt theo từng chi nhánh. Tiền về từ mã QR đặt tại chi nhánh nào thì chỉ hiển thị thông báo chuẩn xác tại màn hình bán hàng của chi nhánh đó ạ."
+                },
+                quiz: {
+                    question: "Cùng một số tài khoản ngân hàng nhưng mã QR cửa hàng (QR tĩnh) ở các chi nhánh khác nhau sẽ hoạt động độc lập với nhau.",
+                    answer: true,
+                    explanation: "Mã QR tĩnh được gán mã định danh riêng cho từng chi nhánh, giúp thông báo tiền về chính xác địa điểm phát sinh giao dịch."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Khớp thanh toán QR tĩnh với đơn tạm",
+                situation: "Khi nhận tiền qua QR tĩnh tại quầy, thu ngân mở pop-up đối chiếu và khớp chính xác giao dịch tiền về với đơn tạm đang lưu.",
+                steps: [
+                    {
+                        text: "Khi có giao dịch QR mới thành công, màn hình Bán hàng xuất hiện <b>chấm đỏ</b> tại biểu tượng <b>QR</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20044606/TTR_201125.png"
+                    },
+                    {
+                        text: "Kích vào biểu tượng <b>QR</b> để mở pop-up Thông báo thanh toán QR (hiển thị biến động tiền về 24h gần nhất).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043644/TTR_201125-5.png"
+                    },
+                    {
+                        text: "Nhấn <b>Khớp</b> tại giao dịch QR mong muốn. Hệ thống ghi nhận tiền vào đơn tạm và chuyển trạng thái giao dịch sang <b>Đang khớp</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043654/TTR_201125-6.png"
+                    },
+                    {
+                        text: "Nếu muốn đổi giao dịch khác, bấm nút <b>Hủy</b> tại giao dịch đang khớp.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/20043707/TTR_201125-7.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách hàng hỏi: Giờ cao điểm đông khách quét QR tĩnh, làm sao thu ngân biết tiền vừa về là của đơn tạm nào?",
+                    advice: "Dạ anh/chị chỉ cần chạm vào chấm đỏ biểu tượng QR trên màn hình. Pop-up hiển thị ngay danh sách biến động dư tiền về trong 24h, thu ngân nhìn số tiền trùng khớp với đơn tạm rồi bấm Khớp là xong, vừa nhanh vừa chống sót tiền ạ."
+                },
+                quiz: {
+                    question: "Chỉ những giao dịch QR ở trạng thái 'Chưa khớp' mới có thể thực hiện khớp với đơn tạm.",
+                    answer: true,
+                    explanation: "Quy tắc hệ thống chỉ cho phép khớp các biến động thanh toán chưa được gán cho đơn hàng nào khác."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Thanh toán trên Điện thoại",
+                situation: "Thực hiện giao dịch thanh toán đơn/đa phương thức, sử dụng điểm tích lũy và voucher ngay trên ứng dụng KiotViet Mobile.",
+                steps: [
+                    {
+                        text: "Trên app KiotViet, sau khi thêm hàng vào đơn, bạn chạm vào nút <b>Thanh toán</b>. Nhập số tiền khách trả và chọn phương thức.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071306/TTR_011025-12.png"
+                    },
+                    {
+                        text: "Thanh toán nhiều phương thức: Chạm vào dấu 3 chấm dưới dòng <b>Khách thanh toán</b> để phân bổ tiền cho từng hình thức (Tiền mặt, Chuyển khoản, Thẻ, Ví, Voucher, Điểm) ➔ Chạm <b>Hoàn thành</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071318/TTR_011025-13.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh chủ cửa hàng hỏi: Bán hàng lưu động qua điện thoại có chia nhiều phương thức thanh toán như trên máy tính được không em?",
+                    advice: "Dạ hoàn toàn được ạ! App KiotViet trên điện thoại hỗ trợ đầy đủ chia tiền mặt, chuyển khoản, trừ điểm, voucher bằng nút 3 chấm ở ô Khách thanh toán, giúp anh bán hàng mọi lúc mọi nơi cực kỳ linh hoạt ạ."
+                },
+                quiz: {
+                    question: "Trên ứng dụng Mobile, thu ngân bấm vào dấu 3 chấm dưới dòng Khách thanh toán để mở giao diện chia nhiều phương thức thanh toán.",
+                    answer: true,
+                    explanation: "Biểu tượng 3 chấm giúp mở bảng phân bổ chi tiết số tiền cho Tiền mặt, Chuyển khoản, Thẻ, Ví, Voucher và Điểm thưởng."
+                }
+            },
+            {
+                category: 'pos',
+                title: "Thanh toán trên Máy POS - Phương thức & Điểm",
+                situation: "Thực hiện thanh toán một hoặc nhiều phương thức và trừ điểm tích lũy trực tiếp trên máy bán hàng POS Android.",
+                steps: [
+                    {
+                        text: "Trên ứng dụng KiotViet Máy bán hàng, chạm nút <b>Thanh toán</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071325/TTR_011025-14.png"
+                    },
+                    {
+                        text: "Nhập số tiền khách trả và chọn nhanh phương thức thanh toán.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071338/TTR_011025-15.png"
+                    },
+                    {
+                        text: "Bật xanh công tắc <b>Điểm</b> nếu khách muốn tiêu dùng điểm tích lũy.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071342/TTR_011025-16.png"
+                    },
+                    {
+                        text: "Để chia nhỏ thanh toán, chạm biểu tượng đa phương thức ➔ Chạm <b>Hoàn thành</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/11/10072803/TTR_101125.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Thu ngân dùng máy POS Android hỏi: Thao tác thanh toán trên màn hình cảm ứng máy POS có trực quan dễ bấm không?",
+                    advice: "Dạ cực kỳ trực quan ạ! Màn hình máy POS hiển thị các phím số to, biểu tượng phương thức và công tắc bật Điểm rõ ràng. Thu ngân chạm tay thao tác chốt đơn trong vài giây ạ."
+                },
+                quiz: {
+                    question: "Giao diện KiotViet Máy bán hàng POS Android cho phép bật công tắc Điểm để trừ tiền tích lũy trực tiếp cho đơn hàng.",
+                    answer: true,
+                    explanation: "Tính năng sử dụng điểm được tích hợp dạng công tắc bật/tắt tiện lợi ngay trên màn hình thanh toán máy POS cảm ứng."
+                }
+            },
+            {
+                category: 'pos',
+                title: "Thanh toán trên Máy POS - Quét mã QR",
+                situation: "Hiển thị và phóng to mã QR động trên màn hình cảm ứng máy POS cho khách hàng quét thanh toán trực tiếp.",
+                steps: [
+                    {
+                        text: "Khi thanh toán chọn phương thức <b>Chuyển khoản</b>. Nhấn <b>Xem mã QR</b> để phóng to thông tin giúp khách dễ dàng quét.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071405/TTR_011025-18.png"
+                    },
+                    {
+                        text: "Khi thanh toán thành công, hệ thống tự động báo xác nhận, phát âm thanh đọc số tiền và tự động hoàn thành đơn hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/01071417/TTR_011025-19.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách hàng hỏi: Màn hình máy POS có hiển thị được mã QR đủ to cho khách đứng xa quét không?",
+                    advice: "Dạ có ạ! Thu ngân chỉ cần chạm nút Xem mã QR là hình ảnh mã QR được phóng to toàn màn hình POS, khách đứng từ xa giơ điện thoại quét là nhận diện thanh toán ngay ạ."
+                },
+                quiz: {
+                    question: "Nút Xem mã QR trên máy POS cho phép phóng to hình ảnh QR để khách hàng quét mã thuận tiện hơn.",
+                    answer: true,
+                    explanation: "Tính năng phóng to giúp hiển thị rõ ràng mã QR động trên màn hình máy POS cảm ứng."
+                }
+            }
+        ];
 
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
+
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN (ROUNDED-2XL CHUẨN VIỀN, MÀU NHẠT TƯƠI SÁNG) -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC (NỀN SÁNG CHỮ ĐEN, ĐẶT SAU FLASHCARD) -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        // INITIALIZE ON LOAD
+        window.addEventListener('DOMContentLoaded', () => {
+            renderOverviewLists();
+            navSelectTab('guide');
+        });
     </script>
 </body>
 </html>
