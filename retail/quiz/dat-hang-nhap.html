@@ -1,1177 +1,979 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Đặt hàng nhập (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Đặt hàng nhập</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Đặt hàng nhập</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Đặt hàng nhập</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>BÁN LẺ / BÁN BUÔN</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (<)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (>)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Đặt hàng nhập</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng Đặt hàng nhập giúp bạn quản lý toàn bộ quy trình làm việc với nhà cung cấp một cách chuyên nghiệp và khép kín, từ khâu lên kế hoạch đặt hàng, gửi đơn, theo dõi xác nhận, nhập kho cho đến khi hoàn tất giao dịch.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051156/DHNR_250526-1.jpg" alt="Infographic Hướng dẫn Đặt hàng nhập" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+
+                    <!-- Khối Video tự động ẩn do tài liệu gốc không có video -->
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 hidden" id="guide-video-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                            <iframe id="guide-video-iframe" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-bold text-sm">1</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Tối ưu hóa quy trình nhập hàng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Giúp chủ cửa hàng và bộ phận mua hàng quản lý giao dịch với nhà cung cấp hệ thống từ đề xuất, gửi đơn, theo dõi đến nhập kho.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-bold text-sm">2</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Chủ động kế hoạch kinh doanh</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tổng hợp số lượng hàng đã đặt nhà cung cấp giúp cân đối lượng hàng bán ra và lập kế hoạch nhập kho/chuyển hàng hợp lý.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-bold text-sm">3</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Kiểm soát tiến độ giao hàng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Dễ dàng quản lý thời gian nhận hàng dự kiến, phát hiện sớm các đơn giao chậm để có phương án xử lý kịp thời.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN (NÚT HỌC NÂNG CAO MỞ TRANG BÌA OVERVIEW ADVANCED) -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng Đặt hàng nhập.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 11</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <!-- POPUP HOÀN THÀNH NÂNG CAO -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 22</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình Đặt hàng nhập.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- FULL JAVASCRIPT DATA & ENGINE V18.0 HOÀN CHỈNH 100% -->
     <script>
-        const unifiedData = [
+        const GLOSSARY_ITEMS = [
             {
-                isIntro: true,
-                icon: "💡",
-                title: "Giới thiệu chung",
-                description: "Tính năng Đặt hàng nhập giúp bạn quản lý toàn bộ quy trình làm việc với nhà cung cấp một cách chuyên nghiệp và khép kín, từ khâu lên kế hoạch đặt hàng, gửi đơn, theo dõi xác nhận, nhập kho cho đến khi hoàn tất giao dịch.",
-                benefits: [
-                    { icon: "fa-circle-check", title: "Tối ưu hóa quy trình nhập hàng", desc: "Quản lý mua hàng hệ thống từ khâu lên kế hoạch đến lúc nhập kho." },
-                    { icon: "fa-chart-line", title: "Chủ động kế hoạch kinh doanh", desc: "Cung cấp dữ liệu tồn kho giúp cân đối dòng hàng hiệu quả." },
-                    { icon: "fa-clock", title: "Kiểm soát tiến độ giao hàng", desc: "Theo dõi hạn giao hàng dự kiến để xử lý kịp thời các đơn chậm trễ." }
-                ],
-                updateInfo: "Cập nhật giao diện quản lý mua hàng tinh gọn và trực quan hóa sơ đồ nghiệp vụ.",
-                youtubeUrl: "",
-                images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051156/DHNR_250526-1.jpg"],
-                chat: [
-                    { r: "customer", t: "Tôi muốn tìm hiểu lợi ích của việc sử dụng tính năng Đặt hàng nhập này là gì?" },
-                    { r: "consultant", t: "Tính năng này mang lại những lợi ích vượt trội sau cho cửa hàng của mình:<br><ul><li class='mb-2'><strong>Tối ưu hóa quy trình nhập hàng:</strong> Quản lý mua hàng hệ thống từ khâu lên kế hoạch đến lúc nhập kho.</li><li class='mb-2'><strong>Chủ động kế hoạch kinh doanh:</strong> Cung cấp dữ liệu tồn kho và lượng đặt hàng giúp cân đối dòng hàng bán ra hiệu quả.</li><li class='mb-2'><strong>Kiểm soát tiến độ giao hàng:</strong> Theo dõi hạn giao hàng dự kiến để chủ động xử lý các tình huống chậm trễ của NCC.</li></ul>" }
-                ]
+                term: "Đặt hàng nhập",
+                desc: "Nghiệp vụ ghi nhận đơn đặt hàng mua gửi cho nhà cung cấp trước khi nhận hàng hóa thực tế về kho, giúp quản lý kế hoạch nhập kho chuyên nghiệp."
             },
             {
-                icon: "💻",
+                term: "Tiền trả nhà cung cấp (Đặt cọc)",
+                desc: "Khoản tiền ứng trước cho nhà cung cấp khi đặt hàng. Hệ thống tự động ghi nhận phiếu chi và trừ dần vào công nợ khi thực hiện phiếu nhập hàng."
+            },
+            {
+                term: "Đề xuất hàng nhập",
+                desc: "Công cụ thông minh tự động gợi ý danh sách và số lượng sản phẩm cần nhập dựa trên mức tồn kho tối thiểu, tồn âm hoặc số lượng đã bán trong 30 ngày."
+            },
+            {
+                term: "Nhập một phần",
+                desc: "Trạng thái phiếu đặt hàng khi nhà cung cấp mới giao một phần số lượng. Phiếu vẫn duy trì để tiếp tục theo dõi các đợt nhận hàng tiếp theo."
+            },
+            {
+                term: "Kết thúc phiếu",
+                desc: "Thao tác đóng phiếu đặt hàng nhập khi nhà cung cấp không thể giao đủ số hàng còn thiếu, giúp làm sạch danh sách đơn chờ nhập."
+            }
+        ];
+
+        const BASIC_LESSONS = [
+            {
                 title: "Kích hoạt tính năng Đặt hàng nhập",
-                scenario: "BẮT ĐẦU SỬ DỤNG TÍNH NĂNG ĐẶT HÀNG NHẬP CHO CỬA HÀNG.",
+                situation: "Khi gian hàng bắt đầu sử dụng nghiệp vụ quản lý đơn đặt hàng mua, bạn cần bật tính năng này trong phần thiết lập chung.",
                 steps: [
-                    "Tại màn hình <strong>Quản lý</strong>, vào menu <strong>Thiết lập</strong> → chọn <strong>Xem tất cả thiết lập</strong>.",
-                    "Tại mục <strong>Mua hàng</strong> → gạt nút bật xanh tính năng <strong>Đặt hàng nhập</strong> để kích hoạt."
+                    {
+                        text: "Tại màn hình <strong>Quản lý</strong>, truy cập menu <strong>Thiết lập</strong> → chọn <strong>Xem tất cả thiết lập</strong>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051209/DHNR_250526-2.png"
+                    },
+                    {
+                        text: "Tại mục <strong>Mua hàng</strong> → gạt bật xanh tính năng <strong>Đặt hàng nhập</strong> để kích hoạt.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120512/DHNR_270526-1.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051209/DHNR_250526-2.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120512/DHNR_270526-1.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi muốn lên kế hoạch nhập hàng trước rồi mới nhập kho sau để theo dõi tiến độ của nhà cung cấp thì làm thế nào?" },
-                    { r: "consultant", t: "Anh/Chị hãy kích hoạt tính năng Đặt hàng nhập bằng cách: Vào màn hình <strong>Quản lý</strong> -> <strong>Thiết lập</strong> -> <strong>Xem tất cả thiết lập</strong> -> Tại mục <strong>Mua hàng</strong> bật xanh tính năng <strong>Đặt hàng nhập</strong> lên nhé ạ." }
-                ]
+                flashcard: {
+                    situation: "Khách hàng thắc mắc: Anh muốn theo dõi lịch mua hàng với bên phân phối nhưng không thấy mục Đặt hàng nhập ở đâu?",
+                    advice: "Dạ anh/chị chỉ cần vào Thiết lập -> Xem tất cả thiết lập -> Mục Mua hàng và gạt bật xanh Đặt hàng nhập. Tính năng này giúp anh/chị quản lý khép kín từ đặt hàng, cọc tiền đến nhận kho mà không lo thất thoát."
+                },
+                quiz: {
+                    question: "Tính năng Đặt hàng nhập được kích hoạt tại mục Mua hàng trong phần Thiết lập chung của cửa hàng.",
+                    answer: true,
+                    explanation: "Để kích hoạt Đặt hàng nhập, người dùng vào Thiết lập -> Xem tất cả thiết lập -> Mục Mua hàng và gạt bật xanh tính năng này."
+                }
             },
             {
-                icon: "💻",
                 title: "Tạo một phiếu Đặt hàng nhập mới",
-                scenario: "LẬP MỘT ĐƠN ĐẶT HÀNG MỚI ĐỂ GỬI CHO NHÀ CUNG CẤP.",
+                situation: "Khi bạn cần lập đơn đặt hàng mua hàng hóa để gửi cho nhà cung cấp.",
                 steps: [
-                    "Tại màn hình <strong>Quản lý</strong>, vào menu <strong>Mua hàng</strong> → chọn <strong>Đặt hàng nhập</strong>.",
-                    "Nhấn nút <strong>+ Đặt hàng nhập</strong> ở góc phải phía trên màn hình để mở giao diện tạo phiếu."
+                    {
+                        text: "Tại màn hình <strong>Quản lý</strong>, truy cập menu <strong>Mua hàng</strong> → chọn <strong>Đặt hàng nhập</strong>.",
+                        img: null
+                    },
+                    {
+                        text: "Nhấn nút <strong>+ Đặt hàng nhập</strong> ở góc phải màn hình để mở giao diện tạo phiếu mới.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051235/DHNR_250526-4.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051235/DHNR_250526-4.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Hôm nay tôi muốn đặt lô sữa mới từ nhà cung cấp TH True Milk, tôi bắt đầu tạo đơn ở đâu trên KiotViet?" },
-                    { r: "consultant", t: "Dạ, Anh/Chị vào mục <strong>Mua hàng</strong> -> chọn <strong>Đặt hàng nhập</strong> và click nút <strong>+ Đặt hàng nhập</strong> ở góc phải màn hình để bắt đầu lập phiếu soạn thảo ạ!" }
-                ]
+                flashcard: {
+                    situation: "Chủ cửa hàng hỏi: Tạo đơn đặt hàng trước có tác dụng gì hơn so với việc cứ gọi điện cho nhà cung cấp rồi chờ nhận hàng?",
+                    advice: "Dạ khi tạo phiếu trên KiotViet, em giúp anh/chị lưu lại chính xác số lượng và đơn giá thỏa thuận. Khi hàng về kho, nhân viên chỉ cần bấm Tạo phiếu nhập là xong, vừa nhanh vừa kiểm soát đúng số lượng tránh giao thiếu."
+                },
+                quiz: {
+                    question: "Thao tác tạo mới phiếu đặt hàng nhập bắt đầu từ menu Mua hàng -> Đặt hàng nhập và nhấn + Đặt hàng nhập.",
+                    answer: true,
+                    explanation: "Người dùng vào menu Mua hàng -> Đặt hàng nhập -> Bấm + Đặt hàng nhập để bắt đầu lập đơn mua hàng mới."
+                }
             },
             {
-                icon: "💻",
                 title: "Thêm hàng hóa vào phiếu",
-                scenario: "THÊM CÁC SẢN PHẨM VÀ SỐ LƯỢNG TƯƠNG ỨNG CẦN NHẬP TỪ NHÀ CUNG CẤP.",
+                situation: "Thêm các sản phẩm và số lượng tương ứng cần nhập từ nhà cung cấp vào phiếu đặt hàng.",
                 steps: [
-                    "<strong>Tìm kiếm trực tiếp (Cách 1)</strong>: Gõ mã, tên hàng hóa hoặc quét mã vạch. Bấm <strong>F6</strong> để thay đổi giữa nhập thường (gõ tay số lượng) và nhập nhanh (mỗi lần quét tăng 1 đơn vị).",
-                    "<strong>Nhập từ file Excel (Cách 2)</strong>: Nhấn <strong>Tải về file mẫu</strong> → Điền thông tin vào file mẫu → Nhấn <strong>Chọn file dữ liệu</strong> để tải lên.",
-                    "<strong>Thêm hàng hóa mới (Cách 3)</strong>: Nhấn nút dấu <strong>+</strong> cạnh thanh tìm kiếm hàng hóa để thêm nhanh mặt hàng chưa có trong danh mục.",
-                    "<strong>Sử dụng Đề xuất hàng nhập</strong>: Bấm biểu tượng đề xuất → tùy chỉnh bộ lọc (Chi nhánh, Nhà cung cấp, Nhóm hàng, Tồn kho, Số lượng đặt) → nhấn <strong>Xong</strong>."
+                    {
+                        text: "<strong>Cách 1: Tìm kiếm trực tiếp hoặc dùng máy quét:</strong> Gõ mã/tên hàng hóa vào ô tìm kiếm hoặc dùng máy quét mã vạch. Nhấn phím <strong>F6</strong> để chuyển đổi giữa nhập thủ công số lượng và nhập nhanh (mỗi lần quét tăng 1 đơn vị).<br><strong>Cách 2: Nhập từ file Excel:</strong> Nhấn Tải về file mẫu, điền thông tin và nhấn Chọn file dữ liệu để tải lên.<br><strong>Cách 3: Thêm hàng mới:</strong> Nhấn biểu tượng + cạnh ô tìm kiếm nếu sản phẩm chưa có trong danh mục.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120536/DHNR_270526-2.png"
+                    },
+                    {
+                        text: "<strong>Sử dụng tính năng Đề xuất hàng nhập:</strong> Nhấn nút Đề xuất hàng nhập để hệ thống tự động gợi ý danh sách hàng hóa dựa trên dữ liệu kinh doanh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120611/DHNR_270526-4.png"
+                    },
+                    {
+                        text: "Tại cửa sổ popup Đề xuất, chọn bộ lọc: Chi nhánh, Nhà cung cấp, Nhóm hàng, Điều kiện Tồn kho (Dưới định mức, Hết hàng, Không xét) và Quy tắc Số lượng đặt (Theo tồn ít nhất/nhiều nhất, Đặt lần cuối, hoặc Số lượng bán 30 ngày) → nhấn <strong>Xong</strong>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120624/DHNR_270526-5.png"
+                    },
+                    {
+                        text: "Sau khi thêm hàng, khi nhập số lượng, hệ thống sẽ tự động hiển thị thêm các chỉ số phụ: <em>Tồn kho</em>, <em>Đặt NCC</em> (hàng đang chờ về) và <em>KH đặt</em> (hàng khách đang cọc) để hỗ trợ quyết định.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120638/DHNR_270526-6.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120536/DHNR_270526-2.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120550/DHNR_270526-3.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120611/DHNR_270526-4.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120624/DHNR_270526-5.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120638/DHNR_270526-6.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi có danh sách hàng rất dài, nhập tay từng mã thì lâu quá, hệ thống có hỗ trợ đề xuất hay tải file lên không?" },
-                    { r: "consultant", t: "Dạ có ạ! Anh/Chị có thể dùng tính năng <strong>Nhập từ file Excel</strong> hoặc sử dụng biểu tượng <strong>Đề xuất hàng nhập</strong> để hệ thống tự động gợi ý các mặt hàng dưới định mức tồn kho hoặc hết hàng cực kỳ nhanh chóng ạ." }
-                ]
+                flashcard: {
+                    situation: "Cửa hàng bán lẻ nhiều mã hàng hỏi: Làm sao để biết chính xác cần đặt bao nhiêu sản phẩm mỗi lần nhập hàng?",
+                    advice: "Dạ anh/chị dùng ngay tính năng Đề xuất hàng nhập ạ. KiotViet tự động tính toán số lượng dựa trên tồn kho tối thiểu hoặc lượng bán 30 ngày qua, em giúp anh/chị không bao giờ bị đứt hàng mà cũng không lo đọng vốn tồn kho quá nhiều."
+                },
+                quiz: {
+                    question: "Tính năng Đề xuất hàng nhập có thể gợi ý số lượng cần đặt dựa trên số lượng hàng đã bán trong 30 ngày qua.",
+                    answer: true,
+                    explanation: "Bộ lọc Đề xuất hàng nhập hỗ trợ tính năng tự động gợi ý số lượng đặt bằng số lượng bán trong 30 ngày gần nhất."
+                }
             },
             {
-                icon: "💻",
                 title: "Hoàn tất thông tin và gửi phiếu cho Nhà cung cấp",
-                scenario: "HOÀN TẤT CÁC THÔNG TIN VỀ NHÀ CUNG CẤP VÀ TIỀN ĐẶT CỌC TRƯỚC KHI GỬI ĐƠN.",
+                situation: "Chọn nhà cung cấp, nhập số tiền đặt cọc trước và dự kiến ngày giao hàng để lưu phiếu.",
                 steps: [
-                    "Tại khung thông tin bên phải, tìm và chọn <strong>Nhà cung cấp</strong> hoặc nhấn nút <strong>+</strong> để tạo nhanh nhà cung cấp mới.",
-                    "Điền Giảm giá, Chi phí nhập hàng, nhập số <strong>Tiền trả nhà cung cấp</strong> (tiền đặt cọc) và chọn <strong>Dự kiến ngày nhập hàng</strong>.",
-                    "Nhấn nút <strong>Đặt hàng nhập</strong> ở góc dưới bên phải để lưu thông tin và hoàn tất phiếu."
+                    {
+                        text: "<strong>Chọn nhà cung cấp:</strong> Tìm chọn nhà cung cấp từ danh sách hoặc nhấn nút + để thêm nhà cung cấp mới.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120653/DHNR_270526-7.png"
+                    },
+                    {
+                        text: "<strong>Nhập thông tin thanh toán:</strong> Điền Giảm giá, Chi phí nhập hàng, Số <strong>Tiền trả nhà cung cấp</strong> (tiền đặt cọc) và Phương thức thanh toán. Chọn <strong>Dự kiến ngày nhập hàng</strong>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120720/DHNR_270526-8.png"
+                    },
+                    {
+                        text: "Nhấn <strong>Đặt hàng nhập</strong> để lưu thông tin và hoàn tất phiếu.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120734/DHNR_270526-9.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120653/DHNR_270526-7.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120720/DHNR_270526-8.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120734/DHNR_270526-9.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi muốn đặt cọc trước cho NCC một phần tiền thì nhập ở đâu để hệ thống tự trừ vào công nợ sau này?" },
-                    { r: "consultant", t: "Anh/Chị nhập số tiền đặt cọc vào ô <strong>Tiền trả nhà cung cấp</strong> ngay trên phiếu đặt nhé. Hệ thống sẽ tự động ghi nhận tiền cọc và chuyển số tiền còn lại vào công nợ NCC khi Anh/Chị lập phiếu nhập hàng thực tế ạ." }
-                ]
+                flashcard: {
+                    situation: "Cửa hàng hỏi: Khi đặt hàng em có chuyển cọc trước 5 triệu cho bên phân phối thì hệ thống ghi nhận thế nào?",
+                    advice: "Dạ anh/chị gõ 5 triệu vào ô Tiền trả nhà cung cấp khi tạo phiếu. KiotViet sẽ tự động tạo phiếu chi cọc và theo dõi bù trừ chính xác vào công nợ khi anh/chị làm thủ tục nhập kho sau này ạ."
+                },
+                quiz: {
+                    question: "Số tiền trả nhà cung cấp trên phiếu đặt hàng nhập được coi là tiền đặt cọc và tự động ghi nhận trừ công nợ khi nhập hàng.",
+                    answer: true,
+                    explanation: "Khoản tiền trả nhà cung cấp tại bước đặt hàng đóng vai trò là tiền cọc, tự động ghi nhận vào sổ quỹ và trừ trừ công nợ khi tạo phiếu nhập hàng."
+                }
             },
             {
-                icon: "💻",
                 title: "Tạo phiếu nhập hàng từ phiếu đặt hàng",
-                scenario: "GHI NHẬN SỐ LƯỢNG HÀNG HÓA THỰC TẾ NHẬN ĐƯỢC VÀO KHO DỰA TRÊN PHIẾU ĐẶT HÀNG ĐÃ TẠO TRƯỚC ĐÓ.",
+                situation: "Khi nhà cung cấp giao hàng đến kho, chuyển dữ liệu từ phiếu đặt sang phiếu nhập kho thực tế.",
                 steps: [
-                    "Vào menu <strong>Mua hàng</strong> → chọn <strong>Đặt hàng nhập</strong>.",
-                    "Tìm và click chọn đúng phiếu đặt hàng nhập tương ứng với lô hàng vừa nhận.",
-                    "Nhấn nút <strong>Tạo phiếu nhập</strong> ở thanh tác vụ phía trên.",
-                    "Hệ thống tự động chuyển tiếp sang màn hình Nhập hàng, kiểm tra số lượng thực nhận và nhấn <strong>Hoàn thành</strong> để ghi nhận hàng vào kho."
+                    {
+                        text: "Vào menu <strong>Mua hàng</strong> → <strong>Đặt hàng nhập</strong>, tìm và chọn phiếu đặt hàng tương ứng.",
+                        img: null
+                    },
+                    {
+                        text: "Nhấn nút <strong>Tạo phiếu nhập</strong> ở chi tiết phiếu đặt.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120748/DHNR_270526-10.png"
+                    },
+                    {
+                        text: "Hệ thống chuyển sang màn hình <strong>Nhập hàng</strong> với đầy đủ thông tin hàng hóa. Kiểm tra/chỉnh sửa số lượng thực nhận và nhấn <strong>Hoàn thành</strong> để ghi tăng kho.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051526/DHNR_250526-17.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120748/DHNR_270526-10.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051526/DHNR_250526-17.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Nhà cung cấp giao hàng làm nhiều đợt thì tôi phải thao tác thế nào từ phiếu đặt hàng nhập ban đầu?" },
-                    { r: "consultant", t: "Dạ rất đơn giản ạ! Anh/Chị chỉ cần click mở phiếu đặt hàng nhập -> nhấn <strong>Tạo phiếu nhập</strong> -> chỉnh sửa số lượng thực nhận của đợt đó rồi nhấn <strong>Hoàn thành</strong>. Đợt sau hàng về tiếp, Anh/Chị lại mở lại phiếu đặt đó và tiếp tục làm tương tự ạ." }
-                ]
-            },
+                flashcard: {
+                    situation: "Nhân viên kho hỏi: Nếu nhà cung cấp chỉ giao trước 50% số lượng theo đơn đặt thì xử lý thế nào?",
+                    advice: "Dạ anh/chị cứ bấm Tạo phiếu nhập, sau đó sửa lại số lượng thực nhận bằng 50% rồi bấm Hoàn thành. Trạng thái phiếu đặt sẽ tự chuyển thành 'Nhập một phần', khi nào họ giao tiếp đợt 2 mình lại vào bấm Tạo phiếu nhập tiếp ạ."
+                },
+                quiz: {
+                    question: "Một phiếu đặt hàng nhập chỉ có thể tạo được tối đa một phiếu nhập hàng duy nhất.",
+                    answer: false,
+                    explanation: "Một phiếu đặt hàng nhập có thể tạo nhiều phiếu nhập hàng tương ứng với các đợt giao hàng khác nhau của nhà cung cấp."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Tìm kiếm, sắp xếp và xuất file danh sách phiếu",
-                scenario: "XEM LẠI BÁO CÁO HOẶC TÌM KIẾM CÁC PHIẾU ĐẶT HÀNG THEO CÁC TIÊU CHÍ CỤ THỂ.",
+                situation: "Tra cứu danh sách đơn đặt hàng nhập theo nhà cung cấp, trạng thái hoặc xuất file Excel báo cáo.",
                 steps: [
-                    "Sử dụng ô tìm kiếm ở cột bên trái để lọc danh sách phiếu đặt theo Mã phiếu, Nhà cung cấp, Trạng thái, Khoảng thời gian hoặc Người tạo.",
-                    "Nhấn vào tiêu đề các cột trên danh sách để thực hiện sắp xếp thứ tự hiển thị tăng hoặc giảm dần.",
-                    "Nhấn nút <strong>Xuất file</strong> ở góc phải trên màn hình để tải về danh sách dưới dạng file Excel tổng quan hoặc chi tiết."
+                    {
+                        text: "Lọc danh sách phiếu theo Mã phiếu, Nhà cung cấp, Trạng thái, Thời gian, Người tạo. Nhấn tiêu đề cột để sắp xếp.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051539/DHNR_250526-18.png"
+                    },
+                    {
+                        text: "Nhấn nút <strong>Xuất file</strong> để tải về file Excel danh sách tổng quan hoặc chi tiết.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051553/DHNR_250526-19.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051539/DHNR_250526-18.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051553/DHNR_250526-19.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi muốn xuất file Excel toàn bộ danh sách phiếu đặt hàng nhập tháng này gửi cho kế toán kiểm tra thì làm sao?" },
-                    { r: "consultant", t: "Dạ, Anh/Chị lọc thời gian là 'Tháng này' trên thanh tìm kiếm bên trái, sau đó nhấn nút <strong>Xuất file</strong> -> chọn xuất file tổng quan hoặc chi tiết là hệ thống sẽ tải về file Excel ngay ạ!" }
-                ]
+                flashcard: {
+                    situation: "Chủ cửa hàng hỏi: Tôi muốn xuất báo cáo toàn bộ các đơn đặt hàng nhập đang chờ giao trong tháng này được không?",
+                    advice: "Dạ hoàn toàn được ạ. Anh/chị chọn bộ lọc Trạng thái là Phiếu tạm/Đã đặt hàng và chọn thời gian Tháng này, sau đó bấm Xuất file để nhận báo cáo Excel đầy đủ chi tiết."
+                },
+                quiz: {
+                    question: "Người dùng có thể xuất danh sách phiếu đặt hàng nhập ra file Excel dưới dạng tổng quan hoặc chi tiết.",
+                    answer: true,
+                    explanation: "Hệ thống hỗ trợ tính năng Xuất file Excel danh sách đơn đặt hàng nhập theo tổng quan hoặc chi tiết theo bộ lọc."
+                }
             },
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Cập nhật, chỉnh sửa hoặc hủy phiếu",
-                scenario: "ĐIỀU CHỈNH THÔNG TIN PHIẾU ĐẶT HÀNG HOẶC HỦY BỎ ĐƠN ĐẶT HÀNG KHI KHÔNG CÒN HIỆU LỰC.",
+                situation: "Thay đổi thông tin chung của đơn đặt hàng, chỉnh sửa toàn bộ phiếu hoặc hủy phiếu khi không còn hiệu lực.",
                 steps: [
-                    "<strong>Cập nhật thông tin nhanh</strong>: Chọn phiếu cần sửa, thay đổi trực tiếp Người đặt, Ngày đặt, Ghi chú rồi nhấn <strong>Lưu</strong>.",
-                    "<strong>Sửa chi tiết phiếu</strong>: Nhấn nút <strong>Mở phiếu</strong> → chỉnh sửa danh sách hàng hóa hoặc số lượng đặt rồi nhấn <strong>Lưu</strong> (Lưu ý: Không thể sửa số lượng đặt nhỏ hơn số lượng đã thực tế nhập).",
-                    "<strong>Hủy bỏ phiếu</strong>: Mở chi tiết phiếu đặt hàng cần hủy → nhấn nút <strong>Hủy</strong> → chọn <strong>Đồng ý</strong> để xác nhận hủy phiếu (Chỉ hủy được khi chưa nhập hàng)."
+                    {
+                        text: "<strong>Cập nhật thông tin chung:</strong> Mở chi tiết phiếu, chỉnh sửa Người đặt, Ngày đặt, Dự kiến nhập, Ghi chú → nhấn <strong>Lưu</strong>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120849/DHNR_270526-12.png"
+                    },
+                    {
+                        text: "<strong>Sửa toàn bộ phiếu:</strong> Nhấn <strong>Mở phiếu</strong> → chỉnh sửa sản phẩm, số lượng → nhấn <strong>Lưu</strong>. <em>(Lưu ý: Không thể sửa số lượng đặt nhỏ hơn số lượng đã nhập kho)</em>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120903/DHNR_270526-13.png"
+                    },
+                    {
+                        text: "<strong>Hủy phiếu:</strong> Mở chi tiết phiếu, nhấn <strong>Hủy</strong> → chọn <strong>Đồng ý</strong>. Thao tác chỉ thực hiện được khi phiếu chưa có lịch sử nhập hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120931/DHNR_270526-15.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120849/DHNR_270526-12.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120903/DHNR_270526-13.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120918/DHNR_270526-14.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120931/DHNR_270526-15.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi lỡ tay tạo nhầm phiếu đặt hàng nhập nhưng NCC chưa giao hàng, giờ tôi muốn hủy bỏ phiếu đi được không?" },
-                    { r: "consultant", t: "Dạ được chứ ạ! Đối với phiếu đặt hàng nhập chưa tạo phiếu nhập kho, Anh/Chị chỉ cần chọn phiếu đó, nhấn nút <strong>Hủy</strong> rồi chọn <strong>Đồng ý</strong> để hủy hoàn toàn phiếu đó mà không ảnh hưởng tới tồn kho hay công nợ ạ." }
-                ]
+                flashcard: {
+                    situation: "Nhân viên hỏi: Em có thể giảm số lượng đặt hàng trên phiếu sau khi đã nhập kho một phần được không?",
+                    advice: "Dạ anh/chị có thể Mở phiếu để sửa số lượng, nhưng lưu ý hệ thống không cho phép giảm số lượng đặt nhỏ hơn số lượng hàng thực tế đã nhập kho trước đó ạ."
+                },
+                quiz: {
+                    question: "Thao tác Hủy phiếu đặt hàng nhập vẫn thực hiện được kể cả khi phiếu đã có lịch sử nhập hàng một phần.",
+                    answer: false,
+                    explanation: "Thao tác Hủy phiếu đặt hàng nhập CHỈ thực hiện được khi phiếu CHƯA phát sinh lịch sử nhập hàng."
+                }
             },
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Sao chép, in ấn và kết thúc phiếu",
-                scenario: "TẠO NHANH ĐƠN MỚI TỪ ĐƠN CŨ, IN CHỨNG TỪ HOẶC ĐÓNG PHIẾU ĐẶT HÀNG KHI KHÔNG CÒN NHẬP NỮA.",
+                situation: "Nhân bản đơn đặt hàng lặp lại, in chứng từ gửi nhà cung cấp hoặc chủ động đóng phiếu khi không nhập tiếp.",
                 steps: [
-                    "<strong>Sao chép phiếu</strong>: Mở phiếu đặt hàng cần sao chép, nhấn nút <strong>Sao chép</strong> để hệ thống tự động tạo một phiếu mới có thông tin tương tự.",
-                    "<strong>In phiếu</strong>: Mở chi tiết phiếu đặt, nhấn vào nút biểu tượng 3 chấm và chọn <strong>In</strong> để xuất chứng từ ra máy in.",
-                    "<strong>Kết thúc phiếu</strong>: Để đóng một phiếu đặt dù chưa nhập đủ hàng, nhấn vào nút <strong>Kết thúc</strong> → chọn <strong>Đồng ý</strong> để xác nhận đóng trạng thái phiếu."
+                    {
+                        text: "<strong>Sao chép:</strong> Mở phiếu, chọn <strong>Sao chép</strong> để tạo phiếu mới với danh sách hàng hóa tương tự.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120957/DHNR_270526-16.png"
+                    },
+                    {
+                        text: "<strong>In chứng từ:</strong> Xem chi tiết phiếu, bấm nút Xuất file hoặc biểu tượng 3 chấm → chọn <strong>In</strong>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121020/DHNR_270526-17.png"
+                    },
+                    {
+                        text: "<strong>Kết thúc phiếu:</strong> Nếu nhà cung cấp hết hàng không thể giao thêm, xem chi tiết phiếu bấm <strong>Kết thúc</strong> → chọn <strong>Đồng ý</strong> để đóng đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121036/DHNR_270526-18.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27120957/DHNR_270526-16.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121020/DHNR_270526-17.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121036/DHNR_270526-18.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Đơn hàng của tôi đặt 100 cái nhưng nhà cung cấp hết hàng chỉ giao được 80 cái và báo không giao tiếp nữa, tôi có phải sửa lại đơn không?" },
-                    { r: "consultant", t: "Dạ không cần sửa số lượng đâu ạ! Anh/Chị cứ nhập 80 cái vào kho bình thường, sau đó mở chi tiết phiếu đặt hàng và nhấn nút <strong>Kết thúc</strong> để hệ thống đóng trạng thái của phiếu đặt này lại ạ." }
-                ]
+                flashcard: {
+                    situation: "Khách hàng thắc mắc: Bên nhà cung cấp báo hết hàng không giao đủ 100 sản phẩm đã đặt, làm sao đóng đơn này lại?",
+                    advice: "Dạ anh/chị vào chi tiết phiếu đặt đó rồi bấm 'Kết thúc' là xong ạ. Hệ thống sẽ đóng phiếu ở trạng thái hiện tại, giúp danh sách theo dõi của mình luôn sạch sẽ và chính xác."
+                },
+                quiz: {
+                    question: "Thao tác 'Kết thúc' giúp chủ cửa hàng đóng phiếu đặt hàng nhập khi không có nhu cầu nhập tiếp phần hàng còn thiếu.",
+                    answer: true,
+                    explanation: "Nút Kết thúc dùng để đóng phiếu đặt hàng nhập khi dừng không tiến hành nhập thêm hàng hóa cho đơn đó nữa."
+                }
             },
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Theo dõi lịch sử giao dịch và công nợ",
-                scenario: "KIỂM TRA LẠI CÁC ĐỢT NHẬP HÀNG, CÁC KHOẢN TIỀN ĐÃ CHI ĐẶT CỌC VÀ CÔNG NỢ ĐỐI VỚI NHÀ CUNG CẤP.",
+                situation: "Xem tiến độ nhập hàng nhiều đợt, lịch sử chi tiền cọc và tổng quan công nợ với nhà cung cấp.",
                 steps: [
-                    "Mở chi tiết phiếu đặt hàng cần xem, chuyển sang tab <strong>Lịch sử nhập hàng</strong> để theo dõi các đợt nhận hàng.",
-                    "Chuyển sang tab <strong>Lịch sử thanh toán</strong> để xem chi tiết các đợt chi tiền đặt cọc.",
-                    "Vào menu <strong>Mua hàng</strong> → chọn <strong>Nhà cung cấp</strong>, click chọn nhà cung cấp tương ứng để xem tổng quan công nợ và lịch sử mua hàng tổng thể."
+                    {
+                        text: "Mở phiếu đặt hàng, chuyển qua tab <strong>Lịch sử nhập hàng</strong> để xem danh sách các đợt nhập kho liên quan.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051738/DHNR_250526-27.png"
+                    },
+                    {
+                        text: "Chuyển qua tab <strong>Lịch sử thanh toán</strong> để xem chi tiết các phiếu chi đặt cọc.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051751/DHNR_250526-28.png"
+                    },
+                    {
+                        text: "Vào menu <strong>Mua hàng</strong> → <strong>Nhà cung cấp</strong> để kiểm tra tổng quan công nợ và toàn bộ lịch sử giao dịch mua hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051807/DHNR_250526-29.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051738/DHNR_250526-27.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051751/DHNR_250526-28.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051807/DHNR_250526-29.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Làm thế nào để tôi kiểm tra xem một đơn đặt hàng nhập đã được chi tạm ứng bao nhiêu tiền và giao mấy lần rồi?" },
-                    { r: "consultant", t: "Anh/Chị chỉ cần click mở chi tiết phiếu đặt hàng nhập đó. Chuyển sang tab <strong>Lịch sử thanh toán</strong> để kiểm tra tiền đặt cọc và tab <strong>Lịch sử nhập hàng</strong> để thấy chi tiết số lượng của từng đợt nhập kho rất rõ ràng ạ." }
-                ]
+                flashcard: {
+                    situation: "Kế toán hỏi: Làm thế nào để kiểm tra một đơn đặt hàng nhập đã thanh toán bao nhiêu tiền cọc và đã nhận bao nhiêu đợt hàng?",
+                    advice: "Dạ chị chỉ cần mở phiếu đặt đó ra, KiotViet có sẵn 2 tab 'Lịch sử nhập hàng' và 'Lịch sử thanh toán' hiển thị minh bạch từng phiếu chi cọc và từng hóa đơn nhập kho cực kỳ rõ ràng ạ."
+                },
+                quiz: {
+                    question: "Tab Lịch sử nhập hàng trong chi tiết phiếu đặt hiển thị danh sách tất cả các phiếu nhập kho đã được tạo từ đơn đặt đó.",
+                    answer: true,
+                    explanation: "Tab Lịch sử nhập hàng giúp theo dõi chính xác các lần nhập hàng liên kết với phiếu đặt hàng nhập."
+                }
             },
             {
-                icon: "💻",
+                category: 'feature',
                 title: "Thiết lập Phân quyền và Mẫu in",
-                scenario: "TÙY CHỈNH MẪU IN PHIẾU ĐẶT HÀNG HOẶC PHÂN QUYỀN TRUY CẬP CHO TỪNG NHÂN VIÊN TRONG CỬA HÀNG.",
+                situation: "Tùy chỉnh mẫu in phiếu đặt hàng nhập và phân quyền thao tác chi tiết cho từng nhân viên.",
                 steps: [
-                    "<strong>Chỉnh sửa Mẫu in</strong>: Vào menu <strong>Thiết lập</strong> → <strong>Xem tất cả thiết lập</strong> → chọn <strong>Mẫu in</strong> để điều chỉnh hiển thị của phiếu <strong>Đặt hàng nhập</strong>.",
-                    "<strong>Thiết lập Phân quyền</strong>: Vào mục quản lý vai trò người dùng → tìm đến phân hệ <strong>Đặt hàng nhập</strong> → Tích chọn chi tiết các quyền muốn cấp (Xem, Tạo, Chỉnh sửa, Hủy, Xuất file...)."
+                    {
+                        text: "<strong>Mẫu in:</strong> Truy cập <strong>Thiết lập</strong> → <strong>Xem tất cả thiết lập</strong> → <strong>Mẫu in</strong> để chỉnh sửa mẫu in Đặt hàng nhập.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051820/DHNR_250526-30.png"
+                    },
+                    {
+                        text: "<strong>Phân quyền:</strong> Vào thiết lập Phân quyền vai trò nhân viên, tìm mục <strong>Đặt hàng nhập</strong> và tích chọn các quyền chi tiết (Xem, Tạo, Chỉnh sửa, Hủy, Xuất file, Sao chép, In lại, Tạo phiếu nhập).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27123149/DHNR_270526-19.png"
+                    }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051820/DHNR_250526-30.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27123149/DHNR_270526-19.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi muốn nhân viên kho chỉ được phép xem phiếu đặt để nhận hàng chứ không được tự sửa hay hủy phiếu thì phân quyền thế nào?" },
-                    { r: "consultant", t: "Dạ, Anh/Chị vào mục thiết lập vai trò của nhân viên kho, tìm đến mục <strong>Đặt hàng nhập</strong>. Tại đây Anh/Chị chỉ tích chọn quyền <strong>Xem</strong> và quyền <strong>Tạo phiếu nhập hàng từ phiếu đặt hàng nhập</strong>, bỏ tích các quyền <strong>Chỉnh sửa</strong> hay <strong>Hủy</strong> đi là được ạ." }
-                ]
+                flashcard: {
+                    situation: "Chủ cửa hàng hỏi: Tôi muốn cho nhân viên kho tạo đơn đặt hàng nhập nhưng không cho phép họ xem công nợ hay sửa phiếu thì cài thế nào?",
+                    advice: "Dạ anh/chị vào Thiết lập Phân quyền, chọn vai trò Nhân viên kho và chỉ tích chọn quyền 'Tạo' ở mục Đặt hàng nhập, bỏ tích các quyền Xem/Sửa/Hủy là hoàn toàn yên tâm phân cấp ạ."
+                },
+                quiz: {
+                    question: "Chủ cửa hàng có thể phân quyền chi tiết cho nhân viên các thao tác như Tạo, Chỉnh sửa, Hủy phiếu đặt hàng nhập.",
+                    answer: true,
+                    explanation: "Tính năng phân quyền KiotViet cho phép bật/tắt từng quyền chi tiết đối với nghiệp vụ Đặt hàng nhập cho từng vai trò nhân viên."
+                }
             }
         ];
 
-        const quizData = [
-            {
-                q: "Đặt hàng nhập giúp quản lý khép kín quy trình mua hàng từ lúc lên kế hoạch đến khi thực tế nhận hàng và nhập kho?",
-                isTrue: true,
-                explain: "Tính năng Đặt hàng nhập của KiotViet hỗ trợ quản lý khép kín toàn bộ quy trình mua hàng với nhà cung cấp, tự động theo dõi tiến độ, cập nhật lịch sử nhập hàng và tự động kết nối với phân hệ công nợ khi lập phiếu nhập kho."
-            },
-            {
-                q: "Đặt hàng nhập chỉ dùng để lưu giữ chứng từ tĩnh, không hỗ trợ theo dõi tiến độ giao hàng hay cập nhật công nợ nhà cung cấp?",
-                isTrue: false,
-                explain: "Tính năng Đặt hàng nhập của KiotViet hỗ trợ quản lý khép kín toàn bộ quy trình mua hàng với nhà cung cấp, tự động theo dõi tiến độ, cập nhật lịch sử nhập hàng và tự động kết nối với phân hệ công nợ khi lập phiếu nhập kho."
-            },
-            {
-                q: "Người dùng bắt buộc phải bật xanh kích hoạt tính năng Đặt hàng nhập trong mục Mua hàng tại phần Xem tất cả thiết lập để bắt đầu sử dụng?",
-                isTrue: true,
-                explain: "Để sử dụng Đặt hàng nhập, chủ cửa hàng cần truy cập menu Thiết lập -> Xem tất cả thiết lập -> di chuyển tới tab Mua hàng và chủ động kích hoạt tính năng này."
-            },
-            {
-                q: "Tính năng Đặt hàng nhập luôn được tự động kích hoạt mặc định trên tất cả các gian hàng mới mà người dùng không thể tắt/bật tùy ý?",
-                isTrue: false,
-                explain: "Để sử dụng Đặt hàng nhập, chủ cửa hàng cần truy cập menu Thiết lập -> Xem tất cả thiết lập -> di chuyển tới tab Mua hàng và chủ động kích hoạt tính năng này."
-            },
-            {
-                q: "Để tạo phiếu đặt hàng nhập mới, bạn truy cập vào mục Mua hàng trên menu Quản lý rồi chọn tính năng Đặt hàng nhập?",
-                isTrue: true,
-                explain: "Phiếu đặt hàng nhập là một chứng từ mua hàng nghiệp vụ quản lý, chỉ có thể được tạo lập từ giao diện Quản lý thông qua menu Mua hàng -> Đặt hàng nhập."
-            },
-            {
-                q: "Bạn có thể tạo phiếu đặt hàng nhập mới trực tiếp ngay tại màn hình Bán hàng (Thu ngân) dành cho nhân viên bán lẻ?",
-                isTrue: false,
-                explain: "Phiếu đặt hàng nhập là một chứng từ mua hàng nghiệp vụ quản lý, chỉ có thể được tạo lập từ giao diện Quản lý thông qua menu Mua hàng -> Đặt hàng nhập."
-            },
-            {
-                q: "KiotViet hỗ trợ đề xuất tự động số lượng đặt hàng dựa trên lượng hàng bán ra trong 30 ngày qua hoặc theo định mức tồn kho?",
-                isTrue: true,
-                explain: "Hệ thống cung cấp linh hoạt nhiều phương thức thêm hàng hóa bao gồm quét mã vạch, import trực tiếp từ file Excel và đặc biệt là công cụ Đề xuất hàng nhập thông minh dựa trên hành vi tồn kho thực tế."
-            },
-            {
-                q: "Khi thêm hàng hóa vào phiếu đặt hàng nhập, bạn bắt buộc phải nhập từng mã sản phẩm thủ công chứ không thể import file Excel?",
-                isTrue: false,
-                explain: "Hệ thống cung cấp linh hoạt nhiều phương thức thêm hàng hóa bao gồm quét mã vạch, import trực tiếp từ file Excel và đặc biệt là công cụ Đề xuất hàng nhập thông minh dựa trên hành vi tồn kho thực tế."
-            },
-            {
-                q: "Phần giá trị đơn hàng còn lại sau khi trừ đi tiền đặt cọc trả trước sẽ tự động ghi nhận vào công nợ nhà cung cấp khi tiến hành nhập hàng?",
-                isTrue: true,
-                explain: "KiotViet cho phép bạn linh hoạt ghi nhận số tiền đặt cọc trả trước (Tiền trả nhà cung cấp), phần tiền còn lại chưa thanh toán sẽ được hệ thống theo dõi và chuyển thành công nợ sau khi hàng hóa thực tế được nhập kho."
-            },
-            {
-                q: "Bạn bắt buộc phải trả toàn bộ 100% giá trị đơn hàng cho nhà cung cấp ngay tại thời điểm tạo phiếu đặt hàng nhập?",
-                isTrue: false,
-                explain: "KiotViet cho phép bạn linh hoạt ghi nhận số tiền đặt cọc trả trước (Tiền trả nhà cung cấp), phần tiền còn lại chưa thanh toán sẽ được hệ thống theo dõi và chuyển thành công nợ sau khi hàng hóa thực tế được nhập kho."
-            },
-            {
-                q: "Một phiếu đặt hàng nhập có thể được sử dụng để tạo nhiều phiếu nhập hàng khác nhau trong trường hợp nhà cung cấp giao hàng làm nhiều đợt?",
-                isTrue: true,
-                explain: "Hệ thống hỗ trợ quy trình nhập hàng nhiều đợt. Phiếu đặt hàng sẽ tự động cập nhật trạng thái tương ứng là 'Nhập một phần' hoặc 'Hoàn thành' dựa trên số lượng thực nhận so với số lượng đặt ban đầu."
-            },
-            {
-                q: "Ngay sau khi tạo phiếu nhập hàng đầu tiên, phiếu đặt hàng nhập liên quan sẽ lập tức bị đóng lại và không thể nhập tiếp các mặt hàng còn thiếu?",
-                isTrue: false,
-                explain: "Hệ thống hỗ trợ quy trình nhập hàng nhiều đợt. Phiếu đặt hàng sẽ tự động cập nhật trạng thái tương ứng là 'Nhập một phần' hoặc 'Hoàn thành' dựa trên số lượng thực nhận so với số lượng đặt ban đầu."
-            },
-            {
-                q: "Bạn có thể lọc danh sách đặt hàng nhập theo nhiều trạng thái khác nhau như Phiếu tạm, Đang đặt hàng, Nhập một phần, Hoàn thành hoặc Hủy?",
-                isTrue: true,
-                explain: "KiotViet cung cấp bộ lọc thông minh đa tiêu chí và hỗ trợ tính năng xuất file Excel trực quan giúp chủ cửa hàng dễ dàng quản lý và phân tích số liệu mua hàng."
-            },
-            {
-                q: "Danh sách đặt hàng nhập chỉ hiển thị cố định theo thời gian tạo phiếu và hoàn toàn không thể xuất ra file Excel để làm việc bên ngoài?",
-                isTrue: false,
-                explain: "KiotViet cung cấp bộ lọc thông minh đa tiêu chí và hỗ trợ tính năng xuất file Excel trực quan giúp chủ cửa hàng dễ dàng quản lý và phân tích số liệu mua hàng."
-            },
-            {
-                q: "Bạn không thể thực hiện chỉnh sửa giảm số lượng đặt hàng nhỏ hơn số lượng hàng hóa đã thực tế tạo phiếu nhập kho trước đó?",
-                isTrue: true,
-                explain: "Để đảm bảo tính toàn vẹn dữ liệu, hệ thống quy định: Không được chỉnh sửa số lượng đặt nhỏ hơn số lượng đã thực tế nhập kho, và nút Hủy phiếu đặt chỉ có hiệu lực khi phiếu đó chưa hề phát sinh lịch sử nhập hàng nào."
-            },
-            {
-                q: "Bạn có thể tùy ý bấm hủy bỏ một phiếu đặt hàng nhập bất kỳ lúc nào ngay cả khi phiếu đó đã hoàn thành nhập kho toàn bộ sản phẩm?",
-                isTrue: false,
-                explain: "Để đảm bảo tính toàn vẹn dữ liệu, hệ thống quy định: Không được chỉnh sửa số lượng đặt nhỏ hơn số lượng đã thực tế nhập kho, và nút Hủy phiếu đặt chỉ có hiệu lực khi phiếu đó chưa hề phát sinh lịch sử nhập hàng nào."
-            },
-            {
-                q: "Việc nhấn Kết thúc phiếu đặt hàng nhập giúp đóng trạng thái đơn hàng khi nhà cung cấp không tiếp tục giao phần số lượng còn thiếu?",
-                isTrue: true,
-                explain: "Chức năng Kết thúc giúp xử lý nghiệp vụ nhà cung cấp giao thiếu hàng và dừng đơn đặt hàng, trong khi tính năng Sao chép giúp tiết kiệm thời gian tái tạo lại các đơn hàng nhập định kỳ."
-            },
-            {
-                q: "Một phiếu đặt hàng nhập sau khi đã tạo xong thì không thể nhân bản (sao chép) sang một phiếu mới để chỉnh sửa nhanh?",
-                isTrue: false,
-                explain: "Chức năng Kết thúc giúp xử lý nghiệp vụ nhà cung cấp giao thiếu hàng và dừng đơn đặt hàng, trong khi tính năng Sao chép giúp tiết kiệm thời gian tái tạo lại các đơn hàng nhập định kỳ."
-            },
-            {
-                q: "Toàn bộ lịch sử nhập kho và lịch sử chi tiền cọc tương ứng được lưu trữ trực quan ngay tại các tab chi tiết của từng phiếu đặt hàng nhập?",
-                isTrue: true,
-                explain: "KiotViet tích hợp luồng dữ liệu mua hàng khép kín, cho phép người dùng theo dõi cả dòng hàng (Lịch sử nhập hàng) và dòng tiền (Lịch sử thanh toán tiền cọc) tập trung ngay tại chi tiết phiếu đặt hàng nhập liên quan."
-            },
-            {
-                q: "Hệ thống không hỗ trợ theo dõi lịch sử thanh toán đặt cọc trực tiếp trên phiếu đặt hàng nhập mà phải tự tra cứu thủ công tại Sổ quỹ?",
-                isTrue: false,
-                explain: "KiotViet tích hợp luồng dữ liệu mua hàng khép kín, cho phép người dùng theo dõi cả dòng hàng (Lịch sử nhập hàng) và dòng tiền (Lịch sử thanh toán tiền cọc) tập trung ngay tại chi tiết phiếu đặt hàng nhập liên quan."
-            },
-            {
-                q: "Chủ cửa hàng có thể phân quyền chi tiết cho nhân viên chỉ được xem danh sách đặt hàng nhập để đối chiếu hàng hóa mà không có quyền thay đổi hay hủy phiếu?",
-                isTrue: true,
-                explain: "Hệ thống phân quyền chặt chẽ của KiotViet giúp chủ cửa hàng bảo mật dữ liệu kinh doanh tốt hơn bằng cách kiểm soát quyền Xem, Tạo, Sửa, Hủy phiếu đặt hàng nhập của từng vai trò nhân viên cụ thể."
-            },
-            {
-                q: "Mọi tài khoản nhân viên khi đăng nhập vào hệ thống mặc định đều có toàn quyền thực hiện mọi thao tác thêm, sửa, xóa, hủy trên phân hệ Đặt hàng nhập?",
-                isTrue: false,
-                explain: "Hệ thống phân quyền chặt chẽ của KiotViet giúp chủ cửa hàng bảo mật dữ liệu kinh doanh tốt hơn bằng cách kiểm soát quyền Xem, Tạo, Sửa, Hủy phiếu đặt hàng nhập của từng vai trò nhân viên cụ thể."
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
+
+        function renderGlossary() {
+            const list = document.getElementById('glossary-list');
+            if (list) {
+                list.innerHTML = GLOSSARY_ITEMS.map(item => `
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-xs sm:text-sm text-blue-900 flex items-center gap-2">
+                            <i class="fa-solid fa-bookmark text-blue-600"></i> ${item.term}
+                        </h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed pl-5">${item.desc}</p>
+                    </div>
+                `).join('');
             }
-        ];
+        }
 
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
-
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
-            }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
-
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
-                }
-
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN (ROUNDED-2XL CHUẨN VIỀN, MÀU NHẠT TƯƠI SÁNG) -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC (NỀN SÁNG CHỮ ĐEN, ĐẶT SAU FLASHCARD) -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            renderGlossary();
+            renderOverviewLists();
+        });
     </script>
 </body>
 </html>
