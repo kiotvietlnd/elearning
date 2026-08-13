@@ -1,1026 +1,942 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Quản lý Chi nhánh (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Quản lý Chi phí nhập hàng</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Quản lý Chi nhánh</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Quản lý Chi phí nhập hàng</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>BÁN LẺ</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (<)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (>)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Quản lý Chi phí nhập hàng</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng Quản lý Chi phí nhập hàng là một công cụ hữu ích giúp bạn hạch toán chính xác các khoản chi phí phát sinh ngoài tiền hàng (như phí vận chuyển, bốc dỡ), từ đó tính toán đúng giá vốn và lợi nhuận kinh doanh.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051738/QLCPNHR_250526-1.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 hidden" id="guide-video-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                            <iframe id="guide-video-iframe" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list"></div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 6</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 12</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- JAVASCRIPT ENGINE V18.0 DATA & LOGIC HOÀN CHỈNH 100% -->
     <script>
-        const unifiedData = [
+        const BENEFITS_DATA = [
+            { title: "Tính giá vốn chuẩn xác", desc: "Tự động phân bổ các chi phí phát sinh vào giá nhập từng sản phẩm, tính đúng lãi lỗ thực tế." },
+            { title: "Kiểm soát công nợ rõ ràng", desc: "Phân biệt rõ chi phí trả Nhà cung cấp và chi phí trả bên thứ ba để không tính trùng công nợ." },
+            { title: "Linh hoạt áp dụng", desc: "Tùy chọn tự động thêm chi phí cố định vào phiếu nhập hoặc tự chọn thủ công theo từng lô hàng." }
+        ];
+
+        const GLOSSARY_ITEMS = [
+            { term: "Chi phí nhập hàng", desc: "Các khoản chi phí phát sinh khi nhập hàng phải trả trực tiếp cho Nhà cung cấp (được cộng vào công nợ NCC và phân bổ vào giá vốn)." },
+            { term: "Chi phí nhập hàng khác", desc: "Các khoản chi phí trả cho bên thứ ba (đơn vị vận chuyển ngoài, bốc dỡ...), không cộng vào công nợ NCC nhưng vẫn phân bổ vào giá vốn." },
+            { term: "Chi phí nhập hoàn lại", desc: "Số tiền chi phí nhập hàng được Nhà cung cấp hoàn lại khi cửa hàng thực hiện trả lại hàng nhập." },
+            { term: "Phân bổ giá vốn", desc: "Cơ chế tự động cộng các khoản chi phí nhập hàng vào giá nhập kho của từng sản phẩm để tính chính xác giá vốn thực tế." }
+        ];
+
+        const BASIC_LESSONS = [
             {
-                isIntro: true,
-                icon: "💡",
-                title: "Giới thiệu chung",
-                description: "Tính năng Quản lý Chi nhánh là công cụ cốt lõi giúp bạn dễ dàng mở rộng quy mô kinh doanh và kiểm soát hoạt động của toàn bộ chuỗi cửa hàng một cách tập trung và hiệu quả.",
-                benefits: [
-                    { icon: "fa-rocket", title: "Mở rộng kinh doanh dễ dàng", desc: "Nhanh chóng thiết lập và đưa vào hoạt động các chi nhánh mới ở nhiều địa điểm khác nhau." },
-                    { icon: "fa-folder-tree", title: "Quản lý tập trung, dữ liệu độc lập", desc: "Theo dõi hoạt động kinh doanh tổng thể của toàn chuỗi nhưng vẫn đảm bảo dữ liệu (hàng hóa, khách hàng, giao dịch) của từng chi nhánh được quản lý riêng biệt." },
-                    { icon: "fa-toggle-on", title: "Vận hành linh hoạt", desc: "Dễ dàng thay đổi trạng thái hoạt động của chi nhánh (tạm ngừng, hoạt động trở lại) để phù hợp với tình hình kinh doanh thực tế." }
+                title: "1. Thiết lập tính năng",
+                situation: "Bạn cần kích hoạt tính năng Quản lý chi phí nhập hàng trên gian hàng để bắt đầu sử dụng.",
+                steps: [
+                    { text: "Tại màn hình Quản lý, vào menu Thiết lập → chọn Mua hàng → Quản lý chi phí nhập hàng → nhấn nút Đang tắt.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121050/QLCPNHR_270526-1.png" },
+                    { text: "Bật xanh nút Quản lý chi phí nhập hàng để kích hoạt tính năng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121114/QLCPNHR_270526-2.png" }
                 ],
-                updateInfo: "Tính năng múi giờ được tự động mở trên các gian hàng tạo sau ngày 25/4/2024. Với các gian hàng không hiển thị, vui lòng liên hệ KiotViet để được hỗ trợ.",
-                youtubeUrl: "",
-                images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/07144836/THIET-LAP-QUAN-LY-CHI-NHANH-1.jpg"]
+                flashcard: {
+                    situation: "Cửa hàng tôi có phát sinh thêm phí vận chuyển, làm thế nào để bật tính năng tính phí này vào phiếu nhập?",
+                    advice: "Em hỗ trợ anh/chị vào Thiết lập -> Mua hàng -> Quản lý chi phí nhập hàng và bật xanh tính năng lên. Giúp cửa hàng quản lý minh bạch chi phí vận chuyển và tính chính xác giá vốn ngay tức thì ạ!"
+                },
+                quiz: {
+                    question: "Tính năng Quản lý chi phí nhập hàng được kích hoạt trong phần Thiết lập -> Mua hàng.",
+                    answer: true,
+                    explanation: "Người dùng vào menu Thiết lập -> Mua hàng -> Quản lý chi phí nhập hàng và bật nút chuyển đổi sang màu xanh để kích hoạt."
+                }
             },
             {
-                icon: "💻",
-                title: "Thêm mới chi nhánh",
-                scenario: "BẠN QUYẾT ĐỊNH MỞ RỘNG KINH DOANH VÀ CẦN THIẾT LẬP MỘT CỬA HÀNG MỚI TRÊN HỆ THỐNG KIOTVIET.",
+                title: "2. Quản lý các loại chi phí nhập hàng",
+                situation: "Khi bạn phát sinh một khoản chi phí mới chưa có trong hệ thống (ví dụ: phí bốc dỡ, phí vận chuyển đường bộ), bạn cần khai báo chi phí này để áp dụng cho các phiếu nhập.",
                 steps: [
-                    "Tại màn hình <strong>Quản lý</strong>, từ menu <strong>Thiết lập</strong>, bạn chọn <strong>Cửa hàng</strong>.",
-                    "Trên menu bên trái, chọn <strong>Quản lý chi nhánh</strong>, bạn nhấn vào nút <strong>+ Tạo chi nhánh</strong>.",
-                    "Điền các thông tin bắt buộc, bao gồm: <strong>Tên chi nhánh</strong>, <strong>Điện thoại</strong>, <strong>Địa chỉ</strong>, <strong>Khu vực</strong>, <strong>Phường/Xã</strong>.",
-                    "Nhấn <strong>Lưu</strong> để hoàn tất."
+                    { text: "Sau khi bật tính năng Quản lý chi phí nhập hàng, bạn nhấn Tạo chi phí nhập hàng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121134/QLCPNHR_270526-3.png" },
+                    { text: "Điền các thông tin: Tên chi phí, Giá trị (cố định VNĐ hoặc % tổng tiền hàng), Hình thức (Chi phí nhập hàng - trả NCC, hoặc Chi phí nhập hàng khác - trả bên thứ 3) và các Tùy chọn tự động đưa vào phiếu / hoàn lại khi trả hàng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121148/QLCPNHR_270526-4.png" },
+                    { text: "Hệ thống mặc định áp dụng trên Toàn hệ thống, bạn có thể chuyển sang tab Phạm vi áp dụng để giới hạn chi nhánh nếu cần.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121201/QLCPNHR_270526-5.png" },
+                    { text: "Nhấn Lưu để hoàn tất khởi tạo chi phí." }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101114/QLCN_101025-1.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101216/QLCN_101025-7.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi chuẩn bị khai trương cửa hàng mới ở Quận 2, muốn tạo thêm chi nhánh này trên phần mềm để phân tách doanh thu thì làm thế nào?" },
-                    { r: "consultant", t: "Chào anh/chị, anh/chị chỉ cần vào menu <strong>Thiết lập</strong> -> chọn <strong>Cửa hàng</strong> -> vào mục <strong>Quản lý chi nhánh</strong> -> nhấn nút <strong>+ Tạo chi nhánh</strong>. Sau đó anh/chị nhập các thông tin bắt buộc như Tên, SĐT, Địa chỉ rồi nhấn <strong>Lưu</strong> là chi nhánh mới sẽ sẵn sàng hoạt động ngay lập tức!" }
-                ]
+                flashcard: {
+                    situation: "Phí vận chuyển tôi trả cho đơn vị ngoài thì chọn hình thức chi phí nào để không bị cộng vào nợ nhà cung cấp?",
+                    advice: "Dạ anh/chị chọn hình thức 'Chi phí nhập hàng khác' giúp em. Số tiền này sẽ tự động phân bổ vào giá vốn sản phẩm để tính đúng lời lỗ, nhưng không bị cộng trùng vào công nợ của Nhà cung cấp ạ!"
+                },
+                quiz: {
+                    question: "Chi phí nhập hàng khác (trả cho bên thứ ba) vẫn được phân bổ vào giá vốn sản phẩm nhưng không làm tăng công nợ nhà cung cấp.",
+                    answer: true,
+                    explanation: "Hình thức Chi phí nhập hàng khác dùng cho bên thứ ba, ghi nhận vào giá vốn sản phẩm nhưng tách biệt khỏi công nợ Nhà cung cấp."
+                }
             },
             {
-                icon: "💻",
-                title: "Cập nhật thông tin chi nhánh",
-                scenario: "THÔNG TIN CỦA MỘT CHI NHÁNH CÓ SỰ THAY ĐỔI VÀ BẠN CẦN CẬP NHẬT LẠI TRÊN HỆ THỐNG.",
+                title: "3. Áp dụng chi phí khi tạo phiếu nhập hàng",
+                situation: "Khi tạo phiếu nhập hàng từ nhà cung cấp, bạn cần ghi nhận thêm các chi phí phát sinh như phí vận chuyển để tính toán đúng giá trị lô hàng và công nợ.",
                 steps: [
-                    "Trong danh sách chi nhánh, chọn chi nhánh cần chỉnh sửa và nhấn nút <strong>Chỉnh sửa</strong>.",
-                    "Thay đổi các thông tin cần thiết như Số điện thoại, Địa chỉ,...",
-                    "Nhấn <strong>Lưu</strong> để hoàn tất việc cập nhật."
+                    { text: "Trên giao diện tạo Phiếu nhập hàng, sau khi chọn sản phẩm, bạn nhấp chọn mục Chi phí nhập hàng hoặc Chi phí nhập hàng khác.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051857/QLCPNHR_250526-7.png" },
+                    { text: "Tích chọn những khoản chi phí phát sinh cho lần nhập này. Bạn cũng có thể trực tiếp sửa lại giá trị chi phí ngay trên phiếu nhập nếu cần.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051912/QLCPNHR_250526-8.png" },
+                    { text: "Hệ thống sẽ tự động cộng Chi phí nhập hàng vào tổng tiền cần trả nhà cung cấp và phân bổ toàn bộ chi phí vào giá nhập của từng sản phẩm." }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101205/QLCN_101025-6.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Chi nhánh cũ của tôi mới chuyển địa điểm sang đường khác và đổi số hotline. Tôi có cần tạo mới chi nhánh không?" },
-                    { r: "consultant", t: "Anh/chị không cần tạo mới đâu ạ, điều này tránh làm trùng lặp số liệu cũ. Anh/chị chỉ cần chọn chi nhánh đó trong danh sách, bấm <strong>Chỉnh sửa</strong>, cập nhật Địa chỉ và Số điện thoại mới, sau đó bấm <strong>Lưu</strong> là xong." }
-                ]
+                flashcard: {
+                    situation: "Tôi có thể sửa lại số tiền chi phí vận chuyển ngay khi lập phiếu nhập được không?",
+                    advice: "Dạ hoàn toàn được ạ! Anh/chị có thể chỉnh sửa trực tiếp số tiền chi phí ngay trên giao diện Tạo phiếu nhập hàng để phản ánh chính xác thực tế phát sinh của lô hàng đó."
+                },
+                quiz: {
+                    question: "Khi tạo phiếu nhập hàng, người dùng không thể sửa lại giá trị chi phí nhập hàng đã thiết lập trước đó.",
+                    answer: false,
+                    explanation: "Người dùng có thể trực tiếp sửa lại giá trị chi phí ngay trên phiếu nhập hàng nếu phát sinh thực tế thay đổi."
+                }
             },
             {
-                icon: "💻",
-                title: "Ngừng / Cho phép hoạt động chi nhánh",
-                scenario: "MỘT CHI NHÁNH CẦN TẠM NGƯNG HOẠT ĐỘNG ĐỂ SỬA CHỮA HOẶC VÌ LÝ DO KINH DOANH, SAU ĐÓ CẦN HOẠT ĐỘNG TRỞ LẠI.",
+                title: "4. Ghi nhận chi phí hoàn lại khi tạo phiếu trả hàng nhập",
+                situation: "Khi trả hàng cho nhà cung cấp, nếu phiếu nhập cũ có các khoản chi phí được thiết lập 'Hoàn lại khi trả hàng', bạn cần ghi nhận số tiền này để giảm trừ công nợ.",
                 steps: [
-                    "Để ngừng hoạt động: Chọn chi nhánh mong muốn và nhấn nút <strong>Ngừng hoạt động</strong>.",
-                    "Để cho phép hoạt động trở lại: Chọn chi nhánh đang ở trạng thái ngừng hoạt động và nhấn nút <strong>Cho phép hoạt động</strong>.",
-                    "Lưu ý: Hệ thống luôn kiểm tra để đảm bảo tổng số chi nhánh hoạt động không vượt quá giới hạn trong hợp đồng dịch vụ của bạn."
+                    { text: "Trên giao diện tạo Phiếu trả hàng nhập, hệ thống tự động tính toán và gợi ý số tiền tại mục Chi phí nhập hoàn lại dựa trên tỷ lệ hàng trả.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051925/QLCPNHR_250526-9.png" },
+                    { text: "Nhấn vào mục này để xem chi tiết, điều chỉnh hoặc bỏ chọn các khoản chi phí không được hoàn lại thực tế." },
+                    { text: "Đối với Trả hàng nhập nhanh (không theo phiếu nhập cũ), bạn chủ động nhấn mục Chi phí nhập hoàn lại và tự chọn các khoản phí hoàn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25051936/QLCPNHR_250526-10.png" }
                 ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101156/QLCN_101025-5.png",
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101147/QLCN_101025-4.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Cửa hàng chi nhánh 1 của tôi sắp đóng cửa 1 tháng để sửa chữa nội thất. Tôi muốn tạm ẩn đi để nhân viên không tạo nhầm hóa đơn trên chi nhánh này thì phải làm sao?" },
-                    { r: "consultant", t: "Dạ, anh/chị hãy vào danh sách chi nhánh, chọn chi nhánh 1 rồi nhấn <strong>Ngừng hoạt động</strong>. Khi nào sửa xong và hoạt động lại, anh/chị chỉ cần chọn lại chi nhánh đó và bấm <strong>Cho phép hoạt động</strong> là được ạ." }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Xóa chi nhánh",
-                scenario: "BẠN CẦN XÓA MỘT CHI NHÁNH KHÔNG CÒN HOẠT ĐỘNG, MUỐN ẨN KHỎI HỆ THỐNG.",
-                steps: [
-                    "Chọn chi nhánh cần xóa từ danh sách chi nhánh của cửa hàng.",
-                    "Nhấn nút <strong>Xóa</strong>.",
-                    "Xác nhận thao tác xóa trên thông báo hệ thống. Sau khi xóa thành công, thông tin chi nhánh sẽ bị khóa lại và toàn bộ nhân viên được trả lương tại chi nhánh này cũng sẽ bị xóa."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101135/QLCN_101025-3.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi có một chi nhánh cũ đã ngưng kinh doanh vĩnh viễn và muốn xóa hẳn khỏi hệ thống. Thao tác này có ảnh hưởng gì không?" },
-                    { r: "consultant", t: "Dạ, khi anh/chị chọn chi nhánh và bấm <strong>Xóa</strong>, hệ thống sẽ khóa chi nhánh đó lại. Anh/chị lưu ý là toàn bộ nhân viên được cấu hình trả lương tại chi nhánh này cũng sẽ bị xóa tự động theo chi nhánh, hãy kiểm tra kỹ thông tin nhân sự trước khi thực hiện nhé!" }
-                ]
-            },
-            {
-                icon: "💻",
-                title: "Thiết lập múi giờ chi nhánh",
-                scenario: "BẠN CÓ CHI NHÁNH HOẠT ĐỘNG Ở CÁC QUỐC GIA KHÁC NHAU VÀ CẦN GHI NHẬN THỜI GIAN GIAO DỊCH CHÍNH XÁC THEO GIỜ ĐỊA PHƯƠNG.",
-                steps: [
-                    "Khi <strong>Thêm mới</strong> hoặc <strong>Chỉnh sửa</strong> một chi nhánh, bạn tìm đến mục <strong>Múi giờ</strong>.",
-                    "Lựa chọn múi giờ phù hợp cho chi nhánh đó từ danh sách hỗ trợ (lên đến 140 múi giờ chuẩn).",
-                    "Nhấn <strong>Lưu</strong> để hoàn tất thiết lập.",
-                    "Lưu ý: Hệ thống chỉ hỗ trợ thiết lập múi giờ một lần duy nhất. Sau khi Lưu, nếu cần thay đổi, bạn phải liên hệ KiotViet để được hỗ trợ."
-                ],
-                images: [
-                    "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/10101126/QLCN_101025-2.png"
-                ],
-                chat: [
-                    { r: "customer", t: "Tôi có cửa hàng ở cả Việt Nam và Nhật Bản. Làm sao để hóa đơn xuất ở chi nhánh Nhật Bản hiển thị đúng theo giờ bên đó?" },
-                    { r: "consultant", t: "Chào anh/chị, khi thêm mới hoặc chỉnh sửa chi nhánh bên Nhật, anh/chị chỉ cần chọn mục <strong>Múi giờ</strong> là Tokyo (UTC+09:00) rồi bấm <strong>Lưu</strong>. Hệ thống sẽ tự động ghi nhận thời gian giao dịch của chi nhánh đó theo giờ Nhật Bản. Khi anh/chị xem báo cáo tổng hợp từ Việt Nam, hệ thống sẽ tự quy đổi về múi giờ chi nhánh anh/chị đang đăng nhập để so sánh dễ dàng!" }
-                ]
+                flashcard: {
+                    situation: "Khi tôi trả bớt 50% lô hàng thì tiền phí vận chuyển được hoàn lại tính thế nào?",
+                    advice: "Dạ KiotViet sẽ tự động gợi ý số tiền Chi phí nhập hoàn lại theo đúng tỷ lệ 50% số hàng anh/chị trả. Anh/chị cũng có thể tự điều chỉnh lại số tiền thực tế nếu Nhà cung cấp thỏa thuận khác ạ!"
+                },
+                quiz: {
+                    question: "Khi trả hàng nhập không theo phiếu nhập cũ, hệ thống vẫn tự động chọn sẵn chi phí hoàn lại mà người dùng không cần thao tác.",
+                    answer: false,
+                    explanation: "Đối với Trả hàng nhập nhanh (không theo phiếu nhập cũ), người dùng phải chủ động nhấn vào mục Chi phí nhập hoàn lại để tự chọn khoản phí hoàn."
+                }
             }
         ];
 
-        const quizData = [
+        const ADVANCED_LESSONS = [
             {
-                q: "Quản lý Chi nhánh giúp theo dõi hoạt động chuỗi cửa hàng tập trung nhưng dữ liệu (hàng hóa, khách hàng, giao dịch) của từng chi nhánh vẫn được quản lý độc lập?",
-                isTrue: true,
-                explain: "KiotViet thiết lập dữ liệu độc lập cho từng chi nhánh để bảo mật và quản lý chính xác, đồng thời cung cấp báo cáo tổng hợp cho chủ cửa hàng dễ dàng theo dõi toàn chuỗi."
+                category: 'feature',
+                title: "1. Quản lý các loại chi phí đã tạo (Cập nhật, Tạm ngưng, Xóa)",
+                situation: "Khi loại chi phí thay đổi hoặc không còn sử dụng, bạn cần cập nhật, tạm ngưng hoặc xóa bỏ để đảm bảo dữ liệu gọn gàng.",
+                steps: [
+                    { text: "Tại màn hình Quản lý, vào menu Thiết lập → Xem tất cả thiết lập → Mua hàng → Quản lý chi phí nhập hàng → chọn chi phí.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121224/QLCPNHR_270526-6.png" },
+                    { text: "Nhấn Chỉnh sửa để thay đổi thông tin và bấm Lưu.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121252/QLCPNHR_270526-7.png" },
+                    { text: "Bấm Ngừng hoạt động để tạm ẩn chi phí khỏi danh sách lựa chọn (có thể Cho phép hoạt động lại sau).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121325/QLCPNHR_270526-8.png" },
+                    { text: "Bấm Xóa để xóa vĩnh viễn (Lưu ý: Chỉ được xóa chi phí chưa từng được sử dụng trong bất kỳ giao dịch nào).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121346/QLCPNHR_270526-9.png" }
+                ],
+                flashcard: {
+                    situation: "Loại chi phí nhập hàng đã dùng để nhập 2 đơn hàng tháng trước thì có xóa hoàn toàn được không?",
+                    advice: "Dạ hệ thống quy định bảo toàn dữ liệu lịch sử nên chi phí đã phát sinh giao dịch sẽ không thể Xóa ạ. Nhưng anh/chị có thể bấm 'Ngừng hoạt động' để ẩn chi phí đó đi vô cùng tiện lợi ạ!"
+                },
+                quiz: {
+                    question: "Hệ thống cho phép xóa vĩnh viễn bất kỳ loại chi phí nhập hàng nào kể cả khi đã có giao dịch phát sinh.",
+                    answer: false,
+                    explanation: "Hệ thống chỉ cho phép xóa những loại chi phí chưa từng được sử dụng trong bất kỳ giao dịch nào để bảo toàn dữ liệu sổ sách."
+                }
             },
             {
-                q: "Khi dùng tính năng Quản lý Chi nhánh, tất cả dữ liệu bán hàng của các chi nhánh sẽ bị gộp chung vào một kho duy nhất và không thể quản lý riêng biệt?",
-                isTrue: false,
-                explain: "KiotViet thiết lập dữ liệu độc lập cho từng chi nhánh để bảo mật và quản lý chính xác, đồng thời cung cấp báo cáo tổng hợp cho chủ cửa hàng dễ dàng theo dõi toàn chuỗi."
+                category: 'feature',
+                title: "2. Tùy chỉnh thứ tự hiển thị chi phí",
+                situation: "Bạn muốn sắp xếp các loại chi phí thường dùng lên đầu danh sách khi tạo phiếu nhập để thao tác nhanh hơn.",
+                steps: [
+                    { text: "Trên danh sách Quản lý chi phí nhập hàng, nhấn nút Thứ tự hiển thị.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121400/QLCPNHR_270526-10.png" },
+                    { text: "Kéo thả chi phí để thay đổi vị trí ưu tiên, sau đó nhấn Lưu." },
+                    { text: "Khi tạo phiếu nhập/đặt/trả hàng, danh sách chi phí sẽ sắp xếp theo đúng thứ tự bạn đã chọn." }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng tôi có 10 loại phí nhưng thường xuyên dùng Phí Ship, làm sao để Phí Ship luôn ở dòng đầu tiên?",
+                    advice: "Dạ anh/chị vào mục Thứ tự hiển thị trong Quản lý chi phí nhập hàng, kéo Phí Ship lên vị trí số 1 rồi bấm Lưu. Khi tạo phiếu nhập, Phí Ship sẽ luôn xuất hiện ở ngay dòng đầu tiên giúp thao tác cực nhanh ạ!"
+                },
+                quiz: {
+                    question: "Người dùng có thể sắp xếp lại thứ tự ưu tiên hiển thị của các chi phí nhập hàng bằng thao tác kéo thả.",
+                    answer: true,
+                    explanation: "Tính năng Thứ tự hiển thị cho phép kéo thả để sắp xếp vị trí chi phí theo nhu cầu sử dụng."
+                }
             },
             {
-                q: "Khi thêm mới một chi nhánh trên KiotViet, các thông tin bao gồm Tên chi nhánh, Điện thoại, Địa chỉ, Khu vực, Phường/Xã là bắt buộc phải điền?",
-                isTrue: true,
-                explain: "Các thông tin về địa chỉ và điện thoại là bắt buộc khi tạo chi nhánh mới giúp hệ thống lưu trữ thông tin liên hệ chuẩn xác để phục vụ cho các giao dịch và in ấn hóa đơn."
+                category: 'feature',
+                title: "3. Xem danh sách phiếu nhập/trả hàng có kèm chi phí",
+                situation: "Khi cần lập báo cáo chi tiết hoặc đối soát sổ sách, bạn có thể xem và xuất file Excel các giao dịch nhập/trả hàng có phát sinh chi phí.",
+                steps: [
+                    { text: "Mở màn hình Quản lý Nhập hàng, Đặt hàng nhập hoặc Trả hàng nhập.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25052052/QLCPNHR_250526-16.png" },
+                    { text: "Sử dụng bộ lọc Chi phí nhập trả NCC, Chi phí nhập khác, Chi phí nhập hoàn lại trên danh sách giao dịch." },
+                    { text: "Xuất file Excel tổng quan hoặc chi tiết, file sẽ tự động có thêm các cột thông tin chi phí tương ứng." }
+                ],
+                flashcard: {
+                    situation: "Tôi muốn xuất file Excel danh sách các phiếu nhập tháng này kèm theo chi phí vận chuyển để kế toán đối soát thì làm thế nào?",
+                    advice: "Dạ anh/chị vào màn hình Quản lý Nhập hàng, dùng bộ lọc chi phí rồi bấm Xuất file Excel. File xuất ra sẽ có sẵn các cột Chi phí nhập trả NCC và Chi phí nhập khác rất chi tiết ạ!"
+                },
+                quiz: {
+                    question: "File Excel xuất từ màn hình Quản lý Nhập hàng bao gồm đầy đủ các cột thông tin chi phí nhập hàng.",
+                    answer: true,
+                    explanation: "Các cột thông tin Chi phí nhập trả NCC, Chi phí nhập khác, Chi phí nhập hoàn lại đều được tích hợp đầy đủ trong file xuất Excel."
+                }
             },
             {
-                q: "Hệ thống KiotViet cho phép người dùng lưu chi nhánh mới mà không cần điền bất kỳ thông tin nào về địa chỉ hay số điện thoại?",
-                isTrue: false,
-                explain: "Các thông tin về địa chỉ và điện thoại là bắt buộc khi tạo chi nhánh mới giúp hệ thống lưu trữ thông tin liên hệ chuẩn xác để phục vụ cho các giao dịch và in ấn hóa đơn."
+                category: 'feature',
+                title: "4. Theo dõi ảnh hưởng của chi phí lên công nợ nhà cung cấp",
+                situation: "Hiểu rõ cơ chế cộng trừ công nợ Nhà cung cấp đối với từng hình thức chi phí nhập hàng.",
+                steps: [
+                    { text: "Công nợ NCC tăng lên = [Tiền hàng] + [Chi phí nhập hàng (trả NCC)]." },
+                    { text: "Công nợ NCC giảm đi khi phát sinh [Chi phí nhập hoàn lại] từ phiếu trả hàng." },
+                    { text: "Các khoản [Chi phí nhập hàng khác] (trả cho bên thứ 3) sẽ không được tính vào công nợ của Nhà cung cấp." }
+                ],
+                flashcard: {
+                    situation: "Vì sao khoản Phí vận chuyển 200k tôi chọn trả cho bên viễn thông lại không cộng vào công nợ của Nhà cung cấp A?",
+                    advice: "Dạ vì khoản phí đó anh/chị đã chọn hình thức 'Chi phí nhập hàng khác' (trả bên thứ 3). Hệ thống ghi nhận để tính đúng giá vốn nhưng không tính vào công nợ Nhà cung cấp A, giúp sổ sách công nợ luôn chuẩn xác ạ!"
+                },
+                quiz: {
+                    question: "Mọi loại chi phí ghi nhận trên phiếu nhập hàng đều tự động cộng trực tiếp vào công nợ phải trả Nhà cung cấp.",
+                    answer: false,
+                    explanation: "Chỉ các khoản thuộc Chi phí nhập hàng mới cộng vào công nợ NCC; còn Chi phí nhập hàng khác (trả bên thứ ba) không cộng vào công nợ NCC."
+                }
             },
             {
-                q: "Việc cập nhật thông tin chi nhánh giúp các hóa đơn và báo cáo liên quan luôn hiển thị đúng thông tin địa chỉ và số điện thoại mới nhất của chi nhánh đó?",
-                isTrue: true,
-                explain: "Chức năng Chỉnh sửa cho phép bạn linh hoạt thay đổi các thông tin của chi nhánh bất cứ lúc nào để đồng bộ với sự thay đổi thực tế của cửa hàng."
+                category: 'feature',
+                title: "5. Xem ảnh hưởng của chi phí lên giá vốn trong báo cáo",
+                situation: "Theo dõi chính xác hiệu quả kinh doanh và lãi ròng sau khi giá vốn đã được cộng thêm các khoản chi phí nhập hàng.",
+                steps: [
+                    { text: "Toàn bộ chi phí ('Chi phí nhập hàng' và 'Chi phí nhập hàng khác') đều được phân bổ vào giá nhập kho của sản phẩm." },
+                    { text: "Giá vốn sản phẩm được cập nhật theo tổng chi phí thực tế phát sinh." },
+                    { text: "Xem các Báo cáo Bán hàng, Báo cáo Hàng hóa, Báo cáo Lợi nhuận để theo dõi số liệu đã tự động cập nhật đúng giá vốn mới." }
+                ],
+                flashcard: {
+                    situation: "Giá vốn trên Báo cáo bán hàng đã bao gồm phí bốc dỡ và vận chuyển chưa em?",
+                    advice: "Dạ đã bao gồm đầy đủ rồi ạ! Hệ thống tự động phân bổ toàn bộ chi phí vào giá nhập kho, giúp Báo cáo Bán hàng và Báo cáo Lợi nhuận của anh/chị phản ánh chính xác 100% lãi ròng thực tế ạ!"
+                },
+                quiz: {
+                    question: "Chi phí nhập hàng khác (trả bên thứ ba) không được tính phân bổ vào giá vốn sản phẩm.",
+                    answer: false,
+                    explanation: "Toàn bộ chi phí (cả Chi phí nhập hàng và Chi phí nhập hàng khác) đều được phân bổ vào giá nhập kho và ảnh hưởng trực tiếp đến giá vốn."
+                }
             },
             {
-                q: "Sau khi một chi nhánh đã được lưu trên hệ thống, các thông tin liên lạc của nó sẽ bị khóa vĩnh viễn và không thể chỉnh sửa lại?",
-                isTrue: false,
-                explain: "Chức năng Chỉnh sửa cho phép bạn linh hoạt thay đổi các thông tin của chi nhánh bất cứ lúc nào để đồng bộ với sự thay đổi thực tế của cửa hàng."
+                category: 'feature',
+                title: "6. Tùy chỉnh mẫu in phiếu nhập/trả hàng",
+                situation: "Hiển thị minh bạch các khoản chi phí trên phiếu in gửi cho nhà cung cấp hoặc lưu trữ nội bộ.",
+                steps: [
+                    { text: "Vào Thiết lập → Quản lý mẫu in → chọn mẫu in Nhập hàng, Đặt hàng nhập hoặc Trả hàng nhập." },
+                    { text: "Chèn các trường thông tin chi phí mới như {Chi_Phi_Nhap_Hang}, {Muc_Chi_Phi_Nhap_Hang}, {Chi_Phi_Nhap_Hoan_Lai} vào mẫu in." },
+                    { text: "Nhấn Lưu mẫu in để hoàn tất thiết lập." }
+                ],
+                flashcard: {
+                    situation: "Tôi muốn phiếu in nhập hàng gửi Nhà cung cấp thể hiện rõ khoản phí vận chuyển đã thu thì làm thế nào?",
+                    advice: "Dạ anh/chị vào Quản lý mẫu in, chèn thêm trường dữ liệu {Chi_Phi_Nhap_Hang} vào mẫu in phiếu Nhập hàng. Khi in phiếu ra giấy sẽ hiển thị chính xác dòng chi phí này ạ!"
+                },
+                quiz: {
+                    question: "Người dùng có thể thêm các trường dữ liệu về chi phí nhập hàng vào mẫu in phiếu Nhập hàng và Trả hàng nhập.",
+                    answer: true,
+                    explanation: "Hệ thống cung cấp các thẻ dữ liệu như {Chi_Phi_Nhap_Hang}, {Chi_Phi_Nhap_Hoan_Lai}... để chèn vào thiết kế mẫu in."
+                }
             },
             {
-                q: "Khi cho phép chi nhánh hoạt động trở lại, hệ thống sẽ kiểm tra để đảm bảo tổng số chi nhánh đang hoạt động không vượt quá giới hạn trong hợp đồng của bạn?",
-                isTrue: true,
-                explain: "Hệ thống KiotViet sẽ tự động đối chiếu số lượng chi nhánh đang kích hoạt hoạt động với giới hạn hợp đồng để đảm bảo đúng gói cước dịch vụ mà bạn đã ký kết."
+                category: 'feature',
+                title: "7. Phân quyền truy cập tính năng cho nhân viên",
+                situation: "Giới hạn quyền thao tác quản lý chi phí nhập hàng chỉ dành cho quản lý hoặc kế toán.",
+                steps: [
+                    { text: "Vào Thiết lập → Xem tất cả thiết lập → Quản lý người dùng → chọn tài khoản nhân viên → nhấn Phân quyền.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27121414/QLCPNHR_270526-11.png" },
+                    { text: "Tìm đến mục Nhập hàng → Chi phí nhập hàng." },
+                    { text: "Cấp hoặc bỏ tích chọn các quyền chi tiết: Xem, Tạo, Chỉnh sửa, Xóa theo vị trí công việc của nhân viên." }
+                ],
+                flashcard: {
+                    situation: "Tôi không muốn nhân viên kho tự ý sửa hay tạo mới các loại chi phí nhập hàng thì phân quyền sao?",
+                    advice: "Dạ anh/chị vào Quản lý người dùng -> Phân quyền, chọn vai trò Nhân viên kho và bỏ tích chọn quyền 'Tạo' và 'Chỉnh sửa' trong mục Chi phí nhập hàng. Nhân viên sẽ chỉ thao tác chọn chi phí theo đúng phân quyền ạ!"
+                },
+                quiz: {
+                    question: "Chủ cửa hàng có thể phân quyền chi tiết các chức năng Xem, Tạo, Chỉnh sửa, Xóa chi phí nhập hàng cho từng nhân viên.",
+                    answer: true,
+                    explanation: "Hệ thống hỗ trợ phân quyền chi tiết từng chức năng Xem, Tạo, Chỉnh sửa, Xóa trong phần Quản lý người dùng."
+                }
             },
             {
-                q: "Người dùng có thể tự do mở hoạt động không giới hạn số lượng chi nhánh mà không cần quan tâm đến điều khoản giới hạn trong hợp đồng dịch vụ?",
-                isTrue: false,
-                explain: "Hệ thống KiotViet sẽ tự động đối chiếu số lượng chi nhánh đang kích hoạt hoạt động với giới hạn hợp đồng để đảm bảo đúng gói cước dịch vụ mà bạn đã ký kết."
+                category: 'mobile',
+                title: "8. Thêm chi phí vào phiếu Nhập hàng trên Điện thoại",
+                situation: "Áp dụng nhanh các khoản chi phí nhập hàng ngay khi tạo phiếu nhập trên ứng dụng di động KiotViet.",
+                steps: [
+                    { text: "Sau khi thêm sản phẩm, chuyển đến màn hình thanh toán của phiếu nhập hàng trên App mobile.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25052120/QLCPNHR_250526-18.png" },
+                    { text: "Chạm vào các mục Chi phí nhập trả NCC và Chi phí nhập khác để chọn loại chi phí cần áp dụng." },
+                    { text: "Bấm Xong và tiếp tục bấm Hoàn thành để lưu phiếu nhập hàng." }
+                ],
+                flashcard: {
+                    situation: "Tôi đang đi nhập hàng bên ngoài, dùng điện thoại có chọn được chi phí vận chuyển vào phiếu nhập không?",
+                    advice: "Dạ hoàn toàn được ạ! Ngay trên App KiotViet di động, ở màn hình thanh toán phiếu nhập, anh/chị chỉ cần chạm vào mục Chi phí nhập khác để chọn phí vận chuyển cực kỳ tiện lợi ạ!"
+                },
+                quiz: {
+                    question: "Ứng dụng KiotViet trên điện thoại hỗ trợ chọn chi phí nhập hàng ngay tại màn hình thanh toán phiếu nhập.",
+                    answer: true,
+                    explanation: "Trên app di động, người dùng chọn khoản chi phí phát sinh tại giao diện thanh toán trước khi bấm Hoàn thành."
+                }
             },
             {
-                q: "Khi xóa chi nhánh thành công, thông tin chi nhánh đó sẽ bị khóa lại và toàn bộ nhân viên được trả lương tại chi nhánh này cũng sẽ bị xóa?",
-                isTrue: true,
-                explain: "Thao tác Xóa chi nhánh là hành động dọn dẹp dữ liệu mạnh mẽ. Hệ thống sẽ khóa chi nhánh và xóa tất cả nhân viên được gán trả lương tại chi nhánh này."
-            },
-            {
-                q: "Hành động xóa chi nhánh chỉ tạm ẩn chi nhánh đi và không gây ảnh hưởng gì tới thông tin nhân sự hay nhân viên thuộc chi nhánh đó?",
-                isTrue: false,
-                explain: "Thao tác Xóa chi nhánh là hành động dọn dẹp dữ liệu mạnh mẽ. Hệ thống sẽ khóa chi nhánh và xóa tất cả nhân viên được gán trả lương tại chi nhánh này."
-            },
-            {
-                q: "Khi bạn xem báo cáo gộp của nhiều chi nhánh có múi giờ khác nhau, hệ thống sẽ tự động quy đổi dữ liệu theo múi giờ của chi nhánh bạn đang đăng nhập?",
-                isTrue: true,
-                explain: "Việc quy đổi tự động giúp chủ cửa hàng theo dõi báo cáo gộp thống nhất theo một múi giờ hiện tại mà không bị lệch thời gian giữa các khu vực địa lý khác nhau."
-            },
-            {
-                q: "Khi xem báo cáo gộp của toàn chuỗi cửa hàng ở các nước khác nhau, dữ liệu thời gian của mỗi chi nhánh sẽ giữ nguyên giờ địa phương riêng gây lệch số liệu?",
-                isTrue: false,
-                explain: "Việc quy đổi tự động giúp chủ cửa hàng theo dõi báo cáo gộp thống nhất theo một múi giờ hiện tại mà không bị lệch thời gian giữa các khu vực địa lý khác nhau."
+                category: 'mobile',
+                title: "9. Thêm chi phí hoàn lại vào phiếu Trả hàng nhập trên Điện thoại",
+                situation: "Ghi nhận khoản chi phí được nhà cung cấp hoàn trả khi làm phiếu trả hàng nhập trên di động.",
+                steps: [
+                    { text: "Chuyển đến màn hình thanh toán của phiếu trả hàng nhập trên App KiotViet di động.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/25052133/QLCPNHR_250526-19.png" },
+                    { text: "Tại mục Chi phí nhập hoàn lại, chạm chọn và áp dụng các khoản phí được hoàn trả." },
+                    { text: "Bấm Hoàn thành để ghi nhận phiếu trả hàng." }
+                ],
+                flashcard: {
+                    situation: "Khi làm phiếu trả hàng nhập trên App điện thoại, tôi có thể ghi nhận tiền phí hoàn lại từ Nhà cung cấp không?",
+                    advice: "Dạ được chứ ạ! Anh/chị vào màn hình thanh toán trả hàng trên App di động, chạm mục Chi phí nhập hoàn lại để chọn khoản phí được hoàn trả, giúp giảm trừ công nợ chuẩn xác ngay tức thì ạ!"
+                },
+                quiz: {
+                    question: "Mục Chi phí nhập hoàn lại trên điện thoại giúp ghi nhận số tiền nhà cung cấp hoàn trả khi trả hàng nhập.",
+                    answer: true,
+                    explanation: "Người dùng chạm vào mục Chi phí nhập hoàn lại trên app mobile để ghi nhận chính xác khoản phí được hoàn trả."
+                }
             }
         ];
 
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
 
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
+        function initDataRender() {
+            // Render Benefits
+            const benefitsList = document.getElementById('guide-benefits-list');
+            if (benefitsList) {
+                benefitsList.innerHTML = BENEFITS_DATA.map(b => `
+                    <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                        <h4 class="font-black text-xs sm:text-sm text-[#166def] flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> ${b.title}
+                        </h4>
+                        <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">${b.desc}</p>
+                    </div>
+                `).join('');
             }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
 
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
-                }
+            // Render Glossary
+            const glossaryList = document.getElementById('glossary-list');
+            if (glossaryList) {
+                glossaryList.innerHTML = GLOSSARY_ITEMS.map((g, idx) => `
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1 hover:border-blue-900 transition-all">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <h3 class="font-black text-slate-800 text-xs sm:text-sm text-blue-900">${g.term}</h3>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-7">${g.desc}</p>
+                    </div>
+                `).join('');
+            }
 
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+            renderOverviewLists();
+        }
+
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        window.addEventListener('DOMContentLoaded', initDataRender);
     </script>
 </body>
 </html>
