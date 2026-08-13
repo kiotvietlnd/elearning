@@ -1,1151 +1,953 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Chuyên ngành Nhà thuốc</title>
+    <title>KiotViet E-Learning - Ngành Nhà thuốc</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#0d9488', // Màu Teal chuyên ngành Nhà thuốc / Dược
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #0d9488 !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Ngành Nhà thuốc</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#059669] border border-[#047857] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-prescription-bottle-medical text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Nhà thuốc</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Ngành Nhà thuốc</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #0d9488;">
+            <i class="fa-solid fa-prescription-bottle-medical text-white"></i>
+            <span>NHÀ THUỐC</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0" style="color: #0d9488;"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (&lt;)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #0d9488;">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (&gt;)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #0d948840;">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #0d9488;">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #0d9488;">Ngành Nhà thuốc</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Để đáp ứng những yêu cầu đặc thù và khắt khe của ngành Dược, KiotViet đã phát triển bộ tính năng chuyên ngành Nhà thuốc. Đây là giải pháp quản lý bán hàng toàn diện giúp vận hành hiệu quả, an toàn và tuân thủ đầy đủ các quy định của Bộ Y tế: từ quản lý Lô - Hạn sử dụng (FEFO), liên thông Cơ sở dữ liệu Dược Quốc gia đến tối ưu quy trình bán thuốc theo đơn.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #0d9488;">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/07123037/CHUYEN-NGANH-NHA-THUOC.jpg" alt="Infographic Hướng dẫn Nhà thuốc" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-video-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #0d9488;">
+                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                            <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/2gRySHJVXkk" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #0d9488;">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Nhà thuốc
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-teal-50/50 border border-teal-100 space-y-2">
+                            <i class="fa-solid fa-[#0d9488] fa-shield-halved text-xl text-[#0d9488]"></i>
+                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Tuân thủ quy định Bộ Y tế</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Kết nối và liên thông dữ liệu trực tiếp với CSDL Dược Quốc gia, đảm bảo nhà thuốc hoạt động hợp pháp và minh bạch.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-teal-50/50 border border-teal-100 space-y-2">
+                            <i class="fa-solid fa-boxes-packing text-xl text-[#0d9488]"></i>
+                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Quản lý Lô - Hạn dùng chính xác</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tự động gợi ý xuất bán lô thuốc gần hết hạn trước (FEFO), giảm thiểu tổn thất và rủi ro hết hạn tồn kho.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-teal-50/50 border border-teal-100 space-y-2">
+                            <i class="fa-solid fa-bolt text-xl text-[#0d9488]"></i>
+                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Đẩy nhanh tốc độ bán theo đơn</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tự động đồng bộ mã đơn thuốc từ CSDL Quốc gia, gợi ý thông tin chuẩn giúp giảm sai sót và phục vụ nhanh chóng.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #0d9488;">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3">
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-600"></span> FEFO (First Expired, First Out)
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-4">Nguyên tắc quản lý hàng hóa ưu tiên xuất bán các lô thuốc có hạn sử dụng gần nhất trước, tránh rủi ro đền bù hoặc tiêu hủy hàng quá hạn.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-600"></span> CSDL Dược Quốc gia (CSDLDQG)
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-4">Hệ thống cơ sở dữ liệu tập trung do Bộ Y tế quản lý, bắt buộc các nhà thuốc phải liên thông dữ liệu mua bán, kiểm kho để đảm bảo tính pháp lý.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-600"></span> Quản lý theo Lô - Hạn sử dụng
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-4">Phương pháp quản lý sản phẩm chi tiết tới từng đợt nhập hàng gắn liền với Mã Lô sản xuất và Ngày hết hạn sử dụng cụ thể.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-600"></span> Liên thông Đơn thuốc Quốc gia
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-4">Tính năng cho phép tra cứu và đồng bộ tự động thông tin từ Mã đơn thuốc điện tử do bác sĩ kê đơn trên toàn quốc về KiotViet.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-teal-600"></span> Danh mục Thuốc Cục Quản lý Dược
+                        </h4>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-4">Tập hợp danh mục các mặt hàng thuốc đã được Bộ Y tế phê duyệt lưu hành kèm mã định danh, hoạt chất và quy cách đóng gói chuẩn.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 14</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 28</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- FULL JAVASCRIPT ENGINE V18.0 HOÀN CHỈNH 100% -->
     <script>
-        const unifiedData = [
-          {
-            isIntro: true,
-            icon: "💡",
-            title: "Giới thiệu chung",
-            description: "Để đáp ứng những yêu cầu đặc thù và khắt khe của ngành Dược, KiotViet đã phát triển một bộ tính năng chuyên ngành, được thiết kế riêng để giúp các nhà thuốc vận hành hiệu quả, an toàn và tuân thủ đầy đủ các quy định của Bộ Y tế. Bộ tính năng này không chỉ là một công cụ quản lý bán hàng thông thường mà còn là một giải pháp toàn diện, từ việc quản lý thuốc theo Lô – Hạn sử dụng, liên thông dữ liệu với Cơ sở dữ liệu Dược Quốc gia, đến việc tối ưu hóa quy trình bán thuốc theo đơn. Tất cả đều nhằm mục đích giúp chủ nhà thuốc kiểm soát chặt chẽ hoạt động kinh doanh, giảm thiểu rủi ro và nâng cao chất lượng phục vụ khách hàng.",
-            benefits: [
-              { icon: "fa-shield-halved", title: "Đảm bảo tuân thủ Bộ Y tế", desc: "Hỗ trợ kết nối và liên thông dữ liệu trực tiếp với Cơ sở dữ liệu Dược Quốc gia (CSDLDQG), giúp nhà thuốc hoạt động minh bạch." },
-              { icon: "fa-pills", title: "Quản lý Lô – Hạn sử dụng", desc: "Tự động gợi ý xuất bán các lô thuốc có hạn sử dụng gần nhất trước (FEFO), giúp giảm thiểu rủi ro hết hạn." },
-              { icon: "fa-business-time", title: "Tối ưu hóa quy trình đơn thuốc", desc: "Cho phép đồng bộ đơn thuốc mẫu từ dữ liệu quốc gia, tự động gợi ý thông tin nhanh chóng." }
-            ],
-            updateInfo: "Hiện tại KiotViet đang nâng cấp Giao diện mới 2026. Một số gian hàng sẽ thấy các mục: Nhập hàng, Đặt hàng nhập, Trả hàng nhập, Nhà cung cấp, Hóa đơn đầu vào được chuyển vào menu Mua hàng (thay vì Hàng hóa trước đây). Luồng nghiệp vụ không thay đổi.",
-            youtubeUrl: "https://www.youtube.com/embed/2gRySHJVXkk?si=ScPmPTQcGmJk8m4G",
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/12/07123037/CHUYEN-NGANH-NHA-THUOC.jpg"],
-            chat: [
-              { r: "customer", t: "Nhà thuốc của tôi có những quy định liên thông và quản lý lô rất phức tạp, KiotViet có đáp ứng tốt được không?" },
-              { r: "consultant", t: "Dạ hoàn toàn đáp ứng tốt ạ! Hệ thống đã được thiết kế riêng biệt để liên thông trực tiếp Cơ sở dữ liệu Dược Quốc gia, đồng bộ hóa đơn thuốc mẫu và quản lý cảnh báo hạn dùng tự động theo nguyên tắc FEFO giúp kiểm soát tối đa." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thiết lập kết nối với CSDL Dược Quốc gia",
-            scenario: "BẠN CẦN THIẾT LẬP KẾT NỐI GIỮA CHI NHÁNH NHÀ THUỐC TRÊN KIOTVIET VỚI TÀI KHOẢN TRÊN CSDL DƯỢC QUỐC GIA ĐỂ BẮT ĐẦU LIÊN THÔNG.",
-            steps: [
-              "Tại màn hình <strong>Quản lý</strong>, bạn vào <strong>Thiết lập</strong> → <strong>Quản lý chi nhánh</strong>.",
-              "Khi <strong>Thêm mới</strong> hoặc <strong>Chỉnh sửa</strong> chi nhánh, điền đầy đủ <strong>Thông tin tài khoản kết nối với cơ sở dữ liệu Dược Quốc gia</strong> (Mã cơ sở, Tên đăng nhập, Mật khẩu do Sở Y tế cấp).",
-              "Nhấn <strong>Lưu</strong> để hoàn tất."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15030937/NTR_141025-1-1.png"],
-            chat: [
-              { r: "customer", t: "Làm sao tôi lấy được các thông tin Mã cơ sở và Mật khẩu để khai báo liên thông này?" },
-              { r: "consultant", t: "Dạ các thông tin kết nối này do Sở Y tế địa phương cung cấp riêng cho mỗi cơ sở nhà thuốc, anh/chị cần liên hệ với Sở Y tế địa phương để được cấp trước khi tiến hành khai báo trên KiotViet nhé ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Quản lý Danh mục hàng hóa (Thuốc)",
-            scenario: "BẠN CẦN THÊM SẢN PHẨM THUỐC VÀO HỆ THỐNG VÀ KÍCH HOẠT TÙY CHỌN LIÊN THÔNG LÊN DỮ LIỆU QUỐC GIA.",
-            steps: [
-              "Tại màn hình <strong>Hàng hóa</strong> → <strong>Danh sách hàng hóa</strong>, bạn nhấn <strong>Tạo mới</strong> → chọn <strong>Thuốc</strong>.",
-              "Tại ô <strong>Tên thuốc</strong>, tìm và chọn thuốc theo danh mục có sẵn của Cục Quản lý Dược để hệ thống tự điền các <strong>Thông tin thuốc</strong>.",
-              "Với thuốc ngoài Danh mục, tự nhập tay đầy đủ và tích chọn <strong>Đồng bộ lên CSDL Dược Quốc gia</strong>.",
-              "Có thể khai báo thêm <strong>Tên viết tắt</strong> để phục vụ tìm kiếm nhanh khi bán lẻ."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15030949/NTR_141025-2-1.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031002/NTR_141025-3.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031020/NTR_141025-4.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031040/NTR_141025-5.png"
-            ],
-            chat: [
-              { r: "customer", t: "Nếu tôi chỉnh sửa thông tin thuốc của tôi trên KiotViet thì có làm thay đổi danh mục chung của Cục Quản lý Dược không?" },
-              { r: "consultant", t: "Dạ không ảnh hưởng đâu ạ. Hệ thống cho phép chỉnh sửa thông tin để phù hợp với quy cách bán tại quầy của anh/chị, và các sửa đổi này chỉ có hiệu lực nội bộ trên phần mềm KiotViet của anh/chị thôi ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Quản lý hàng hóa (Nội bộ)",
-            scenario: "QUẢN LÝ CÁC SẢN PHẨM KHÔNG CẦN LIÊN THÔNG QUỐC GIA NHƯNG CẦN KIỂM SOÁT THEO LÔ - HẠN SỬ DỤNG.",
-            steps: [
-              "Tại màn hình <strong>Hàng hóa</strong> → <strong>Danh sách hàng hóa</strong>, nhấn <strong>Tạo mới</strong> → chọn <strong>Hàng hóa</strong>.",
-              "Nhập thông tin cơ bản và tích chọn <strong>Có</strong> ở ô <strong>Quản lý theo lô, hạn sử dụng</strong> để kích hoạt tính năng."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031056/NTR_141025-6.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031118/NTR_141025-7.png"
-            ],
-            chat: [
-              { r: "customer", t: "Mỹ phẩm hay thực phẩm chức năng có hạn dùng tôi có cần khai báo là loại Thuốc không?" },
-              { r: "consultant", t: "Dạ không cần đâu ạ. Với các loại hàng tiêu dùng thông thường, anh/chị chọn Tạo mới Hàng hóa và tích Quản lý theo lô, hạn sử dụng để theo dõi nội bộ mà không cần đồng bộ lên CSDL Dược Quốc gia nhé." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Nhập hàng theo Lô - Hạn sử dụng",
-            scenario: "GHI NHẬN CHÍNH XÁC SỐ LÔ, HẠN SỬ DỤNG VÀ GIÁ VỐN KHI CÓ ĐỢT THUỐC MỚI NHẬP VỀ.",
-            steps: [
-              "Khi tạo phiếu <strong>Nhập hàng</strong>, đối với các sản phẩm quản lý lô, nhấn vào nút <strong>Thêm mới lô, hạn sử dụng</strong>.",
-              "Nhập thông tin <strong>Lô</strong>, <strong>Hạn sử dụng</strong>, <strong>Số lượng</strong> và nhấn <strong>Thêm</strong>.",
-              "Tiếp tục điền <strong>Đơn giá</strong> nhập, hoàn thành hóa đơn để tăng tồn kho cho đúng lô hàng."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031131/NTR_141025-8.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031145/NTR_141025-9.png"
-            ],
-            chat: [
-              { r: "customer", t: "Làm thế nào để hệ thống tự động lưu trữ và quản lý tách biệt số lượng tồn của nhiều lô khác nhau?" },
-              { r: "consultant", t: "Dạ khi anh/chị thực hiện thêm lô trực tiếp khi lập phiếu nhập hàng, KiotViet sẽ tự động lưu và theo dõi số lượng tồn kho cũng như hạn dùng riêng của từng lô hàng cụ thể, vô cùng chính xác ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Bán hàng theo Lô - Hạn sử dụng",
-            scenario: "XUẤT BÁN SẢN PHẨM TỪ LÔ CÓ HẠN SỬ DỤNG GẦN NHẤT ĐỂ TỐI ƯU HÀNG TỒN, TRÁNH LÃNG PHÍ.",
-            steps: [
-              "Tại màn hình bán hàng, tìm kiếm thuốc bằng tên, mã vạch hoặc <strong>Tên viết tắt</strong>.",
-              "Khi thêm vào hóa đơn, hệ thống tự động gợi ý lô cận hạn nhất (FEFO) và hiển thị cảnh báo màu sắc trực quan (màu vàng: cận hạn, màu đỏ: hết hạn).",
-              "Nhấn <strong>Thanh toán</strong> để hoàn tất và trừ đúng số lượng tồn của lô đã chọn."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031201/NTR_141025-10.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031214/NTR_141025-11.png"
-            ],
-            chat: [
-              { r: "customer", t: "Nhân viên của tôi có thể tự ý chọn một lô khác lô hệ thống gợi ý để bán cho khách được không?" },
-              { r: "consultant", t: "Dạ được chứ ạ. Hệ thống tự động gợi ý theo FEFO để bảo vệ lợi ích nhà thuốc, nhưng dược sĩ vẫn có quyền click vào danh sách lô để đổi sang một lô khác cho đúng thực tế giao dịch ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Tạo và sử dụng Đơn thuốc mẫu",
-            scenario: "THIẾT LẬP CÁC ĐƠN THUỐC MẪU TRỊ CÁC BỆNH PHỔ BIẾN ĐỂ GỌI NHANH COMBO KHI BÁN HÀNG.",
-            steps: [
-              "Vào menu <strong>Bác sĩ</strong> → chọn <strong>Đơn thuốc mẫu</strong> và nhấn <strong>Thêm mới</strong>.",
-              "Nhập tên đơn thuốc (Ví dụ: Đơn cảm cúm), tìm kiếm và thêm các loại thuốc kèm liều lượng hướng dẫn cụ thể.",
-              "Khi bán lẻ, chuyển chế độ tìm kiếm sang <strong>Đơn thuốc mẫu</strong> để thêm nhanh toàn bộ combo thuốc vào hóa đơn."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031225/NTR_141025-12.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031237/NTR_141025-13.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031247/NTR_141025-14.png"
-            ],
-            chat: [
-              { r: "customer", t: "Mỗi ngày khách đến hỏi mua combo cảm cúm rất đông, chọn lẻ từng vỉ rất mất thời gian." },
-              { r: "consultant", t: "Dạ chị hãy dùng tính năng Đơn thuốc mẫu này để thiết lập sẵn đơn cảm cúm nhé. Khi bán hàng chỉ cần chọn tên Đơn cảm cúm là hệ thống gọi ra 3-4 loại thuốc kèm liều lượng chỉ trong 1 giây ạ!" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Quản lý thông tin Bác sĩ",
-            scenario: "LƯU TRỮ THÔNG TIN CHI TIẾT BÁC SĨ ĐỂ TRA CỨU VÀ PHỤC VỤ CHO VIỆC LẬP ĐƠN THUỐC BÁN THEO ĐƠN.",
-            steps: [
-              "Truy cập vào menu <strong>Bác sĩ</strong> trên thanh quản lý.",
-              "Nhấn <strong>Thêm mới</strong> hoặc chỉnh sửa để ghi nhận: Tên bác sĩ, số điện thoại, chuyên khoa, nơi công tác..."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031302/NTR_141025-15.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031317/NTR_141025-16.png"
-            ],
-            chat: [
-              { r: "customer", t: "Danh mục bác sĩ này có liên quan gì đến việc quản lý bán hàng của tôi không?" },
-              { r: "consultant", t: "Dạ có ạ, khi bán thuốc theo đơn, hệ thống sẽ yêu cầu chọn thông tin bác sĩ kê đơn để đảm bảo lưu trữ thông tin đầy đủ và xuất báo cáo đúng theo quy định quản lý của Bộ Y tế ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Bán thuốc theo đơn (Liên thông Đơn thuốc Quốc gia)",
-            scenario: "BÁN THUỐC CHÍNH XÁC VÀ ĐỒNG BỘ TRỰC TIẾP TRẠNG THÁI VỚI CỔNG ĐƠN THUỐC QUỐC GIA DONTHUOCQUOCGIA.VN.",
-            steps: [
-              "Trên màn hình <strong>Bán hàng</strong>, sau khi thêm hàng, bạn nhấn vào mục <strong>Bán thuốc theo đơn</strong>.",
-              "Nhập chính xác <strong>Mã đơn thuốc</strong> của khách hàng để hệ thống tự tải thông tin bệnh nhân, bác sĩ và các thuốc kê.",
-              "Nhấn <strong>Xong</strong> để hệ thống tự động đối chiếu mã thuốc liên thông với hàng hóa của KiotViet.",
-              "Nhấn <strong>Thanh toán</strong> để hoàn tất và đồng bộ trạng thái 'Đã bán' lên hệ thống donthuocquocgia.vn."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031328/NTR_141025-17.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031340/NTR_141025-18.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031355/NTR_141025-19.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031413/NTR_141025-20.png"
-            ],
-            chat: [
-              { r: "customer", t: "Nếu thuốc của bác sĩ kê không trùng khớp mã hoặc tôi không có hàng trong kho thì xử lý thế nào?" },
-              { r: "consultant", t: "Dạ hệ thống sẽ cảnh báo đỏ ngay lập tức. Chị có thể chủ động chọn một thuốc tương đương khác có sẵn trên KiotViet của cửa hàng để tư vấn thay thế cho khách nhé ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Quản lý các giao dịch liên thông",
-            scenario: "THEO DÕI TRẠNG THÁI LIÊN THÔNG ĐỒNG BỘ LÊN CỔNG DƯỢC QUỐC GIA CỦA CÁC PHIẾU KHO.",
-            steps: [
-              "KiotViet tự động đồng bộ hóa các giao dịch Nhập, Xuất, Trả hàng có chứa thuốc nằm trong danh mục Cục Quản lý Dược.",
-              "Tại danh sách giao dịch, kiểm tra biểu tượng <strong>tích v xanh</strong> ngay bên cạnh mã phiếu để xác nhận trạng thái liên thông thành công."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031502/NTR_141025-24.png"],
-            chat: [
-              { r: "customer", t: "Làm thế nào tôi kiểm tra được hóa đơn bán hàng hay phiếu nhập đã liên thông thành công lên Bộ Y tế chưa?" },
-              { r: "consultant", t: "Dạ chị chỉ cần mở danh sách hóa đơn hoặc phiếu nhập, hóa đơn nào hiển thị dấu tích xanh nhỏ cạnh mã hóa đơn là đã hoàn tất đồng bộ thành công lên CSDL Dược Quốc gia rồi ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Xem báo cáo hàng hóa theo hạn sử dụng",
-            scenario: "LỌC DANH SÁCH LÔ THUỐC CẬN HẠN TRONG KHO ĐỂ CHỦ ĐỘNG LÊN KẾ HOẠCH TRẢ HÀNG HOẶC KHUYẾN MÃI.",
-            steps: [
-              "Bạn truy cập vào hệ thống <strong>Phân tích</strong> → <strong>Báo cáo</strong> → <strong>Hàng hóa</strong>.",
-              "Chọn mối quan tâm là <strong>Hạn sử dụng</strong> để xem chi tiết thống kê các lô sắp và đã hết hạn sử dụng."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031519/NTR_141025-25.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031530/NTR_141025-26.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi muốn lọc nhanh các mặt hàng chỉ còn dưới 60 ngày hạn sử dụng để kịp đổi trả nhà cung cấp thì làm thế nào?" },
-              { r: "consultant", t: "Dạ trong báo cáo Hạn sử dụng, anh/chị có thể tùy chọn bộ lọc mốc thời gian sắp hết hạn (30, 60, 90 ngày) cực kỳ linh hoạt để hệ thống tự động xuất danh sách chính xác ngay lập tức ạ!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "[Mobile] Thêm mới và Nhập hàng theo Lô - Hạn sử dụng",
-            scenario: "SỬ DỤNG ỨNG DỤNG DI ĐỘNG ĐỂ KHAI BÁO THUỐC MỚI VÀ NHẬP KHO LÔ THUỐC NGAY TẠI QUẦY.",
-            steps: [
-              "Trong menu <strong>Hàng hóa</strong> trên app KiotViet Quản lý, chạm vào dấu <strong>+</strong> để thêm mới <strong>Thuốc</strong>.",
-              "Khi lập phiếu <strong>Nhập hàng</strong>, chạm chọn thuốc và nhấn vào nút <strong>Thêm lô</strong> để nhập Số lô, Hạn sử dụng, Số lượng.",
-              "Hoàn tất lưu phiếu nhập để tự động cập nhật số liệu kho theo lô."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031548/NTR_141025-27.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031602/NTR_141025-28.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031615/NTR_141025-29.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi đang kiểm kho dưới hầm, cầm điện thoại có nhập được lô hàng mới về luôn không?" },
-              { r: "consultant", t: "Dạ hoàn toàn được ạ. Ứng dụng di động hỗ trợ đầy đủ tính năng Thêm lô và lưu Hạn sử dụng trực tiếp vô cùng tiện lợi cho việc nhập hàng lưu động nhé." }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "[Mobile] Bán hàng theo Lô - Hạn sử dụng",
-            scenario: "TIẾN HÀNH LẬP ĐƠN BÁN HÀNG VÀ CHỈ ĐỊNH LÔ THUỐC TRÊN ĐIỆN THOẠI DI ĐỘNG.",
-            steps: [
-              "Mở app KiotViet Bán hàng, tìm kiếm thuốc bằng tên viết tắt hoặc quét mã vạch.",
-              "Chạm vào lô hàng muốn bán từ danh sách tồn kho gợi ý và nhập số lượng.",
-              "Tiến hành thanh toán đơn để hoàn tất giao dịch."
-            ],
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031635/NTR_141025-30.png"],
-            chat: [
-              { r: "customer", t: "Khi lên đơn trên điện thoại có hiện cảnh báo màu sắc cho lô cận hạn giống máy tính không?" },
-              { r: "consultant", t: "Dạ có đầy đủ ạ. Hệ thống hiển thị rõ ràng danh sách lô kèm hạn dùng cận kề để dược sĩ dễ dàng chọn lựa và tư vấn chính xác cho người mua." }
-            ]
-          },
-          {
-            icon: "📟",
-            title: "[Máy POS] Bán hàng theo Lô - Hạn sử dụng",
-            scenario: "DƯỢC SĨ THAO TÁC TRÊN THIẾT BỊ POS ANDROID ĐỂ BÁN THUỐC THEO LÔ NHANH CHÓNG TẠI QUẦY.",
-            steps: [
-              "Tại màn hình bán hàng Máy POS, tìm kiếm sản phẩm thuốc bằng tên hoặc <strong>Tên viết tắt</strong>.",
-              "Hệ thống tự động hiển thị lô cận hạn nhất. Chạm trực tiếp vào lô thuốc để thay đổi chọn lô khác nếu cần.",
-              "Nhấn thanh toán trực tiếp để hoàn thành in hóa đơn tại quầy."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031651/NTR_141025-31.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031705/NTR_141025-32.png"
-            ],
-            chat: [
-              { r: "customer", t: "Giao diện Máy POS cảm ứng nhỏ có gây khó khăn cho nhân viên khi chọn lô không?" },
-              { r: "consultant", t: "Dạ giao diện Máy POS Android được tối ưu hóa với các phím bấm lớn, hiển thị thông tin lô rõ ràng và trực quan nên nhân viên thao tác vô cùng dễ dàng và chính xác ạ." }
-            ]
-          }
-        ];
-
-        const quizData = [
-          { q: "Việc liên thông Cơ sở dữ liệu Dược Quốc gia giúp nhà thuốc tuân thủ quy định pháp luật của Bộ Y tế?", isTrue: true, explain: "Tính năng liên thông CSDL Dược Quốc gia giúp nhà thuốc hoạt động minh bạch, hợp pháp và đảm bảo tuân thủ đầy đủ các quy định nghiêm ngặt của Bộ Y tế." },
-          { q: "Việc nâng cấp giao diện mới 2026 sẽ làm thay đổi hoàn toàn quy trình nghiệp vụ chi tiết của nhà thuốc?", isTrue: false, explain: "Giao diện mới 2026 chỉ thay đổi vị trí sắp xếp một số menu (chuyển sang menu Mua hàng) để trải nghiệm trực quan hơn, hoàn toàn giữ nguyên các quy trình nghiệp vụ chi tiết của nhà thuốc." },
-          
-          { q: "Mỗi chi nhánh nhà thuốc trên KiotViet sẽ tương ứng với một Mã cơ sở kết nối riêng biệt được Sở Y tế cấp?", isTrue: true, explain: "Mỗi chi nhánh hoạt động độc lập trên phần mềm KiotViet sẽ kết nối tương ứng với một Mã cơ sở riêng biệt do Sở Y tế địa phương cung cấp." },
-          { q: "Chủ cửa hàng có thể tự tạo tài khoản liên thông Dược Quốc gia tùy ý mà không cần liên hệ Sở Y tế?", isTrue: false, explain: "Tài khoản liên thông bao gồm Mã cơ sở, Tên đăng nhập và Mật khẩu bắt buộc phải do Sở Y tế địa phương trực tiếp cấp cho nhà thuốc." },
-          
-          { q: "Hàng hóa khi được khai báo dưới loại 'Thuốc' sẽ mặc định được quản lý theo Lô - Hạn sử dụng trên KiotViet?", isTrue: true, explain: "Đối với hàng hóa thuộc loại chuyên biệt là 'Thuốc', phần mềm KiotViet mặc định kích hoạt chế độ quản lý theo Lô và Hạn sử dụng để đảm bảo an toàn dược phẩm." },
-          { q: "Việc thay đổi thông tin chi tiết của thuốc trên KiotViet sẽ làm cập nhật ngược dữ liệu lên cổng danh mục chung của Cục Quản lý Dược?", isTrue: false, explain: "Mọi thay đổi thông tin thuốc chỉ mang tính chất lưu trữ nội bộ trên gian hàng KiotViet của bạn và hoàn toàn không ảnh hưởng hay cập nhật ngược lên danh mục chung quốc gia." },
-          
-          { q: "KiotViet hỗ trợ quản lý lô và hạn sử dụng cho cả các mặt hàng tiêu dùng thông thường không phải là thuốc?", isTrue: true, explain: "Tính năng quản lý theo lô, hạn sử dụng có thể bật chủ động cho cả hàng hóa thông thường (mỹ phẩm, thực phẩm chức năng) để theo dõi kiểm kho nội bộ." },
-          { q: "Toàn bộ hàng hóa bật tính năng quản lý theo lô đều bắt buộc phải đồng bộ trực tiếp lên cổng CSDL Dược Quốc gia?", isTrue: false, explain: "Chỉ các sản phẩm được thiết lập loại là 'Thuốc' và bật tính năng liên thông mới được đồng bộ lên CSDL Dược Quốc gia, các hàng hóa thông thường khác chỉ quản lý nội bộ." },
-          
-          { q: "Nhập thông tin lô và hạn sử dụng khi nhập kho là bắt buộc để hệ thống kích hoạt cảnh báo tồn kho theo hạn dùng?", isTrue: true, explain: "Người dùng cần điền Số lô và Hạn sử dụng chính xác khi làm phiếu nhập hàng để KiotViet phân bổ số liệu tồn kho đúng theo từng lô thực tế." },
-          { q: "Phần mềm KiotViet tự động nhận diện và cập nhật hạn sử dụng của thuốc mà người dùng không cần nhập khi làm phiếu nhập hàng?", isTrue: false, explain: "Thông tin Lô, Hạn sử dụng thực tế bắt buộc phải do nhân viên tự tay khai báo khi làm phiếu nhập để hệ thống ghi nhận chính xác dữ liệu gốc." },
-          
-          { q: "KiotViet hỗ trợ hiển thị màu cảnh báo trực quan cho các lô thuốc cận hạn (màu vàng) và hết hạn (màu đỏ) khi bán hàng?", isTrue: true, explain: "Hệ thống tự động hiển thị màu sắc cảnh báo thông minh: màu vàng cho lô sắp hết hạn và màu đỏ cho lô đã hết hạn để dược sĩ tránh sơ suất xuất kho nhầm." },
-          { q: "Hệ thống khóa cứng và bắt buộc người dùng chỉ được bán lô hàng do KiotViet gợi ý mà không cho phép đổi lô khác?", isTrue: false, explain: "Mặc dù hệ thống áp dụng nguyên tắc FEFO tự động gợi ý lô cận hạn trước, dược sĩ vẫn hoàn toàn có quyền chủ động click chọn lô thuốc khác theo thực tế." },
-          
-          { q: "Tính năng Đơn thuốc mẫu giúp dược sĩ lưu lại liều lượng, cách dùng chuẩn để phục vụ bán nhanh các bệnh thông thường?", isTrue: true, explain: "Đơn thuốc mẫu giúp lưu trữ sẵn một combo thuốc kèm theo hướng dẫn cách dùng chuẩn, giúp dược sĩ thêm nhanh vào hóa đơn chỉ với một click." },
-          { q: "Mọi đơn thuốc mẫu sau khi tạo trên KiotViet sẽ tự động cập nhật lên cổng Đơn thuốc Quốc gia?", isTrue: false, explain: "Đơn thuốc mẫu là tính năng tiện ích nội bộ của KiotViet nhằm tối ưu tốc độ bán hàng tại quầy, hoàn toàn không liên kết và không cập nhật lên cổng quốc gia." },
-          
-          { q: "Nhà thuốc có thể quản lý danh sách bác sĩ kê đơn độc lập với danh sách khách hàng?", isTrue: true, explain: "KiotViet thiết kế một phân hệ quản lý danh sách Bác sĩ kê đơn độc lập để phục vụ cho việc nhập và quản lý hóa đơn thuốc theo đơn chuẩn Bộ Y tế." },
-          { q: "Hệ thống KiotViet bắt buộc phải có thông tin bác sĩ thì mới cho phép thanh toán hóa đơn bán thuốc thông thường?", isTrue: false, explain: "Thông tin bác sĩ chỉ bắt buộc áp dụng khi thực hiện nghiệp vụ 'Bán thuốc theo đơn', các giao dịch bán thuốc thông thường khác không cần nhập bác sĩ." },
-          
-          { q: "Khi nhập đúng Mã đơn thuốc hợp lệ, hệ thống KiotViet sẽ tự động điền toàn bộ thông tin bệnh nhân và bác sĩ từ cổng Đơn thuốc Quốc gia?", isTrue: true, explain: "Tính năng liên thông giúp tự động điền toàn bộ thông tin hành chính của bệnh nhân và bác sĩ kê đơn từ cổng quốc gia donthuocquocgia.vn sang hóa đơn KiotViet." },
-          { q: "Dù thuốc trong đơn quốc gia không trùng khớp với danh mục trên phần mềm, hệ thống vẫn cho phép thanh toán và đồng bộ trực tiếp lên cổng quốc gia mà không cần cảnh báo?", isTrue: false, explain: "Hệ thống sẽ đối chiếu mã liên thông quốc gia. Nếu không trùng khớp, KiotViet sẽ cảnh báo yêu cầu dược sĩ chọn lại thuốc tương đương phù hợp hoặc loại bỏ trước khi thanh toán." },
-          
-          { q: "Mọi giao dịch làm thay đổi tồn kho thuốc (bao gồm cả nhập hàng, hủy, xuất kho) đều được hỗ trợ liên thông lên CSDL Dược Quốc gia?", isTrue: true, explain: "Để kiểm soát chuỗi cung ứng, mọi giao dịch biến động tồn kho thuốc đều được hỗ trợ đồng bộ tự động lên cổng CSDL Dược Quốc gia." },
-          { q: "Chỉ duy nhất giao dịch bán lẻ (Hóa đơn) mới được đồng bộ lên CSDL Dược Quốc gia, còn các giao dịch kho khác không cần liên thông?", isTrue: false, explain: "Cả hóa đơn, trả hàng nhập, nhập hàng, kiểm kho, xuất hủy... đều phải đồng bộ liên thông lên CSDL Dược Quốc gia theo đúng quy định của Bộ Y tế." },
-          
-          { q: "Báo cáo hạn sử dụng giúp chủ cửa hàng chủ động lên kế hoạch xử lý hàng cận hạn để tránh lãng phí, thất thoát vốn?", isTrue: true, explain: "Báo cáo hạn sử dụng thống kê chính xác các lô cận hạn giúp chủ nhà thuốc chủ động lên kế hoạch đổi trả nhà cung cấp hoặc thanh lý kịp thời." },
-          { q: "Báo cáo hạn sử dụng chỉ có thể hiển thị các lô hàng đã hết hạn ở thời điểm hiện tại chứ không thể dự đoán tương lai?", isTrue: false, explain: "Báo cáo hạn sử dụng hỗ trợ lọc dự báo các mốc thời gian hết hạn sắp tới (30, 60, 90 ngày) vô cùng thông minh và chủ động." },
-          
-          { q: "Ứng dụng KiotViet trên điện thoại hỗ trợ đầy đủ nghiệp vụ khai báo thuốc mới và quản lý nhập kho theo lô?", isTrue: true, explain: "Dược sĩ hoàn toàn có thể sử dụng ứng dụng KiotViet trên điện thoại để tạo mới thông tin thuốc, số lô, hạn dùng ngay khi đang làm việc tại kho hàng." },
-          { q: "Do màn hình di động nhỏ, tính năng nhập thông tin lô, hạn sử dụng bị khóa và bắt buộc phải thao tác trên máy tính?", isTrue: false, explain: "Ứng dụng di động được tối ưu hóa hoàn hảo giúp bạn dễ dàng nhập thông tin lô, hạn sử dụng và số lượng nhập kho nhanh chóng, chính xác." },
-          
-          { q: "Ứng dụng bán hàng trên di động cho phép tìm kiếm nhanh thuốc theo tên viết tắt đã thiết lập trên hệ thống?", isTrue: true, explain: "Tính năng tìm kiếm theo Tên viết tắt được đồng bộ mượt mà trên ứng dụng di động giúp việc tìm và lên đơn thuốc tại quầy diễn ra nhanh hơn." },
-          { q: "Khi bán hàng trên điện thoại, hệ thống sẽ tự động trừ kho ngẫu nhiên mà không cho phép dược sĩ chọn đích danh lô thuốc xuất bán?", isTrue: false, explain: "Ứng dụng bán hàng di động cho phép chạm chọn chính xác lô thuốc thực tế cần xuất bán để hệ thống trừ kho chính xác." },
-          
-          { q: "Giao diện KiotViet trên Máy POS hỗ trợ tự động gợi ý lô cận hạn theo nguyên tắc FEFO giống như phiên bản máy tính?", isTrue: true, explain: "Giao diện Máy POS Android thừa hưởng trọn vẹn thuật toán FEFO để tự động hiển thị gợi ý lô thuốc cận hạn trước tiên giúp tối ưu vòng đời sản phẩm." },
-          { q: "Ứng dụng KiotViet trên Máy POS Android chỉ hỗ trợ bán các mặt hàng thông thường và không hỗ trợ nghiệp vụ bán hàng theo lô?", isTrue: false, explain: "Giao diện Máy POS được thiết kế chuyên biệt hỗ trợ đầy đủ nghiệp vụ quản lý bán hàng theo lô và hạn dùng cho ngành dược phẩm cực kỳ mượt mà." }
-        ];
-
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
-
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
+        const BASIC_LESSONS = [
+            {
+                title: "Thiết lập kết nối với CSDL Dược Quốc gia",
+                situation: "Nhà thuốc cần liên thông dữ liệu bán hàng trực tiếp với Cơ sở dữ liệu Dược Quốc gia theo đúng quy định pháp lý của Bộ Y tế.",
+                steps: [
+                    { text: "Tại màn hình Quản lý, truy cập vào menu Thiết lập ➔ chọn Quản lý chi nhánh.", img: null },
+                    { text: "Khi Thêm mới hoặc Chỉnh sửa thông tin chi nhánh, tìm đến mục 'Thông tin tài khoản kết nối với cơ sở dữ liệu Dược Quốc gia' và điền đầy đủ Mã cơ sở, Tên đăng nhập, Mật khẩu (do Sở Y tế cấp).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15030937/NTR_141025-1-1.png" },
+                    { text: "Nhấn Lưu để hoàn tất. Hệ thống sẽ tự động sử dụng thông tin này để đăng ký và liên thông dữ liệu giao dịch.", img: null }
+                ],
+                flashcard: {
+                    situation: "Chủ nhà thuốc e ngại thủ tục kết nối CSDL Dược Quốc gia phức tạp và lo lắng bị phạt nếu không liên thông đúng cách?",
+                    advice: "Anh/chị yên tâm, em hỗ trợ điền Mã cơ sở từ Sở Y tế vào KiotViet chỉ trong 1 phút. Sau đó mọi hóa đơn bán thuốc sẽ tự động đẩy lên hệ thống Dược Quốc gia, giúp cửa hàng hoạt động hoàn toàn hợp pháp, minh bạch mà không phát sinh thêm công sức thủ công."
+                },
+                quiz: {
+                    question: "Mỗi chi nhánh nhà thuốc trên phần mềm KiotViet tương ứng với một Mã cơ sở riêng biệt do Sở Y tế địa phương cấp.",
+                    answer: true,
+                    explanation: "Mỗi chi nhánh độc lập cần một Mã cơ sở kết nối CSDL Dược Quốc gia riêng do Sở Y tế cấp để liên thông chính xác."
+                }
+            },
+            {
+                title: "Quản lý Danh mục hàng hóa (Thuốc)",
+                situation: "Khai báo và quản lý mặt hàng Thuốc vào hệ thống KiotViet, hỗ trợ tự động tìm kiếm thông tin từ Cục Quản lý Dược.",
+                steps: [
+                    { text: "Tại màn hình Hàng hóa ➔ Danh sách hàng hóa ➔ nhấn Tạo mới ➔ chọn Thuốc.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15030949/NTR_141025-2-1.png" },
+                    { text: "Đối với thuốc trong Danh mục Cục Quản lý Dược: Tìm theo tên tại ô 'Tên thuốc', hệ thống sẽ tự động điền các thông tin chuẩn hóa (Hoạt chất, Quy cách đóng gói, Số đăng ký).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031002/NTR_141025-3.png" },
+                    { text: "Đối với thuốc ngoài Danh mục (đăng ký mới): Nhập tên thuốc và điền các thông tin bắt buộc (Đường dùng, Hoạt chất...). Tích chọn 'Đồng bộ lên CSDL Dược Quốc gia'.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031020/NTR_141025-4.png" },
+                    { text: "Hàng hóa loại Thuốc sẽ mặc định bật tính năng Quản lý theo Lô – Hạn sử dụng.", img: null },
+                    { text: "Thiết lập thêm Tên viết tắt theo quy định nội bộ nhà thuốc để giúp tư vấn viên tìm kiếm siêu nhanh khi bán hàng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031040/NTR_141025-5.png" }
+                ],
+                flashcard: {
+                    situation: "Dược sĩ than phiền nhập thông tin thuốc thủ công mất quá nhiều thời gian và hay gõ sai tên hoạt chất?",
+                    advice: "Bên em đã tích hợp sẵn kho dữ liệu chuẩn của Cục Quản lý Dược. Anh/chị chỉ cần gõ tên thuốc là hệ thống tự động điền đầy đủ Hoạt chất, Số đăng ký, Quy cách đóng gói... Tiết kiệm 80% thời gian tạo mới hàng hóa."
+                },
+                quiz: {
+                    question: "Khi chỉnh sửa thông tin thuốc lấy từ Danh mục Cục Quản lý Dược, thông tin thay đổi sẽ cập nhật ngược lại vào danh mục chung của Cục.",
+                    answer: false,
+                    explanation: "Thông tin chỉnh sửa chỉ có hiệu lực nội bộ trên gian hàng KiotViet của nhà thuốc để phù hợp thực tế, không thay đổi dữ liệu gốc của Cục Quản lý Dược."
+                }
+            },
+            {
+                title: "Quản lý hàng hóa (Nội bộ)",
+                situation: "Khai báo các mặt hàng có quản lý Lô - Hạn dùng nhưng nằm ngoài danh mục liên thông với Dược Quốc gia (ví dụ: Thực phẩm chức năng, thiết bị y tế).",
+                steps: [
+                    { text: "Tại màn hình Hàng hóa ➔ Danh sách hàng hóa ➔ nhấn Tạo mới ➔ chọn Hàng hóa.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031056/NTR_141025-6.png" },
+                    { text: "Điền tên sản phẩm, nhóm hàng, giá vốn, giá bán. Chọn 'Có' tại ô 'Quản lý theo lô, hạn sử dụng' để kích hoạt tính năng kiểm soát lô hạn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031118/NTR_141025-7.png" }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng bán thêm thực phẩm chức năng và vật tư y tế cũng có hạn sử dụng, làm sao để theo dõi chung với Thuốc?",
+                    advice: "Anh/chị chỉ cần tạo Hàng hóa thông thường và bật Quản lý theo lô, hạn sử dụng. KiotViet giúp theo dõi sát sao hạn dùng của mọi mặt hàng trong kho mà không làm ảnh hưởng hay xáo trộn dữ liệu liên thông thuốc của Bộ Y tế."
+                },
+                quiz: {
+                    question: "Hàng hóa nội bộ quản lý theo Lô - Hạn sử dụng bắt buộc phải tích chọn đồng bộ CSDL Dược Quốc gia.",
+                    answer: false,
+                    explanation: "Các sản phẩm nội bộ (như thực phẩm chức năng, mỹ phẩm) không thuộc danh mục thuốc bắt buộc liên thông CSDLDQG."
+                }
+            },
+            {
+                title: "Nhập hàng theo Lô - Hạn sử dụng",
+                situation: "Ghi nhận chính xác số lượng, mã lô, hạn dùng và giá vốn khi nhập đợt thuốc mới về kho.",
+                steps: [
+                    { text: "Khi tạo phiếu Nhập hàng, chọn sản phẩm quản lý theo lô ➔ nhấn vào nút 'Thêm mới lô, hạn sử dụng'.", img: null },
+                    { text: "Nhập Tên Lô, Ngày Hạn sử dụng, Số lượng tương ứng ➔ nhấn Thêm.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031131/NTR_141025-8.png" },
+                    { text: "Điền Đơn giá nhập và chọn thông tin Nhà cung cấp.", img: null },
+                    { text: "Nhấn Hoàn thành phiếu nhập để hệ thống chính thức cộng tồn kho cho lô hàng vừa nhập.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031145/NTR_141025-9.png" }
+                ],
+                flashcard: {
+                    situation: "Chủ nhà thuốc băn khoăn về việc cùng 1 tên thuốc nhưng mỗi đợt nhập có hạn sử dụng và giá nhập khác nhau thì quản lý ra sao?",
+                    advice: "KiotViet cho phép anh/chị nhập chi tiết từng Mã Lô và Hạn dùng cho từng đợt nhập. Hệ thống sẽ tách biệt chính xác số lượng và giá vốn từng lô, đảm bảo tính tiền chuẩn xác và kiểm soát tồn kho không bị lẫn lộn."
+                },
+                quiz: {
+                    question: "Phiếu nhập hàng sau khi hoàn thành sẽ lập tức cập nhật số lượng tồn kho theo từng Lô - Hạn sử dụng cụ thể.",
+                    answer: true,
+                    explanation: "Hệ thống tự động cộng tồn kho chi tiết vào đúng lô hàng và hạn dùng đã chọn trong phiếu nhập."
+                }
+            },
+            {
+                title: "Bán hàng theo Lô - Hạn sử dụng",
+                situation: "Xuất bán thuốc theo cơ chế gợi ý nguyên tắc FEFO (lô hạn dùng gần nhất xuất trước) để tránh đọng hàng cận hạn.",
+                steps: [
+                    { text: "Tại màn hình Bán hàng, tìm kiếm sản phẩm theo Tên, Mã hàng, Mã vạch, Mã lô hoặc Tên viết tắt.", img: null },
+                    { text: "Khi thêm mặt hàng vào đơn, KiotViet tự động gợi ý xuất từ lô có hạn sử dụng gần nhất (nguyên tắc FEFO).", img: null },
+                    { text: "Hệ thống cảnh báo trạng thái lô bằng màu sắc: Màu vàng cho lô sắp hết hạn và Màu đỏ cho lô đã hết hạn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031201/NTR_141025-10.png" },
+                    { text: "Nhân viên có thể chủ động chọn sang lô khác từ danh sách nếu khách hàng yêu cầu.", img: null },
+                    { text: "Nhập thông tin khách hàng, số tiền thanh toán và bấm Hoàn thành hóa đơn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031214/NTR_141025-11.png" }
+                ],
+                flashcard: {
+                    situation: "Dược sĩ bán hàng bận rộn thường quên không kiểm tra hạn dùng, dẫn đến xuất nhầm vỉ thuốc hết hạn cho người bệnh?",
+                    advice: "Màn hình bán hàng KiotViet tự động khóa hoặc đổi màu đỏ cảnh báo lô thuốc hết hạn, đồng thời tự ưu tiên chọn lô cận hạn xuất trước. Dược sĩ chỉ cần bấm bán mà hoàn toàn yên tâm về độ an toàn sản phẩm."
+                },
+                quiz: {
+                    question: "Màn hình bán hàng KiotViet cảnh báo màu đỏ đối với các lô thuốc đã hết hạn sử dụng.",
+                    answer: true,
+                    explanation: "Cảnh báo màu sắc giúp nhân viên nhận biết ngay lập tức: màu vàng là sắp hết hạn, màu đỏ là đã hết hạn."
+                }
             }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
+        ];
 
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Tạo và sử dụng Đơn thuốc mẫu",
+                situation: "Nhà thuốc muốn thiết lập sẵn các đơn thuốc mẫu cho những bệnh phổ biến (cảm cúm, đau đầu...) để tư vấn bán nhanh tại quầy.",
+                steps: [
+                    { text: "Vào menu Bác sĩ ➔ chọn Đơn thuốc mẫu ➔ nhấn Thêm mới.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031225/NTR_141025-12.png" },
+                    { text: "Đặt tên đơn thuốc (Ví dụ: Đơn cảm cúm người lớn), tìm chọn các loại thuốc và nhập liều dùng/cách dùng chi tiết ➔ Bấm Lưu.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031237/NTR_141025-13.png" },
+                    { text: "Khi bán hàng, chuyển sang chế độ tìm kiếm 'Đơn thuốc mẫu' để tải nhanh toàn bộ thuốc và liều dùng vào hóa đơn chỉ với 1 click.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031247/NTR_141025-14.png" }
+                ],
+                flashcard: {
+                    situation: "Vào giờ cao điểm khách đông, việc gõ từng loại thuốc và hướng dẫn liều dùng tốn rất nhiều thời gian?",
+                    advice: "Anh/chị chỉ cần tạo sẵn các Đơn thuốc mẫu cho các bệnh thông thường. Khi bán hàng chỉ cần chọn đơn mẫu, KiotViet sẽ tự động lấy đủ thuốc và in sẵn hướng dẫn liều dùng lên hóa đơn, giảm bớt 70% thời gian chờ đợi của khách."
+                },
+                quiz: {
+                    question: "Tính năng Đơn thuốc mẫu cho phép tự động thêm nhiều loại thuốc cùng liều dùng chi tiết vào đơn hàng.",
+                    answer: true,
+                    explanation: "Đơn thuốc mẫu giúp thêm nhanh toàn bộ sản phẩm và hướng dẫn liều dùng đã cài đặt sẵn vào hóa đơn."
                 }
+            },
+            {
+                category: 'feature',
+                title: "Quản lý thông tin Bác sĩ",
+                situation: "Lưu trữ thông tin bác sĩ kê đơn để phục vụ quản lý bán thuốc theo đơn và tra cứu báo cáo kê đơn.",
+                steps: [
+                    { text: "Truy cập vào menu Bác sĩ trên màn hình Quản lý.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031302/NTR_141025-15.png" },
+                    { text: "Nhấn Thêm mới bác sĩ và nhập các thông tin chi tiết: Họ tên, Số điện thoại, Chuyên khoa, Nơi công tác... ➔ Nhấn Lưu.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031317/NTR_141025-16.png" }
+                ],
+                flashcard: {
+                    situation: "Nhà thuốc cần theo dõi xem bác sĩ nào thường xuyên kê đơn để phục vụ các yêu cầu quản lý chuyên môn?",
+                    advice: "Danh mục Bác sĩ trên KiotViet giúp anh/chị lưu đầy đủ hồ sơ bác sĩ kê đơn. Khi bán hàng chỉ cần gõ tên bác sĩ, hệ thống sẽ thống kê đầy đủ doanh số bán theo từng bác sĩ rõ ràng."
+                },
+                quiz: {
+                    question: "Thông tin Bác sĩ có thể được lưu trữ bao gồm nơi công tác và chuyên khoa kê đơn.",
+                    answer: true,
+                    explanation: "KiotViet hỗ trợ lưu trữ chi tiết Họ tên, SĐT, Chuyên khoa, Nơi công tác của bác sĩ để tra cứu."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Bán thuốc theo đơn (Liên thông Đơn thuốc Quốc gia)",
+                situation: "Bán thuốc khi bệnh nhân mang đơn thuốc điện tử có mã số từ hệ thống Đơn thuốc Quốc gia.",
+                steps: [
+                    { text: "Trên màn hình Bán hàng, nhấn vào tính năng 'Bán thuốc theo đơn' và nhập Mã đơn thuốc điện tử.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031328/NTR_141025-17.png" },
+                    { text: "Hệ thống tự động tải và điền thông tin bệnh nhân, chẩn đoán, bác sĩ và cơ sở khám bệnh từ trang donthuocquocgia.vn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031340/NTR_141025-18.png" },
+                    { text: "Hệ thống đối chiếu mã thuốc trong đơn với danh mục kho nhà thuốc. Nếu trùng khớp, tự động tải danh sách thuốc và liều dùng kê đơn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031355/NTR_141025-19.png" },
+                    { text: "Trường hợp không trùng khớp thuốc, KiotViet phát cảnh báo để dược sĩ chủ động chọn thuốc thay thế hoặc bỏ qua.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031413/NTR_141025-20.png" },
+                    { text: "Thực hiện thanh toán. Số lượng bán thực tế sẽ tự động đồng bộ sang mục 'Đã bán' trên CSDL Đơn thuốc Quốc gia.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031423/NTR_141025-21.png" }
+                ],
+                flashcard: {
+                    situation: "Bệnh nhân cầm mã đơn thuốc điện tử đến mua, dược sĩ gõ lại thông tin rất dễ sai sót tên bệnh nhân và liều dùng?",
+                    advice: "Anh/chị chỉ cần nhập Mã đơn thuốc, KiotViet tự động kéo trọn bộ thông tin Bệnh nhân, Bác sĩ, Tên thuốc và Liều dùng từ Đơn thuốc Quốc gia về. Chuẩn xác 100% và cực kỳ chuyên nghiệp."
+                },
+                quiz: {
+                    question: "Khi bán thuốc theo đơn liên thông thành công, số lượng thuốc đã bán sẽ tự động ghi nhận lên trang donthuocquocgia.vn.",
+                    answer: true,
+                    explanation: "Giao dịch bán thành công trên KiotViet sẽ tự động đồng bộ thông tin số lượng đã bán lên CSDL Đơn thuốc Quốc gia."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Quản lý các giao dịch liên thông",
+                situation: "Kiểm tra và quản lý trạng thái đồng bộ dữ liệu của tất cả các giao dịch (Nhập kho, Trả hàng, Kiểm kho, Xuất hủy) lên CSDL Dược Quốc gia.",
+                steps: [
+                    { text: "Mọi thao tác Tạo mới, Chỉnh sửa, Hủy các phiếu Nhập hàng, Trả hàng, Xuất hủy... chứa thuốc liên thông sẽ tự động được gửi lên CSDLDQG.", img: null },
+                    { text: "Trên danh sách giao dịch, các hóa đơn/phiếu liên thông thành công sẽ xuất hiện biểu tượng Tích xanh bên cạnh Mã phiếu.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031502/NTR_141025-24.png" }
+                ],
+                flashcard: {
+                    situation: "Chủ nhà thuốc lo lắng không biết các hóa đơn nhập xuất trong ngày đã được gửi lên Bộ Y tế chưa?",
+                    advice: "Trạng thái liên thông được hiển thị trực quan bằng Biểu tượng Tích xanh ngay cạnh mã phiếu. Anh/chị nhìn vào màn hình là biết ngay phiếu nào đã đồng bộ thành công, không lo sót dữ liệu."
+                },
+                quiz: {
+                    question: "Biểu tượng tích xanh bên cạnh mã phiếu thể hiện giao dịch đã được liên thông thành công lên CSDL Dược Quốc gia.",
+                    answer: true,
+                    explanation: "Tích xanh là dấu hiệu nhận biết trực quan các giao dịch đã đồng bộ dữ liệu thành công với CSDLDQG."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Xem báo cáo hàng hóa theo hạn sử dụng",
+                situation: "Chủ nhà thuốc cần kiểm tra danh sách các lô thuốc sắp hết hạn để chủ động có kế hoạch xả hàng hoặc trả lại nhà cung cấp.",
+                steps: [
+                    { text: "Truy cập vào menu Phân tích ➔ chọn Báo cáo ➔ chọn Báo cáo Hàng hóa.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031519/NTR_141025-25.png" },
+                    { text: "Tại tiêu chí báo cáo, chọn mối quan tâm là 'Hạn sử dụng'. Màn hình sẽ thống kê chi tiết danh sách lô hàng sắp hết hạn và đã hết hạn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031530/NTR_141025-26.png" }
+                ],
+                flashcard: {
+                    situation: "Cuối tháng kiểm kho mới phát hiện nhiều hộp thuốc đắt tiền đã hết hạn từ lâu phải bỏ đi gây tổn thất lớn?",
+                    advice: "Báo cáo Hạn sử dụng trên KiotViet sẽ tự động lọc ra toàn bộ thuốc sắp hết hạn trước 30, 60 hay 90 ngày. Anh/chị chỉ cần mở báo cáo là biết ngay cần đẩy bán sản phẩm nào trước, loại bỏ hoàn toàn lãng phí đền bù."
+                },
+                quiz: {
+                    question: "Báo cáo Hàng hóa theo Hạn sử dụng giúp lọc ra danh sách các lô thuốc sắp hết hạn để cửa hàng xử lý kịp thời.",
+                    answer: true,
+                    explanation: "Mối quan tâm Hạn sử dụng trong Báo cáo Hàng hóa cho phép liệt kê chi tiết các lô cận hạn hoặc đã hết hạn."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Thêm mới và Nhập hàng theo Lô - Hạn sử dụng trên Mobile",
+                situation: "Thực hiện tạo mặt hàng thuốc mới và lập phiếu nhập kho theo lô hạn dùng ngay trên ứng dụng di động KiotViet.",
+                steps: [
+                    { text: "Mở app KiotViet Quản lý ➔ chọn menu Hàng hóa ➔ chạm vào dấu (+) để thêm mới Thuốc và bật Quản lý theo lô.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031548/NTR_141025-27.png" },
+                    { text: "Khi lập phiếu Nhập hàng trên điện thoại, sau khi chọn thuốc, ứng dụng sẽ mở giao diện 'Thêm lô'.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031602/NTR_141025-28.png" },
+                    { text: "Nhập Tên Lô, Ngày hết hạn và Số lượng nhập ➔ Bấm Xong để hoàn tất nhập kho.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031615/NTR_141025-29.png" }
+                ],
+                flashcard: {
+                    situation: "Chủ nhà thuốc đi nhập hàng bên ngoài, muốn kiểm hàng và nhập kho trực tiếp tại kho hàng nhà cung cấp?",
+                    advice: "Anh/chị cầm điện thoại bật App KiotViet là có thể quét mã, tạo lô và nhập kho ngay tại chỗ. Tồn kho tự động tăng lên ngay lập tức mà không cần chờ về nhà gõ máy tính."
+                },
+                quiz: {
+                    question: "Ứng dụng KiotViet trên di động cho phép nhập đầy đủ Tên lô và Hạn sử dụng khi tạo phiếu nhập hàng.",
+                    answer: true,
+                    explanation: "App KiotViet di động hỗ trợ đầy đủ quy trình tạo lô, nhập hạn sử dụng và số lượng nhập kho."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Bán hàng theo Lô - Hạn sử dụng trên Mobile",
+                situation: "Tạo đơn hàng và chọn lô thuốc xuất bán trực tiếp bằng ứng dụng KiotViet Bán hàng trên điện thoại.",
+                steps: [
+                    { text: "Tìm kiếm thuốc cần bán theo Tên, Mã hàng, Mã lô hoặc Tên viết tắt.", img: null },
+                    { text: "Ứng dụng hiển thị danh sách các lô hàng. Chạm vào Lô cần xuất bán và nhập số lượng tương ứng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031635/NTR_141025-30.png" },
+                    { text: "Tiến hành thu tiền và hoàn tất hóa đơn.", img: null }
+                ],
+                flashcard: {
+                    situation: "Dược sĩ cần đứng tại kệ thuốc dùng tablet/điện thoại tư vấn và chọn lô bán trực tiếp cho khách?",
+                    advice: "Với ứng dụng KiotViet Bán hàng trên di động, dược sĩ chọn thuốc đến đâu có thể chạm chọn ngay Lô hạn tương ứng trên kệ. Bán hàng di động cực kỳ linh hoạt và hiện đại."
+                },
+                quiz: {
+                    question: "Khi bán hàng trên ứng dụng mobile, người dùng có thể chủ động chọn lô hàng cần xuất bán từ danh sách.",
+                    answer: true,
+                    explanation: "Màn hình mobile liệt kê danh sách lô để người dùng chạm chọn chính xác lô thuốc cần xuất bán."
+                }
+            },
+            {
+                category: 'pos',
+                title: "Bán hàng theo Lô - Hạn sử dụng trên Máy POS",
+                situation: "Dược sĩ thao tác bán thuốc chọn lô siêu tốc trên màn hình cảm ứng của Máy POS Android đặt tại quầy.",
+                steps: [
+                    { text: "Tìm kiếm thuốc theo tên hoặc tên viết tắt trên giao diện máy POS.", img: null },
+                    { text: "Máy POS hiển thị cửa sổ gợi ý lô thuốc có hạn sử dụng gần nhất. Dược sĩ có thể đổi sang lô khác nếu muốn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031651/NTR_141025-31.png" },
+                    { text: "Xác nhận chọn lô để đưa thuốc vào hóa đơn và thực hiện thanh toán.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2025/10/15031705/NTR_141025-32.png" }
+                ],
+                flashcard: {
+                    situation: "Nhà thuốc sử dụng máy POS cảm ứng tại quầy lo lắng việc chọn lô thuốc sẽ bị chạm nhầm hoặc chậm ca bán?",
+                    advice: "Giao diện KiotViet POS được tối ưu nút bấm to rõ cho màn hình cảm ứng. Hệ thống tự động chọn sẵn lô cận hạn nhất, dược sĩ chỉ cần chạm 1 chạm là hoàn thành chọn lô cực nhanh."
+                },
+                quiz: {
+                    question: "Trên Máy POS Android, KiotViet tự động gợi ý lô thuốc có hạn sử dụng gần nhất.",
+                    answer: true,
+                    explanation: "Nguyên tắc FEFO tự động gợi ý chọn lô cận hạn nhất trước trên cả màn hình máy POS."
+                }
+            }
+        ];
 
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
+
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain bg-slate-50 select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN (ROUNDED-2XL CHUẨN VIỀN) -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC (NỀN SÁNG CHỮ ĐEN) -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        // Khởi tạo các danh sách bài học trên giao diện bìa
+        document.addEventListener('DOMContentLoaded', function() {
+            renderOverviewLists();
+        });
     </script>
 </body>
 </html>
