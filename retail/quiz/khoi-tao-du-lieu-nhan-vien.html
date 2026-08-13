@@ -1,1307 +1,965 @@
 <!DOCTYPE html>
-<html lang="vi" class="scroll-smooth h-full">
+<html lang="vi" class="h-full w-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KiotViet E-Learning - Khởi tạo dữ liệu Quản lý Nhân viên (Bán buôn, Bán lẻ)</title>
+    <title>KiotViet E-Learning - Khởi tạo dữ liệu Quản lý Nhân viên</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: 'Inter', sans-serif; color: #334155; background-color: #f8fafc; font-size: 12px; }
-        .tech-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; background: conic-gradient(at top right, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        body, p, li, button, .step-text-content, .explain-box, .chat-content, .chat-content-focus, .topic-item, .nav-main-btn, .nav-quiz-btn, span:not(.heading-text), div:not(.heading-text), a {
-            font-size: 12px !important;
-            line-height: 1.6 !important;
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .sidebar-tab-btn.active-guide,
+        .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-glossary,
+        .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-basic,
+        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
+        
+        .sidebar-tab-btn.active-advanced,
+        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+
+        .sidebar-tab-btn.active-guide i,
+        .sidebar-tab-btn.active-glossary i,
+        .sidebar-tab-btn.active-basic i,
+        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
         }
-        
-        .nav-main-btn { transition: all 0.2s ease; border: 1px solid transparent; }
-        .nav-main-btn.active { background-color: #166def; color: #ffffff; border-color: #166def; box-shadow: 0 2px 8px -1px rgba(22,109,239,0.3); }
-        .nav-main-btn:not(.active):hover { background-color: #f8fafc; color: #166def; border-color: #166def; }
-        
-        .nav-quiz-btn { transition: all 0.2s ease; border: 1px solid transparent; background-color: #16a34a; color: #ffffff; border-color: #15803d; }
-        .nav-quiz-btn.active { background-color: #15803d; color: #ffffff; border-color: #166534; box-shadow: 0 4px 10px -3px rgba(22,163,74,0.3); }
-        .nav-quiz-btn:not(.active):hover { background-color: #15803d; border-color: #166534; color: #fff; }
-        
-        .topic-item { transition: all 0.2s; border-left: 3px solid transparent; }
-        .topic-item:hover { background-color: rgba(255,255,255,0.05); color: #166def; }
-        .topic-item.active { background-color: rgba(255,255,255,0.08); color: #ffffff; border-left-color: #166def; font-weight: 700; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-list { list-style-type: disc; padding-left: 1.2rem; margin-top: 0.5rem; }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .btn-interact:hover { transform: translateY(-2px); }
+        .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
+        .img-zoomable:hover { transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col h-full overflow-hidden select-none">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
 
-    <div class="tech-bg"></div>
-
-    <header class="shrink-0 bg-[#166def] border-b border-black/10 shadow-sm py-1.5 sm:py-2 px-3 sm:px-4 z-50">
-        <div class="container mx-auto flex justify-between items-center max-w-none w-full">
-            <div class="flex items-center gap-2 sm:gap-3 select-none">
-                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6" style="filter: brightness(0) invert(1);">
-                <span class="text-white/30 font-light text-lg hidden sm:inline">|</span>
-                <div class="hidden sm:block">
-                    <h1 class="text-xs sm:text-sm font-bold text-white tracking-tight uppercase leading-tight heading-text">Khởi tạo dữ liệu Quản lý Nhân viên</h1>
-                </div>
+    <!-- HEADER MAIN -->
+    <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-3 truncate">
+            <div class="shrink-0 bg-white p-1 rounded-md flex items-center">
+                <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-4 sm:h-5">
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-[#06b6d4] border border-[#0891b2] px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-store text-white text-xs"></i>
-                    <span class="text-white font-bold tracking-wide" style="font-size: 11px !important;">Bán buôn, Bán lẻ</span>
-                </div>
+            <span class="text-white/40 text-lg font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate" id="main-feature-title">Khởi tạo dữ liệu Quản lý Nhân viên</h1>
+                <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
+        </div>
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
+            <i class="fa-solid fa-store text-white"></i>
+            <span>Bán buôn, Bán lẻ</span>
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-none px-4 py-3 flex flex-col md:flex-row overflow-hidden gap-4 relative min-h-0">
-        
-        <!-- SIDEBAR RỘNG HƠN (w-72 / w-80) & TIÊU ĐỀ TỰ ĐỘNG XUỐNG DÒNG -->
-        <div class="shrink-0 w-full md:w-72 lg:w-80 bg-[#073c6c] rounded-xl shadow-sm border border-slate-800 flex flex-col z-30 overflow-hidden order-2 md:order-1 max-h-[25vh] md:max-h-full">
-            <div class="p-2 sm:p-3 border-b border-slate-800 shrink-0 bg-slate-900/50">
-                <span class="text-slate-200 font-bold uppercase tracking-wider block heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-list mr-1"></i> Danh sách bài học</span>
+    <!-- RIGHT SIDEBAR NAVIGATION -->
+    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
+        <div class="p-2 space-y-1.5 overflow-y-auto">
+            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                <span class="hidden md:inline truncate">Hướng dẫn học</span>
+            </button>
+            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                <span class="hidden md:inline truncate">Thuật ngữ</span>
+            </button>
+            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
+            </button>
+            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
+            </button>
+        </div>
+
+        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
+            <div class="relative group flex-1">
+                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác trước (<)
+                </div>
             </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5" id="sidebar-topic-list"></div>
-            <div class="p-2 border-t border-slate-800 shrink-0 bg-slate-900/50">
-                <button onclick="switchMainTab('kiem-tra')" id="btn-kiem-tra" class="nav-quiz-btn w-full py-2 rounded-lg font-black flex items-center justify-center gap-1.5 shadow-sm text-white">
-                    <i class="fa-solid fa-circle-question text-sm text-white"></i> Quiz Game
+            <div class="relative group flex-1">
+                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
+                    <i class="fa-solid fa-chevron-right text-white"></i>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    Thao tác tiếp (>)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
+        
+        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+                
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Khởi tạo dữ liệu Quản lý Nhân viên</h2>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                        Tính năng Khởi tạo dữ liệu Quản lý Nhân viên đóng vai trò như một luồng dẫn dắt thông minh dành riêng cho các gian hàng mới bắt đầu sử dụng phần mềm Quản lý nhân sự. Thay vì phải tự tìm kiếm các thiết lập rải rác, tính năng này cung cấp một lộ trình tuần tự, giúp bạn nhanh chóng thiết lập hệ thống từ những bước cơ bản nhất: thêm nhân viên, cấu hình ca làm việc, cài đặt chấm công cho đến khi tạo thành công bảng lương tự động.
+                    </p>
+                </div>
+
+                <div class="space-y-6" id="guide-media-block">
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/22045152/KTE_220626-1.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 hidden" id="guide-video-container">
+                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                        </h3>
+                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                            <iframe id="guide-video-iframe" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">1</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Lộ trình trực quan, xóa bỏ sự bỡ ngỡ</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Giải quyết triệt để bài toán "không biết bắt đầu từ đâu" của người dùng mới nhờ lộ trình từng bước rõ ràng.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">2</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Thiết lập siêu tốc nhờ gợi ý thông minh</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Gợi ý sẵn ca làm phổ biến, giao diện thêm nhiều nhân viên cùng lúc và thiết lập ngày nghỉ lễ theo chuẩn.</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-100 text-[#166def] flex items-center justify-center font-black text-sm">3</div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm">Đảm bảo vận hành chuẩn xác ngay từ đầu</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Thiết kế khóa chiều đảm bảo nền tảng dữ liệu đồng bộ, giúp máy chấm công và tính lương hoạt động chính xác.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: THUẬT NGỮ -->
+        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
+            <div class="max-w-4xl mx-auto space-y-4 pb-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900">
+                        <i class="fa-solid fa-book-bookmark text-xl"></i>
+                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                </div>
+                <div id="glossary-list" class="space-y-3">
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-slate-900 text-xs sm:text-sm text-[#166def]">Ca làm việc</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Khung giờ định nghĩa thời gian làm việc vào/ra tiêu chuẩn của nhân viên trong ngày (ví dụ: Ca sáng, Ca chiều, Ca tối).</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-slate-900 text-xs sm:text-sm text-[#166def]">Bảng chấm công</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Hệ thống ghi nhận và tự động tổng hợp thời gian làm việc thực tế của nhân viên thông qua Zalo Mini App, Vân tay hoặc Chấm công tự động.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-slate-900 text-xs sm:text-sm text-[#166def]">Chi nhánh trả lương</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Chi nhánh trực tiếp hạch toán và chi trả chi phí lương cho nhân viên. Mỗi nhân viên chỉ thuộc duy nhất 01 Chi nhánh trả lương.</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
+                        <h3 class="font-black text-slate-900 text-xs sm:text-sm text-[#166def]">Zalo Mini App (KiotViet Nhân viên)</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">Ứng dụng tích hợp trên Zalo cá nhân giúp nhân viên thực hiện chấm công định vị GPS, xem lịch làm việc và phiếu lương trực tuyến.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                    </div>
+                    <div class="space-y-3 text-left pt-1">
+                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                        </h4>
+                        <div id="basic-overview-list" class="space-y-2.5"></div>
+                    </div>
+                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
+                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
+                    <div class="space-y-3">
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                    </div>
+
+                    <div class="space-y-6 text-left pt-2">
+                        <div id="adv-group-features" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                            </h4>
+                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-mobile" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
+                            </h4>
+                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
+                        </div>
+
+                        <div id="adv-group-pos" class="space-y-3">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                            </h4>
+                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    </button>
+                </div>
+            </div>
+            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
+        </div>
+
+    </main>
+
+    <!-- POPUP HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-[#166def]">
+            <div class="w-16 h-16 bg-blue-100 text-[#166def] rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học nâng cao
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="main-content-container" class="flex-1 overflow-hidden flex flex-col bg-white/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 relative order-1 md:order-2">
-            
-            <div id="learning-content-wrapper" class="flex-1 flex flex-col overflow-hidden">
-                <div class="shrink-0 px-4 py-2 border-b border-slate-200/60 flex justify-between items-center bg-white z-10 shadow-sm gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="content-header-icon" class="text-base sm:text-lg">💡</span>
-                        <h2 id="content-header-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate heading-text">Tiêu đề</h2>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span id="slide-progress-badge" class="font-bold text-[#166def] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100" style="font-size: 10px !important;">Bài 1 / 15</span>
-                    </div>
-                </div>
-
-                <div id="content-body" class="flex-1 overflow-hidden relative bg-slate-50/30"></div>
-
-                <div class="shrink-0 bg-white border-t border-slate-200/80 px-4 py-2 flex items-center justify-between z-10 shadow-inner">
-                    <button id="btn-slide-prev" onclick="changeTopic(-1)" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-30">
-                        Bài trước
-                    </button>
-                    <div id="slide-dots-container" class="flex gap-1.5"></div>
-                    <button id="btn-slide-next" onclick="changeTopic(1)" class="px-3 py-1 bg-[#166def] hover:opacity-90 text-white font-bold rounded-lg flex items-center gap-1.5 transition-colors">
-                        Bài sau
-                    </button>
-                </div>
+    <!-- POPUP HOÀN THÀNH TOÀN BỘ -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-trophy"></i>
             </div>
-
-            <div id="sec-kiem-tra" class="hidden flex-1 overflow-hidden flex-col p-4 bg-slate-50/50 justify-between">
-                <div class="shrink-0 flex items-center justify-between border-b border-slate-200 pb-2">
-                    <h3 class="text-slate-800 font-black flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-solid fa-brain text-orange-500"></i> Bài tập củng cố kiến thức</h3>
-                    <button onclick="exitQuiz()" class="bg-[#166def] hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow-sm transition-colors">
-                        Quay lại Bài học
-                    </button>
-                </div>
-                
-                <div class="flex-1 flex items-stretch justify-center p-2 overflow-hidden mt-3">
-                    <div class="w-full h-full grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
-                        
-                        <div class="bg-[#f0f7ff] border border-blue-200 rounded-2xl p-3 flex flex-col overflow-hidden max-h-full shadow-sm">
-                            <span class="text-slate-500 font-bold uppercase tracking-wider block mb-2 heading-text" style="font-size: 10px !important;"><i class="fa-solid fa-square-poll-vertical mr-1"></i> Tiến trình thử thách</span>
-                            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 flex flex-col no-scrollbar" id="quiz-progress-dashboard-list"></div>
-                        </div>
-
-                        <div id="quiz-active-card-container" class="bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar"></div>
-
-                        <div id="quiz-active-remark-column" class="bg-[#f0f7ff] border border-blue-200 p-5 rounded-2xl shadow-md flex flex-col justify-center overflow-y-auto custom-scrollbar"></div>
-
-                    </div>
-                </div>
-
-                <div class="shrink-0 flex items-center justify-between border-t border-slate-200 pt-3 bg-white/40 px-2 rounded-xl">
-                    <button id="btn-quiz-prev" onclick="changeQuizSlide(-1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu trước
-                    </button>
-                    <span id="quiz-progress-indicator" class="font-bold text-slate-500 heading-text" style="font-size: 11px !important;">Nhận định 1 / 30</span>
-                    <button id="btn-quiz-next" onclick="changeQuizSlide(1)" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg flex items-center gap-1 transition-colors">
-                        Câu tiếp
-                    </button>
-                </div>
+            <div class="space-y-1">
+                <h3 class="text-lg font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs sm:text-sm text-slate-600">Tuyệt vời! Bạn đã hoàn thành xong tất cả các bài học trong chương trình.</p>
             </div>
-            
-        </div>
-    </main>
-
-    <div id="quiz-result-popup" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-xs w-full text-center transform scale-95 transition-transform" id="quiz-popup-content">
-            <div class="w-12 h-12 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fa-solid fa-trophy"></i></div>
-            <h3 class="font-black text-slate-800 mb-1 heading-text" style="font-size: 15px !important;">Hoàn thành thử thách!</h3>
-            <p class="text-slate-500 mb-4">Bạn đã xuất sắc trả lời đúng <br><strong class="text-lg text-green-600 block mt-1 heading-text" id="quiz-score-display">0/0</strong></p>
-            <div class="flex gap-2 justify-center">
-                <button onclick="closeQuizPopup()" class="px-4 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-lg transition-colors">Đóng</button>
-                <button onclick="resetQuiz()" class="px-4 py-1.5 bg-[#166def] text-white hover:opacity-90 font-bold rounded-lg transition-opacity shadow-md"><i class="fa-solid fa-rotate-right mr-1"></i> Làm lại</button>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal('modal-advanced-complete')" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Đóng
+                </button>
+                <button onclick="restartCourse()" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Học lại từ đầu
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="lightbox" class="fixed inset-0 bg-slate-900/95 z-[9999] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0" onclick="closeLightbox(event)">
-        <button onclick="closeLightbox(event)" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-xl transition-colors z-50 border border-white/20"><i class="fa-solid fa-xmark"></i></button>
-        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none z-40">
-            <button id="lb-btn-prev" onclick="changeLightboxImg(-1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-left"></i></button>
-            <button id="lb-btn-next" onclick="changeLightboxImg(1); event.stopPropagation();" class="pointer-events-auto w-10 h-10 bg-black/40 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[85vh] object-contain rounded shadow-2xl transition-transform transform scale-95 bg-white z-50" onclick="handleLightboxImgClick(event)" onmousemove="handleImgMouseMove(event)" />
-        <div class="absolute bottom-4 text-white/60 font-semibold pointer-events-none bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm z-50">Dùng chuột rê bên mép ảnh để chuyển hoặc dùng phím mũi tên ⬅ ➡</div>
-    </div>
-
-    <div id="chat-focus-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4 transition-opacity opacity-0" onclick="closeChatFocusModal()">
-        <div class="bg-white rounded-2xl shadow-2xl p-5 max-w-lg w-full flex flex-col h-[70vh] transform scale-95 transition-transform" onclick="event.stopPropagation();">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-slate-800 flex items-center gap-1.5 heading-text" style="font-size: 13px !important;"><i class="fa-regular fa-comments text-[#166def]"></i> Chi tiết hội thoại mô phỏng</h3>
-                <button onclick="closeChatFocusModal()" class="text-slate-400 hover:text-slate-600 text-base"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="chat-focus-body" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col"></div>
+    <!-- LIGHTBOX MODAL PHÓNG TO ẢNH -->
+    <div id="lightbox-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out" onclick="closeLightbox()">
+        <div class="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <img id="lightbox-img" src="" alt="Enlarged view" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            <button onclick="closeLightbox()" class="absolute -top-3 -right-3 bg-white text-slate-900 w-9 h-9 rounded-full font-black text-base flex items-center justify-center shadow-lg hover:bg-slate-200 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
     </div>
 
+    <!-- DATA & ENGINE JAVASCRIPT -->
     <script>
-        const unifiedData = [
-          {
-            isIntro: true,
-            icon: "💡",
-            title: "Giới thiệu chung",
-            description: "Tính năng Khởi tạo dữ liệu Quản lý Nhân viên đóng vai trò như một luồng dẫn dắt thông minh dành riêng cho các gian hàng mới bắt đầu sử dụng phần mềm Quản lý nhân sự. Thay vì phải tự tìm kiếm các thiết lập rải rác, tính năng này cung cấp một lộ trình tuần tự, giúp bạn nhanh chóng thiết lập hệ thống từ những bước cơ bản nhất: thêm nhân viên, cấu hình ca làm việc, cài đặt chấm công cho đến khi tạo thành công bảng lương tự động.",
-            benefits: [
-              { icon: "fa-map-location-dot", title: "Lộ trình trực quan, xóa bỏ bỡ ngỡ", desc: "Giải quyết triệt để bài toán \"không biết bắt đầu từ đâu\" cho người dùng mới qua các bước đi tuần tự trực quan." },
-              { icon: "fa-bolt", title: "Thiết lập siêu tốc gợi ý thông minh", desc: "Hệ thống tự động gợi ý sẵn các khung giờ làm việc phổ biến và mặc định hiển thị sẵn giao diện thêm nhiều nhân viên cùng lúc." },
-              { icon: "fa-shield-halved", title: "Đảm bảo vận hành chuẩn xác ngay từ đầu", desc: "Luồng khởi tạo được thiết kế khóa chiều nghiêm ngặt giúp dữ liệu đồng bộ, chặt chẽ, máy chấm công và bảng lương vận hành chính xác." }
-            ],
-            updateInfo: "Cập nhật giao diện / Nâng cấp: Tích hợp lộ trình 6 bước khóa chiều thông minh giúp thiết lập hệ thống nhân sự nhanh gọn nhất.",
-            youtubeUrl: "",
-            images: ["https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/22045152/KTE_220626-1.jpg"]
-          },
-          {
-            icon: "💻",
-            title: "Khởi tạo (Máy tính)",
-            scenario: "KHI MỚI BẮT ĐẦU SỬ DỤNG TÍNH NĂNG QUẢN LÝ NHÂN VIÊN, BẠN CẦN TÌM VÀ MỞ MÀN HÌNH THIẾT LẬP NHÂN VIÊN BAN ĐẦU ĐỂ THỰC HIỆN CHUỖI THAO TÁC CẤU HÌNH TUẦN TỰ.",
-            steps: [
-              "Từ màn hình <strong>Quản lý</strong>, nhấn vào menu <strong>Nhân viên</strong>.",
-              "Chọn <strong>Thiết lập nhân viên</strong>.",
-              "Hoặc nhấn vào một trong các mục con bất kỳ như: <strong>Danh sách nhân viên</strong>, <strong>Lịch làm việc</strong>, <strong>Bảng chấm công</strong>, <strong>Bảng lương</strong>, <strong>Bảng hoa hồng</strong>.",
-              "Nhấn <strong>Trải nghiệm ngay</strong> hoặc nhấn <strong>Khởi tạo</strong> (góc dưới màn hình) để hệ thống điều hướng đến màn hình Thiết lập nhân viên."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19070036/KTRT_N_-1.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19070015/KTRT_N_-2.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065948/KTRT_N_-3.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065940/KTRT_N_-4.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi vào màn hình quản lý rồi, làm sao để tìm thấy màn hình thiết lập nhân viên ban đầu?" },
-              { r: "consultant", t: "Dạ, từ màn hình <strong>Quản lý</strong>, anh/chị nhấn menu <strong>Nhân viên</strong> rồi chọn mục con <strong>Thiết lập nhân viên</strong>. Tại đây anh/chị nhấn nút <strong>Trải nghiệm ngay</strong> hoặc <strong>Khởi tạo</strong> để bắt đầu lộ trình dẫn dắt nhé!" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thêm nhân viên (Máy tính)",
-            scenario: "BẠN CẦN TẠO HỒ SƠ NHÂN VIÊN TRÊN HỆ THỐNG KÈM TÀI KHOẢN ĐĂNG NHẬP ĐỂ BẮT ĐẦU QUY TRÌNH THIẾT LẬP.",
-            steps: [
-              "Từ màn hình <strong>Khởi tạo</strong> (bước 0/6), nhấn <strong>Thêm nhân viên</strong>.",
-              "Nhập thông tin bắt buộc: <strong>Tên nhân viên</strong>, <strong>Số điện thoại</strong>.",
-              "Chọn <strong>Chi nhánh trả lương</strong> (mặc định là chi nhánh đăng nhập, một nhân viên chỉ được trả lương tại 1 chi nhánh) và chọn các <strong>Chi nhánh làm việc</strong> (có thể chọn nhiều chi nhánh). Chọn hoặc thêm tài khoản đăng nhập nếu có.",
-              "Nhấn <strong>+ Thêm nhân viên</strong> ngay trong màn hình này nếu bạn muốn khai báo nhanh nhiều nhân viên cùng lúc.",
-              "Nhấn <strong>Lưu và Tiếp tục</strong> để chuyển sang bước Tạo ca làm việc."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065929/KTRT_N_-5.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065917/KTRT_N_-6.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi muốn thêm một lúc 5-7 nhân viên cho nhanh, có thể thêm ngay trên một màn hình được không?" },
-              { r: "consultant", t: "Dạ được chứ ạ! Trong giao diện Thêm nhân viên, anh/chị chỉ cần chạm nút <strong>+ Thêm nhân viên</strong> ở cuối màn hình để khai báo đồng thời nhiều nhân sự cùng lúc trước khi bấm <strong>Lưu và Tiếp tục</strong> nhé!" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Tạo ca làm việc (Máy tính)",
-            scenario: "SAU KHI THÊM NHÂN VIÊN, BẠN CẦN ĐỊNH NGHĨA NHANH CÁC KHUNG GIỜ LÀM VIỆC TIÊU CHUẨN CỦA CỬA HÀNG ĐỂ TIẾN HÀNH PHÂN CA.",
-            steps: [
-              "Hệ thống tự động hiển thị màn hình <strong>Tạo ca làm việc</strong> với các ca được gợi ý sẵn (Ca sáng, Ca chiều, Ca tối) kèm khung giờ mặc định.",
-              "Bạn có thể giữ nguyên cấu hình gợi ý này, hoặc tùy chỉnh giờ vào/ra, xóa ca không cần thiết, hoặc nhấn <strong>+ Thêm ca</strong> để tạo khung giờ mới.",
-              "Nhấn <strong>Lưu và Tiếp tục</strong> để lưu dữ liệu và chuyển sang bước tiếp theo."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065909/KTRT_N_-7.png"
-            ],
-            chat: [
-              { r: "customer", t: "Cửa hàng tôi có ca gãy vào giờ lửng lơ thì có cấu hình được ca mẫu của KiotViet không?" },
-              { r: "consultant", t: "Dạ hoàn toàn được ạ! Anh/chị có thể sửa trực tiếp giờ vào/ra trên các ca gợi ý, xóa ca thừa hoặc nhấn <strong>+ Thêm ca</strong> để nhập chính xác khung giờ ca gãy của cửa hàng mình ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Xếp lịch làm việc (Máy tính)",
-            scenario: "BẠN CẦN PHÂN BỔ NHÂN VIÊN VỪA TẠO VÀO CÁC CA LÀM VIỆC CỤ THỂ TRONG TUẦN VỚI TÍNH NĂNG TỰ ĐỘNG LẶP LẠI.",
-            steps: [
-              "Trên lưới lịch dạng tuần, rê chuột vào ô trống tương ứng ngày và nhân viên cần xếp lịch, chọn <strong>+ Thêm lịch</strong> (hoặc nhấn <strong>Đã hiểu</strong> ở thông báo hướng dẫn lần đầu).",
-              "Tích chọn ca làm việc mong muốn. Bật xanh <strong>Lặp lại hàng tuần</strong> (chọn thứ lặp lại, ngày kết thúc và tùy chọn Làm việc cả ngày lễ tết).",
-              "Bật xanh <strong>Thêm lịch tương tự cho nhân viên khác</strong> và chọn nhân viên áp dụng chung lịch.",
-              "Nhấn <strong>Lưu</strong> -> Nhấn <strong>Đóng</strong> ở thông báo cập nhật thành công -> Nhấn <strong>Tiếp tục</strong> ở góc phải dưới của bảng để chuyển bước."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065900/KTRT_N_-8.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065842/KTRT_N_-9.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065828/KTRT_N_-10.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065820/KTRT_N_-11.png"
-            ],
-            chat: [
-              { r: "customer", t: "Hàng tuần lịch của các nhân viên đều giống hệt nhau, xếp từng tuần thì mất thời gian quá?" },
-              { r: "consultant", t: "Dạ, anh/chị chỉ cần bật tính năng <strong>Lặp lại hàng tuần</strong> khi xếp lịch và chọn <strong>Thêm lịch tương tự cho nhân viên khác</strong>. Lịch sẽ tự động điền hàng loạt cho tất cả nhân sự luôn ạ!" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Hình thức chấm công (Máy tính)",
-            scenario: "BẠN CẦN LỰA CHỌN PHƯƠNG THỨC GHI NHẬN GIỜ LÀM VIỆC PHÙ HỢP CHO NHÂN VIÊN TẠI CỬA HÀNG.",
-            steps: [
-              "Tích chọn các hình thức muốn áp dụng: KiotViet Nhân viên (Zalo mini app), Chấm công vân tay, hoặc Chấm công tự động.",
-              "Với <strong>Zalo mini app</strong>: Nhấn <strong>Xem tại đây</strong> -> <strong>Thêm địa chỉ chấm công</strong> -> Chọn chi nhánh, điền Địa chỉ, Xác nhận GPS và Phạm vi (m) được phép chấm công -> Nhấn <strong>Lưu</strong> -> Nhấn <strong>Xong</strong>.",
-              "Chọn tính năng nhân viên được phép sử dụng (Bảng chấm công, Bảng lương) rồi nhấn <strong>Chia sẻ ngay</strong> để In/Tải mã QR hoặc chia sẻ link cho nhân viên quét vào Zalo Mini App.",
-              "Với <strong>Vân tay</strong>: Nhấn <strong>Tải về</strong> phần mềm kết nối máy chấm công. Với <strong>Tự động</strong>: Hệ thống tự chấm dựa trên lịch. Nhấn <strong>Tiếp tục</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065758/KTRT_N_-12.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065744/KTRT_N_-13.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065731/KTRT_N_-14.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065723/KTRT_N_-15.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065716/KTRT_N_-16.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065703/KTRT_N_-17.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065653/KTRT_N_-18.png"
-            ],
-            chat: [
-              { r: "customer", t: "Nếu nhân viên dùng Zalo chấm công từ xa ở nhà thì hệ thống có phát hiện được không?" },
-              { r: "consultant", t: "Dạ hoàn toàn phát hiện được ạ! Khi anh/chị thiết lập **Vị trí GPS** kèm bán kính phạm vi (ví dụ: 30m), nhân viên bắt buộc phải đứng đúng trong phạm vi chi nhánh mới bấm chấm công được ạ." }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Thiết lập lương (Máy tính)",
-            scenario: "BẠN CẦN KHAI BÁO MỨC LƯƠNG CƠ SỞ VÀ QUY TẮC TÍNH LƯƠNG CHO NHÂN VIÊN ĐỂ PHỤC VỤ VIỆC TẠO BẢNG LƯƠNG TỰ ĐỘNG.",
-            steps: [
-              "Tại dòng nhân viên trên danh sách, bấm vào biểu tượng dấu <strong>+</strong> ở cột <strong>Lương chính</strong>.",
-              "Trên màn hình Lương chính, chọn <strong>Loại lương</strong> (Theo ca, Theo giờ, Theo ngày công chuẩn, Cố định) và nhập số tiền vào ô <strong>Mức lương</strong>.",
-              "Tùy chọn <strong>Thiết lập hệ số lương ngày nghỉ, lễ tết</strong> (không áp dụng với lương Cố định). Bật xanh -> điền hệ số -> nhấn <strong>Xong</strong>.",
-              "Nhấn <strong>Lưu</strong> hoặc <strong>Lưu và áp dụng cho toàn bộ nhân viên</strong>.",
-              "Thiết lập thêm các loại Làm thêm, Thưởng, Hoa hồng, Phụ cấp, Giảm trừ nếu có -> Nhấn <strong>Tiếp tục</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065636/KTRT_N_-19.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065619/KTRT_N_-20.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065611/KTRT_N_-21.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065555/KTRT_N_-22.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065547/KTRT_N_-23.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065538/KTRT_N_-24.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi muốn cấu hình nhanh mức lương này cho toàn bộ 20 nhân viên mới thì làm thế nào?" },
-              { r: "consultant", t: "Dạ rất nhanh thôi ạ, sau khi điền thông tin lương cho nhân viên đầu tiên, anh/chị chỉ cần nhấn nút <strong>Lưu và áp dụng cho toàn bộ nhân viên</strong> là hệ thống tự động gán đồng loạt cho 19 người còn lại luôn!" }
-            ]
-          },
-          {
-            icon: "💻",
-            title: "Tạo bảng lương (Máy tính)",
-            scenario: "ĐÂY LÀ BƯỚC CUỐI CÙNG ĐỂ HOÀN TẤT QUY TRÌNH THIẾT LẬP. BẠN CẦN KHỞI TẠO KỲ LƯƠNG ĐẦU TIÊN ĐỂ HỆ THỐNG TỰ ĐỘNG CHỐT CÔNG.",
-            steps: [
-              "Hệ thống hiển thị popup <strong>Tạo bảng lương</strong>.",
-              "Kiểm tra và cấu hình các thông số cơ bản cho kỳ lương: Ngày bắt đầu kỳ lương hàng tháng (ví dụ: ngày 1), Kỳ hạn trả lương (Hàng tháng), Kỳ làm việc (hệ thống tự động gợi ý tương ứng thời gian thực tế).",
-              "Nhấn <strong>Tạo bảng lương</strong>.",
-              "Hệ thống hiển thị thông báo tạo thành công, nhấn vào <strong>tại đây</strong> để xem chi tiết bảng lương hoặc nhấn <strong>Hoàn thành</strong> để chính thức kết thúc."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065530/KTRT_N_-25.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065514/KTRT_N_-26.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tạo bảng lương xong thì hệ thống tự động tổng hợp dữ liệu hay tôi phải nhập tay?" },
-              { r: "consultant", t: "Dạ, hệ thống sẽ tự động liên kết với lịch làm việc và bảng chấm công thực tế hàng ngày để tự động tổng hợp công chuẩn và kết xuất ra bảng lương tự động chính xác cho anh/chị nhé!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Khởi tạo (Điện thoại)",
-            scenario: "BẠN MUỐN THIẾT LẬP NHÂN SỰ NGAY TRÊN ĐIỆN THOẠI DI ĐỘNG ĐỂ TIỆN QUẢN LÝ MỌI LÚC MỌI NƠI.",
-            steps: [
-              "Trên ứng dụng quản lý KiotViet trên điện thoại, bạn truy cập menu <strong>Nhiều hơn</strong>.",
-              "Chạm vào <strong>Thiết lập nhân viên</strong> -> chạm <strong>Khởi tạo</strong>.",
-              "Hoặc chạm vào 1 trong các mục bất kỳ: <strong>Nhân viên</strong>, <strong>Lịch làm việc</strong>, <strong>Chấm công</strong>, <strong>Bảng lương</strong>, <strong>Hoa hồng</strong> tại khu vực Nhân viên để hệ thống tự động điều hướng đến màn hình Khởi tạo."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065506/KTRT_N_-27.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065453/KTRT_N_-28.png"
-            ],
-            chat: [
-              { r: "customer", t: "Trên app điện thoại tôi không thấy nút thiết lập nhân viên nằm ngoài màn hình chính?" },
-              { r: "consultant", t: "Dạ, anh/chị chạm vào menu <strong>Nhiều hơn</strong> ở thanh điều hướng dưới app, sau đó sẽ thấy mục <strong>Thiết lập nhân viên</strong> và chỉ cần chạm vào đó rồi chọn <strong>Khởi tạo</strong> là được ạ!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Thêm nhân viên (Điện thoại)",
-            scenario: "BẠN CẦN TẠO HỒ SƠ NHÂN VIÊN MỚI TRÊN ĐIỆN THOẠI ĐỂ BẮT ĐẦU QUY TRÌNH THIẾT LẬP.",
-            steps: [
-              "Trên màn hình <strong>Khởi tạo</strong> trên app di động, chạm vào nút <strong>Thêm nhân viên</strong>.",
-              "Nhập các thông tin bắt buộc gồm: <strong>Tên nhân viên</strong> và <strong>Số điện thoại</strong>.",
-              "Chạm <strong>Thêm nhân viên</strong> ở cuối màn hình nếu bạn muốn khai báo nhanh nhiều nhân viên cùng lúc.",
-              "Chạm <strong>Lưu</strong> để chuyển sang bước Tiếp theo."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065445/KTRT_N_-29.png"
-            ],
-            chat: [
-              { r: "customer", t: "Nhập nhân viên trên điện thoại có bắt buộc phải điền số điện thoại không?" },
-              { r: "consultant", t: "Dạ có ạ! Số điện thoại là thông tin bắt buộc để sau này nhân viên có thể sử dụng định danh tài khoản và chấm công qua Zalo Mini App đó ạ!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Tạo ca làm việc (Điện thoại)",
-            scenario: "ĐỊNH NGHĨA CÁC KHUNG GIỜ LÀM VIỆC TIÊU CHUẨN CỦA CỬA HÀNG TRỰC TIẾP TRÊN APP DI ĐỘNG.",
-            steps: [
-              "Trên màn hình <strong>Khởi tạo</strong>, chạm vào <strong>Tạo ca</strong>.",
-              "Chọn số lượng ca làm việc thực tế của cửa hàng.",
-              "Hệ thống tự động gợi ý sẵn các ca sáng, chiều, tối kèm khung giờ mẫu.",
-              "Bạn có thể tùy chỉnh lại giờ vào/ra, xóa bớt ca không cần thiết hoặc chạm <strong>Thêm ca</strong> để tạo khung giờ mới -> Chạm <strong>Lưu</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065437/KTRT_N_-30.png"
-            ],
-            chat: [
-              { r: "customer", t: "Trên app di động có gợi ý ca mẫu như trên web máy tính không?" },
-              { r: "consultant", t: "Dạ có đầy đủ luôn ạ! Khi anh/chị chạm <strong>Tạo ca</strong>, app sẽ hỏi số ca làm việc rồi tự động xuất ra khung giờ mẫu cho anh/chị duyệt rất nhanh!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Xếp lịch làm việc (Điện thoại)",
-            scenario: "PHÂN BỔ NHÂN VIÊN VÀO CÁC CA LÀM VIỆC CỤ THỂ TRONG TUẦN TRÊN APP DI ĐỘNG.",
-            steps: [
-              "Trên màn hình <strong>Khởi tạo</strong>, chạm vào <strong>Xếp lịch</strong> -> chạm <strong>Đã hiểu</strong> ở thông báo hướng dẫn.",
-              "Chạm vào ô trống tương ứng với ngày và nhân viên cần xếp ca.",
-              "Tích chọn ca làm việc mong muốn -> Chạm <strong>Tiếp tục</strong>.",
-              "Bật xanh <strong>Lặp lại hàng tuần</strong> (chọn thứ lặp lại, ngày kết thúc và tùy chọn ngày lễ), chọn <strong>Thêm lịch tương tự cho nhân viên khác</strong> -> Chạm <strong>Lưu</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065430/KTRT_N_-31.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065422/KTRT_N_-32.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi muốn xếp lịch lặp lại hàng tuần cho nhân viên trên app điện thoại thì thao tác thế nào?" },
-              { r: "consultant", t: "Dạ, sau khi chạm chọn ca làm việc, anh/chị chỉ cần bật xanh mục <strong>Lặp lại hàng tuần</strong> là lịch phân ca sẽ tự động áp dụng cho các tuần kế tiếp cực tiện lợi!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Hình thức chấm công (Điện thoại)",
-            scenario: "LỰA CHỌN PHƯƠNG THỨC GHI NHẬN CHẤM CÔNG VÀ QUẢN LÝ VỊ TRÍ CHI NHÁNH TRÊN APP DI ĐỘNG.",
-            steps: [
-              "Trên màn hình <strong>Khởi tạo</strong>, chạm vào nút <strong>Thiết lập</strong> tại dòng Chấm công -> bật xanh các hình thức muốn áp dụng.",
-              "Với <strong>Zalo mini app</strong>: Chạm vào <strong>Tại đây</strong> -> cấu hình tính năng cho phép sử dụng -> chạm <strong>Thêm địa chỉ</strong> để điền GPS và Phạm vi (m) -> Chạm <strong>Lưu</strong>.",
-              "Chạm <strong>Chia sẻ đường dẫn</strong> để hiển thị link hoặc mã QR để tải về gửi cho nhân viên quét vào Zalo Mini App."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065414/KTRT_N_-33.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065407/KTRT_N_-34.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065400/KTRT_N_-35.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065349/KTRT_N_-36.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065340/KTRT_N_-37.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tôi có thể chia sẻ mã QR chấm công cho nhân viên trực tiếp bằng điện thoại không?" },
-              { r: "consultant", t: "Dạ hoàn toàn được ạ! Anh/chị chỉ cần chạm nút <strong>Chia sẻ đường dẫn</strong> trên app, hệ thống tự động xuất mã QR chấm công để anh/chị tải về hoặc gửi trực tiếp cho nhân sự quét ạ!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Thiết lập lương (Điện thoại)",
-            scenario: "KHAI BÁO MỨC LƯƠNG CƠ SỞ VÀ CÁC QUY TẮC LƯƠNG ĐỐI VỚI NHÂN VIÊN TRÊN APP DI ĐỘNG.",
-            steps: [
-              "Trên màn hình <strong>Khởi tạo</strong>, chạm <strong>Thiết lập</strong> trên dòng Thiết lập lương.",
-              "Chạm vào trạng thái <strong>Chưa thiết lập</strong> dưới tên của nhân viên.",
-              "Chọn <strong>Loại lương</strong> -> chạm <strong>Áp dụng</strong> -> nhập số tiền tại ô <strong>Mức lương</strong>.",
-              "Cấu hình <strong>Thiết lập nâng cao</strong> hệ số ngày nghỉ lễ tết (nếu có) -> chạm <strong>Xong</strong>.",
-              "Thêm các mục làm thêm giờ, thưởng, hoa hồng, phụ cấp, giảm trừ -> chạm <strong>Lưu</strong>."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065333/KTRT_N_-38.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065322/KTRT_N_-39.png",
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065315/KTRT_N_-40.png"
-            ],
-            chat: [
-              { r: "customer", t: "Trên app điện thoại có hỗ trợ cài đặt các khoản phụ cấp đi lại hay giảm trừ phạt muộn không?" },
-              { r: "consultant", t: "Dạ có đầy đủ ạ! Sau khi nhập mức lương chính và chạm <strong>Lưu</strong>, app sẽ hiển thị các mục Thưởng, Phụ cấp, Hoa hồng, Giảm trừ để anh/chị tùy ý cấu hình chi tiết cho từng nhân viên ạ!" }
-            ]
-          },
-          {
-            icon: "📱",
-            title: "Tạo bảng lương (Điện thoại)",
-            scenario: "BƯỚC CUỐI CÙNG ĐỂ HOÀN TẤT THIẾT LẬP NHÂN VIÊN BAN ĐẦU NGAY TRÊN ỨNG DỤNG ĐIỆN THOẠI.",
-            steps: [
-              "Tại bước cuối của màn hình <strong>Khởi tạo</strong> trên app, chạm vào <strong>Tạo bảng lương</strong>.",
-              "Kiểm tra và tùy chỉnh các thông số cơ bản cho kỳ lương (Ngày bắt đầu, Kỳ hạn trả lương, Kỳ làm việc).",
-              "Chạm <strong>Lưu</strong> để hoàn tất khởi tạo bảng lương.",
-              "Hệ thống tạo thành công, anh/chị có thể nhấn <strong>tại đây</strong> để xem bảng lương chi tiết hoặc đóng màn hình kết thúc."
-            ],
-            images: [
-              "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065255/KTRT_N_-41.png"
-            ],
-            chat: [
-              { r: "customer", t: "Tạo bảng lương trên điện thoại xong thì cuối tháng dữ liệu có tự động cập nhật không?" },
-              { r: "consultant", t: "Dạ có chứ ạ! Hệ thống sẽ tự động tổng hợp số ngày công dựa trên dữ liệu lịch làm việc và chấm công hàng ngày trên app để chốt lương tự động cuối tháng luôn ạ!" }
-            ]
-          }
-        ];
-
-        const quizData = [
-          {
-            q: "Luồng khởi tạo dữ liệu Quản lý nhân viên là lộ trình bắt buộc mở khóa theo chiều tuần tự để tránh lỗi dữ liệu khi vận hành?",
-            isTrue: true,
-            explain: "Luồng khởi tạo được thiết kế khóa chiều chặt chẽ (phải thêm nhân viên trước mới được cài đặt chấm công/tạo bảng lương) nhằm đảm bảo tính đồng bộ, nhất quán của dữ liệu."
-          },
-          {
-            q: "Người dùng có thể thiết lập bảng lương trước rồi mới thêm nhân viên sau trong luồng khởi tạo dữ liệu?",
-            isTrue: false,
-            explain: "Luồng khởi tạo được thiết kế khóa chiều chặt chẽ (phải thêm nhân viên trước mới được cài đặt chấm công/tạo bảng lương) nhằm đảm bảo tính đồng bộ, nhất quán của dữ liệu."
-          },
-          {
-            q: "Để mở màn hình Khởi tạo thiết lập nhân viên, bạn có thể bấm vào bất kỳ mục con nào trong menu Nhân viên như Lịch làm việc hay Bảng lương để được điều hướng?",
-            isTrue: true,
-            explain: "Lối vào được tích hợp thông minh ở menu Nhân viên và tất cả các tính năng thành phần (Lịch làm việc, Bảng chấm công, Bảng lương, Hoa hồng) để dẫn dắt người dùng mới bắt đầu tiện lợi."
-          },
-          {
-            q: "Lối vào màn hình Khởi tạo thiết lập nhân viên chỉ nằm duy nhất ở nút Cài đặt hệ thống tổng của KiotViet?",
-            isTrue: false,
-            explain: "Lối vào được tích hợp thông minh ở menu Nhân viên và tất cả các tính năng thành phần (Lịch làm việc, Bảng chấm công, Bảng lương, Hoa hồng) để dẫn dắt người dùng mới bắt đầu tiện lợi."
-          },
-          {
-            q: "Trên KiotViet, một nhân viên chỉ được phép nhận lương từ một chi nhánh trả lương duy nhất nhưng có thể làm việc ở nhiều chi nhánh khác nhau?",
-            isTrue: true,
-            explain: "Để tránh sai lệch hạch toán tài chính, mỗi nhân viên chỉ thuộc về 1 chi nhánh trả lương duy nhất, dù có thể được điều động làm việc ở nhiều chi nhánh."
-          },
-          {
-            q: "Một nhân viên bắt buộc phải nhận lương song song từ tất cả các chi nhánh làm việc đã tích chọn?",
-            isTrue: false,
-            explain: "Để tránh sai lệch hạch toán tài chính, mỗi nhân viên chỉ thuộc về 1 chi nhánh trả lương duy nhất, dù có thể được điều động làm việc ở nhiều chi nhánh."
-          },
-          {
-            q: "Khi tạo ca làm việc, hệ thống KiotViet hỗ trợ sẵn các ca làm việc mẫu giúp người dùng không cần phải thiết lập khung giờ từ đầu?",
-            isTrue: true,
-            explain: "KiotViet cung cấp các ca mẫu làm dữ liệu gợi ý thông minh, người dùng hoàn toàn có thể tùy chỉnh giờ giấc, xóa bỏ ca thừa hoặc thêm ca mới tùy thích."
-          },
-          {
-            q: "Hệ thống khóa cứng các ca sáng, chiều, tối gợi ý và không cho phép người dùng thay đổi hay xóa bớt?",
-            isTrue: false,
-            explain: "KiotViet cung cấp các ca mẫu làm dữ liệu gợi ý thông minh, người dùng hoàn toàn có thể tùy chỉnh giờ giấc, xóa bỏ ca thừa hoặc thêm ca mới tùy thích."
-          },
-          {
-            q: "Bạn có thể nhanh chóng sao chép lịch làm việc của một nhân viên và áp dụng hàng loạt cho các nhân viên khác ngay trên giao diện xếp lịch?",
-            isTrue: true,
-            explain: "KiotViet hỗ trợ tính năng lặp lại lịch làm việc hàng tuần và gán lịch tương tự cho nhiều nhân viên để tối ưu thời gian thao tác."
-          },
-          {
-            q: "Lịch làm việc của nhân viên bắt buộc phải xếp thủ công lại từng ngày và không hỗ trợ tính năng tự động lặp lại hàng tuần?",
-            isTrue: false,
-            explain: "KiotViet hỗ trợ tính năng lặp lại lịch làm việc hàng tuần và gán lịch tương tự cho nhiều nhân viên để tối ưu thời gian thao tác."
-          },
-          {
-            q: "Chấm công qua Zalo Mini App yêu cầu người quản lý phải thiết lập chính xác địa chỉ và phạm vi GPS cho phép của cửa hàng để chống gian lận?",
-            isTrue: true,
-            explain: "Tính năng chấm công Zalo Mini App khóa chặt theo định vị GPS, nhân viên bắt buộc phải đứng đúng địa chỉ và trong phạm vi (mét) quy định của chi nhánh mới chấm thành công."
-          },
-          {
-            q: "Nhân viên có thể mở Zalo Mini App để chấm công tại bất kỳ địa điểm nào mà không bị giới hạn vị trí địa lý?",
-            isTrue: false,
-            explain: "Tính năng chấm công Zalo Mini App khóa chặt theo định vị GPS, nhân viên bắt buộc phải đứng đúng địa chỉ và trong phạm vi (mét) quy định của chi nhánh mới chấm thành công."
-          },
-          {
-            q: "Bạn có thể áp dụng nhanh một mức lương và loại lương chuẩn cho toàn bộ danh sách nhân viên chỉ với một thao tác lưu hàng loạt?",
-            isTrue: true,
-            explain: "Bạn có thể áp dụng nhanh một mức lương và loại lương chuẩn cho toàn bộ danh sách nhân viên chỉ với một thao tác lưu hàng loạt."
-          },
-          {
-            q: "Với hình thức lương Cố định, hệ thống vẫn hỗ trợ người dùng thiết lập hệ số lương ngày nghỉ lễ tết?",
-            isTrue: false,
-            explain: "Lương Cố định nhận một khoản tiền cố định trọn gói nên hệ thống sẽ không áp dụng thiết lập hệ số lương ngày nghỉ, lễ tết (chỉ áp dụng cho lương theo ca, theo giờ hoặc ngày công chuẩn)."
-          },
-          {
-            q: "Ngày bắt đầu kỳ lương hàng tháng có thể cấu hình linh hoạt (ví dụ: ngày 1, ngày 5...) và hệ thống sẽ tự động tính toán kỳ làm việc tương ứng?",
-            isTrue: true,
-            explain: "Hệ thống cho phép chọn ngày bắt đầu kỳ lương linh hoạt để phù hợp với quy chế trả lương thực tế của từng doanh nghiệp."
-          },
-          {
-            q: "Bảng lương khởi tạo mặc định luôn luôn bắt đầu từ ngày 1 và kết thúc vào ngày cuối cùng của tháng, không thể thay đổi ngày bắt đầu?",
-            isTrue: false,
-            explain: "Hệ thống cho phép chọn ngày bắt đầu kỳ lương linh hoạt để phù hợp với quy chế trả lương thực tế của từng doanh nghiệp."
-          },
-          {
-            q: "Người dùng có thể khởi động luồng thiết lập nhân viên trên điện thoại bằng cách chạm vào bất kỳ menu nào liên quan như Chấm công hoặc Bảng lương?",
-            isTrue: true,
-            explain: "KiotViet hỗ trợ trọn vẹn luồng thiết lập nhân viên thông minh trên cả giao diện Web máy tính và ứng dụng di động để tăng tính tiện lợi."
-          },
-          {
-            q: "Luồng thiết lập nhân viên ban đầu chỉ có thể thao tác trên máy tính (Web) chứ ứng dụng điện thoại chưa hỗ trợ?",
-            isTrue: false,
-            explain: "KiotViet hỗ trợ trọn vẹn luồng thiết lập nhân viên thông minh trên cả giao diện Web máy tính và ứng dụng di động để tăng tính tiện lợi."
-          },
-          {
-            q: "Khi thêm nhân viên mới trên ứng dụng di động, Tên nhân viên và Số điện thoại là hai trường thông tin bắt buộc phải điền?",
-            isTrue: true,
-            explain: "Khi thêm nhân viên mới trên ứng dụng di động, Tên nhân viên và Số điện thoại là hai trường thông tin bắt buộc phải điền."
-          },
-          {
-            q: "Bạn chỉ có thể tạo hồ sơ của từng nhân viên một trên điện thoại và không thể thêm nhiều người cùng lúc trên một màn hình?",
-            isTrue: false,
-            explain: "Ứng dụng điện thoại vẫn có nút hỗ trợ thêm nhiều nhân viên cùng lúc để tối giản thao tác nhập liệu cho chủ cửa hàng."
-          },
-          {
-            q: "Ứng dụng di động KiotViet sẽ hỏi số lượng ca làm việc trước khi đưa ra các gợi ý khung giờ thông minh tương ứng cho cửa hàng?",
-            isTrue: true,
-            explain: "Giao diện di động cũng được tối ưu hóa với tính năng tự động gợi ý ca làm việc theo số lượng ca được chọn để giảm thiểu thao tác nhập liệu."
-          },
-          {
-            q: "Khi thiết lập ca làm việc trên điện thoại, hệ thống bắt buộc người dùng tự gõ thủ công toàn bộ giờ giấc mà không có bất kỳ ca mẫu gợi ý nào?",
-            isTrue: false,
-            explain: "Giao diện di động cũng được tối ưu hóa với tính năng tự động gợi ý ca làm việc theo số lượng ca được chọn để giảm thiểu thao tác nhập liệu."
-          },
-          {
-            q: "Thao tác xếp lịch trên điện thoại cũng cho phép người dùng lặp lại lịch làm việc hàng tuần tương tự như phiên bản trên máy tính?",
-            isTrue: true,
-            explain: "Để đồng bộ trải nghiệm, tính năng xếp lịch lặp lại hàng tuần và gán lịch hàng loạt cho nhân viên khác đều được tích hợp đầy đủ trên phiên bản di động."
-          },
-          {
-            q: "Giao diện di động không hỗ trợ xếp lịch lặp lại hàng tuần mà bắt buộc phải chọn thủ công từng ngày một?",
-            isTrue: false,
-            explain: "Để đồng bộ trải nghiệm, tính năng xếp lịch lặp lại hàng tuần và gán lịch hàng loạt cho nhân viên khác đều được tích hợp đầy đủ trên phiên bản di động."
-          },
-          {
-            q: "Bạn có thể cài đặt địa điểm GPS được phép chấm công và chia sẻ mã QR Zalo Mini App cho nhân viên trực tiếp từ ứng dụng điện thoại?",
-            isTrue: true,
-            explain: "KiotViet cho phép người quản lý thực hiện toàn bộ quy trình thiết lập địa chỉ GPS chi nhánh và chia sẻ mã QR trực tiếp ngay trên app di động."
-          },
-          {
-            q: "Thiết lập địa chỉ GPS chấm công chỉ thực hiện được trên máy tính còn điện thoại chỉ dùng để chia sẻ link QR?",
-            isTrue: false,
-            explain: "KiotViet cho phép người quản lý thực hiện toàn bộ quy trình thiết lập địa chỉ GPS chi nhánh và chia sẻ mã QR trực tiếp ngay trên app di động."
-          },
-          {
-            q: "Để thiết lập lương trên điện thoại, người dùng cần chạm vào trạng thái Chưa thiết lập của từng nhân viên để mở giao diện cấu hình chi tiết?",
-            isTrue: true,
-            explain: "Giao diện thiết lập lương trên di động hỗ trợ đầy đủ từ lương chính, làm thêm, phụ cấp, thưởng cho đến các khoản giảm trừ để đảm bảo tính lương tự động chính xác."
-          },
-          {
-            q: "Ứng dụng điện thoại chỉ hỗ trợ nhập mức lương chính chứ không cho phép thêm các khoản phụ cấp hay giảm trừ?",
-            isTrue: false,
-            explain: "Giao diện thiết lập lương trên di động hỗ trợ đầy đủ từ lương chính, làm thêm, phụ cấp, thưởng cho đến các khoản giảm trừ để đảm bảo tính lương tự động chính xác."
-          },
-          {
-            q: "Khi tạo bảng lương thành công trên điện thoại, hệ thống sẽ tự động tính toán dựa trên dữ liệu lịch làm việc và chấm công hàng ngày?",
-            isTrue: true,
-            explain: "KiotViet HRM tự động hóa toàn bộ việc đối chiếu dữ liệu chấm công, lịch làm việc để xuất ra bảng lương chính xác mà không cần tính toán thủ công."
-          },
-          {
-            q: "Sau khi tạo bảng lương trên điện thoại, người quản lý vẫn phải tính toán công thủ công bên ngoài rồi gõ số tiền vào bảng lương?",
-            isTrue: false,
-            explain: "KiotViet HRM tự động hóa toàn bộ việc đối chiếu dữ liệu chấm công, lịch làm việc để xuất ra bảng lương chính xác mà không cần tính toán thủ công."
-          }
-        ];
-
-        let currentTopic = 0; 
-        let activeMainTab = 'ly-thuyet';
-        let activeImgIndices = {};
-        let localCompletedTopics = JSON.parse(localStorage.getItem('kv_completed_topics_dynamic_f') || '[]');
-        
-        let currentQuizIdx = 0; 
-        let quizAnswersState = {};
-
-        window.quizScore = 0; 
-        window.quizAnswered = 0;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(unifiedData.length > 0) { 
-                renderSidebarList(); 
-                switchMainTab('ly-thuyet'); 
+        const BASIC_LESSONS = [
+            {
+                title: "Khởi tạo",
+                situation: "Khi mới bắt đầu sử dụng tính năng quản lý nhân viên, bạn cần tìm và mở màn hình thiết lập nhân viên ban đầu để có thể thực hiện chuỗi thao tác cấu hình hệ thống một cách tuần tự.",
+                steps: [
+                    { text: "Từ màn hình <strong>Quản lý</strong>, bấm vào menu <strong>Nhân viên</strong> ➔ chọn <strong>Thiết lập nhân viên</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19070036/KTRT_N_-1.png" },
+                    { text: "Hoặc bấm vào 1 trong các mục bất kỳ: <strong>Danh sách nhân viên</strong>, <strong>Lịch làm việc</strong>, <strong>Bảng chấm công</strong>, <strong>Bảng lương</strong>, <strong>Bảng hoa hồng</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19070015/KTRT_N_-2.png" },
+                    { text: "Nhấn <strong>Trải nghiệm ngay</strong> hoặc nhấn <strong>Khởi tạo</strong> ở góc dưới màn hình.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065948/KTRT_N_-3.png" },
+                    { text: "Hệ thống tự động điều hướng đến màn hình <strong>Thiết lập nhân viên</strong> để bắt đầu các bước khởi tạo.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065940/KTRT_N_-4.png" }
+                ],
+                flashcard: {
+                    situation: "Anh/chị chưa dùng phần mềm chấm công bao giờ, sợ quy trình thiết lập ban đầu phức tạp rối rắm lắm em ơi?",
+                    advice: "Anh/chị hoàn toàn yên tâm ạ! KiotViet có sẵn luồng Hướng dẫn khởi tạo từng bước cực kỳ trực quan. Anh/chị chỉ cần bấm 'Khởi tạo' là hệ thống dẫn dắt từ thêm nhân viên, cài ca làm việc cho tới tự động tính lương, thao tác chưa tới 5 phút là vận dụng trơn tru ngay ạ!"
+                },
+                quiz: {
+                    question: "Luồng 'Khởi tạo' giúp dẫn dắt người dùng thực hiện tuần tự các bước cấu hình nhân sự ban đầu một cách đồng bộ và ngắn gọn.",
+                    answer: true,
+                    explanation: "Luồng khởi tạo được thiết kế khóa chiều tuần tự nhằm giúp gian hàng mới dễ dàng thiết lập đầy đủ thông tin nhân sự, ca làm việc, chấm công và lương mà không bị bỏ sót bước nào."
+                }
+            },
+            {
+                title: "Thêm nhân viên",
+                situation: "Bạn cần tạo hồ sơ nhân viên trên hệ thống kèm tài khoản đăng nhập để bắt đầu quy trình thiết lập.",
+                steps: [
+                    { text: "Từ màn hình <strong>Khởi tạo</strong> (0/6 bước), nhấn nút <strong>Thêm nhân viên</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065929/KTRT_N_-5.png" },
+                    { text: "Nhập các thông tin bắt buộc: <strong>Tên nhân viên</strong>, <strong>Số điện thoại</strong>. Chọn <strong>Chi nhánh trả lương</strong> (1 nhân viên chỉ thuộc 1 chi nhánh trả lương duy nhất) và <strong>Chi nhánh làm việc</strong> (có thể chọn nhiều chi nhánh). Chọn hoặc tạo Tài khoản đăng nhập nếu có.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065917/KTRT_N_-6.png" },
+                    { text: "(Tùy chọn) Nhấn <strong>+ Thêm nhân viên</strong> ngay trong màn hình này nếu muốn khai báo nhiều nhân sự cùng lúc.", img: null },
+                    { text: "Nhấn <strong>Lưu và Tiếp tục</strong> để chuyển sang bước Tạo ca làm việc.", img: null }
+                ],
+                flashcard: {
+                    situation: "Một nhân viên bên anh làm việc luân chuyển ở 2 chi nhánh thì KiotViet có hỗ trợ phân chi nhánh làm việc và trả lương không em?",
+                    advice: "Dạ có chứ anh/chị! KiotViet cho phép anh/chị chọn 1 Chi nhánh trả lương cố định để hạch toán chi phí, đồng thời tích chọn nhiều Chi nhánh làm việc giúp nhân viên có thể chấm công và làm việc linh hoạt ở mọi chi nhánh ạ."
+                },
+                quiz: {
+                    question: "Trên phần mềm KiotViet, một nhân viên có thể đăng ký đồng thời nhiều Chi nhánh trả lương khác nhau.",
+                    answer: false,
+                    explanation: "Mỗi nhân viên chỉ thuộc duy nhất 1 Chi nhánh trả lương để đảm bảo hạch toán chi phí lương chính xác, nhưng có thể chọn làm việc ở nhiều Chi nhánh làm việc khác nhau."
+                }
+            },
+            {
+                title: "Tạo ca làm việc",
+                situation: "Sau khi thêm nhân viên, bạn cần định nghĩa nhanh các khung giờ làm việc tiêu chuẩn của cửa hàng để tiến hành phân ca.",
+                steps: [
+                    { text: "Màn hình tự động hiển thị danh sách <strong>Tạo ca làm việc</strong> với các ca được gợi ý sẵn (Ca sáng, Ca chiều, Ca tối) kèm khung giờ mặc định.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065909/KTRT_N_-7.png" },
+                    { text: "Bạn có thể giữ nguyên cấu hình này, tùy chỉnh giờ vào/ra, xóa ca không dùng hoặc nhấn <strong>+ Thêm ca</strong> để tạo khung giờ mới.", img: null },
+                    { text: "Nhấn <strong>Lưu và Tiếp tục</strong> để lưu dữ liệu và chuyển bước tiếp theo.", img: null }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng anh chia theo 3 ca linh hoạt, thiết lập các ca này có tốn nhiều thời gian không em?",
+                    advice: "Dạ siêu nhanh ạ! KiotViet tự động gợi ý sẵn các khung giờ ca làm việc tiêu chuẩn (1 ca, 2 ca, 3 ca). Anh/chị chỉ cần giữ nguyên hoặc chỉnh sửa nhẹ giờ vào/ra cho đúng với thực tế cửa hàng trong vài giây là xong ạ!"
+                },
+                quiz: {
+                    question: "Hệ thống KiotViet tự động gợi ý sẵn các khung giờ ca làm việc phổ biến để người dùng tùy chỉnh nhanh chóng.",
+                    answer: true,
+                    explanation: "Màn hình Tạo ca làm việc tự động hiển thị các ca làm việc gợi ý (Ca sáng, Ca chiều, Ca tối) giúp rút ngắn thời gian thao tác cài đặt của cửa hàng."
+                }
+            },
+            {
+                title: "Xếp lịch làm việc",
+                situation: "Bạn cần phân bổ nhân viên vừa tạo vào các ca làm việc cụ thể trong tuần.",
+                steps: [
+                    { text: "Ở lần đầu truy cập, nhấn <strong>Đã hiểu</strong> trên màn hình hướng dẫn thao tác rê chuột.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065600/KTRT_N_-8.png" },
+                    { text: "Trên màn hình <strong>Xếp lịch làm việc</strong> dạng lưới theo tuần, rê chuột vào ô trống tương ứng với ngày và nhân viên ➔ chọn <strong>+ Thêm lịch</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065842/KTRT_N_-9.png" },
+                    { text: "Tích chọn ca làm việc ➔ Bật xanh <strong>Lặp lại hàng tuần</strong> (chọn thứ trong tuần, ngày kết thúc) ➔ Bật xanh <strong>Thêm lịch tương tự cho nhân viên khác</strong> nếu áp dụng chung ➔ Bấm <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065828/KTRT_N_-10.png" },
+                    { text: "Hệ thống báo cập nhật thành công, nhấn <strong>Đóng</strong> ➔ Bấm nút <strong>Tiếp tục</strong> ở góc phải dưới bảng xếp lịch.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065820/KTRT_N_-11.png" }
+                ],
+                flashcard: {
+                    situation: "Nhân viên bên anh làm ca cố định theo tuần, tuần nào anh cũng phải ngồi bấm xếp lịch từng người thì phiền quá?",
+                    advice: "Dạ không cần đâu anh/chị! Anh/chị chỉ cần xếp lịch 1 lần và bật tính năng 'Lặp lại hàng tuần' kết hợp 'Thêm lịch tương tự cho nhân viên khác'. Hệ thống sẽ tự động sao chép lịch cho các tuần tiếp theo rất nhàn hạ ạ!"
+                },
+                quiz: {
+                    question: "Tính năng xếp lịch làm việc cho phép cài đặt tự động lặp lại theo tuần và nhân bản lịch làm việc cho nhiều nhân viên cùng lúc.",
+                    answer: true,
+                    explanation: "KiotViet hỗ trợ cấu hình lặp lại hàng tuần và áp dụng lịch làm việc tương tự cho các nhân viên khác giúp tiết kiệm tối đa thời gian xếp lịch."
+                }
+            },
+            {
+                title: "Hình thức chấm công",
+                situation: "Bạn cần lựa chọn phương thức ghi nhận giờ làm việc phù hợp cho nhân viên tại cửa hàng.",
+                steps: [
+                    { text: "Tích chọn các hình thức chấm công muốn áp dụng (có thể chọn nhiều hình thức cùng lúc): Zalo Mini App, Vân tay, Tự động.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065758/KTRT_N_-12.png" },
+                    { text: "Nếu dùng <strong>Zalo Mini App</strong>: Bấm <strong>Xem tại đây</strong> ➔ Bấm <strong>Thêm địa chỉ chấm công</strong> ➔ Điền địa chỉ chi nhánh, tọa độ GPS và Phạm vi (m) được phép chấm công ➔ Bấm <strong>Lưu</strong> ➔ Bấm <strong>Xong</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065744/KTRT_N_-13.png" },
+                    { text: "Phân quyền tính năng cho nhân viên (Bảng chấm công, Bảng lương) ➔ Nhấn <strong>Chia sẻ ngay</strong> để tải mã QR hoặc in mã gửi cho nhân viên tham gia Zalo Mini App.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065703/KTRT_N_-17.png" },
+                    { text: "Nếu dùng <strong>Chấm công vân tay</strong>: Bấm <strong>Tải về</strong> phần mềm kết nối KiotViet. Nếu chọn <strong>Chấm công tự động</strong>: Hệ thống tự ghi nhận công chuẩn. Bấm <strong>Tiếp tục</strong>.", img: null }
+                ],
+                flashcard: {
+                    situation: "Nhân viên ngồi ở nhà tự chấm công qua Zalo Mini App rồi bảo đang ở cửa hàng thì làm sao anh biết được?",
+                    advice: "Anh/chị yên tâm tuyệt đối ạ! KiotViet yêu cầu thiết lập địa chỉ GPS chính xác và bán kính phạm vi (ví dụ: 50m). Nhân viên bắt buộc phải đứng đúng tại vị trí cửa hàng mới thực hiện chấm công thành công được ạ!"
+                },
+                quiz: {
+                    question: "Khi chấm công bằng Zalo Mini App, nhân viên có thể chấm công ở bất kỳ đâu mà không bị giới hạn phạm vi vị trí GPS.",
+                    answer: false,
+                    explanation: "Hệ thống bắt buộc kiểm tra vị trí GPS của nhân viên, chỉ khi nhân viên nằm trong đúng địa chỉ và phạm vi (m) đã cài đặt mới chấm công thành công."
+                }
+            },
+            {
+                title: "Thiết lập lương",
+                situation: "Bạn cần khai báo mức lương cơ sở và quy tắc tính lương cho nhân viên để phục vụ việc tạo bảng lương tự động.",
+                steps: [
+                    { text: "Tại cột <strong>Lương chính</strong> trong danh sách nhân viên, bấm vào biểu tượng dấu <strong>+</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065636/KTRT_N_-19.png" },
+                    { text: "Chọn <strong>Loại lương</strong> (Theo ca làm việc, Theo giờ làm việc, Theo ngày công chuẩn, Cố định) và nhập số tiền vào ô <strong>Mức lương</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065619/KTRT_N_-20.png" },
+                    { text: "Tùy chọn <strong>Thiết lập hệ số lương ngày nghỉ, lễ tết</strong> (không áp dụng với lương Cố định): Bật xanh ➔ nhập hệ số theo giá trị VND hoặc % ➔ bấm <strong>Xong</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065555/KTRT_N_-22.png" },
+                    { text: "Bấm <strong>Lưu</strong> hoặc <strong>Lưu và áp dụng cho toàn bộ nhân viên</strong>. Cài đặt thêm các khoản Làm thêm, Thưởng, Hoa hồng, Phụ cấp, Giảm trừ nếu có ➔ bấm <strong>Tiếp tục</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065538/KTRT_N_-24.png" }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng anh tính lương nhân viên đi làm ngày Lễ Tết x2 lương thì phần mềm có tự động tính được không?",
+                    advice: "Dạ tự động 100% luôn ạ! Anh/chị chỉ cần bật nút 'Thiết lập hệ số lương ngày nghỉ, lễ tết' và đặt mức 200%, khi tạo bảng lương hệ thống sẽ tự động nhân đúng hệ số cho các ca làm việc ngày lễ tết mà không cần tính tay ạ."
+                },
+                quiz: {
+                    question: "Mọi loại lương (bao gồm cả loại Lương cố định) đều có thể bật tính năng thiết lập hệ số lương ngày nghỉ, lễ tết.",
+                    answer: false,
+                    explanation: "Tính năng thiết lập hệ số lương ngày nghỉ, lễ tết chỉ áp dụng cho Lương theo ca, theo giờ, theo ngày công chuẩn và KHÔNG áp dụng cho Lương cố định."
+                }
+            },
+            {
+                title: "Tạo bảng lương",
+                situation: "Đây là bước cuối cùng để hoàn tất quy trình thiết lập, khởi tạo kỳ lương đầu tiên để hệ thống bắt đầu tự động tính lương.",
+                steps: [
+                    { text: "Màn hình hiển thị popup <strong>Tạo bảng lương</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065530/KTRT_N_-25.png" },
+                    { text: "Cấu hình thông số: <strong>Ngày bắt đầu kỳ lương hàng tháng</strong> (VD: Ngày 1), <strong>Kỳ hạn trả lương</strong> (Hàng tháng), <strong>Kỳ làm việc</strong> (hệ thống gợi ý kỳ hiện tại).", img: null },
+                    { text: "Nhấn nút <strong>Tạo bảng lương</strong>.", img: null },
+                    { text: "Hệ thống báo tạo bảng lương thành công. Nhấn <strong>tại đây</strong> để xem bảng lương chi tiết hoặc nhấn <strong>Hoàn thành</strong> để kết thúc toàn bộ quy trình khởi tạo.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065514/KTRT_N_-26.png" }
+                ],
+                flashcard: {
+                    situation: "Mỗi cuối tháng ngồi chốt công và tính lương cho cả chục nhân viên mất cả ngày trời, dùng KiotViet có nhanh hơn không em?",
+                    advice: "Dạ dùng KiotViet anh/chị chỉ mất đúng 3 giây bấm nút 'Tạo bảng lương' thôi ạ! Hệ thống tự động gom toàn bộ dữ liệu chấm công, ca làm, phụ cấp và hoa hồng để tính ra tổng lương chính xác tuyệt đối ạ!"
+                },
+                quiz: {
+                    question: "Sau khi cài đặt xong luồng khởi tạo, hệ thống KiotViet sẽ tự động tập hợp dữ liệu chấm công và quy tắc lương để tạo bảng lương chỉ với 1 cú nhấp chuột.",
+                    answer: true,
+                    explanation: "Tính năng Tạo bảng lương giúp tự động hóa toàn bộ khâu tổng hợp công lương, giảm bớt sai sót do tính toán thủ công bằng Excel."
+                }
             }
-            
-            document.addEventListener('keydown', (e) => {
-                const lightbox = document.getElementById('lightbox');
-                const focusChat = document.getElementById('chat-focus-modal');
-                
-                if (lightbox && !lightbox.classList.contains('hidden')) {
-                    if (e.key === 'ArrowLeft') {
-                        changeLightboxImg(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeLightboxImg(1);
-                        e.preventDefault();
-                    } else if (e.key === 'Escape') {
-                        closeLightbox();
-                    }
-                    return;
-                }
-                
-                if (focusChat && !focusChat.classList.contains('hidden')) {
-                    if (e.key === 'Escape') {
-                        closeChatFocusModal();
-                    }
-                    return;
-                }
+        ];
 
-                if (activeMainTab === 'ly-thuyet') {
-                    if (e.key === 'ArrowLeft') {
-                        changeTopic(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeTopic(1);
-                        e.preventDefault();
-                    }
+        const ADVANCED_LESSONS = [
+            {
+                category: 'mobile',
+                title: "Khởi tạo trên Mobile",
+                situation: "Bạn muốn nhanh chóng khởi tạo thông tin nhân viên, thiết lập giờ làm việc và tính lương ngay trên ứng dụng di động KiotViet.",
+                steps: [
+                    { text: "Trên ứng dụng KiotViet di động, truy cập vào menu <strong>Nhiều hơn</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065506/KTRT_N_-27.png" },
+                    { text: "Chạm <strong>Thiết lập nhân viên</strong> ➔ chạm <strong>Khởi tạo</strong>.", img: null },
+                    { text: "Hoặc chạm vào 1 trong các menu: Nhân viên, Lịch làm việc, Chấm công, Bảng lương tại khu vực Nhân viên để tự động chuyển đến màn hình Khởi tạo.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065453/KTRT_N_-28.png" }
+                ],
+                flashcard: {
+                    situation: "Anh hay đi ngoài đường không mang laptop, có thiết lập toàn bộ quy trình nhân sự trên điện thoại được không em?",
+                    advice: "Dạ hoàn toàn được ạ! App KiotViet trên điện thoại tích hợp đầy đủ luồng Khởi tạo nhân sự như trên máy tính, giúp anh/chị cài đặt ca làm, phân công và tạo bảng lương mọi lúc mọi nơi ạ."
+                },
+                quiz: {
+                    question: "Người dùng có thể kích hoạt và hoàn thành luồng Khởi tạo nhân sự ngay trên ứng dụng KiotViet điện thoại di động.",
+                    answer: true,
+                    explanation: "App KiotViet hỗ trợ đầy đủ giao diện Khởi tạo nhân sự trên điện thoại giúp chủ cửa hàng quản lý linh hoạt."
                 }
+            },
+            {
+                category: 'mobile',
+                title: "Thêm nhân viên trên Mobile",
+                situation: "Bạn cần tạo hồ sơ nhân viên trực tiếp trên ứng dụng di động.",
+                steps: [
+                    { text: "Trên màn hình Khởi tạo của điện thoại, chạm nút <strong>Thêm nhân viên</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065445/KTRT_N_-29.png" },
+                    { text: "Nhập các thông tin bắt buộc: <strong>Tên nhân viên</strong>, <strong>Số điện thoại</strong>.", img: null },
+                    { text: "(Tùy chọn) Chạm <strong>Thêm nhân viên</strong> nếu muốn khai báo thêm nhiều người cùng lúc.", img: null },
+                    { text: "Chạm <strong>Lưu</strong> để chuyển sang bước Tạo ca làm việc.", img: null }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng mới tuyển nhân viên mới, anh thêm thông tin hồ sơ trên điện thoại có nhanh không?",
+                    advice: "Dạ chỉ mất vài giây thôi ạ! Anh mở App ➔ Thêm nhân viên ➔ Nhập tên và SĐT rồi bấm Lưu là xong. Anh có thể nhập liên tục nhiều nhân viên vô cùng thuận tiện ạ."
+                },
+                quiz: {
+                    question: "Thao tác thêm nhân viên trên ứng dụng điện thoại bắt buộc phải đăng ký đầy đủ địa chỉ nhà và email mới lưu được.",
+                    answer: false,
+                    explanation: "Khi thêm nhân viên trên Mobile, các thông tin bắt buộc tối thiểu chỉ bao gồm Tên nhân viên và Số điện thoại."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Tạo ca làm việc trên Mobile",
+                situation: "Định nghĩa các khung giờ làm việc tiêu chuẩn của cửa hàng ngay trên ứng dụng điện thoại.",
+                steps: [
+                    { text: "Trên màn hình Khởi tạo, chạm <strong>Tạo ca</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065437/KTRT_N_-30.png" },
+                    { text: "Chọn số lượng ca làm việc của cửa hàng.", img: null },
+                    { text: "Hệ thống tự động gợi ý các ca tiêu chuẩn (Ca sáng, Ca chiều, Ca tối) kèm giờ mặc định.", img: null },
+                    { text: "Tùy chỉnh giờ vào/ra, xóa ca hoặc chạm <strong>Thêm ca</strong> để tạo ca mới ➔ chạm <strong>Lưu</strong>.", img: null }
+                ],
+                flashcard: {
+                    situation: "Anh muốn đổi giờ vào ca của nhân viên ngay trên điện thoại thì thao tác ở đâu?",
+                    advice: "Dạ anh chỉ cần vào mục Tạo ca trong luồng Khởi tạo trên điện thoại, chạm trực tiếp vào ô giờ vào/ra của ca đó để chỉnh lại rồi bấm Lưu là hệ thống cập nhật tức thì ạ!"
+                },
+                quiz: {
+                    question: "Trên điện thoại, ứng dụng KiotViet cũng tự động gợi ý các khung ca làm việc mặc định giúp tiết kiệm thời gian cài đặt.",
+                    answer: true,
+                    explanation: "Giao diện Mobile vẫn được tích hợp dữ liệu gợi ý ca làm việc thông minh tương tự trên bản máy tính."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Xếp lịch làm việc trên Mobile",
+                situation: "Phân bổ nhân viên vào các ca làm việc cụ thể trong tuần ngay trên điện thoại.",
+                steps: [
+                    { text: "Trên màn hình Khởi tạo, chạm <strong>Xếp lịch</strong> ➔ chạm <strong>Đã hiểu</strong> trên màn hình hướng dẫn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065430/KTRT_N_-31.png" },
+                    { text: "Chạm vào ô trống tương ứng với ngày và nhân viên cần xếp lịch ➔ Tích chọn ca làm ➔ chạm <strong>Tiếp tục</strong>.", img: null },
+                    { text: "Bật <strong>Lặp lại hàng tuần</strong> (chọn thứ, ngày kết thúc) ➔ Chạm <strong>Thêm lịch tương tự cho nhân viên khác</strong> nếu áp dụng chung ➔ Chạm <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065422/KTRT_N_-32.png" }
+                ],
+                flashcard: {
+                    situation: "Thao tác xếp lịch trên màn hình điện thoại nhỏ như vậy có dễ bị bấm nhầm không em?",
+                    advice: "Dạ giao diện xếp lịch trên Mobile của KiotViet được tối ưu thiết kế ô vuông to rõ, anh/chị chỉ cần chạm chọn ca và bấm 'Áp dụng cho nhân viên khác' là xong, rất dễ thao tác ạ!"
+                },
+                quiz: {
+                    question: "Khi xếp lịch trên điện thoại, người dùng không thể cài đặt tính năng lặp lại hàng tuần.",
+                    answer: false,
+                    explanation: "Ứng dụng di động hỗ trợ đầy đủ tùy chọn 'Lặp lại hàng tuần' và nhân bản lịch cho nhân viên khác giống như giao diện máy tính."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Hình thức chấm công trên Mobile",
+                situation: "Cấu hình phương thức chấm công GPS Zalo Mini App và địa chỉ chi nhánh trên điện thoại.",
+                steps: [
+                    { text: "Trên màn hình Khởi tạo, chạm <strong>Thiết lập</strong> trên dòng Chấm công ➔ Bật xanh hình thức áp dụng.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065414/KTRT_N_-33.png" },
+                    { text: "Với <strong>Zalo Mini App</strong>: Chạm <strong>Tại đây</strong> ➔ Tích chọn quyền (Bảng chấm công, Bảng lương) ➔ Chạm <strong>Thêm địa chỉ</strong> ➔ Nhập Địa chỉ, chọn Tỉnh/Thành, Xã/Phường và Phạm vi (m) ➔ Chạm <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065349/KTRT_N_-36.png" },
+                    { text: "Chạm <strong>Chia sẻ đường dẫn</strong> để tải mã QR hoặc chia sẻ liên kết Zalo Mini App cho nhân viên.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065340/KTRT_N_-37.png" }
+                ],
+                flashcard: {
+                    situation: "Anh đứng tại cửa hàng dùng điện thoại cài đặt vị trí GPS chấm công luôn có chuẩn không em?",
+                    advice: "Dạ chuẩn xác 100% luôn ạ! Điện thoại có sẵn định vị GPS cực nhạy, anh/chị chỉ cần chạm 'Thêm địa chỉ' là ứng dụng tự bắt tọa độ chi nhánh vô cùng tiện lợi ạ."
+                },
+                quiz: {
+                    question: "Chủ cửa hàng có thể chia sẻ liên kết và mã QR Zalo Mini App cho nhân viên trực tiếp từ điện thoại.",
+                    answer: true,
+                    explanation: "App di động cho phép gửi đường dẫn hoặc xuất mã QR để nhân viên quét tham gia chấm công Zalo Mini App nhanh chóng."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Thiết lập lương trên Mobile",
+                situation: "Khai báo mức lương cơ sở và quy tắc tính lương cho nhân viên trên ứng dụng di động.",
+                steps: [
+                    { text: "Trên màn hình Khởi tạo, chạm <strong>Thiết lập</strong> trên dòng Thiết lập lương ➔ Chạm vào dòng <strong>Chưa thiết lập</strong> dưới tên nhân viên.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065333/KTRT_N_-38.png" },
+                    { text: "Chọn <strong>Loại lương</strong> ➔ chạm <strong>Áp dụng</strong> ➔ Nhập số tiền vào ô <strong>Mức lương</strong>.", img: null },
+                    { text: "Tùy chọn <strong>Thiết lập nâng cao</strong> (không áp dụng với lương Cố định): Nhập hệ số ngày nghỉ lễ tết (VND hoặc %) ➔ chạm <strong>Xong</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065322/KTRT_N_-39.png" },
+                    { text: "Thêm Lương làm thêm giờ, Thưởng, Hoa hồng, Phụ cấp, Giảm trừ nếu có ➔ chạm <strong>Lưu</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065315/KTRT_N_-40.png" }
+                ],
+                flashcard: {
+                    situation: "Anh thiết lập lương trên App điện thoại có bị thiếu các khoản phụ cấp hay thưởng so với bản máy tính không?",
+                    advice: "Dạ đầy đủ 100% không thiếu tính năng nào ạ! Anh/chị vẫn cài đặt đủ Lương cơ sở, hệ số lễ tết, làm thêm giờ, thưởng và hoa hồng chi tiết ngay trên điện thoại ạ."
+                },
+                quiz: {
+                    question: "Giao diện thiết lập lương trên Mobile cho phép cấu hình đầy đủ các khoản phụ cấp, giảm trừ và hoa hồng.",
+                    answer: true,
+                    explanation: "Phiên bản di động đảm bảo tính năng đồng bộ hoàn toàn với bản Web, đầy đủ các loại phụ cấp và quy tắc tính lương."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Tạo bảng lương trên Mobile",
+                situation: "Khởi tạo bảng lương tự động đầu tiên ngay trên điện thoại di động.",
+                steps: [
+                    { text: "At bước cuối cùng trên màn hình Khởi tạo di động, chạm <strong>Tạo bảng lương</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19065255/KTRT_N_-41.png" },
+                    { text: "Kiểm tra và điều chỉnh các thông số: Ngày bắt đầu kỳ lương, Kỳ hạn trả lương, Kỳ làm việc.", img: null },
+                    { text: "Chạm <strong>Lưu</strong> để hệ thống bắt đầu tính toán tự động.", img: null },
+                    { text: "Bảng lương tạo thành công ➔ Nhấn <strong>tại đây</strong> để xem chi tiết hoặc đóng màn hình để kết thúc.", img: null }
+                ],
+                flashcard: {
+                    situation: "Đang đi công tác mà tới ngày chốt lương, anh bấm tạo bảng lương trên điện thoại được không?",
+                    advice: "Dạ được chứ ạ! Anh chỉ cần mở App KiotViet trên điện thoại, vào mục Tạo bảng lương bấm 'Lưu' là hệ thống tự tính xong bảng lương trong vài giây, anh kiểm tra và duyệt lương ngay tại chỗ ạ!"
+                },
+                quiz: {
+                    question: "Sau khi bấm Lưu tạo bảng lương trên Mobile, chủ cửa hàng có thể xem lại chi tiết bảng lương ngay trên điện thoại.",
+                    answer: true,
+                    explanation: "Sau khi hoàn thành khởi tạo, bảng lương tự động xuất hiện chi tiết trên màn hình ứng dụng di động để người dùng kiểm tra."
+                }
+            }
+        ];
 
-                if (activeMainTab === 'kiem-tra') {
-                    if (e.key === 'ArrowLeft') {
-                        changeQuizSlide(-1);
-                        e.preventDefault();
-                    } else if (e.key === 'ArrowRight') {
-                        changeQuizSlide(1);
-                        e.preventDefault();
-                    }
-                }
+        let currentViewState = 'guide';
+        let basicIndex = 0;
+        let advancedIndex = 0;
+        let userAnswers = {};
+
+        function navSelectTab(tab) {
+            ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (view) view.classList.add('hidden');
+                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
             });
+
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeBtn = document.getElementById(`tab-btn-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+
+            if (tab === 'basic') {
+                currentViewState = 'basic-overview';
+                document.getElementById('viewer-basic').classList.add('hidden');
+                document.getElementById('overview-basic').classList.remove('hidden');
+            } else if (tab === 'advanced') {
+                currentViewState = 'advanced-overview';
+                document.getElementById('viewer-advanced').classList.add('hidden');
+                document.getElementById('overview-advanced').classList.remove('hidden');
+            } else {
+                currentViewState = tab;
+            }
+        }
+
+        function jumpToLesson(scope, index) {
+            navSelectTab(scope);
+            if (scope === 'basic') {
+                currentViewState = 'basic-viewer';
+                basicIndex = index;
+                document.getElementById('overview-basic').classList.add('hidden');
+                document.getElementById('viewer-basic').classList.remove('hidden');
+                renderLesson('basic', basicIndex);
+            } else {
+                currentViewState = 'advanced-viewer';
+                advancedIndex = index;
+                document.getElementById('overview-advanced').classList.add('hidden');
+                document.getElementById('viewer-advanced').classList.remove('hidden');
+                renderLesson('advanced', advancedIndex);
+            }
+        }
+
+        function startSectionContent(scope) { jumpToLesson(scope, 0); }
+
+        function nextGlobal() {
+            if (currentViewState === 'guide') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('basic'); }
+            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-viewer') {
+                if (basicIndex < BASIC_LESSONS.length - 1) {
+                    basicIndex++; renderLesson('basic', basicIndex);
+                } else {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                }
+            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            else if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex < ADVANCED_LESSONS.length - 1) {
+                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                } else {
+                    document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                }
+            }
+        }
+
+        function prevGlobal() {
+            if (currentViewState === 'advanced-viewer') {
+                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                else { navSelectTab('advanced'); }
+            } else if (currentViewState === 'advanced-overview') {
+                jumpToLesson('basic', BASIC_LESSONS.length - 1);
+            } else if (currentViewState === 'basic-viewer') {
+                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                else { navSelectTab('basic'); }
+            } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
+            else if (currentViewState === 'glossary') { navSelectTab('guide'); }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') { nextGlobal(); }
+            else if (e.key === 'ArrowLeft') { prevGlobal(); }
         });
 
-        function formatDescription(text) {
-            if (!text) return '';
-            const sentences = text.split(/\.\s+/);
-            return sentences
-                .map(s => s.trim())
-                .filter(s => s.length > 0)
-                .map(s => s.endsWith('.') ? s : s + '.')
-                .join('<br><br>');
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
         }
 
-        function switchMainTab(tab) {
-            activeMainTab = tab;
-            const btnKiemTra = document.getElementById('btn-kiem-tra');
-            const learningWrapper = document.getElementById('learning-content-wrapper');
-            const quizSec = document.getElementById('sec-kiem-tra');
-            const topicList = document.getElementById('sidebar-topic-list');
-            
-            if(btnKiemTra) {
-                btnKiemTra.classList.remove('active');
-                btnKiemTra.classList.add('bg-[#16a34a]', 'border-[#15803d]');
-            }
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
 
-            if (tab === 'kiem-tra') {
-                if(btnKiemTra) btnKiemTra.classList.add('active');
-                learningWrapper.classList.add('hidden'); learningWrapper.classList.remove('flex');
-                quizSec.classList.remove('hidden'); quizSec.classList.add('flex');
-                topicList.classList.add('opacity-50', 'pointer-events-none'); 
-                currentQuizIdx = 0;
-                renderActiveQuizCard();
-            } else {
-                quizSec.classList.add('hidden'); quizSec.classList.remove('flex');
-                learningWrapper.classList.remove('hidden'); learningWrapper.classList.add('flex');
-                topicList.classList.remove('opacity-50', 'pointer-events-none');
-                if(unifiedData.length > 0) updateContentArea(); 
-            }
-        }
-
-        function exitQuiz() {
-            switchMainTab('ly-thuyet');
-        }
-
-        function renderSidebarList() {
-            const list = document.getElementById('sidebar-topic-list');
-            list.innerHTML = '';
-            unifiedData.forEach((item, idx) => {
-                const btn = document.createElement('button');
-                const isActive = idx === currentTopic;
-                const isCompleted = localCompletedTopics.includes(idx);
-                
-                const activeClasses = isActive 
-                    ? 'active text-[#166def] font-bold border-l-4 border-[#166def]' 
-                    : 'border-transparent text-slate-300 hover:text-white';
-                
-                let checkIcon = isCompleted 
-                    ? `<span class="text-green-500 shrink-0 ml-auto pl-1" style="font-size:11px !important;"><i class="fa-solid fa-circle-check"></i></span>`
-                    : '';
-
-                btn.className = `topic-item w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between gap-2 border-l-4 font-semibold ${activeClasses}`;
-                btn.innerHTML = `<span class="whitespace-normal break-words leading-snug pr-1 flex-1 text-left">${item.title}</span>${checkIcon}`;
-                btn.onclick = () => { selectTopic(idx); };
-                list.appendChild(btn);
-            });
-        }
-
-        function selectTopic(index) {
-            currentTopic = index; 
-            if(activeMainTab === 'kiem-tra') switchMainTab('ly-thuyet'); 
-            renderSidebarList(); 
-            updateContentArea();
-        }
-
-        function markTopicAsCompleted(topicIndex) {
-            if (!localCompletedTopics.includes(topicIndex)) {
-                localCompletedTopics.push(topicIndex);
-                localStorage.setItem('kv_completed_topics_dynamic_f', JSON.stringify(localCompletedTopics));
-                renderSidebarList();
-            }
-        }
-
-        function changeTopic(direction) {
-            const nextIdx = currentTopic + direction;
-            if (nextIdx >= 0 && nextIdx < unifiedData.length) {
-                selectTopic(nextIdx);
-            } else if (nextIdx >= unifiedData.length) {
-                switchMainTab('kiem-tra');
-            }
-        }
-
-        function changeInnerImage(direction) {
-            const data = unifiedData[currentTopic];
-            if (!data.images || data.images.length <= 1) return;
-            
-            let curIdx = activeImgIndices[currentTopic] || 0;
-            curIdx = (curIdx + direction + data.images.length) % data.images.length;
-            activeImgIndices[currentTopic] = curIdx;
-            
-            const imgEl = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (imgEl) imgEl.src = data.images[curIdx];
-            if (indicatorEl) indicatorEl.innerText = `${curIdx + 1} / ${data.images.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${curIdx + 1}`;
-        }
-
-        function handleImgMouseMove(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                event.target.style.cursor = 'w-resize';
-            } else if (ratio > 0.75) {
-                event.target.style.cursor = 'e-resize';
-            } else {
-                event.target.style.cursor = 'default';
-            }
-        }
-
-        function handleMainImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeInnerImage(-1);
-            } else if (ratio > 0.75) {
-                changeInnerImage(1);
-            }
-        }
-
-        function handleLightboxImgClick(event) {
-            event.stopPropagation();
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const ratio = x / rect.width;
-            if (ratio < 0.25) {
-                changeLightboxImg(-1);
-            } else if (ratio > 0.75) {
-                changeLightboxImg(1);
-            }
-        }
-
-        function openLightbox(imgArray, index) { 
-            lbImages = imgArray; 
-            lbIndex = index; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            lightbox.classList.remove('hidden'); 
-            lightbox.classList.add('flex'); 
-            
-            const btnPrev = document.getElementById('lb-btn-prev');
-            const btnNext = document.getElementById('lb-btn-next');
-            if (lbImages.length <= 1) {
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            } else {
-                btnPrev.classList.remove('hidden');
-                btnNext.classList.remove('hidden');
-            }
-
-            setTimeout(() => { 
-                lightbox.classList.remove('opacity-0'); 
-                lightboxImg.classList.remove('scale-95'); 
-                lightboxImg.classList.add('scale-100'); 
-            }, 10); 
-        }
-
-        function closeLightbox(e) { 
-            if(e) e.preventDefault(); 
-            lightbox.classList.add('opacity-0'); 
-            lightboxImg.classList.remove('scale-100'); 
-            lightboxImg.classList.add('scale-95'); 
-            setTimeout(() => { 
-                lightbox.classList.add('hidden'); 
-                lightbox.classList.remove('flex'); 
-            }, 200); 
-        }
-
-        function changeLightboxImg(dir) { 
-            if (lbImages.length <= 1) return; 
-            lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length; 
-            lightboxImg.src = lbImages[lbIndex]; 
-            
-            activeImgIndices[currentTopic] = lbIndex;
-            const qImg = document.getElementById('quadrant-display-img');
-            const indicatorEl = document.getElementById('quadrant-img-indicator');
-            const stepBadgeEl = document.getElementById('quadrant-step-badge');
-            
-            if (qImg) qImg.src = lbImages[lbIndex];
-            if (indicatorEl) indicatorEl.innerText = `${lbIndex + 1} / ${lbImages.length}`;
-            if (stepBadgeEl) stepBadgeEl.innerText = `Hình ${lbIndex + 1}`;
-        }
-
-        const lightbox = document.getElementById('lightbox');
-        const lightboxImg = document.getElementById('lightbox-img');
-        let lbImages = []; 
-        let lbIndex = 0;
-
-        function updateContentArea() {
-            const data = unifiedData[currentTopic];
-            markTopicAsCompleted(currentTopic);
-
-            document.getElementById('content-header-icon').innerHTML = data.icon;
-            document.getElementById('content-header-title').innerText = data.title;
-            document.getElementById('slide-progress-badge').innerText = `Bài ${currentTopic + 1} / ${unifiedData.length}`;
-
-            const body = document.getElementById('content-body');
-
-            if (data.isIntro) {
-                let infoBtnHtml = '';
-                if (data.images && data.images.length > 0 && data.youtubeUrl) {
-                    infoBtnHtml = `<button onclick="openLightbox(unifiedData[0].images, 0)" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-solid fa-circle-info"></i> Xem Infographic</button>`;
-                }
-                
-                let mediaContainerHtml = '';
-                if (data.youtubeUrl) {
-                    mediaContainerHtml = `
-                        <iframe class="w-full h-full absolute inset-0" src="${data.youtubeUrl}" title="KiotViet Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    `;
-                } else if (data.images && data.images.length > 0) {
-                    mediaContainerHtml = `
-                        <img src="${data.images[0]}" class="w-full h-full object-contain hover:scale-[1.01] transition-transform cursor-zoom-in" onclick="openLightbox(unifiedData[0].images, 0)">
-                    `;
-                }
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-4 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-2 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-circle-question text-[#b25900]"></i> Giới thiệu chung
-                                </span>
-                                <p class="text-slate-700 font-normal leading-relaxed">${formatDescription(data.description)}</p>
-                            </div>
-                            <div class="bg-[#e2f9e9] border border-[#9ee9b3] rounded-2xl p-4 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <div class="flex justify-between items-center border-b border-[#9ee9b3] pb-2 mb-2 shrink-0">
-                                    <span class="font-bold text-[#1b7a3e] uppercase tracking-wider flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                        <i class="fa-solid fa-star text-[#1b7a3e]"></i> Lợi ích nổi bật
-                                    </span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                                    ${data.benefits.map(b => `
-                                        <div class="bg-white p-2.5 rounded-xl border border-green-200 shadow-xs">
-                                            <strong class="block text-green-800 mb-0.5"><i class="fa-solid ${b.icon} text-green-500 mr-1"></i> ${b.title}</strong>
-                                            <p class="text-slate-500 leading-relaxed">${b.desc}</p>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-4 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2.5 mb-3 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Sơ đồ nghiệp vụ trực quan
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-[#166def] hover:opacity-95 bg-white hover:bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-sm"><i class="fa-regular fa-comments"></i> Xem Hội thoại</button>
-                                    ${infoBtnHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    ${mediaContainerHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="mt-3 bg-cyan-50 border border-cyan-100 p-2.5 rounded-xl text-cyan-900 font-semibold shrink-0">
-                                <i class="fa-solid fa-bell mr-1"></i> ${data.updateInfo}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                const curImgIdx = activeImgIndices[currentTopic] || 0;
-                const activeImg = data.images[curImgIdx] || data.images[0];
-                const totalImg = data.images.length;
-
-                const imgControls = totalImg > 1 ? `
-                    <button onclick="changeInnerImage(-1); event.stopPropagation();" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <button onclick="changeInnerImage(1); event.stopPropagation();" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#166def] hover:opacity-90 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors shadow-md z-20">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
-                    <span id="quadrant-img-indicator" class="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold z-20">${curImgIdx + 1} / ${totalImg}</span>
-                ` : '';
-
-                body.innerHTML = `
-                    <div class="flex flex-col md:grid md:grid-cols-3 h-full gap-3 p-3 overflow-y-auto md:overflow-hidden box-border">
-                        <div class="col-span-1 flex flex-col gap-3 h-full overflow-hidden">
-                            <div class="bg-[#ffecc7] border border-[#ffd699] rounded-2xl p-3.5 shadow-sm flex flex-col shrink-0">
-                                <span class="font-bold text-[#b25900] uppercase tracking-wider mb-1.5 flex items-center gap-1.5 heading-text" style="font-size:10px !important;">
-                                    <i class="fa-solid fa-clipboard-user text-[#b25900]"></i> Tình huống thực tế
-                                </span>
-                                <div class="bg-white p-2.5 rounded-xl border border-orange-100 flex gap-2 items-start">
-                                    <span class="text-base shrink-0">🙋🏻‍♂️</span>
-                                    <p class="text-slate-600 font-normal leading-relaxed">${data.scenario}</p>
-                                </div>
-                            </div>
-
-                            <div class="bg-[#e2f9e9] rounded-xl border border-[#9ee9b3] p-3.5 shadow-sm flex flex-col flex-1 overflow-hidden">
-                                <span class="font-bold text-[#1b7a3e] uppercase tracking-wider mb-2 shrink-0 flex items-center gap-1 heading-text" style="font-size:10px !important;"><i class="fa-solid fa-list-check text-[#1b7a3e]"></i> Hướng dẫn thao tác</span>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 pr-1 py-1">
-                                    ${data.steps.map((step, idx) => `
-                                        <div class="bg-white p-2.5 rounded-lg border border-green-100 shadow-xs flex gap-2.5 items-start select-none">
-                                            <div class="text-slate-700 leading-snug flex-1 font-medium step-text-content"><strong class="text-[#166def]">Bước ${idx + 1}:</strong> ${step}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 bg-[#e6f4ff] rounded-xl border border-[#adcbe3] p-3.5 shadow-sm flex flex-col h-full overflow-hidden justify-between">
-                            <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-2 shrink-0">
-                                <span class="font-bold text-[#0a528a] flex items-center gap-1.5 heading-text" style="font-size:12px !important;">
-                                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full shrink-0"></span> Màn hình thao tác phần mềm
-                                </span>
-                                <div class="flex items-center gap-2">
-                                    <button onclick="openChatFocusModal()" class="font-bold text-pink-700 hover:text-pink-900 bg-white hover:bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg transition-all flex items-center gap-1.5 shadow-xs"><i class="fa-regular fa-comments text-pink-500"></i> Xem Hội thoại</button>
-                                    <button onclick="openLightbox(unifiedData[currentTopic].images, activeImgIndices[currentTopic] || 0)" class="font-bold text-slate-500 hover:text-[#166def] flex items-center gap-1 heading-text"><i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to</button>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 w-full flex items-center justify-center overflow-hidden relative">
-                                <div class="w-full aspect-[16/9] relative rounded-xl bg-white border border-blue-200/60 shadow-inner flex items-center justify-center overflow-hidden">
-                                    <img id="quadrant-display-img" src="${activeImg}" class="w-full h-full object-contain select-none" onclick="handleMainImgClick(event)" onmousemove="handleImgMouseMove(event)">
-                                    ${imgControls}
-                                    <span id="quadrant-step-badge" class="absolute top-4 left-4 bg-blue-100 text-[#166def] border border-blue-200 font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs heading-text z-20" style="font-size:10px !important;">
-                                        Hình ${curImgIdx + 1}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-3 p-3.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs sm:text-sm flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
-
-            updateNavFooter();
         }
 
-        function openChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            const body = document.getElementById('chat-focus-body');
-            const data = unifiedData[currentTopic];
-            
-            if (!data || !data.chat) return;
-            
-            body.innerHTML = `
-                <div class="flex gap-3 items-start w-[85%] self-start">
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs shrink-0 shadow border"><i class="fa-regular fa-user text-slate-500"></i></div>
-                    <div class="bg-white border p-3 rounded-2xl rounded-tl-none text-slate-700 shadow-sm leading-relaxed">${data.chat[0].t}</div>
-                </div>
-                <div class="flex gap-3 items-start flex-row-reverse w-[85%] self-end">
-                    <div class="w-8 h-8 rounded-full bg-[#166def] flex items-center justify-center text-xs text-white shrink-0 shadow"><i class="fa-solid fa-headset"></i></div>
-                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl rounded-tr-none text-blue-950 shadow-sm leading-relaxed">
-                        <div class="chat-content-focus text-left">${data.chat[1].t}</div>
+        function renderLesson(scope, index) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
+            const viewer = document.getElementById(viewerId);
+            const scopeColor = scope === 'basic' ? '#166def' : '#16a34a';
+
+            const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
+
+            viewer.innerHTML = `
+                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
+                    <div class="space-y-2 border-b border-slate-100 pb-4">
+                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                        </span>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
                     </div>
+
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
+                        </p>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    </div>
+
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <div class="space-y-5">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-5">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-2.5">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN (ROUNDED-2XL CHUẨN VIỀN, MÀU NHẠT TƯƠI SÁNG) -->
+                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/90 border-2 border-amber-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-comments text-amber-600"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+                                </div>
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/90 border-2 border-teal-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                            <i class="fa-solid fa-lightbulb text-teal-600"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-1 rounded-full flex items-center gap-1 uppercase">
+                                            Bấm lật lại tình huống <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                        <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
+                            <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300">
+                                ✓ ĐÚNG
+                            </button>
+                            <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2.5 px-4 rounded-xl font-black text-xs sm:text-sm border-2 transition-all btn-interact cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300">
+                                ✕ SAI
+                            </button>
+                        </div>
+
+                        <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
+                    </div>
+
+                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
+                        </button>
+                        ${nextTitle ? `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact" style="background-color: ${scopeColor}">
+                                ${nextTitle} <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        ` : `
+                            <button onclick="nextGlobal()" class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all btn-interact">
+                                Hoàn thành phần này <i class="fa-solid fa-check"></i>
+                            </button>
+                        `}
+                    </div>
+
                 </div>
             `;
-            
-            const focusUl = body.querySelectorAll('.chat-content-focus ul');
-            focusUl.forEach(ul => {
-                ul.classList.add('chat-list');
-                ul.style.fontSize = '12px';
-            });
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('.transform').classList.remove('scale-95');
-                modal.querySelector('.transform').classList.add('scale-100');
-            }, 10);
+            viewer.firstElementChild.scrollTop = 0;
         }
 
-        function closeChatFocusModal() {
-            const modal = document.getElementById('chat-focus-modal');
-            modal.classList.add('opacity-0');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
-
-        function updateNavFooter() {
-            const dotsContainer = document.getElementById('slide-dots-container');
-            dotsContainer.innerHTML = '';
-            
-            const totalTopics = unifiedData.length;
-            for (let i = 0; i < totalTopics; i++) {
-                const dot = document.createElement('div');
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-colors ${i === currentTopic ? 'bg-[#166def]' : 'bg-slate-300'}`;
-                dot.onclick = () => { selectTopic(i); };
-                dotsContainer.appendChild(dot);
-            }
-
-            const btnPrev = document.getElementById('btn-slide-prev');
-            const btnNext = document.getElementById('btn-slide-next');
-
-            btnPrev.disabled = currentTopic === 0;
-
-            if (currentTopic === totalTopics - 1) {
-                btnNext.innerHTML = `Làm Quiz <i class="fa-solid fa-brain text-[10px] ml-1"></i>`;
-            } else {
-                btnNext.innerHTML = `Bài sau <i class="fa-solid fa-chevron-right text-[10px]"></i>`;
-            }
-        }
-
-        function renderQuizProgressDashboard() {
-            const list = document.getElementById('quiz-progress-dashboard-list');
-            if (!list) return;
-            list.innerHTML = '';
-            quizData.forEach((quiz, idx) => {
-                const state = quizAnswersState[idx] || {};
-                const isActive = idx === currentQuizIdx;
-                
-                let iconHtml = `<div class="w-2.5 h-2.5 rounded-full border border-blue-300 shrink-0"></div>`;
-                let bgClass = "bg-white text-slate-600 border-blue-100";
-                
-                if (state.checked) {
-                    if (state.isCorrectSelected) {
-                        iconHtml = `<i class="fa-solid fa-circle-check text-green-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-green-50/70 text-green-700 border-green-200";
-                    } else {
-                        iconHtml = `<i class="fa-solid fa-circle-xmark text-red-500 text-xs shrink-0"></i>`;
-                        bgClass = "bg-red-50/70 text-red-700 border-red-200";
-                    }
-                }
-                
-                if (isActive) {
-                    bgClass += " ring-2 ring-[#166def] ring-offset-1 font-bold";
-                }
-                
-                const btn = document.createElement('button');
-                btn.className = `w-full text-left px-2.5 py-2 border flex items-center justify-between gap-2 font-semibold transition-all ${bgClass} shrink-0`;
-                btn.innerHTML = `<span class="truncate">Nhận định ${idx + 1}</span> ${iconHtml}`;
-                btn.onclick = () => {
-                    currentQuizIdx = idx;
-                    renderActiveQuizCard();
-                };
-                list.appendChild(btn);
-            });
-        }
-
-        function renderActiveQuizCard() {
-            renderQuizProgressDashboard();
-            const cardContainer = document.getElementById('quiz-active-card-container');
-            const remarkContainer = document.getElementById('quiz-active-remark-column');
-            const quiz = quizData[currentQuizIdx];
-            const state = quizAnswersState[currentQuizIdx] || {};
-
-            document.getElementById('quiz-progress-indicator').innerText = `Nhận định ${currentQuizIdx + 1} / ${quizData.length}`;
-
-            let btnCorrectStyle = "border-green-200 text-green-600 hover:bg-green-50 bg-white";
-            let btnWrongStyle = "border-red-200 text-red-600 hover:bg-red-50 bg-white";
-            let pointerClass = "";
-
-            if (state.checked) {
-                pointerClass = "pointer-events-none opacity-40";
-                if (state.isCorrectSelected) {
-                    if (quiz.isTrue) btnCorrectStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                    else btnWrongStyle = "border-green-500 bg-green-500 text-white shadow-sm font-bold";
-                } else {
-                    if (quiz.isTrue) {
-                        btnWrongStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnCorrectStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    } else {
-                        btnCorrectStyle = "border-red-500 bg-red-500 text-white shadow-sm font-bold";
-                        btnWrongStyle = "border-green-400 text-green-600 bg-green-50 font-bold";
-                    }
-                }
-            }
-
-            cardContainer.className = "flex-1 bg-white border border-slate-200 p-5 rounded-2xl shadow-md flex flex-col justify-between relative overflow-y-auto transition-all custom-scrollbar";
-
-            cardContainer.innerHTML = `
-                <div class="flex flex-col gap-4 flex-1 justify-center py-2">
-                    <div class="bg-[#f0f7ff] border-l-4 border-[#166def] p-4 sm:p-5 rounded-r-xl shadow-xs">
-                        <span class="inline-block bg-[#166def] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full mb-3 heading-text">Nhận định ${currentQuizIdx + 1}</span>
-                        <h3 class="font-bold text-slate-800 leading-relaxed heading-text" style="font-size: 13px !important;">
-                            ${quiz.q}
-                        </h3>
+        function renderOverviewLists() {
+            const basicList = document.getElementById('basic-overview-list');
+            if (basicList && typeof BASIC_LESSONS !== 'undefined') {
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
+                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
                     </div>
-                    <div class="flex gap-3 justify-center items-center py-3 ${pointerClass}">
-                        <button onclick="submitQuizAnswer(true)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnCorrectStyle}">
-                            <i class="fa-solid fa-check"></i> ĐÚNG
-                        </button>
-                        <button onclick="submitQuizAnswer(false)" class="w-28 py-2 rounded-xl border-2 font-black flex items-center justify-center gap-1.5 transition-all tracking-wider ${btnWrongStyle}">
-                            <i class="fa-solid fa-xmark"></i> SAI
-                        </button>
-                    </div>
-                </div>
-            `;
+                `).join('');
+            }
 
-            if (state.checked) {
-                if (state.isCorrectSelected) {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-circle-check"></i>
+            if (typeof ADVANCED_LESSONS !== 'undefined') {
+                const featureList = document.getElementById('advanced-list-features');
+                const mobileList = document.getElementById('advanced-list-mobile');
+                const posList = document.getElementById('advanced-list-pos');
+
+                let featureHTML = '', mobileHTML = '', posHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const itemHTML = `
+                        <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
+                            <div class="flex items-center gap-3 truncate">
+                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
                             </div>
-                            <h4 class="font-bold text-green-700 text-center heading-text" style="font-size: 14px !important;">Chính xác!</h4>
-                            <div class="p-3.5 rounded-xl bg-green-50 border border-green-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
+                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
                         </div>
                     `;
-                } else {
-                    remarkContainer.innerHTML = `
-                        <div class="flex flex-col gap-3 text-center fade-in">
-                            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl mx-auto shadow-sm">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </div>
-                            <h4 class="font-bold text-red-700 text-center heading-text" style="font-size: 14px !important;">Rất tiếc, chưa đúng!</h4>
-                            <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-left shadow-inner">
-                                <p class="text-slate-600 leading-relaxed">${quiz.explain}</p>
-                            </div>
-                        </div>
-                    `;
+
+                    if (lesson.category === 'mobile') { mobileHTML += itemHTML; }
+                    else if (lesson.category === 'pos') { posHTML += itemHTML; }
+                    else { featureHTML += itemHTML; }
+                });
+
+                if (featureList) {
+                    featureList.innerHTML = featureHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-features').style.display = featureHTML ? 'block' : 'none';
                 }
-            } else {
-                remarkContainer.innerHTML = `
-                    <div class="flex flex-col items-center justify-center text-center p-4 fade-in">
-                        <div class="w-14 h-14 rounded-full bg-blue-50 border border-dashed border-blue-300 flex items-center justify-center text-blue-400 text-xl mb-3 animate-pulse">
-                            <i class="fa-solid fa-user-pen"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-700 mb-1 heading-text" style="font-size: 13px !important;">Chưa có câu trả lời</h4>
-                        <p class="text-slate-500 max-w-[200px] leading-relaxed mx-auto">Hãy đưa ra nhận định của mình bằng cách bấm nút ĐÚNG hoặc SAI ở cột giữa.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('btn-quiz-prev').disabled = currentQuizIdx === 0;
-            const btnQuizNext = document.getElementById('btn-quiz-next');
-            if (currentQuizIdx === quizData.length - 1) {
-                btnQuizNext.innerHTML = `Hoàn thành <i class="fa-solid fa-flag-checkered ml-1"></i>`;
-            } else {
-                btnQuizNext.innerHTML = `Câu tiếp <i class="fa-solid fa-chevron-right"></i>`;
-            }
-        }
-
-        function submitQuizAnswer(selectedAnswer) {
-            if (quizAnswersState[currentQuizIdx] && quizAnswersState[currentQuizIdx].checked) return;
-
-            const quiz = quizData[currentQuizIdx];
-            const isCorrect = quiz.isTrue === selectedAnswer;
-
-            quizAnswersState[currentQuizIdx] = {
-                checked: true,
-                selected: selectedAnswer,
-                isCorrectSelected: isCorrect
-            };
-
-            if (isCorrect) {
-                window.quizScore = (window.quizScore || 0) + 1;
-            }
-            window.quizAnswered = (window.quizAnswered || 0) + 1;
-
-            renderActiveQuizCard();
-
-            if (window.quizAnswered === quizData.length) {
-                setTimeout(() => showQuizResultPopup(), 1000);
-            }
-        }
-
-        function changeQuizSlide(direction) {
-            const targetIdx = currentQuizIdx + direction;
-            if (targetIdx >= 0 && targetIdx < quizData.length) {
-                currentQuizIdx = targetIdx;
-                renderActiveQuizCard();
-            } else if (targetIdx >= quizData.length) {
-                if (window.quizAnswered === quizData.length) {
-                    showQuizResultPopup();
-                } else {
-                    const activeContainer = document.getElementById('quiz-active-card-container');
-                    activeContainer.classList.add('border-red-400');
-                    setTimeout(() => activeContainer.classList.remove('border-red-400'), 500);
+                if (mobileList) {
+                    mobileList.innerHTML = mobileHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-mobile').style.display = mobileHTML ? 'block' : 'none';
+                }
+                if (posList) {
+                    posList.innerHTML = posHTML || '<p class="text-xs text-slate-400 italic pl-2">Không có thao tác phát sinh</p>';
+                    document.getElementById('adv-group-pos').style.display = posHTML ? 'block' : 'none';
                 }
             }
         }
 
-        function showQuizResultPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const scoreDisplay = document.getElementById('quiz-score-display'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            scoreDisplay.innerText = window.quizScore + ' / ' + quizData.length; 
-            popup.classList.remove('hidden'); 
-            popup.classList.add('flex'); 
-            setTimeout(() => { 
-                popup.classList.remove('opacity-0'); 
-                content.classList.remove('scale-95'); 
-                content.classList.add('scale-100'); 
-            }, 10); 
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function goToAdvancedFromModal() { 
+            closeModal('modal-basic-complete'); 
+            navSelectTab('advanced'); 
         }
+        
+        function restartSection(scope) { closeModal(`modal-${scope}-complete`); jumpToLesson(scope, 0); }
+        function restartCourse() { closeModal('modal-advanced-complete'); jumpToLesson('basic', 0); }
 
-        function closeQuizPopup() { 
-            const popup = document.getElementById('quiz-result-popup'); 
-            const content = document.getElementById('quiz-popup-content'); 
-            popup.classList.add('opacity-0'); 
-            content.classList.remove('scale-100'); 
-            content.classList.add('scale-95'); 
-            setTimeout(() => { 
-                popup.classList.add('hidden'); 
-                popup.classList.remove('flex'); 
-            }, 200); 
-        }
+        function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
 
-        function resetQuiz() { 
-            closeQuizPopup(); 
-            window.quizScore = 0; 
-            window.quizAnswered = 0; 
-            currentQuizIdx = 0;
-            quizAnswersState = {};
-            renderActiveQuizCard(); 
-            document.getElementById('sec-kiem-tra').scrollTop = 0; 
-        }
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            renderOverviewLists();
+            navSelectTab('guide');
+        });
     </script>
 </body>
 </html>
