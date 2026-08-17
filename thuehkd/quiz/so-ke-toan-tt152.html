@@ -24,11 +24,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Khử hoàn toàn viền đen mặc định của trình duyệt */
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none !important; }
         
         .sidebar-tab-btn.active-guide,
         .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
@@ -36,16 +45,17 @@
         .sidebar-tab-btn.active-glossary,
         .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
         
-        .sidebar-tab-btn.active-basic,
-        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
-        
-        .sidebar-tab-btn.active-advanced,
-        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-tab-btn.active-basic-tab { background-color: #dbeafe !important; color: #166def !important; font-weight: 800; }
+        .sidebar-tab-btn.active-advanced-tab { background-color: #dcfce7 !important; color: #16a34a !important; font-weight: 800; }
 
         .sidebar-tab-btn.active-guide i,
-        .sidebar-tab-btn.active-glossary i,
-        .sidebar-tab-btn.active-basic i,
-        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+        .sidebar-tab-btn.active-glossary i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
 
         .flashcard-3d-scene { perspective: 1000px; }
         .flashcard-3d-card {
@@ -71,10 +81,21 @@
         .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .btn-interact:hover { transform: translateY(-2px); }
         .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
-        .img-zoomable:hover { transform: scale(1.01); }
+        .img-zoomable:hover { transform: scale(1.008); }
+
+        .float-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s ease;
+        }
+        .float-nav-btn:hover {
+            transform: scale(1.12);
+        }
+        .float-nav-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f1f5f9] overflow-hidden">
 
     <!-- HEADER MAIN -->
     <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
@@ -88,264 +109,339 @@
                 <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
         </div>
-        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
-            <i class="fa-solid fa-store text-white"></i>
-            <span>BÁN BUÔN, BÁN LẺ</span>
+        <!-- TAG BÁN BUÔN, BÁN LẺ NỀN CYAN NỔI BẬT -->
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-sm bg-cyan-400 border border-cyan-400/40">
+            <i class="fa-solid fa-store text-cyan-100"></i>
+            <span>Bán buôn, Bán lẻ</span>
         </div>
     </header>
 
-    <!-- RIGHT SIDEBAR NAVIGATION -->
-    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
-        <div class="p-2 space-y-1.5 overflow-y-auto">
-            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
-                <span class="hidden md:inline truncate">Hướng dẫn học</span>
-            </button>
-            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
-                <span class="hidden md:inline truncate">Thuật ngữ</span>
-            </button>
-            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
-            </button>
-            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
-            </button>
-        </div>
+    <!-- WRAPPER BODY: SIBLING FLEX-ROW -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden">
 
-        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
-            <div class="relative group flex-1">
-                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
-                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác trước (&lt;)
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 min-w-0 h-full relative p-2 sm:p-4 overflow-hidden flex flex-col">
+            
+            <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+            <div id="view-guide" class="w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-[#166def] flex items-center justify-center cursor-pointer shadow-md" title="Xem phần tiếp theo (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem phần trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-6 pb-8">
+                        
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 scroll-mt-4" style="border-color: #166def40;">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Sổ kế toán (Thông tư 152)</h2>
+                            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                                Tính năng Sổ kế toán giúp các hộ kinh doanh tự động ghi nhận và quản lý đầy đủ sổ sách kế toán theo quy định của Thông tư 152 và quy định hiện hành. Hệ thống tự động hiển thị các loại sổ phù hợp dựa trên quy mô doanh thu và phương pháp kê khai thuế của cửa hàng, giúp chủ hộ kinh doanh yên tâm kinh doanh mà không lo lắng về các thủ tục hành chính phức tạp.
+                            </p>
+                        </div>
+
+                        <div class="space-y-6" id="guide-media-block">
+                            <!-- ƯU TIÊN 1: INFOGRAPHIC -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-infographic-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                                </h3>
+                                <div class="w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                                    <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/28024124/SO-KE-TOAN.jpg" alt="Infographic Sổ kế toán" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                </div>
+                            </div>
+
+                            <!-- ƯU TIÊN 2: YOUTUBE VIDEO -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-video-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                                    <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/e8s07t1KX84?si=rtCsdqTingPAF-Kn" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-benefits-block">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-scale-balanced"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tuân thủ pháp lý chuẩn xác</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tự động phân loại doanh thu và tạo lập sổ sách chuẩn Thông tư 152/2025/TT-BTC &amp; Luật Thuế TNCN hiện hành.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tự động hóa toàn diện</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Dữ liệu ghi nhận tự động từ Bán hàng, Kho, Thu chi và Hóa đơn điện tử, giảm 95% thời gian nhập liệu thủ công.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Minh bạch &amp; An toàn dữ liệu</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Bộ lọc đa chiều linh hoạt, hỗ trợ xuất file Excel lưu trữ theo quy định và khóa sổ an toàn sau mỗi kỳ kê khai.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                                <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-800/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-blue-800 uppercase">Phần 1</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-blue-800 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-800">Thuật ngữ nền tảng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                                </div>
+                                <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                                </div>
+                                <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            <div class="relative group flex-1">
-                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
-                    <i class="fa-solid fa-chevron-right text-white"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác tiếp (&gt;)
+
+            <!-- SECTION 2: THUẬT NGỮ -->
+            <div id="view-glossary" class="hidden w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-blue-800 flex items-center justify-center cursor-pointer shadow-md" title="Xem thuật ngữ sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem thuật ngữ trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-4 pb-8">
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-800 shadow-xs space-y-2 scroll-mt-4">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-xl"></i>
+                                <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div id="glossary-list" class="space-y-3">
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Thông tư 152/2025/TT-BTC &amp; Luật Thuế TNCN</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Bộ quy định về Chế độ kế toán và Quản lý thuế Hộ kinh doanh, chuẩn hóa các mẫu sổ S1a, S2a, S2b, S2c, S2d, S2e, S3a.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Sổ S1a-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ doanh thu bán hàng hóa, dịch vụ dành cho HKD có doanh thu dưới 1 tỷ đồng/năm (thuộc nhóm miễn thuế GTGT &amp; TNCN).</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Sổ S2a-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ doanh thu dùng cho HKD có doanh thu từ 1 - 3 tỷ đồng/năm nộp thuế TNCN theo tỷ lệ % doanh thu.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Sổ S2b-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ doanh thu phân loại ngành hàng dùng cho HKD có doanh thu trên 1 tỷ đồng/năm tính thuế TNCN theo lợi nhuận thực tế (dùng để tính riêng thuế GTGT).</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Sổ S2c-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ chi tiết doanh thu và chi phí để xác định lợi nhuận thực tế (Doanh thu - Chi phí) làm căn cứ tính thuế TNCN.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">6. Sổ S2d-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa giúp quản lý nhập - xuất - tồn kho về số lượng và giá trị.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">7. Sổ S2e-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ chi tiết tiền theo dõi biến động dòng tiền mặt và tiền gửi ngân hàng.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">8. Sổ S3a-HKD</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Sổ theo dõi nghĩa vụ thuế khác (Thuế Tiêu thụ đặc biệt, Thuế Bảo vệ môi trường, Thuế tài nguyên...).</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">9. Khóa sổ kế toán</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tính năng chốt toàn bộ giao dịch sổ sách đến ngày cuối kỳ kê khai để bảo đảm tính toàn vẹn dữ liệu, ngăn chặn thay đổi dữ liệu quá khứ.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </aside>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
-        
-        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
-        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+            <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+            <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-basic" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-[#166def] shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div class="space-y-3 text-left pt-1">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                            </h4>
+                            <div id="basic-overview-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+            <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+            <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-advanced" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+
+                        <div class="space-y-5 text-left pt-2">
+                            <div id="adv-group-features" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                                </h4>
+                                <div id="advanced-list-features" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-mobile" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Điện thoại
+                                </h4>
+                                <div id="advanced-list-mobile" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-pos" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                                </h4>
+                                <div id="advanced-list-pos" class="space-y-2.5 pl-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR NAVIGATION -->
+        <aside class="w-64 lg:w-72 bg-white border-l border-slate-200 shrink-0 h-full flex flex-col shadow-sm overflow-hidden z-20">
+            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
                 
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
-                    <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Sổ kế toán (Thông tư 152)</h2>
-                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
-                        Tính năng Sổ kế toán giúp các hộ kinh doanh tự động ghi nhận và quản lý đầy đủ sổ sách kế toán theo quy định mới của dự thảo Thông tư 152 (áp dụng từ năm 2026) và quy định hiện hành. Hệ thống sẽ tự động hiển thị các loại sổ phù hợp dựa trên quy mô doanh thu và phương pháp kê khai thuế của cửa hàng, giúp chủ hộ kinh doanh yên tâm kinh doanh mà không lo lắng về các thủ tục hành chính phức tạp.
-                    </p>
-                </div>
-
-                <div class="space-y-6" id="guide-media-block">
-                    <!-- INFOGRAPHIC CHÍNH DẪN ĐẦU -->
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
-                        </h3>
-                        <div class="w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
-                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/28024124/SO-KE-TOAN.jpg" alt="Infographic Sổ kế toán" class="w-full h-auto object-cover img-zoomable" onclick="openLightbox(this.src)">
-                        </div>
-                    </div>
-
-                    <!-- YOUTUBE VIDEO BÊN DƯỚI -->
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-video-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-                            <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/e8s07t1KX84?si=rtCsdqTingPAF-Kn" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <i class="fa-solid fa-scale-balanced text-xl text-[#166def]"></i>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Tuân thủ pháp lý chính xác</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tự động phân loại doanh thu và tạo lập sổ sách chuẩn Thông tư 152/2025/TT-BTC &amp; Luật Thuế TNCN 109/2025/QH15.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <i class="fa-solid fa-wand-magic-sparkles text-xl text-[#166def]"></i>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Tự động hóa toàn diện</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Dữ liệu ghi nhận tự động từ Bán hàng, Kho, Thu chi và Hóa đơn điện tử, giảm 95% thời gian nhập liệu thủ công.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <i class="fa-solid fa-lock text-xl text-[#166def]"></i>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Minh bạch &amp; An toàn dữ liệu</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Bộ lọc đa chiều linh hoạt, hỗ trợ xuất file Excel lưu trữ 5 năm và khóa sổ an toàn sau mỗi kỳ kê khai.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
-                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                        </div>
-                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                        </div>
-                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- SECTION 2: THUẬT NGỮ -->
-        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-4 pb-8">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
-                    <div class="flex items-center gap-2 text-blue-900">
-                        <i class="fa-solid fa-book-bookmark text-xl"></i>
-                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                </div>
-                <div id="glossary-list" class="space-y-3">
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">1. Thông tư 152/2025/TT-BTC &amp; Luật Thuế TNCN 109/2025/QH15</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Bộ quy định mới về Chế độ kế toán và Quản lý thuế Hộ kinh doanh áp dụng từ 2026, chuẩn hóa các mẫu sổ S1a, S2a, S2b, S2c, S2d, S2e, S3a.</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">2. Sổ S1a-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ doanh thu bán hàng hóa, dịch vụ dành cho HKD có doanh thu dưới 1 tỷ đồng/năm (thuộc nhóm miễn thuế GTGT &amp; TNCN).</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">3. Sổ S2a-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ doanh thu dùng cho HKD có doanh thu từ 1 - 3 tỷ đồng/năm nộp thuế TNCN theo tỷ lệ % doanh thu.</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">4. Sổ S2b-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ doanh thu phân loại ngành hàng dùng cho HKD có doanh thu trên 1 tỷ đồng/năm tính thuế TNCN theo lợi nhuận thực tế (dùng để tính riêng thuế GTGT).</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">5. Sổ S2c-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ chi tiết doanh thu và chi phí để xác định lợi nhuận thực tế (Doanh thu - Chi phí) làm căn cứ tính thuế TNCN (15%, 17%, 20%).</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">6. Sổ S2d-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa giúp quản lý nhập - xuất - tồn kho về số lượng và giá trị.</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">7. Sổ S2e-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ chi tiết tiền theo dõi biến động dòng tiền mặt và tiền gửi ngân hàng.</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">8. Sổ S3a-HKD</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Sổ theo dõi nghĩa vụ thuế khác (Thuế Tiêu thụ đặc biệt, Thuế Bảo vệ môi trường, Thuế tài nguyên...).</p>
-                    </div>
-                    <div class="p-4 bg-white rounded-2xl border border-slate-200 space-y-1">
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">9. Khóa sổ kế toán</h3>
-                        <p class="text-xs text-slate-700 leading-relaxed">Tính năng chốt toàn bộ giao dịch sổ sách đến ngày cuối kỳ kê khai để bảo đảm tính toàn vẹn dữ liệu, ngăn chặn thay đổi dữ liệu quá khứ.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
-        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                    </div>
-                    <div class="space-y-3 text-left pt-1">
-                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
-                        </h4>
-                        <div id="basic-overview-list" class="space-y-2.5"></div>
-                    </div>
-                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                <!-- CỤM 1: NỀN XANH DƯƠNG NHẠT -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                        <span class="truncate text-left flex-1">Hướng dẫn học</span>
                     </button>
-                </div>
-            </div>
-            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
-
-        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
-        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                    </div>
-
-                    <div class="space-y-6 text-left pt-2">
-                        <div id="adv-group-features" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
-                            </h4>
-                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-mobile" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
-                            </h4>
-                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-pos" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
-                            </h4>
-                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
-                        </div>
-                    </div>
-
-                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    
+                    <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                        <span class="truncate text-left flex-1">Thuật ngữ</span>
                     </button>
+                    
+                    <!-- ACCORDION KIẾN THỨC CƠ BẢN -->
+                    <div class="rounded-xl overflow-hidden border border-blue-200/70 bg-white shadow-2xs">
+                        <button onclick="handleBasicHeaderClick()" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-blue-100/50 text-xs sm:text-sm font-bold cursor-pointer transition-all border-none outline-none focus:outline-none focus:ring-0">
+                            <div class="flex items-center gap-2.5 truncate">
+                                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                                <span class="truncate text-left">Kiến thức cơ bản</span>
+                            </div>
+                            <i id="accordion-icon-basic" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+                        </button>
+                        <div id="accordion-panel-basic" class="hidden space-y-1 p-1.5 bg-blue-50/40 border-t border-blue-100"></div>
+                    </div>
                 </div>
-            </div>
-            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
 
-    </main>
+                <!-- CỤM 2: NỀN XANH LÁ NHẠT -->
+                <div class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-800 hover:bg-white text-xs sm:text-sm font-black cursor-pointer transition-all border-none outline-none focus:outline-none">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                            <span class="truncate text-left">Kiến thức nâng cao</span>
+                        </div>
+                    </button>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAccordion('adv-features')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-sliders text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Tính năng nâng cao</span>
+                                </div>
+                                <i id="accordion-icon-adv-features" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-features" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile">
+                            <button onclick="toggleAccordion('adv-mobile')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Điện thoại</span>
+                                </div>
+                                <i id="accordion-icon-adv-mobile" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-mobile" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos">
+                            <button onclick="toggleAccordion('adv-pos')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-desktop text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Máy POS</span>
+                                </div>
+                                <i id="accordion-icon-adv-pos" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-pos" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
 
     <!-- POPUP HOÀN THÀNH CƠ BẢN -->
     <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
@@ -355,23 +451,26 @@
             </div>
             <div class="space-y-1">
                 <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
-                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+                <p class="text-xs sm:text-sm text-slate-600 text-left">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng <strong class="text-slate-900">Sổ kế toán (Thông tư 152)</strong>.
+                    <br><br>
+                    Tiếp theo, bạn có thể <strong class="text-slate-900">Kết thúc bài học</strong> và chuyển sang <strong class="text-slate-900">học tiếp bài học tiếp theo</strong> trong khóa học.
+                    <br><br>
+                    Ngoài ra, bạn có thể khám phá tiếp các thao tác nâng cao ít phổ biến hơn (nếu có nhu cầu và có đủ thời gian).
+                </p>
             </div>
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Đóng
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Kết thúc bài học
                 </button>
-                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Học lại từ đầu
-                </button>
-                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#12c74e] hover:bg-[#12c712] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
                     Học nâng cao
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- POPUP HOÀN THÀNH NÂNG CAO -->
+    <!-- POPUP HOÀN THÀNH TẤT CẢ -->
     <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -402,25 +501,25 @@
         </div>
     </div>
 
-    <!-- DATA DATABASE & JAVASCRIPT ENGINE V18.0 -->
+    <!-- JAVASCRIPT ENGINE -->
     <script>
         const BASIC_LESSONS = [
             {
                 title: "Sổ doanh thu (Mẫu S1a-HKD) - HKD Doanh thu dưới 1 tỷ",
-                situation: "Bạn kinh doanh tiệm tạp hóa nhỏ, mục tiêu chính là theo dõi tổng doanh thu bán hàng hàng ngày (mức doanh thu cả năm dưới 1 tỷ đồng để được miễn thuế GTGT & TNCN). Bạn cần một công cụ đơn giản để ghi chép lại trực tiếp trên hệ thống.",
+                situation: "Bạn kinh doanh tiệm tạp hóa nhỏ, mục tiêu chính là <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">theo dõi tổng doanh thu</b> bán hàng hàng ngày (mức doanh thu cả năm <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">dưới 1 tỷ đồng</b> để được <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">miễn thuế GTGT & TNCN</b>). Bạn cần một công cụ đơn giản để ghi chép lại trực tiếp trên hệ thống.",
                 steps: [
                     {
-                        text: "Sau khi khai báo hồ sơ thuế thuộc nhóm doanh thu dưới 1 tỷ đồng/năm, truy cập menu <b>Sổ kế toán</b>. Màn hình tổng quan hiển thị duy nhất 1 Sổ doanh thu (S1a-HKD) với chỉ số <i>Tổng doanh thu năm nay</i>.",
+                        text: "Sau khi khai báo hồ sơ thuế thuộc nhóm doanh thu dưới 1 tỷ đồng/năm, truy cập menu <b class=\"font-bold text-[#166def]\">\"Sổ kế toán\"</b>. Màn hình tổng quan hiển thị duy nhất 1 Sổ doanh thu (S1a-HKD) với chỉ số <b class=\"font-bold text-[#166def]\">\"Tổng doanh thu năm nay\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124015/SKTR_270526-1.png"
                     },
                     {
-                        text: "Bấm vào sổ để mở xem chi tiết Sổ doanh thu (S1a-HKD). Dữ liệu tự động tổng hợp từ các giao dịch bán hàng và trả hàng, hiển thị rõ Ngày tháng, Giao dịch, Số tiền, Kênh bán và Mã giao dịch.",
+                        text: "Bấm vào sổ để mở xem chi tiết <b class=\"font-bold text-[#166def]\">Sổ doanh thu (S1a-HKD)</b>. Dữ liệu tự động tổng hợp từ các giao dịch bán hàng và trả hàng, hiển thị rõ Ngày tháng, Giao dịch, Số tiền, Kênh bán và Mã giao dịch.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124041/SKTR_270526-2.png"
                     }
                 ],
                 flashcard: {
-                    situation: "Chị kinh doanh tạp hóa doanh thu khoảng 600 triệu/năm, nghe nói năm 2026 áp dụng Thông tư 152 phải làm sổ sách phức tạp lắm, bên em có giải pháp nào gọn nhẹ không?",
-                    advice: "Dạ chị hoàn toàn yên tâm ạ! Theo Thông tư 152 áp dụng từ 2026, hộ kinh doanh dưới 1 tỷ/năm như chị được miễn hoàn toàn thuế GTGT & TNCN và chỉ cần duy nhất 1 cuốn Sổ doanh thu mẫu S1a-HKD. Trên KiotViet, mỗi khi chị bán đơn hàng hay khách trả hàng, hệ thống tự động ghi nhận vào sổ S1a-HKD chuẩn mực. Chị không phải ghi chép sổ tay hay nhập lại từng dòng bao giờ nữa ạ!"
+                    situation: "Chị kinh doanh tạp hóa doanh thu khoảng 600 triệu/năm, nghe nói theo Thông tư 152 phải làm sổ sách phức tạp lắm, bên em có giải pháp nào gọn nhẹ không?",
+                    advice: "Dạ chị hoàn toàn yên tâm ạ! Theo Thông tư 152, hộ kinh doanh dưới 1 tỷ/năm như chị được miễn thuế GTGT & TNCN và chỉ cần duy nhất 1 cuốn Sổ doanh thu mẫu S1a-HKD. Trên KiotViet, mỗi khi chị bán đơn hàng hay khách trả hàng, hệ thống tự động ghi nhận vào sổ S1a-HKD chuẩn mực. Chị không phải ghi chép sổ tay hay nhập lại từng dòng nữa ạ!"
                 },
                 quiz: {
                     question: "Hộ kinh doanh có doanh thu dưới 1 tỷ đồng/năm khi sử dụng Sổ kế toán Thông tư 152 trên KiotViet sẽ tự động áp dụng duy nhất mẫu Sổ doanh thu S1a-HKD?",
@@ -430,20 +529,20 @@
             },
             {
                 title: "Sổ doanh thu (Mẫu S2a-HKD) - HKD Doanh thu 1 - 3 tỷ (% Doanh thu)",
-                situation: "Bạn là chủ shop thời trang có doanh thu ~2 tỷ/năm, đã đăng ký với cơ quan thuế phương pháp kê khai thuế theo tỷ lệ % doanh thu. Bạn cần xem chính xác số tiền thuế GTGT và TNCN phải nộp tương ứng với từng đơn hàng bán ra.",
+                situation: "Bạn là chủ shop thời trang có doanh thu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">1 - 3 tỷ/năm</b>, đã đăng ký phương pháp <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kê khai thuế theo tỷ lệ % doanh thu</b>. Bạn cần xem chính xác số tiền thuế GTGT và TNCN phải nộp tương ứng với từng đơn hàng bán ra.",
                 steps: [
                     {
-                        text: "Khi hồ sơ thuế thiết lập nhóm 1 - 3 tỷ/năm tính thuế theo % doanh thu, truy cập menu <b>Sổ kế toán</b>. Màn hình hiển thị duy nhất Sổ doanh thu (S2a-HKD) với các chỉ số: <i>Tổng doanh thu năm nay, Tổng doanh thu quý này, Tổng tiền thuế quý này</i>.",
+                        text: "Khi hồ sơ thuế thiết lập nhóm 1 - 3 tỷ/năm tính thuế theo % doanh thu, truy cập menu <b class=\"font-bold text-[#166def]\">\"Sổ kế toán\"</b>. Màn hình hiển thị duy nhất Sổ doanh thu (S2a-HKD) với các chỉ số: <b class=\"font-bold text-[#166def]\">Tổng doanh thu năm nay</b>, <b class=\"font-bold text-[#166def]\">Tổng doanh thu quý này</b>, <b class=\"font-bold text-[#166def]\">Tổng tiền thuế quý này</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124056/SKTR_270526-3.png"
                     },
                     {
-                        text: "Bấm xem chi tiết Sổ doanh thu (Mẫu S2a-HKD). Hệ thống tự động tính toán nghĩa vụ thuế GTGT và TNCN dựa trên tỷ lệ % quy định cho từng dòng giao dịch bán hàng / trả hàng.",
+                        text: "Bấm xem chi tiết <b class=\"font-bold text-[#166def]\">Sổ doanh thu (Mẫu S2a-HKD)</b>. Hệ thống tự động tính toán nghĩa vụ thuế GTGT và TNCN dựa trên tỷ lệ % quy định cho từng dòng giao dịch bán hàng / trả hàng.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124115/SKTR_270526-4.png"
                     }
                 ],
                 flashcard: {
-                    situation: "Shop em bán quần áo doanh thu 2 tỷ/năm nộp thuế khoán % doanh thu. KiotViet hỗ trợ tính chính xác tiền thuế phải nộp hằng quý như thế nào?",
-                    advice: "Dạ anh/chị ơi, KiotViet tự động nhân tỷ lệ % thuế GTGT và TNCN cho từng mặt hàng ngay khi phát sinh đơn bán. Anh/chị vào Sổ S2a-HKD là thấy ngay tổng doanh thu quý này cùng chính xác từng đồng thuế GTGT và TNCN phải nộp. Cuối quý chỉ cần tải sổ xuất kê khai là xong ngay, không sợ tính nhầm lẫn ạ!"
+                    situation: "Shop em bán quần áo doanh thu 2 tỷ/năm nộp thuế theo % doanh thu. KiotViet hỗ trợ tính chính xác tiền thuế phải nộp hằng quý như thế nào?",
+                    advice: "Dạ anh/chị ơi, KiotViet tự động nhân tỷ lệ % thuế GTGT và TNCN cho từng mặt hàng ngay khi phát sinh đơn bán. Anh/chị vào Sổ S2a-HKD là thấy ngay tổng doanh thu quý này cùng chính xác từng đồng thuế GTGT và TNCN phải nộp. Cuối quý chỉ cần tải sổ xuất kê khai là xong ngay ạ!"
                 },
                 quiz: {
                     question: "Sổ doanh thu Mẫu S2a-HKD dành cho nhóm HKD doanh thu 1 - 3 tỷ/năm tính thuế theo % doanh thu sẽ hiển thị cả chỉ số Thuế GTGT và Thuế TNCN phải nộp?",
@@ -453,14 +552,14 @@
             },
             {
                 title: "Sổ doanh thu (Mẫu S2b-HKD) - HKD tính thuế TNCN theo lợi nhuận / trên 3 tỷ",
-                situation: "Bạn quản lý cửa hàng điện máy lớn nộp thuế TNCN trên lợi nhuận thực tế (15%, 17% hoặc 20%). Bạn cần hệ thống phân loại doanh thu theo đúng nhóm ngành hàng để tính thuế GTGT chính xác.",
+                situation: "Bạn quản lý cửa hàng điện máy lớn nộp thuế TNCN trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lợi nhuận thực tế</b> hoặc có <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">doanh thu trên 3 tỷ/năm</b>. Bạn cần hệ thống phân loại doanh thu theo đúng nhóm ngành hàng để tính thuế GTGT chính xác.",
                 steps: [
                     {
-                        text: "Khi chọn phương pháp tính thuế TNCN theo lợi nhuận, menu <b>Sổ kế toán</b> sẽ hiển thị đầy đủ bộ 4 loại sổ chính (S2b, S2c, S2d, S2e) cùng các chỉ số lũy kế Doanh thu, Chi phí, Chênh lệch và Thuế TNCN.",
+                        text: "Khi chọn phương pháp tính thuế TNCN theo lợi nhuận, menu <b class=\"font-bold text-[#166def]\">\"Sổ kế toán\"</b> sẽ hiển thị đầy đủ bộ 4 loại sổ chính (S2b, S2c, S2d, S2e) cùng các chỉ số lũy kế Doanh thu, Chi phí, Chênh lệch và Thuế TNCN.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124129/SKTR_270526-5.png"
                     },
                     {
-                        text: "Bấm xem chi tiết <b>Sổ doanh thu (Mẫu S2b-HKD)</b>. Sổ này dùng để tính Thuế GTGT (trực tiếp trên doanh thu) và phân loại doanh thu theo nhóm ngành. <i>Lưu ý: Sổ S2b-HKD không hiển thị thuế TNCN</i>.",
+                        text: "Bấm xem chi tiết <b class=\"font-bold text-[#166def]\">\"Sổ doanh thu (Mẫu S2b-HKD)\"</b>. Sổ này dùng để tính Thuế GTGT (trực tiếp trên doanh thu) và phân loại doanh thu theo nhóm ngành. Lưu ý: Sổ S2b-HKD không hiển thị thuế TNCN.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124144/SKTR_270526-6.png"
                     }
                 ],
@@ -476,19 +575,19 @@
             },
             {
                 title: "Sổ doanh thu & chi phí (Mẫu S2c-HKD) - HKD tính thuế TNCN theo lợi nhuận",
-                situation: "Bạn cần kiểm soát minh bạch tổng doanh thu và toàn bộ chi phí hợp lệ (giá vốn, hóa đơn đầu vào, chi phí vận hành, lương) để xác định chênh lệch lợi nhuận và tính thuế TNCN phải nộp.",
+                situation: "Bạn cần kiểm soát minh bạch <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tổng doanh thu và toàn bộ chi phí</b> hợp lệ (giá vốn, hóa đơn đầu vào, chi phí vận hành, lương) để xác định <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chênh lệch lợi nhuận</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tính thuế TNCN</b>.",
                 steps: [
                     {
-                        text: "Tại màn hình Sổ kế toán, chọn <b>Sổ doanh thu & chi phí (Mẫu S2c-HKD)</b>. Đây là sổ quan trọng nhất để xác định lợi nhuận thực tế.",
+                        text: "Tại màn hình Sổ kế toán, chọn <b class=\"font-bold text-[#166def]\">\"Sổ doanh thu & chi phí (Mẫu S2c-HKD)\"</b>. Đây là sổ quan trọng nhất để xác định lợi nhuận thực tế.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124206/SKTR_270526-7.png"
                     },
                     {
-                        text: "Kiểm tra các chỉ số tổng hợp: <i>Tổng doanh thu trong kỳ, Tổng chi phí trong kỳ, Chênh lệch (Doanh thu - Chi phí), Thuế TNCN phải nộp</i>. <i>Cơ chế: Giá vốn hàng xuất bán được tính tự động 1 lần vào cuối kỳ</i>.",
+                        text: "Kiểm tra các chỉ số tổng hợp: <b class=\"font-bold text-[#166def]\">Tổng doanh thu trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Tổng chi phí trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Chênh lệch (Doanh thu - Chi phí)</b>, <b class=\"font-bold text-[#166def]\">Thuế TNCN phải nộp</b>. Giá vốn hàng xuất bán được tính tự động 1 lần vào cuối kỳ.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124206/SKTR_270526-7.png"
                     }
                 ],
                 flashcard: {
-                    situation: "Shop em chọn đóng thuế TNCN 15% trên lợi nhuận. Làm sao để KiotViet tự gom đủ hóa đơn đầu vào và giá vốn vào Sổ S2c-HKD?",
+                    situation: "Shop em chọn đóng thuế TNCN trên lợi nhuận. Làm sao để KiotViet tự gom đủ hóa đơn đầu vào và giá vốn vào Sổ S2c-HKD?",
                     advice: "Dạ anh/chị hoàn toàn yên tâm! KiotViet tự động kết nối dữ liệu từ Đơn bán hàng, Hóa đơn mua hàng đầu vào, Phiếu xuất hủy cho đến Bảng lương nhân viên. Cuối kỳ hệ thống tự động tính giá vốn và tổng hợp vào Sổ S2c-HKD, lấy Doanh thu trừ Chi phí ra ngay lợi nhuận và tiền thuế TNCN chính xác từng đồng ạ!"
                 },
                 quiz: {
@@ -499,14 +598,14 @@
             },
             {
                 title: "Sổ hàng hóa (Mẫu S2d-HKD) - Quản lý Nhập - Xuất - Tồn",
-                situation: "Bạn cần quản lý chi tiết tình hình biến động hàng hóa tồn kho (Nhập - Xuất - Tồn) cả về số lượng và giá trị để sẵn sàng giải trình với cơ quan thuế khi có kiểm tra.",
+                situation: "Bạn cần quản lý chi tiết tình hình biến động <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hàng hóa tồn kho (Nhập - Xuất - Tồn)</b> cả về <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số lượng và giá trị</b> để sẵn sàng giải trình với cơ quan thuế khi có kiểm tra.",
                 steps: [
                     {
-                        text: "Tại màn hình Sổ kế toán, chọn <b>Sổ hàng hóa (Mẫu S2d-HKD)</b> để quản lý chi tiết kho.",
+                        text: "Tại màn hình Sổ kế toán, chọn <b class=\"font-bold text-[#166def]\">\"Sổ hàng hóa (Mẫu S2d-HKD)\"</b> để quản lý chi tiết kho.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124230/SKTR_270526-8.png"
                     },
                     {
-                        text: "Theo dõi các chỉ số tổng hợp: <i>Tồn đầu kỳ, Nhập trong kỳ, Xuất trong kỳ, Tồn cuối kỳ</i> cùng các cột chi tiết theo từng mặt hàng: Ngày tháng, Diễn giải, Đơn vị, Đơn giá, Nhập, Xuất, Tồn.",
+                        text: "Theo dõi các chỉ số tổng hợp: <b class=\"font-bold text-[#166def]\">Tồn đầu kỳ</b>, <b class=\"font-bold text-[#166def]\">Nhập trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Xuất trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Tồn cuối kỳ</b> cùng các cột chi tiết theo từng mặt hàng: Ngày tháng, Diễn giải, Đơn vị, Đơn giá, Nhập, Xuất, Tồn.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124230/SKTR_270526-8.png"
                     }
                 ],
@@ -522,14 +621,14 @@
             },
             {
                 title: "Sổ tiền (Mẫu S2e-HKD) - Quản lý Thu - Chi - Dòng tiền",
-                situation: "Chủ cửa hàng cần theo dõi biến động dòng tiền ra vào thực tế của cửa hàng, tách biệt giữa quỹ tiền mặt và tài khoản ngân hàng.",
+                situation: "Chủ cửa hàng cần theo dõi biến động <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">dòng tiền thực tế</b> của cửa hàng, tách biệt giữa <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">quỹ tiền mặt</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tài khoản ngân hàng</b>.",
                 steps: [
                     {
-                        text: "Tại màn hình Sổ kế toán, chọn <b>Sổ tiền (Mẫu S2e-HKD)</b>. Xem các chỉ số: <i>Số dư đầu kỳ, Tổng thu trong kỳ, Tổng chi trong kỳ, Số dư hiện tại</i>.",
+                        text: "Tại màn hình Sổ kế toán, chọn <b class=\"font-bold text-[#166def]\">\"Sổ tiền (Mẫu S2e-HKD)\"</b>. Xem các chỉ số: <b class=\"font-bold text-[#166def]\">Số dư đầu kỳ</b>, <b class=\"font-bold text-[#166def]\">Tổng thu trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Tổng chi trong kỳ</b>, <b class=\"font-bold text-[#166def]\">Số dư hiện tại</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124245/SKTR_270526-9.png"
                     },
                     {
-                        text: "Sử dụng các tab bộ lọc linh hoạt: <b>Tổng quỹ</b> (thống kê toàn bộ tiền mặt + ngân hàng), <b>Tiền mặt</b> (chỉ lọc phiếu thu chi tiền mặt), <b>Tiền gửi ngân hàng</b> (lọc chuyển khoản, thẻ, ví điện tử có chọn Tài khoản).",
+                        text: "Sử dụng các tab bộ lọc linh hoạt: <b class=\"font-bold text-[#166def]\">Tổng quỹ</b> (thống kê toàn bộ tiền mặt + ngân hàng), <b class=\"font-bold text-[#166def]\">Tiền mặt</b> (chỉ lọc phiếu thu chi tiền mặt), <b class=\"font-bold text-[#166def]\">Tiền gửi ngân hàng</b> (lọc chuyển khoản, thẻ, ví điện tử có chọn Tài khoản).",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124300/SKTR_270526-10.png"
                     }
                 ],
@@ -545,14 +644,14 @@
             },
             {
                 title: "Sổ theo dõi nghĩa vụ thuế khác (Mẫu S3a-HKD)",
-                situation: "Cửa hàng của bạn kinh doanh mặt hàng đặc thù (rượu, bia, thuốc lá...) thuộc diện chịu thuế Tiêu thụ đặc biệt hoặc có hoạt động nộp thuế Bảo vệ môi trường, thuế tài nguyên.",
+                situation: "Cửa hàng của bạn kinh doanh mặt hàng đặc thù (<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">rượu, bia, thuốc lá...</b>) thuộc diện chịu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thuế Tiêu thụ đặc biệt</b> hoặc có hoạt động nộp <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thuế Bảo vệ môi trường, thuế tài nguyên</b>.",
                 steps: [
                     {
-                        text: "Tại màn hình Sổ kế toán, chọn <b>Sổ theo dõi nghĩa vụ thuế khác (Mẫu S3a-HKD)</b>.",
+                        text: "Tại màn hình Sổ kế toán, chọn <b class=\"font-bold text-[#166def]\">\"Sổ theo dõi nghĩa vụ thuế khác (Mẫu S3a-HKD)\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124317/SKTR_270526-11.png"
                     },
                     {
-                        text: "Hệ thống tự động đồng bộ dữ liệu Thuế TTĐB, Thuế tài nguyên, Thuế/Phí BVMT từ Tờ khai 01/CNKD. Chọn bộ lọc Thời gian (Quý/Năm) để xem chỉ số <i>Số phát sinh trong kỳ</i>.",
+                        text: "Hệ thống tự động đồng bộ dữ liệu Thuế TTĐB, Thuế tài nguyên, Thuế/Phí BVMT từ Tờ khai 01/CNKD. Chọn bộ lọc Thời gian (Quý/Năm) để xem chỉ số <b class=\"font-bold text-[#166def]\">Số phát sinh trong kỳ</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124336/SKTR_270526-12.png"
                     }
                 ],
@@ -572,26 +671,26 @@
             {
                 category: "feature",
                 title: "Thiết lập và quản lý Mã số thuế trên Web",
-                situation: "Khi cửa hàng mở rộng chi nhánh hoặc thay đổi quy mô doanh thu, bạn cần thêm Mã số thuế mới, điều chỉnh nhóm doanh thu / phương pháp tính thuế hoặc cập nhật địa điểm kinh doanh trên giao diện Web.",
+                situation: "Khi cửa hàng mở rộng chi nhánh hoặc thay đổi quy mô doanh thu, bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thêm Mã số thuế mới</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">điều chỉnh nhóm doanh thu / phương pháp tính thuế</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">quản lý địa điểm kinh doanh</b> trên Web.",
                 steps: [
                     {
-                        text: "Truy cập <b>Thiết lập → Xem tất cả thiết lập → Thuế & Kế toán</b>. Tại khu vực <i>Hồ sơ kê khai</i>, nhấn <b>+ Thêm mã số thuế</b> để khai báo thông tin MST mới.",
+                        text: "Truy cập <b class=\"font-bold text-[#166def]\">Thiết lập → Xem tất cả thiết lập → Thuế & Kế toán</b>. Tại khu vực Hồ sơ kê khai, nhấn <b class=\"font-bold text-[#166def]\">\"+ Thêm mã số thuế\"</b> để khai báo thông tin MST mới.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124351/SKTR_270526-13.png"
                     },
                     {
-                        text: "Nhập đầy đủ thông tin MST, Nhóm doanh thu, Phương pháp tính thuế ➔ Bấm <b>Lưu</b>.",
+                        text: "Nhập đầy đủ thông tin MST, Nhóm doanh thu, Phương pháp tính thuế ➔ Nhấn nút <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124406/SKTR_270526-14.png"
                     },
                     {
-                        text: "Để <b>Ngừng kê khai MST</b>: Tại dòng MST tương ứng ➔ Tắt nút xanh thành xám ➔ Xác nhận <i>Ngừng kê khai</i>.",
+                        text: "Để Ngừng kê khai MST: Tại dòng MST tương ứng ➔ Tắt nút gạt xanh thành xám ➔ Xác nhận <b class=\"font-bold text-[#166def]\">\"Ngừng kê khai\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124429/SKTR_270526-15.png"
                     },
                     {
-                        text: "Để <b>Chỉnh sửa thông tin MST</b>: Nhấn biểu tượng cây bút để thay đổi Nhóm doanh thu hoặc Phương pháp tính thuế ➔ Bấm <b>Lưu</b>.",
+                        text: "Để Chỉnh sửa thông tin MST: Nhấn biểu tượng cây bút để thay đổi Nhóm doanh thu hoặc Phương pháp tính thuế ➔ Nhấn <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124458/SKTR_270526-16.png"
                     },
                     {
-                        text: "Để <b>Quản lý Địa điểm kinh doanh</b>: Bấm <i>+ Thêm địa điểm kinh doanh</i> hoặc nhấn biểu tượng cây bút để Sửa / Tắt trạng thái ngừng hoạt động địa điểm.",
+                        text: "Để Quản lý Địa điểm kinh doanh: Nhấn <b class=\"font-bold text-[#166def]\">\"+ Thêm địa điểm kinh doanh\"</b> hoặc nhấn biểu tượng cây bút để Sửa / Tắt trạng thái ngừng hoạt động địa điểm.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124551/SKTR_270526-18.png"
                     }
                 ],
@@ -608,18 +707,18 @@
             {
                 category: "feature",
                 title: "Tải và xuất Sổ kế toán ra file Excel",
-                situation: "Đến cuối kỳ kê khai hoặc khi cơ quan thuế yêu cầu kiểm tra, bạn cần xuất dữ liệu toàn bộ sổ sách kế toán ra file Excel để lưu trữ hoặc in ấn báo cáo.",
+                situation: "Đến cuối kỳ kê khai hoặc khi cơ quan thuế yêu cầu kiểm tra, bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">xuất dữ liệu sổ sách kế toán ra file Excel</b> chuẩn mẫu Thông tư 152 để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lưu trữ hoặc in ấn báo cáo</b>.",
                 steps: [
                     {
-                        text: "Truy cập chi tiết Sổ kế toán cần xuất (S1a, S2a, S2b, S2c, S2d, S2e, S3a) ➔ Bấm nút <b>Tải sổ</b> ở góc phải.",
+                        text: "Truy cập chi tiết Sổ kế toán cần xuất (S1a, S2a, S2b, S2c, S2d, S2e, S3a) ➔ Nhấn nút <b class=\"font-bold text-[#166def]\">\"Tải sổ\"</b> ở góc phải.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124659/SKTR_270526-21.png"
                     },
                     {
-                        text: "Màn hình hiển thị cửa sổ tải sổ: Chọn khoảng <b>Thời gian</b> (Quý/Năm), nhập <b>Tên người đại diện</b> ➔ Bấm <b>Tải xuống</b>.",
+                        text: "Màn hình hiển thị cửa sổ tải sổ: Chọn khoảng <b class=\"font-bold text-[#166def]\">Thời gian</b> (Quý/Năm), nhập <b class=\"font-bold text-[#166def]\">Tên người đại diện</b> ➔ Nhấn <b class=\"font-bold text-[#166def]\">\"Tải xuống\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124715/SKTR_270526-22.png"
                     },
                     {
-                        text: "File Excel sổ kế toán chuẩn mẫu Thông tư 152 sẽ được tự động tải xuống thiết bị của bạn với đầy đủ chữ ký và tiêu đề.",
+                        text: "File Excel sổ kế toán chuẩn mẫu Thông tư 152 sẽ được tự động tải xuống thiết bị của bạn với đầy đủ chữ ký và tiêu đề theo quy định.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124738/SKTR_270526-23.png"
                     }
                 ],
@@ -636,18 +735,18 @@
             {
                 category: "feature",
                 title: "Khóa sổ và mở khóa Sổ kế toán",
-                situation: "Sau khi chốt xong báo cáo thuế quý/năm, bạn cần khóa sổ kế toán đến hết kỳ kê khai để bảo toàn số liệu, tránh nhân viên vô tình thêm/sửa/xóa hóa đơn quá khứ làm sai lệch sổ sách.",
+                situation: "Sau khi chốt xong báo cáo thuế quý/năm, bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">khóa sổ kế toán</b> để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bảo toàn số liệu</b>, tránh việc chỉnh sửa/xóa giao dịch quá khứ làm sai lệch sổ sách.",
                 steps: [
                     {
-                        text: "Tại menu <b>Sổ kế toán</b>, nhấn vào biểu tượng bánh răng thiết lập ở góc trên bên phải màn hình.",
+                        text: "Tại menu <b class=\"font-bold text-[#166def]\">\"Sổ kế toán\"</b>, nhấn vào biểu tượng <b class=\"font-bold text-[#166def]\">bánh răng thiết lập</b> ở góc trên bên phải màn hình.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124808/SKTR_270526-25.png"
                     },
                     {
-                        text: "Bật xanh công tắc <b>Khóa sổ</b> ➔ Nhập <b>Ngày khóa sổ</b> (tối đa là ngày cuối cùng của kỳ kê khai trước) ➔ Bấm <b>Lưu</b>. <i>Sau khi khóa, mọi thao tác sửa/xóa giao dịch trước ngày khóa sổ sẽ không cập nhật vào sổ kế toán</i>.",
+                        text: "Bật xanh công tắc <b class=\"font-bold text-[#166def]\">\"Khóa sổ\"</b> ➔ Nhập <b class=\"font-bold text-[#166def]\">Ngày khóa sổ</b> (tối đa là ngày cuối cùng của kỳ kê khai trước) ➔ Nhấn <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>. Sau khi khóa, mọi thao tác sửa/xóa giao dịch trước ngày khóa sổ sẽ không cập nhật vào sổ kế toán.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124808/SKTR_270526-25.png"
                     },
                     {
-                        text: "Để <b>Mở khóa sổ</b> khi cần điều chỉnh: Vào lại bánh răng thiết lập ➔ Tắt xám công tắc <b>Khóa sổ</b> ➔ Bấm <b>Lưu</b> ➔ Bấm <b>Xác nhận</b> trên màn hình thông báo.",
+                        text: "Để Mở khóa sổ khi cần điều chỉnh: Vào lại bánh răng thiết lập ➔ Tắt xám công tắc <b class=\"font-bold text-[#166def]\">\"Khóa sổ\"</b> ➔ Nhấn <b class=\"font-bold text-[#166def]\">\"Lưu\"</b> ➔ Nhấn <b class=\"font-bold text-[#166def]\">\"Xác nhận\"</b> trên màn hình thông báo.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124847/SKTR_270526-27.png"
                     }
                 ],
@@ -664,14 +763,14 @@
             {
                 category: "mobile",
                 title: "Thiết lập ban đầu cho Sổ kế toán trên Mobile",
-                situation: "Bạn muốn chủ động thực hiện nhanh quy trình khởi tạo hồ sơ kê khai thuế và kết nối hóa đơn điện tử cho cửa hàng ngay trên chiếc điện thoại di động.",
+                situation: "Bạn muốn chủ động thực hiện nhanh quy trình <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">khởi tạo hồ sơ kê khai thuế</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kết nối hóa đơn điện tử</b> cho cửa hàng ngay trên chiếc điện thoại di động.",
                 steps: [
                     {
-                        text: "Trên ứng dụng KiotViet Mobile, mở menu <b>Nhiều hơn</b> ➔ Chọn <b>Thuế & Kế toán</b> ➔ Chạm vào <b>Tạo hồ sơ kê khai đầu tiên</b>.",
+                        text: "Trên ứng dụng KiotViet Mobile, mở menu <b class=\"font-bold text-[#166def]\">\"Nhiều hơn\"</b> ➔ Chọn <b class=\"font-bold text-[#166def]\">\"Thuế & Kế toán\"</b> ➔ Chạm vào <b class=\"font-bold text-[#166def]\">\"Tạo hồ sơ kê khai đầu tiên\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124916/SKTR_270526-29.png"
                     },
                     {
-                        text: "Thực hiện khai báo đầy đủ qua 4 bước hướng dẫn trực quan trên màn hình app (Điền thông tin HKD, Chọn nhóm doanh thu, Phương pháp tính thuế, Kết nối HĐĐT) ➔ Bấm Hoàn thành.",
+                        text: "Thực hiện khai báo đầy đủ qua 4 bước hướng dẫn trực quan trên màn hình app (Điền thông tin HKD, Chọn nhóm doanh thu, Phương pháp tính thuế, Kết nối HĐĐT) ➔ Chạm <b class=\"font-bold text-[#166def]\">\"Hoàn thành\"</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27124937/SKTR_270526-30.png"
                     }
                 ],
@@ -688,14 +787,14 @@
             {
                 category: "mobile",
                 title: "Xem chi tiết các loại Sổ kế toán trên Mobile",
-                situation: "Bạn cần xem nhanh báo cáo tổng quan và truy cập chi tiết từng loại Sổ kế toán mọi lúc mọi nơi trên điện thoại để nắm bắt tình hình tài chính tức thì.",
+                situation: "Bạn cần xem nhanh <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">báo cáo tổng quan</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">truy cập chi tiết từng loại Sổ kế toán</b> mọi lúc mọi nơi trên điện thoại để nắm bắt tình hình tài chính tức thì.",
                 steps: [
                     {
-                        text: "Trên menu <b>Nhiều hơn</b> ➔ Chọn <b>Thuế & Kế toán</b> ➔ Chọn Mã số thuế cần xem ➔ Chạm <b>Sổ kế toán</b>. App hiển thị danh sách các loại sổ phù hợp với quy mô cửa hàng.",
+                        text: "Trên menu <b class=\"font-bold text-[#166def]\">\"Nhiều hơn\"</b> ➔ Chọn <b class=\"font-bold text-[#166def]\">\"Thuế & Kế toán\"</b> ➔ Chọn Mã số thuế cần xem ➔ Chạm <b class=\"font-bold text-[#166def]\">\"Sổ kế toán\"</b>. App hiển thị danh sách các loại sổ phù hợp với quy mô cửa hàng.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27125019/SKTR_270526-32.png"
                     },
                     {
-                        text: "Chạm vào từng loại sổ để xem chi tiết: <b>Sổ doanh thu (S1a/S2a/S2b)</b>, <b>Sổ doanh thu & chi phí (S2c)</b>, <b>Sổ hàng hóa (S2d)</b>, <b>Sổ tiền (S2e)</b>, <b>Sổ thuế đặc thù (S3a)</b>.",
+                        text: "Chạm vào từng loại sổ để xem chi tiết: <b class=\"font-bold text-[#166def]\">Sổ doanh thu (S1a/S2a/S2b)</b>, <b class=\"font-bold text-[#166def]\">Sổ doanh thu & chi phí (S2c)</b>, <b class=\"font-bold text-[#166def]\">Sổ hàng hóa (S2d)</b>, <b class=\"font-bold text-[#166def]\">Sổ tiền (S2e)</b>, <b class=\"font-bold text-[#166def]\">Sổ thuế đặc thù (S3a)</b>.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27125040/SKTR_270526-33.png"
                     }
                 ],
@@ -712,14 +811,14 @@
             {
                 category: "mobile",
                 title: "Thiết lập và quản lý Mã số thuế trên Mobile",
-                situation: "Bạn cần thêm MST mới, thay đổi phương pháp tính thuế hoặc bật/tắt trạng thái hoạt động của các địa điểm kinh doanh trực tiếp trên điện thoại.",
+                situation: "Bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thêm MST mới</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thay đổi phương pháp tính thuế</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bật/tắt trạng thái hoạt động của địa điểm kinh doanh</b> trực tiếp trên điện thoại.",
                 steps: [
                     {
-                        text: "Vào menu <b>Nhiều hơn → Thiết lập cửa hàng → Thuế & Kế toán</b> trên App Mobile.",
+                        text: "Vào menu <b class=\"font-bold text-[#166def]\">\"Nhiều hơn → Thiết lập cửa hàng → Thuế & Kế toán\"</b> trên App Mobile.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27125228/SKTR_270526-38.png"
                     },
                     {
-                        text: "Thực hiện các thao tác linh hoạt: Chạm <b>Thêm mã số thuế</b>, <b>Ngừng kê khai MST</b>, <b>Sửa nhóm doanh thu / phương pháp tính thuế</b>, hoặc <b>Bật/Tắt trạng thái hoạt động của địa điểm kinh doanh</b>.",
+                        text: "Thực hiện các thao tác linh hoạt: Chạm <b class=\"font-bold text-[#166def]\">\"Thêm mã số thuế\"</b>, <b class=\"font-bold text-[#166def]\">\"Ngừng kê khai MST\"</b>, <b class=\"font-bold text-[#166def]\">\"Sửa nhóm doanh thu / phương pháp tính thuế\"</b>, hoặc Bật/Tắt trạng thái hoạt động của địa điểm kinh doanh.",
                         img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/27125300/SKTR_270526-40.png"
                     }
                 ],
@@ -739,68 +838,182 @@
         let basicIndex = 0;
         let advancedIndex = 0;
         let userAnswers = {};
+        
+        let viewedLessons = {
+            basic: new Set(),
+            advanced: new Set()
+        };
+
+        let activeAccordionKey = 'basic'; 
+        let currentStepTargetIdx = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderOverviewLists();
+            renderSidebarAccordions();
+        });
+
+        function toggleAccordion(key) {
+            if (activeAccordionKey === key) {
+                activeAccordionKey = null;
+            } else {
+                activeAccordionKey = key;
+            }
+            updateAccordionDOM();
+        }
+
+        function handleBasicHeaderClick() {
+            navSelectTab('basic');
+            toggleAccordion('basic');
+        }
+
+        function updateAccordionDOM() {
+            const allKeys = ['basic', 'adv-features', 'adv-mobile', 'adv-pos'];
+            allKeys.forEach(k => {
+                const panel = document.getElementById(`accordion-panel-${k}`);
+                const icon = document.getElementById(`accordion-icon-${k}`);
+                if (panel) {
+                    if (activeAccordionKey === k) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (icon) {
+                    icon.style.transform = (activeAccordionKey === k) ? 'rotate(0deg)' : 'rotate(-90deg)';
+                }
+            });
+        }
+
+        function renderSidebarAccordions() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    const isActive = (currentViewState === 'basic-viewer' && basicIndex === idx);
+                    return `
+                        <button onclick="jumpToLesson('basic', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white font-bold' : 'text-slate-700 hover:bg-blue-100/60'}">
+                            <span class="break-words flex-1">${lesson.title}</span>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            const featuresContainer = document.getElementById('accordion-panel-adv-features');
+            const mobileContainer = document.getElementById('accordion-panel-adv-mobile');
+            const posContainer = document.getElementById('accordion-panel-adv-pos');
+
+            let featHTML = '', mobHTML = '', posHTML = '';
+
+            ADVANCED_LESSONS.forEach((lesson, idx) => {
+                const isViewed = viewedLessons.advanced.has(idx);
+                const isActive = (currentViewState === 'advanced-viewer' && advancedIndex === idx);
+                const itemHTML = `
+                    <button onclick="jumpToLesson('advanced', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white font-bold' : 'text-slate-700 hover:bg-emerald-100/60'}">
+                        <span class="break-words flex-1">${lesson.title}</span>
+                        ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                    </button>
+                `;
+
+                if (lesson.category === 'feature') featHTML += itemHTML;
+                else if (lesson.category === 'mobile') mobHTML += itemHTML;
+                else if (lesson.category === 'pos') posHTML += itemHTML;
+            });
+
+            if (featuresContainer) {
+                featuresContainer.innerHTML = featHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-features').style.display = featHTML ? 'block' : 'none';
+            }
+            if (mobileContainer) {
+                mobileContainer.innerHTML = mobHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-mobile').style.display = mobHTML ? 'block' : 'none';
+            }
+            if (posContainer) {
+                posContainer.innerHTML = posHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-pos').style.display = posHTML ? 'block' : 'none';
+            }
+
+            updateAccordionDOM();
+        }
 
         function navSelectTab(tab) {
+            currentStepTargetIdx = 0;
             ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
                 const view = document.getElementById(`view-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (view) view.classList.add('hidden');
-                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
+                if (btn) {
+                    btn.classList.remove('active-guide', 'active-glossary', 'active-basic-tab', 'active-advanced-tab');
+                }
             });
 
             const activeView = document.getElementById(`view-${tab}`);
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeView) activeView.classList.remove('hidden');
-            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+            
+            if (activeBtn) {
+                if (tab === 'guide') activeBtn.classList.add('active-guide');
+                else if (tab === 'glossary') activeBtn.classList.add('active-glossary');
+                else if (tab === 'basic') activeBtn.classList.add('active-basic-tab');
+                else if (tab === 'advanced') activeBtn.classList.add('active-advanced-tab');
+            }
 
             if (tab === 'basic') {
                 currentViewState = 'basic-overview';
                 document.getElementById('viewer-basic').classList.add('hidden');
                 document.getElementById('overview-basic').classList.remove('hidden');
-                renderOverviewLists();
             } else if (tab === 'advanced') {
                 currentViewState = 'advanced-overview';
                 document.getElementById('viewer-advanced').classList.add('hidden');
                 document.getElementById('overview-advanced').classList.remove('hidden');
-                renderOverviewLists();
             } else {
                 currentViewState = tab;
             }
+            renderSidebarAccordions();
         }
 
         function jumpToLesson(scope, index) {
+            currentStepTargetIdx = 0;
+            viewedLessons[scope].add(index);
             navSelectTab(scope);
+            
             if (scope === 'basic') {
                 currentViewState = 'basic-viewer';
                 basicIndex = index;
+                activeAccordionKey = 'basic';
                 document.getElementById('overview-basic').classList.add('hidden');
                 document.getElementById('viewer-basic').classList.remove('hidden');
                 renderLesson('basic', basicIndex);
             } else {
                 currentViewState = 'advanced-viewer';
                 advancedIndex = index;
+                const cat = ADVANCED_LESSONS[index].category;
+                if (cat === 'feature') activeAccordionKey = 'adv-features';
+                else if (cat === 'mobile') activeAccordionKey = 'adv-mobile';
+                else if (cat === 'pos') activeAccordionKey = 'adv-pos';
+                
                 document.getElementById('overview-advanced').classList.add('hidden');
                 document.getElementById('viewer-advanced').classList.remove('hidden');
                 renderLesson('advanced', advancedIndex);
             }
+            renderSidebarAccordions();
+            renderOverviewLists();
         }
-
-        function startSectionContent(scope) { jumpToLesson(scope, 0); }
 
         function nextGlobal() {
             if (currentViewState === 'guide') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('basic'); }
-            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-overview') { jumpToLesson('basic', 0); }
             else if (currentViewState === 'basic-viewer') {
                 if (basicIndex < BASIC_LESSONS.length - 1) {
-                    basicIndex++; renderLesson('basic', basicIndex);
+                    jumpToLesson('basic', basicIndex + 1);
                 } else {
                     document.getElementById('modal-basic-complete').classList.remove('hidden');
                 }
-            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            } else if (currentViewState === 'advanced-overview') { jumpToLesson('advanced', 0); }
             else if (currentViewState === 'advanced-viewer') {
                 if (advancedIndex < ADVANCED_LESSONS.length - 1) {
-                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                    jumpToLesson('advanced', advancedIndex + 1);
                 } else {
                     document.getElementById('modal-advanced-complete').classList.remove('hidden');
                 }
@@ -809,21 +1022,74 @@
 
         function prevGlobal() {
             if (currentViewState === 'advanced-viewer') {
-                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                if (advancedIndex > 0) { jumpToLesson('advanced', advancedIndex - 1); }
                 else { navSelectTab('advanced'); }
             } else if (currentViewState === 'advanced-overview') {
                 jumpToLesson('basic', BASIC_LESSONS.length - 1);
             } else if (currentViewState === 'basic-viewer') {
-                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                if (basicIndex > 0) { jumpToLesson('basic', basicIndex - 1); }
                 else { navSelectTab('basic'); }
             } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('guide'); }
         }
 
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') { nextGlobal(); }
-            else if (e.key === 'ArrowLeft') { prevGlobal(); }
+            if (['guide', 'glossary', 'basic-viewer', 'advanced-viewer'].includes(currentViewState)) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateStepInLesson('next');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateStepInLesson('prev');
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    navigateStepInLesson('top');
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    navigateStepInLesson('bottom');
+                }
+            }
         });
+
+        function navigateStepInLesson(direction) {
+            let container = null;
+            if (currentViewState === 'guide') {
+                container = document.querySelector('#view-guide .lesson-scroll-container');
+            } else if (currentViewState === 'glossary') {
+                container = document.querySelector('#view-glossary .lesson-scroll-container');
+            } else if (currentViewState === 'basic-viewer') {
+                container = document.querySelector('#viewer-basic .lesson-scroll-container');
+            } else if (currentViewState === 'advanced-viewer') {
+                container = document.querySelector('#viewer-advanced .lesson-scroll-container');
+            }
+
+            if (!container) return;
+
+            const targets = container.querySelectorAll('[data-step-target="true"]');
+            if (!targets.length) return;
+
+            if (direction === 'top') {
+                currentStepTargetIdx = 0;
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (direction === 'bottom') {
+                currentStepTargetIdx = targets.length - 1;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            if (direction === 'next') {
+                currentStepTargetIdx = Math.min(currentStepTargetIdx + 1, targets.length - 1);
+            } else if (direction === 'prev') {
+                currentStepTargetIdx = Math.max(currentStepTargetIdx - 1, 0);
+            }
+
+            const targetElement = targets[currentStepTargetIdx];
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
 
         function toggleFlashcard3D(sceneEl) {
             const cardEl = sceneEl.querySelector('.flashcard-3d-card');
@@ -850,6 +1116,7 @@
         }
 
         function renderLesson(scope, index) {
+            currentStepTargetIdx = 0;
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
             const lesson = lessons[index];
             const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
@@ -859,30 +1126,57 @@
             const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
 
             viewer.innerHTML = `
-                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
-                    <div class="space-y-2 border-b border-slate-100 pb-4">
-                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
-                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
-                        </span>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
+                <!-- FLOAT ACTION BUTTONS -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer shadow-md" style="background-color: ${scopeColor}" title="Xem bước sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem bước trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- NỘI DUNG CHI TIẾT BÀI HỌC -->
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto p-4 sm:p-6 pr-14 sm:pr-16 space-y-6 max-w-5xl mx-auto">
+                    
+                    <div data-step-target="true" class="space-y-2 border-b border-slate-100 pb-4 scroll-mt-4">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                            </span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-base" title="Đang học"></i>
+                        </div>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                            <span>${lesson.title}</span>
+                        </h2>
                     </div>
 
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
-                        </p>
-                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    <!-- TÌNH HUỐNG THỰC TẾ -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-xs space-y-2.5">
+                        <div class="flex items-center gap-2 text-amber-900">
+                            <div class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-8">${lesson.situation}</p>
                     </div>
 
-                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <!-- QUY TRÌNH THỰC HIỆN -->
                     <div class="space-y-5">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
                         <div class="space-y-5">
                             ${lesson.steps.map((step, sIdx) => `
-                                <div class="space-y-2.5">
+                                <div data-step-target="true" class="space-y-2.5 scroll-mt-4">
                                     <div class="flex items-start gap-3">
-                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
-                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5 font-medium">${step.text}</div>
                                     </div>
                                     ${step.img ? `
                                         <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
@@ -894,8 +1188,8 @@
                         </div>
                     </div>
 
-                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN -->
-                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                    <!-- GÓC TƯ VẤN BÁN HÀNG -->
+                    <div data-step-target="true" class="pt-4 border-t border-slate-200 space-y-3 scroll-mt-4">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
                         <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
                             <div class="flashcard-3d-card">
@@ -929,8 +1223,8 @@
                         </div>
                     </div>
 
-                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC -->
-                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                    <!-- KIỂM TRA NHANH KIẾN THỨC -->
+                    <div data-step-target="true" class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6 scroll-mt-4">
                         <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
                             <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
                             <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
@@ -949,7 +1243,7 @@
                         <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
                     </div>
 
-                    <!-- 4️⃣ KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <!-- ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
                     <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
                             <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
@@ -967,21 +1261,31 @@
 
                 </div>
             `;
-            viewer.firstElementChild.scrollTop = 0;
+            viewer.querySelector('.lesson-scroll-container').scrollTop = 0;
         }
 
         function renderOverviewLists() {
             const basicList = document.getElementById('basic-overview-list');
             if (basicList && typeof BASIC_LESSONS !== 'undefined') {
-                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
-                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
-                        <div class="flex items-center gap-3 truncate">
-                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    return `
+                        <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3 truncate pr-2">
+                                <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
+                            </div>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-[#166def] hover:bg-[#1259c7] text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             if (typeof ADVANCED_LESSONS !== 'undefined') {
@@ -992,13 +1296,21 @@
                 let featureHTML = '', mobileHTML = '', posHTML = '';
 
                 ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedLessons.advanced.has(idx);
                     const itemHTML = `
                         <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
-                            <div class="flex items-center gap-3 truncate">
+                            <div class="flex items-center gap-3 truncate pr-2">
                                 <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
                                 <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
                             </div>
-                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
                     `;
 
@@ -1034,9 +1346,6 @@
 
         function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
-
-        // Tự động khởi tạo giao diện
-        renderOverviewLists();
     </script>
 </body>
 </html>
