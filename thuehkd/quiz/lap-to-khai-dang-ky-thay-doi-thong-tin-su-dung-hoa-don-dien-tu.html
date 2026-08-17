@@ -24,11 +24,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Khử hoàn toàn viền đen mặc định của trình duyệt khi click focus */
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none !important; }
         
         .sidebar-tab-btn.active-guide,
         .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
@@ -36,16 +45,17 @@
         .sidebar-tab-btn.active-glossary,
         .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
         
-        .sidebar-tab-btn.active-basic,
-        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
-        
-        .sidebar-tab-btn.active-advanced,
-        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-tab-btn.active-basic-tab { background-color: #dbeafe !important; color: #166def !important; font-weight: 800; }
+        .sidebar-tab-btn.active-advanced-tab { background-color: #dcfce7 !important; color: #16a34a !important; font-weight: 800; }
 
         .sidebar-tab-btn.active-guide i,
-        .sidebar-tab-btn.active-glossary i,
-        .sidebar-tab-btn.active-basic i,
-        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+        .sidebar-tab-btn.active-glossary i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
 
         .flashcard-3d-scene { perspective: 1000px; }
         .flashcard-3d-card {
@@ -71,10 +81,21 @@
         .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .btn-interact:hover { transform: translateY(-2px); }
         .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
-        .img-zoomable:hover { transform: scale(1.01); }
+        .img-zoomable:hover { transform: scale(1.008); }
+
+        .float-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s ease;
+        }
+        .float-nav-btn:hover {
+            transform: scale(1.12);
+        }
+        .float-nav-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f1f5f9] overflow-hidden">
 
     <!-- HEADER MAIN -->
     <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
@@ -88,225 +109,327 @@
                 <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
         </div>
-        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
-            <i class="fa-solid fa-store text-white"></i>
-            <span>Ngành Bán buôn, Bán lẻ</span>
+        <!-- TAG BÁN BUÔN, BÁN LẺ NỀN CYAN NỔI BẬT -->
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-sm bg-cyan-400 border border-cyan-400/40">
+            <i class="fa-solid fa-store text-cyan-100"></i>
+            <span>Bán buôn, Bán lẻ</span>
         </div>
     </header>
 
-    <!-- RIGHT SIDEBAR NAVIGATION -->
-    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
-        <div class="p-2 space-y-1.5 overflow-y-auto">
-            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
-                <span class="hidden md:inline truncate">Hướng dẫn học</span>
-            </button>
-            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
-                <span class="hidden md:inline truncate">Thuật ngữ</span>
-            </button>
-            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
-            </button>
-            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
-            </button>
-        </div>
+    <!-- WRAPPER BODY: SIDEBAR CẠNH NỘI DUNG CHÍNH (FLEX ROW) -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden">
 
-        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
-            <div class="relative group flex-1">
-                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
-                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác trước (&lt;)
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 min-w-0 h-full relative p-2 sm:p-4 overflow-hidden flex flex-col">
+            
+            <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+            <div id="view-guide" class="w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-[#166def] flex items-center justify-center cursor-pointer shadow-md" title="Xem phần tiếp theo (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem phần trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-6 pb-8">
+                        
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 scroll-mt-4" style="border-color: #166def40;">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Lập tờ khai đăng ký/ thay đổi thông tin sử dụng hóa đơn điện tử</h2>
+                            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                                Tính năng cho phép người nộp thuế lập và nộp tờ khai đăng ký hoặc thay đổi thông tin sử dụng hóa đơn điện tử (Mẫu số 01/ĐKTĐ-HĐĐT - Phụ lục IA ban hành kèm theo Nghị định 70/2025/NĐ-CP) trực tiếp trên phần mềm KiotViet (tích hợp KiotViet eInvoice). Tờ khai được ký số điện tử và gửi lên Cơ quan Thuế (CQT). Đây là bước bắt buộc trước khi cửa hàng phát hành hóa đơn điện tử hợp lệ.
+                            </p>
+                        </div>
+
+                        <div class="space-y-6" id="guide-media-block">
+                            <!-- UUTIEN 1: INFOGRAPHIC -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-infographic-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                                    <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033425/TKHDDT_060426-1.jpg" alt="Infographic Hướng dẫn Tờ khai HĐĐT" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                </div>
+                            </div>
+
+                            <!-- UUTIEN 2: YOUTUBE VIDEO -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-video-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                                    <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/wep3Hi1aobM?si=JQU3fl40WcC1XXoO" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-benefits-block">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Đăng ký nhanh chóng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Chủ cửa hàng lập tờ khai Mẫu 01 và nộp CQT trực tiếp trên KiotViet mà không cần làm thủ tục giấy tờ phức tạp.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tự động điền dữ liệu</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Hệ thống tự lấy thông tin từ hồ sơ cửa hàng và điền lại dữ liệu người đại diện, CKS từ tờ khai cũ giúp giảm sai sót.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Theo dõi thời gian thực</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nắm bắt ngay trạng thái duyệt CQT (Chờ duyệt / Chấp nhận / Từ chối) để chủ động phát hành hóa đơn.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                                <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-800/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-blue-800 uppercase">Phần 1</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-blue-800 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-800">Thuật ngữ nền tảng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                                </div>
+                                <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                                </div>
+                                <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            <div class="relative group flex-1">
-                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
-                    <i class="fa-solid fa-chevron-right text-white"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác tiếp (&gt;)
+
+            <!-- SECTION 2: THUẬT NGỮ -->
+            <div id="view-glossary" class="hidden w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-blue-800 flex items-center justify-center cursor-pointer shadow-md" title="Xem thuật ngữ sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem thuật ngữ trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-4 pb-8">
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-800 shadow-xs space-y-2 scroll-mt-4">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-xl"></i>
+                                <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div id="glossary-list" class="space-y-3">
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Hóa đơn điện tử thông thường</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Là HĐĐT có mã hoặc không có mã CQT được lập thủ công trên phần mềm, bắt buộc ký số trước khi phát hành và nộp CQT. Phù hợp giao dịch B2B, xuất hóa đơn theo hợp đồng.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Hóa đơn điện tử từ máy tính tiền</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Là HĐĐT được khởi tạo tự động từ phần mềm bán hàng/máy POS. Nội dung đơn giản, không bắt buộc ký số trên bản in ra cho khách. Bắt buộc đối với Hộ kinh doanh bán lẻ có doanh thu từ 1 tỷ/năm trở lên.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Hóa đơn Bán hàng</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Dành cho Hộ/cá nhân kinh doanh hoặc DN kê khai thuế theo phương pháp trực tiếp. Giá bán đã bao gồm thuế, không có dòng thuế suất GTGT riêng và không được khấu trừ thuế đầu vào.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Hóa đơn Giá trị gia tăng (VAT)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Dành cho DN kê khai thuế theo phương pháp khấu trừ. Hiển thị tách biệt dòng thuế suất GTGT (0%, 5%, 10%...) và tiền thuế, người mua được khấu trừ thuế đầu vào.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Mẫu số 01/ĐKTĐ-HĐĐT</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tờ khai đăng ký hoặc thay đổi thông tin sử dụng HĐĐT ban hành kèm theo Phụ lục IA Nghị định 70/2025/NĐ-CP, nộp cho CQT để đăng ký phát hành hóa đơn.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">6. Chữ ký số (CKS)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Thiết bị/chứng thư số (như IntrustCA Smart CA, USB Token, CKS HSM...) dùng để xác thực và ký điện tử trên tờ khai và hóa đơn phát hành gửi CQT.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </aside>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
-        
-        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
-        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+            <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+            <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-basic" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-[#166def] shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div class="space-y-3 text-left pt-1">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                            </h4>
+                            <div id="basic-overview-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+            <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+            <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-advanced" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+
+                        <div class="space-y-5 text-left pt-2">
+                            <div id="adv-group-features" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                                </h4>
+                                <div id="advanced-list-features" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-mobile" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Điện thoại
+                                </h4>
+                                <div id="advanced-list-mobile" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-pos" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                                </h4>
+                                <div id="advanced-list-pos" class="space-y-2.5 pl-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR NAVIGATION -->
+        <aside class="w-64 lg:w-72 bg-white border-l border-slate-200 shrink-0 h-full flex flex-col shadow-sm overflow-hidden z-20">
+            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
                 
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
-                    <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Lập tờ khai đăng ký/ thay đổi thông tin sử dụng hóa đơn điện tử</h2>
-                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
-                        Tính năng cho phép người nộp thuế lập và nộp tờ khai đăng ký hoặc thay đổi thông tin sử dụng hóa đơn điện tử (Mẫu số 01/ĐKTĐ-HĐĐT - Phụ lục IA ban hành kèm theo Nghị định 70/2025/NĐ-CP) trực tiếp trên phần mềm KiotViet (tích hợp KiotViet eInvoice). Tờ khai được ký số điện tử và gửi lên Cơ quan Thuế (CQT). Đây là bước bắt buộc trước khi cửa hàng phát hành hóa đơn điện tử hợp lệ.
-                    </p>
-                </div>
-
-                <div class="space-y-6" id="guide-media-block">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
-                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033425/TKHDDT_060426-1.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-video-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-                            <iframe id="guide-video-iframe" class="w-full h-full" src="https://www.youtube.com/embed/wep3Hi1aobM?si=JQU3fl40WcC1XXoO" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-xs">1</div>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Đăng ký nhanh chóng</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Chủ cửa hàng lập tờ khai Mẫu 01 và nộp CQT trực tiếp trên KiotViet mà không cần làm thủ tục giấy tờ phức tạp.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-xs">2</div>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Tự động điền dữ liệu</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Hệ thống tự lấy thông tin từ hồ sơ cửa hàng và điền lại dữ liệu người đại diện, CKS từ tờ khai cũ giúp giảm sai sót.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1.5">
-                            <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-xs">3</div>
-                            <h4 class="font-black text-xs sm:text-sm text-slate-800">Theo dõi thời gian thực</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Nắm bắt ngay trạng thái duyệt CQT (Chờ duyệt / Chấp nhận / Từ chối) để chủ động phát hành hóa đơn.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
-                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                        </div>
-                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                        </div>
-                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- SECTION 2: THUẬT NGỮ -->
-        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-4 pb-8">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
-                    <div class="flex items-center gap-2 text-blue-900">
-                        <i class="fa-solid fa-book-bookmark text-xl"></i>
-                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                </div>
-                <div id="glossary-list" class="space-y-3"></div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
-        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                    </div>
-                    <div class="space-y-3 text-left pt-1">
-                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
-                        </h4>
-                        <div id="basic-overview-list" class="space-y-2.5"></div>
-                    </div>
-                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                <!-- CỤM 1: NỀN XANH DƯƠNG NHẠT -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                        <span class="truncate text-left flex-1">Hướng dẫn học</span>
                     </button>
-                </div>
-            </div>
-            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
-
-        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
-        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                    </div>
-
-                    <div class="space-y-6 text-left pt-2">
-                        <div id="adv-group-features" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
-                            </h4>
-                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-mobile" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
-                            </h4>
-                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-pos" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
-                            </h4>
-                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
-                        </div>
-                    </div>
-
-                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    
+                    <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                        <span class="truncate text-left flex-1">Thuật ngữ</span>
                     </button>
+                    
+                    <!-- ACCORDION KIẾN THỨC CƠ BẢN -->
+                    <div class="rounded-xl overflow-hidden border border-blue-200/70 bg-white shadow-2xs">
+                        <button onclick="handleBasicHeaderClick()" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-blue-100/50 text-xs sm:text-sm font-bold cursor-pointer transition-all border-none outline-none focus:outline-none focus:ring-0">
+                            <div class="flex items-center gap-2.5 truncate">
+                                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                                <span class="truncate text-left">Kiến thức cơ bản</span>
+                            </div>
+                            <i id="accordion-icon-basic" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+                        </button>
+                        <div id="accordion-panel-basic" class="hidden space-y-1 p-1.5 bg-blue-50/40 border-t border-blue-100"></div>
+                    </div>
                 </div>
-            </div>
-            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
 
-    </main>
+                <!-- CỤM 2: NỀN XANH LÁ NHẠT -->
+                <div class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-800 hover:bg-white text-xs sm:text-sm font-black cursor-pointer transition-all border-none outline-none focus:outline-none">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                            <span class="truncate text-left">Kiến thức nâng cao</span>
+                        </div>
+                    </button>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAccordion('adv-features')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-sliders text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Tính năng nâng cao</span>
+                                </div>
+                                <i id="accordion-icon-adv-features" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-features" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile">
+                            <button onclick="toggleAccordion('adv-mobile')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Điện thoại</span>
+                                </div>
+                                <i id="accordion-icon-adv-mobile" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-mobile" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos">
+                            <button onclick="toggleAccordion('adv-pos')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-desktop text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Máy POS</span>
+                                </div>
+                                <i id="accordion-icon-adv-pos" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-pos" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
 
     <!-- POPUP HOÀN THÀNH CƠ BẢN -->
     <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
@@ -316,23 +439,26 @@
             </div>
             <div class="space-y-1">
                 <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
-                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+                <p class="text-xs sm:text-sm text-slate-600 text-left">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng <strong class="text-slate-900">Lập tờ khai HĐĐT</strong>.
+                    <br><br>
+                    Tiếp theo, bạn có thể <strong class="text-slate-900">Kết thúc bài học</strong> và chuyển sang <strong class="text-slate-900">học tiếp bài học tiếp theo</strong> trong khóa học.
+                    <br><br>
+                    Ngoài ra, bạn có thể khám phá tiếp các thao tác nâng cao ít phổ biến hơn (nếu có nhu cầu và có đủ thời gian).
+                </p>
             </div>
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Đóng
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Kết thúc bài học
                 </button>
-                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Học lại từ đầu
-                </button>
-                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#12c74e] hover:bg-[#12c712] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
                     Học nâng cao
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- POPUP HOÀN THÀNH TOÀN BỘ -->
+    <!-- POPUP HOÀN THÀNH TẤT CẢ -->
     <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -363,48 +489,33 @@
         </div>
     </div>
 
-    <!-- FULL JAVASCRIPT DATA & ENGINE V18.0 HOÀN CHỈNH 100% -->
+    <!-- JAVASCRIPT ENGINE -->
     <script>
-        const GLOSSARY_DATA = [
-            {
-                term: "Hóa đơn điện tử thông thường",
-                definition: "Là HĐĐT có mã hoặc không có mã CQT được lập thủ công trên phần mềm, bắt buộc ký số trước khi phát hành và nộp CQT. Phù hợp giao dịch B2B, xuất hóa đơn theo hợp đồng."
-            },
-            {
-                term: "Hóa đơn điện tử từ máy tính tiền",
-                definition: "Là HĐĐT được khởi tạo tự động từ phần mềm bán hàng/máy POS. Nội dung đơn giản, không bắt buộc ký số trên bản in ra cho khách. Bắt buộc đối với Hộ kinh doanh bán lẻ có doanh thu từ 1 tỷ/năm trở lên."
-            },
-            {
-                term: "Hóa đơn Bán hàng",
-                definition: "Dành cho Hộ/cá nhân kinh doanh hoặc DN kê khai thuế theo phương pháp trực tiếp. Giá bán đã bao gồm thuế, không có dòng thuế suất GTGT riêng và không được khấu trừ thuế đầu vào."
-            },
-            {
-                term: "Hóa đơn Giá trị gia tăng (VAT)",
-                definition: "Dành cho DN kê khai thuế theo phương pháp khấu trừ. Hiển thị tách biệt dòng thuế suất GTGT (0%, 5%, 10%...) và tiền thuế, người mua được khấu trừ thuế đầu vào."
-            },
-            {
-                term: "Mẫu số 01/ĐKTĐ-HĐĐT",
-                definition: "Tờ khai đăng ký hoặc thay đổi thông tin sử dụng HĐĐT ban hành kèm theo Phụ lục IA Nghị định 70/2025/NĐ-CP, nộp cho CQT để đăng ký phát hành hóa đơn."
-            },
-            {
-                term: "Chữ ký số (CKS)",
-                definition: "Thiết bị/chứng thư số (như IntrustCA Smart CA, USB Token, CKS HSM...) dùng để xác thực và ký điện tử trên tờ khai và hóa đơn phát hành gửi CQT."
-            }
-        ];
-
         const BASIC_LESSONS = [
             {
                 title: "Truy cập màn hình Tờ khai và tạo tờ khai mới",
-                situation: "Cửa hàng bán lẻ chuyển sang dùng HĐĐT, nhân viên cần mở màn hình quản lý tờ khai trên KiotViet để lập tờ khai Mẫu 01 mới gửi Cơ quan Thuế.",
+                situation: "Cửa hàng bán lẻ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chuyển sang dùng HĐĐT</b>, nhân viên cần mở màn hình <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">quản lý tờ khai</b> trên KiotViet để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lập tờ khai Mẫu 01 mới</b> gửi Cơ quan Thuế.",
                 steps: [
-                    { text: "Truy cập menu <strong>Tờ khai</strong> ➔ chọn <strong>Tờ khai SD hóa đơn điện tử</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095607/LTK_210426-1.png" },
-                    { text: "Hệ thống hiển thị màn hình danh sách Tờ khai đăng ký/thay đổi thông tin sử dụng HĐĐT.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033436/TKHDDT_060426-3.png" },
-                    { text: "Nhấn nút <strong>+ Tạo tờ khai</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033440/TKHDDT_060426-4.png" },
-                    { text: "Hệ thống tự động xác định loại tờ khai (Đăng ký mới nếu chưa có tờ khai, hoặc Thay đổi thông tin nếu đã từng có tờ khai được duyệt). Có thể tùy chỉnh loại tờ khai nếu cần.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095747/LTK_210426-2.png" }
+                    {
+                        text: "Truy cập menu <b class=\"font-bold text-[#166def]\">Tờ khai</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Tờ khai SD hóa đơn điện tử</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095607/LTK_210426-1.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị màn hình danh sách Tờ khai đăng ký/thay đổi thông tin sử dụng HĐĐT.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033436/TKHDDT_060426-3.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">+ Tạo tờ khai</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033440/TKHDDT_060426-4.png"
+                    },
+                    {
+                        text: "Hệ thống tự động xác định loại tờ khai (Đăng ký mới nếu chưa có tờ khai, hoặc Thay đổi thông tin nếu đã từng có tờ khai được duyệt). Có thể tùy chỉnh loại tờ khai nếu cần.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095747/LTK_210426-2.png"
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Cửa hàng em mới đăng ký hóa đơn điện tử lần đầu thì trên KiotViet thao tác tạo tờ khai mới như thế nào?",
-                    advice: "Anh/chị chỉ cần vào menu 'Tờ khai' ➔ 'Tờ khai SD hóa đơn điện tử' ➔ bấm '+ Tạo tờ khai'. Hệ thống sẽ tự động nhận diện cửa hàng chưa có tờ khai cũ và chọn sẵn chế độ 'Đăng ký mới' cho anh/chị luôn ạ."
+                    situation: "Cửa hàng em mới đăng ký hóa đơn điện tử lần đầu thì trên KiotViet thao tác tạo tờ khai mới như thế nào em?",
+                    advice: "Dạ anh/chị chỉ cần vào menu 'Tờ khai' ➔ 'Tờ khai SD hóa đơn điện tử' ➔ bấm '+ Tạo tờ khai'. Hệ thống sẽ tự động nhận diện cửa hàng chưa có tờ khai cũ và chọn sẵn chế độ 'Đăng ký mới' cho mình luôn ạ!"
                 },
                 quiz: {
                     question: "Hệ thống KiotViet sẽ tự động chọn chế độ 'Đăng ký mới' khi cửa hàng chưa từng có tờ khai nào được CQT chấp nhận trước đó.",
@@ -414,15 +525,24 @@
             },
             {
                 title: "Kiểm tra và xác nhận thông tin đơn vị",
-                situation: "Kế toán cần kiểm tra tính chính xác của thông tin pháp lý cửa hàng trên tờ khai trước khi nộp cho Cơ quan Thuế.",
+                situation: "Kế toán cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kiểm tra tính chính xác</b> của <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thông tin pháp lý cửa hàng</b> trên tờ khai trước khi nộp cho Cơ quan Thuế.",
                 steps: [
-                    { text: "Kiểm tra phần <strong>Thông tin đơn vị</strong> tự động điền: Tên đơn vị, Mã số thuế, Hình thức kê khai thuế, Tỉnh/thành phố, Cơ quan thuế quản lý, Địa chỉ, Loại hình, Loại đơn vị.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095737/LTK_210426-3.png" },
-                    { text: "Nếu phát hiện thông tin chưa chính xác, nhấn vào chữ <strong>Thông tin đơn vị</strong> trên màn hình.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095651/LTK_210426-4.png" },
-                    { text: "Hệ thống chuyển sang màn hình <strong>Thiết lập ➔ Thông tin đơn vị</strong>. Nhấn <strong>Chỉnh sửa</strong> để cập nhật hồ sơ, sau đó quay lại giao diện tờ khai.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033512/TKHDDT_060426-8.png" }
+                    {
+                        text: "Kiểm tra phần <b class=\"font-bold text-[#166def]\">Thông tin đơn vị</b> tự động điền: Tên đơn vị, Mã số thuế, Hình thức kê khai thuế, Tỉnh/thành phố, Cơ quan thuế quản lý, Địa chỉ, Loại hình, Loại đơn vị.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095737/LTK_210426-3.png"
+                    },
+                    {
+                        text: "Nếu phát hiện thông tin chưa chính xác, nhấn vào chữ <b class=\"font-bold text-[#166def]\">Thông tin đơn vị</b> trên màn hình.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095651/LTK_210426-4.png"
+                    },
+                    {
+                        text: "Hệ thống chuyển sang màn hình <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ <b class=\"font-bold text-[#166def]\">Thông tin đơn vị</b>. Nhấn <b class=\"font-bold text-[#166def]\">Chỉnh sửa</b> để cập nhật hồ sơ, sau đó quay lại giao diện tờ khai.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033512/TKHDDT_060426-8.png"
+                    }
                 ],
                 flashcard: {
-                    situation: "Chủ cửa hàng thắc mắc: Sao thông tin Tên cửa hàng hay Thuế quận/huyện trên tờ khai không sửa trực tiếp trên ô nhập liệu được?",
-                    advice: "Dạ thông tin đơn vị được đồng bộ từ Hồ sơ pháp lý của cửa hàng. Anh/chị bấm vào chữ 'Thông tin đơn vị' để chuyển sang màn hình Thiết lập chỉnh sửa chuẩn hóa, tránh việc nhập sai lệch thông tin đã đăng ký với Thuế ạ."
+                    situation: "Sao thông tin Tên cửa hàng hay Thuế quận/huyện trên tờ khai không sửa trực tiếp trên ô nhập liệu được vậy em?",
+                    advice: "Dạ thông tin đơn vị được đồng bộ từ Hồ sơ pháp lý của cửa hàng. Anh/chị bấm vào chữ 'Thông tin đơn vị' để chuyển sang màn hình Thiết lập chỉnh sửa chuẩn hóa, tránh việc nhập sai lệch thông tin đã đăng ký với Thuế ạ!"
                 },
                 quiz: {
                     question: "Thông tin đơn vị trên tờ khai được chỉnh sửa trực tiếp ngay tại ô hiển thị trên giao diện tờ khai.",
@@ -432,15 +552,24 @@
             },
             {
                 title: "Khai thông tin người đại diện pháp luật",
-                situation: "Khai báo chính xác thông tin cá nhân của người đại diện pháp luật chịu trách nhiệm pháp lý cho tờ khai.",
+                situation: "Khai báo <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chính xác thông tin cá nhân</b> của <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">người đại diện pháp luật</b> chịu trách nhiệm pháp lý cho tờ khai.",
                 steps: [
-                    { text: "Tại khu vực <strong>Thông tin người đại diện pháp luật</strong>, điền đầy đủ các trường bắt buộc: Họ và tên (tối đa 50 ký tự), Số CCCD (12 chữ số), Ngày sinh, Giới tính, Số điện thoại, Email.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095640/LTK_210426-5.png" },
-                    { text: "Nếu là Hộ kinh doanh: Số CCCD của người đại diện phải trùng khớp hoàn toàn với Mã số thuế của HKD.", img: null },
-                    { text: "Trường Số hộ chiếu là không bắt buộc, có thể bỏ qua nếu không sử dụng.", img: null }
+                    {
+                        text: "Tại khu vực <b class=\"font-bold text-[#166def]\">Thông tin người đại diện pháp luật</b>, điền đầy đủ các trường bắt buộc: Họ và tên (tối đa 50 ký tự), Số CCCD (12 chữ số), Ngày sinh, Giới tính, Số điện thoại, Email.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095640/LTK_210426-5.png"
+                    },
+                    {
+                        text: "Nếu là Hộ kinh doanh: Số CCCD của người đại diện phải trùng khớp hoàn toàn với Mã số thuế của HKD.",
+                        img: null
+                    },
+                    {
+                        text: "Trường Số hộ chiếu là không bắt buộc, có thể bỏ qua nếu không sử dụng.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Bên em là Hộ kinh doanh cá thể thì thông tin người đại diện có lưu ý gì đặc biệt không em?",
-                    advice: "Dạ đối với Hộ kinh doanh, số CCCD của người đại diện bắt buộc phải trùng khớp với Mã số thuế đăng ký của HKD. Hệ thống KiotViet sẽ tự động đối soát điều kiện này khi anh/chị gửi tờ khai lên CQT ạ."
+                    situation: "Bên em là Hộ kinh doanh cá thể thì thông tin người đại diện có lưu ý gì đặc biệt không em?",
+                    advice: "Dạ đối với Hộ kinh doanh, số CCCD của người đại diện bắt buộc phải trùng khớp với Mã số thuế đăng ký của HKD. Hệ thống KiotViet sẽ tự động đối soát điều kiện này khi anh/chị gửi tờ khai lên CQT ạ!"
                 },
                 quiz: {
                     question: "Đối với Hộ kinh doanh, Số CCCD khai báo của người đại diện pháp luật bắt buộc phải trùng khớp với Mã số thuế đăng ký.",
@@ -450,16 +579,28 @@
             },
             {
                 title: "Cấu hình thông tin hóa đơn",
-                situation: "Thiết lập loại hình hóa đơn điện tử và phương thức truyền nhận dữ liệu phù hợp với mô hình kinh doanh bán lẻ.",
+                situation: "Thiết lập <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">loại hình hóa đơn điện tử</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phương thức truyền nhận dữ liệu</b> phù hợp với mô hình kinh doanh bán lẻ.",
                 steps: [
-                    { text: "<strong>Hình thức hóa đơn</strong>: Tích chọn ít nhất 1 hình thức (Có mã của CQT / Không có mã CQT / Hóa đơn có mã được khởi tạo từ máy tính tiền).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033520/TKHDDT_060426-10.png" },
-                    { text: "<strong>Hình thức gửi dữ liệu HĐĐT</strong>: Chọn phương thức truyền nhận tương ứng. Nếu chọn HĐĐT không có mã, hệ thống mặc định gửi qua tổ chức cung cấp dịch vụ.", img: null },
-                    { text: "<strong>Phương thức chuyển dữ liệu</strong>: Chọn Chuyển đầy đủ nội dung từng hóa đơn hoặc Bảng tổng hợp dữ liệu.", img: null },
-                    { text: "<strong>Loại hóa đơn sử dụng</strong>: Tích chọn Hóa đơn GTGT hoặc Hóa đơn bán hàng tùy theo phương pháp kê khai thuế.", img: null }
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hình thức hóa đơn</b>: Tích chọn ít nhất 1 hình thức (Có mã của CQT / Không có mã CQT / Hóa đơn có mã được khởi tạo từ máy tính tiền).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033520/TKHDDT_060426-10.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hình thức gửi dữ liệu HĐĐT</b>: Chọn phương thức truyền nhận tương ứng. Nếu chọn HĐĐT không có mã, hệ thống mặc định gửi qua tổ chức cung cấp dịch vụ.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Phương thức chuyển dữ liệu</b>: Chọn Chuyển đầy đủ nội dung từng hóa đơn hoặc Bảng tổng hợp dữ liệu.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Loại hóa đơn sử dụng</b>: Tích chọn Hóa đơn GTGT hoặc Hóa đơn bán hàng tùy theo phương pháp kê khai thuế.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Shop anh bán lẻ quần áo, anh muốn chọn làm Hóa đơn từ máy tính tiền và Hóa đơn GTGT luôn được không?",
-                    advice: "Dạ hoàn toàn được ạ! Anh tích chọn 'Hóa đơn có mã khởi tạo từ máy tính tiền' ở phần Hình thức, và tích 'Hóa đơn GTGT' ở phần Loại hóa đơn. KiotViet sẽ tự động hỗ trợ anh xuất cả 2 dạng hóa đơn này đúng quy định ạ."
+                    situation: "Shop anh bán lẻ quần áo, anh muốn chọn làm Hóa đơn từ máy tính tiền và Hóa đơn GTGT luôn được không?",
+                    advice: "Dạ hoàn toàn được ạ! Anh tích chọn 'Hóa đơn có mã khởi tạo từ máy tính tiền' ở phần Hình thức, và tích 'Hóa đơn GTGT' ở phần Loại hóa đơn. KiotViet sẽ tự động hỗ trợ anh xuất cả 2 dạng hóa đơn này đúng quy định ạ!"
                 },
                 quiz: {
                     question: "Khi đăng ký hình thức Hóa đơn có mã của cơ quan thuế, người dùng có thể chọn chuyển dữ liệu dạng Bảng tổng hợp.",
@@ -469,15 +610,24 @@
             },
             {
                 title: "Khai thông tin chữ ký số",
-                situation: "Khai báo các chứng thư số / Chữ ký số (CKS) mà cửa hàng sẽ dùng để ký nộp tờ khai và ký phát hành hóa đơn.",
+                situation: "Khai báo các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chứng thư số / Chữ ký số (CKS)</b> mà cửa hàng sẽ dùng để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ký nộp tờ khai</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ký phát hành hóa đơn</b>.",
                 steps: [
-                    { text: "Hệ thống hiển thị danh sách CKS đã liên kết. Nhấn <strong>+ Thêm chữ ký số</strong> để bổ sung CKS mới.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033523/TKHDDT_060426-11.png" },
-                    { text: "Lựa chọn <strong>Hình thức đăng ký</strong> cho từng dòng CKS: <strong>Thêm mới</strong> (chưa khai bao giờ), <strong>Gia hạn</strong> (CKS sắp hết hạn), hoặc <strong>Ngừng sử dụng</strong>.", img: null },
-                    { text: "Đảm bảo Số Serial CKS phải khớp đúng với MST của cửa hàng.", img: null }
+                    {
+                        text: "Hệ thống hiển thị danh sách CKS đã liên kết. Nhấn <b class=\"font-bold text-[#166def]\">+ Thêm chữ ký số</b> để bổ sung CKS mới.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033523/TKHDDT_060426-11.png"
+                    },
+                    {
+                        text: "Lựa chọn <b class=\"font-bold text-[#166def]\">Hình thức đăng ký</b> cho từng dòng CKS: <b class=\"font-bold text-[#166def]\">Thêm mới</b> (chưa khai bao giờ), <b class=\"font-bold text-[#166def]\">Gia hạn</b> (CKS sắp hết hạn), hoặc <b class=\"font-bold text-[#166def]\">Ngừng sử dụng</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Đảm bảo Số Serial CKS phải khớp đúng với MST của cửa hàng.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Chữ ký số USB Token của anh mới gia hạn thêm 2 năm thì chọn Hình thức đăng ký nào trên tờ khai?",
-                    advice: "Dạ anh bấm '+ Thêm chữ ký số', chọn dòng CKS USB Token đó và tại cột Hình thức đăng ký anh chọn là 'Gia hạn' giúp em nhé. Sau đó gửi tờ khai để Thuế cập nhật thời hạn CKS mới ạ."
+                    situation: "Chữ ký số USB Token của anh mới gia hạn thêm 2 năm thì chọn Hình thức đăng ký nào trên tờ khai em?",
+                    advice: "Dạ anh bấm '+ Thêm chữ ký số', chọn dòng CKS USB Token đó và tại cột Hình thức đăng ký anh chọn là 'Gia hạn' giúp em nhé. Sau đó gửi tờ khai để Thuế cập nhật thời hạn CKS mới ạ!"
                 },
                 quiz: {
                     question: "Số Serial của Chữ ký số khai báo trên tờ khai bắt buộc phải khớp với Mã số thuế của cửa hàng.",
@@ -487,15 +637,24 @@
             },
             {
                 title: "Khai thông tin khác",
-                situation: "Bổ sung thông tin tổ chức truyền nhận hoặc cấu hình quyền truy cập cho đơn vị hạch toán phụ thuộc.",
+                situation: "Bổ sung <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thông tin tổ chức truyền nhận</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cấu hình quyền truy cập</b> cho đơn vị hạch toán phụ thuộc.",
                 steps: [
-                    { text: "Kiểm tra thông tin tại bảng <strong>Tổ chức cung cấp phần mềm HĐĐT</strong> và <strong>Tổ chức truyền nhận dữ liệu HĐĐT</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033527/TKHDDT_060426-12.png" },
-                    { text: "Dòng mặc định KiotViet là cố định. Nếu có dùng thêm đơn vị trung gian khác ngoài KiotViet, nhấn <strong>+ Thêm dòng</strong> để khai báo.", img: null },
-                    { text: "Lựa chọn <strong>Có</strong> hoặc <strong>Không</strong> cho phần Đơn vị hạch toán phụ thuộc cần cấp quyền tra cứu hoặc Tạm ngưng sử dụng HĐĐT.", img: null }
+                    {
+                        text: "Kiểm tra thông tin tại bảng <b class=\"font-bold text-[#166def]\">Tổ chức cung cấp phần mềm HĐĐT</b> và <b class=\"font-bold text-[#166def]\">Tổ chức truyền nhận dữ liệu HĐĐT</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033527/TKHDDT_060426-12.png"
+                    },
+                    {
+                        text: "Dòng mặc định KiotViet là cố định. Nếu có dùng thêm đơn vị trung gian khác ngoài KiotViet, nhấn <b class=\"font-bold text-[#166def]\">+ Thêm dòng</b> để khai báo.",
+                        img: null
+                    },
+                    {
+                        text: "Lựa chọn <b class=\"font-bold text-[#166def]\">Có</b> hoặc <b class=\"font-bold text-[#166def]\">Không</b> cho phần Đơn vị hạch toán phụ thuộc cần cấp quyền tra cứu hoặc Tạm ngưng sử dụng HĐĐT.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Dòng thông tin nhà cung cấp KiotViet trên tờ khai anh có xóa đi để điền tên bên khác được không?",
-                    advice: "Dạ dòng mặc định KiotViet là nhà cung cấp giải pháp tích hợp sẵn nên cố định ạ. Nếu anh/chị có dùng song song với một đơn vị truyền nhận khác, anh/chị chỉ cần bấm '+ Thêm dòng' để bổ sung thêm tổ chức đó vào tờ khai nhé."
+                    situation: "Dòng thông tin nhà cung cấp KiotViet trên tờ khai anh có xóa đi để điền tên bên khác được không em?",
+                    advice: "Dạ dòng mặc định KiotViet là nhà cung cấp giải pháp tích hợp sẵn nên cố định ạ. Nếu anh/chị có dùng song song với một đơn vị truyền nhận khác, anh/chị chỉ cần bấm '+ Thêm dòng' để bổ sung thêm tổ chức đó vào tờ khai nhé!"
                 },
                 quiz: {
                     question: "Người dùng có thể xóa dòng thông tin tổ chức cung cấp phần mềm KiotViet mặc định trên giao diện tờ khai.",
@@ -505,16 +664,28 @@
             },
             {
                 title: "Xác nhận, ký số và nộp tờ khai cho CQT",
-                situation: "Rà soát toàn bộ dữ liệu đã nhập, thực hiện ký điện tử và gửi tờ khai lên hệ thống Cơ quan Thuế.",
+                situation: "Rà soát <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">toàn bộ dữ liệu đã nhập</b>, thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ký điện tử</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">gửi tờ khai lên hệ thống Cơ quan Thuế</b>.",
                 steps: [
-                    { text: "Nhấn nút <strong>Nộp tờ khai cho CQT</strong> ở góc dưới màn hình.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033531/TKHDDT_060426-13.png" },
-                    { text: "Màn hình xác nhận hiển thị. Rà soát lại Email và Tên đơn vị, sau đó nhấn <strong>Tiếp tục</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033535/TKHDDT_060426-14.png" },
-                    { text: "Chọn loại CKS đang sử dụng (Chữ ký số từ xa IntrustCA hoặc USB Token) và nhấn <strong>Xác nhận</strong> để thực hiện ký số.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033539/TKHDDT_060426-15.png" },
-                    { text: "Nhấn <strong>Đồng ý</strong> tại thông báo gửi thành công để quay lại màn hình danh sách quản lý.", img: null }
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Nộp tờ khai cho CQT</b> ở góc dưới màn hình.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033531/TKHDDT_060426-13.png"
+                    },
+                    {
+                        text: "Màn hình xác nhận hiển thị. Rà soát lại Email và Tên đơn vị, sau đó nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033535/TKHDDT_060426-14.png"
+                    },
+                    {
+                        text: "Chọn loại CKS đang sử dụng (Chữ ký số từ xa IntrustCA hoặc USB Token) và nhấn <b class=\"font-bold text-[#166def]\">Xác nhận</b> để thực hiện ký số.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033539/TKHDDT_060426-15.png"
+                    },
+                    {
+                        text: "Nhấn <b class=\"font-bold text-[#166def]\">Đồng ý</b> tại thông báo gửi thành công để quay lại màn hình danh sách quản lý.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách lo lắng: Anh bấm 'Nộp tờ khai' rồi thì bao lâu mới biết Thuế nhận được tờ khai chưa em?",
-                    advice: "Dạ ngay sau khi anh bấm 'Đồng ý' ký số thành công, tờ khai sẽ được truyền trực tiếp sang CQT. Trạng thái trên danh sách KiotViet sẽ chuyển sang 'Chờ CQT duyệt' ngay lập tức để anh theo dõi real-time ạ."
+                    situation: "Anh bấm 'Nộp tờ khai' rồi thì bao lâu mới biết Thuế nhận được tờ khai chưa em?",
+                    advice: "Dạ ngay sau khi anh bấm 'Đồng ý' ký số thành công, tờ khai sẽ được truyền trực tiếp sang CQT. Trạng thái trên danh sách KiotViet sẽ chuyển sang 'Chờ CQT duyệt' ngay lập tức để anh theo dõi real-time ạ!"
                 },
                 quiz: {
                     question: "Trước khi nộp tờ khai cho Cơ quan Thuế, người dùng bắt buộc phải chọn Chữ ký số để ký điện tử lên tờ khai.",
@@ -524,15 +695,24 @@
             },
             {
                 title: "Theo dõi trạng thái tờ khai trong danh sách",
-                situation: "Kiểm tra tiến độ phê duyệt từ Cơ quan Thuế để chuẩn bị phát hành hóa đơn điện tử cho khách mua hàng.",
+                situation: "Kiểm tra <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tiến độ phê duyệt</b> từ Cơ quan Thuế để chuẩn bị <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phát hành hóa đơn điện tử</b> cho khách mua hàng.",
                 steps: [
-                    { text: "Tại danh sách Tờ khai, theo dõi cột <strong>Trạng thái</strong> (Chờ CQT duyệt / CQT Chấp nhận / CQT Không chấp nhận).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033548/TKHDDT_060426-16.png" },
-                    { text: "Khi trạng thái là <strong>CQT Chấp nhận</strong>: Lấy <strong>Mã CQT cấp</strong> (nếu dùng HĐĐT từ máy tính tiền) để cấu hình phát hành hóa đơn.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033610/TKHDDT_060426-17.png" },
-                    { text: "Nếu trạng thái là <strong>CQT không chấp nhận</strong>: Nhấn <strong>Xem chi tiết</strong> để đọc nguyên nhân từ chối của Thuế và tạo tờ khai điều chỉnh.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033614/TKHDDT_060426-18.png" }
+                    {
+                        text: "Tại danh sách Tờ khai, theo dõi cột <b class=\"font-bold text-[#166def]\">Trạng thái</b> (Chờ CQT duyệt / CQT Chấp nhận / CQT Không chấp nhận).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033548/TKHDDT_060426-16.png"
+                    },
+                    {
+                        text: "Khi trạng thái là <b class=\"font-bold text-[#166def]\">CQT Chấp nhận</b>: Lấy <b class=\"font-bold text-[#166def]\">Mã CQT cấp</b> (nếu dùng HĐĐT từ máy tính tiền) để cấu hình phát hành hóa đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033610/TKHDDT_060426-17.png"
+                    },
+                    {
+                        text: "Nếu trạng thái là <b class=\"font-bold text-[#166def]\">CQT không chấp nhận</b>: Nhấn <b class=\"font-bold text-[#166def]\">Xem chi tiết</b> để đọc nguyên nhân từ chối của Thuế và tạo tờ khai điều chỉnh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033614/TKHDDT_060426-18.png"
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Nếu bên Thuế từ chối tờ khai của anh thì làm sao anh biết lý do sai ở đâu?",
-                    advice: "Dạ trên danh sách tờ khai, dòng trạng thái sẽ báo 'CQT không chấp nhận'. Anh chỉ cần bấm vào 'Xem chi tiết' là hệ thống hiển thị chính xác văn bản phản hồi kèm lý do từ chối từ cơ quan Thuế để mình điều chỉnh lại ạ."
+                    situation: "Nếu bên Thuế từ chối tờ khai của anh thì làm sao anh biết lý do sai ở đâu em?",
+                    advice: "Dạ trên danh sách tờ khai, dòng trạng thái sẽ báo 'CQT không chấp nhận'. Anh chỉ cần bấm vào 'Xem chi tiết' là hệ thống hiển thị chính xác văn bản phản hồi kèm lý do từ chối từ cơ quan Thuế để mình điều chỉnh lại ạ!"
                 },
                 quiz: {
                     question: "Khi tờ khai ở trạng thái 'CQT Chấp nhận', người dùng có thể lấy Mã CQT cấp để thiết lập cấu hình xuất hóa đơn.",
@@ -544,17 +724,26 @@
 
         const ADVANCED_LESSONS = [
             {
+                category: 'feature',
                 title: "Tạo tờ khai thay đổi thông tin",
-                category: "feature",
-                situation: "Cửa hàng thay đổi địa chỉ kinh doanh hoặc bổ sung Chữ ký số mới, cần làm tờ khai Thay đổi thông tin nộp CQT.",
+                situation: "Cửa hàng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thay đổi địa chỉ kinh doanh</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bổ sung Chữ ký số mới</b>, cần làm tờ khai Thay đổi thông tin nộp CQT.",
                 steps: [
-                    { text: "Nhấn nút <strong>+ Tạo tờ khai</strong>. Do cửa hàng đã có tờ khai được duyệt, hệ thống tự động chuyển chế độ <strong>Thay đổi thông tin</strong>.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095631/LTK_210426-6.png" },
-                    { text: "Toàn bộ dữ liệu từ tờ khai gần nhất sẽ được tự động điền sẵn. Cửa hàng chỉ cần chỉnh sửa các trường có thay đổi.", img: null },
-                    { text: "Thực hiện ký số và nộp lại cho CQT theo đúng quy trình.", img: null }
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">+ Tạo tờ khai</b>. Do cửa hàng đã có tờ khai được duyệt, hệ thống tự động chuyển chế độ <b class=\"font-bold text-[#166def]\">Thay đổi thông tin</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/21095631/LTK_210426-6.png"
+                    },
+                    {
+                        text: "Toàn bộ dữ liệu từ tờ khai gần nhất sẽ được tự động điền sẵn. Cửa hàng chỉ cần chỉnh sửa các trường có thay đổi.",
+                        img: null
+                    },
+                    {
+                        text: "Thực hiện ký số và nộp lại cho CQT theo đúng quy trình.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Bên anh bổ sung thêm 1 Chữ ký số mới thì phải gõ lại từ đầu toàn bộ tờ khai hả em?",
-                    advice: "Dạ không cần đâu ạ! Khi anh bấm '+ Tạo tờ khai', KiotViet tự chọn chế độ 'Thay đổi thông tin' và điền sẵn 100% dữ liệu tờ khai cũ. Anh chỉ cần thêm đúng dòng CKS mới rồi ký nộp là xong trong 1 phút thôi ạ."
+                    situation: "Bên anh bổ sung thêm 1 Chữ ký số mới thì phải gõ lại từ đầu toàn bộ tờ khai hả em?",
+                    advice: "Dạ không cần đâu ạ! Khi anh bấm '+ Tạo tờ khai', KiotViet tự chọn chế độ 'Thay đổi thông tin' và điền sẵn 100% dữ liệu tờ khai cũ. Anh chỉ cần thêm đúng dòng CKS mới rồi ký nộp là xong trong 1 phút thôi ạ!"
                 },
                 quiz: {
                     question: "Khi tạo tờ khai Thay đổi thông tin, người dùng phải tự gõ lại toàn bộ thông tin từ đầu.",
@@ -563,15 +752,21 @@
                 }
             },
             {
+                category: 'feature',
                 title: "Tự động điền dữ liệu từ tờ khai gần nhất",
-                category: "feature",
-                situation: "Hiểu rõ cơ chế tự động điền dữ liệu giúp kế toán tiết kiệm thời gian và hạn chế sai sót khi lập lại tờ khai.",
+                situation: "Hiểu rõ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cơ chế tự động điền dữ liệu</b> giúp kế toán <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tiết kiệm thời gian</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hạn chế sai sót</b> khi lập lại tờ khai.",
                 steps: [
-                    { text: "Hệ thống kế thừa tự động các trường: Họ tên, CCCD, Ngày sinh, SĐT, Email đại diện, Hình thức HĐĐT, Phương thức chuyển dữ liệu, Thông tin CKS, Tổ chức truyền nhận...", img: null },
-                    { text: "<strong>Lưu ý quan trọng</strong>: Khối 'Thông tin đơn vị' luôn luôn được lấy trực tiếp từ phần <strong>Thiết lập ➔ Thông tin đơn vị</strong> hiện tại, không lấy từ tờ khai cũ.", img: null }
+                    {
+                        text: "Hệ thống kế thừa tự động các trường: Họ tên, CCCD, Ngày sinh, SĐT, Email đại diện, Hình thức HĐĐT, Phương thức chuyển dữ liệu, Thông tin CKS, Tổ chức truyền nhận...",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Lưu ý quan trọng</b>: Khối 'Thông tin đơn vị' luôn luôn được lấy trực tiếp từ phần <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ <b class=\"font-bold text-[#166def]\">Thông tin đơn vị</b> hiện tại, không lấy từ tờ khai cũ.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách thắc mắc: Sao anh đổi địa chỉ shop trong phần Thiết lập rồi mà trên tờ khai Thay đổi thông tin nó lấy địa chỉ mới hay cũ?",
+                    situation: "Sao anh đổi địa chỉ shop trong phần Thiết lập rồi mà trên tờ khai Thay đổi thông tin nó lấy địa chỉ mới hay cũ?",
                     advice: "Dạ riêng phần Thông tin đơn vị (Tên, Địa chỉ, MST...) KiotViet luôn ưu tiên lấy dữ liệu mới nhất từ 'Thiết lập ➔ Thông tin đơn vị' sang, nên địa chỉ mới của anh sẽ tự động cập nhật ngay trên tờ khai ạ!"
                 },
                 quiz: {
@@ -581,16 +776,25 @@
                 }
             },
             {
+                category: 'feature',
                 title: "Kiểm soát logic hình thức hóa đơn theo loại hình đơn vị",
-                category: "feature",
-                situation: "Cơ chế kiểm soát thông minh giúp ngăn ngừa việc chọn sai loại hóa đơn không đúng với quy định pháp luật thuế.",
+                situation: "Cơ chế <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kiểm soát thông minh</b> giúp <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ngăn ngừa việc chọn sai loại hóa đơn</b> không đúng với quy định pháp luật thuế.",
                 steps: [
-                    { text: "Cửa hàng kê khai thuế Trực tiếp: Hệ thống tự động khóa (không cho chọn) Hóa đơn Giá trị gia tăng (VAT).", img: null },
-                    { text: "Cửa hàng kê khai thuế Khấu trừ: Hệ thống khóa không cho chọn Hóa đơn Bán hàng.", img: null },
-                    { text: "Loại hình Hộ/cá nhân kinh doanh: Mặc định chọn cứng hình thức 'Có mã của cơ quan thuế'.", img: null }
+                    {
+                        text: "Cửa hàng kê khai thuế Trực tiếp: Hệ thống tự động khóa (không cho chọn) Hóa đơn Giá trị gia tăng (VAT).",
+                        img: null
+                    },
+                    {
+                        text: "Cửa hàng kê khai thuế Khấu trừ: Hệ thống khóa không cho chọn Hóa đơn Bán hàng.",
+                        img: null
+                    },
+                    {
+                        text: "Loại hình Hộ/cá nhân kinh doanh: Mặc định chọn cứng hình thức 'Có mã của cơ quan thuế'.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Sao cửa hàng anh là Hộ kinh doanh mà ô 'Không có mã CQT' bị ẩn không tích chọn được em?",
+                    situation: "Sao cửa hàng anh là Hộ kinh doanh mà ô 'Không có mã CQT' bị ẩn không tích chọn được em?",
                     advice: "Dạ theo quy định pháp luật Thuế hiện hành, Hộ kinh doanh bắt buộc phải dùng Hóa đơn có mã của CQT ạ. KiotViet đã cài sẵn quy tắc này để tự động khóa tùy chọn sai, giúp anh chị luôn làm đúng luật Thuế ạ!"
                 },
                 quiz: {
@@ -600,16 +804,25 @@
                 }
             },
             {
+                category: 'feature',
                 title: "Quản lý danh sách chữ ký số",
-                category: "feature",
-                situation: "Thêm mới, cấu hình phương thức xác thực hoặc ngưng sử dụng các loại Chữ ký số (IntrustCA, USB Token, CKS khác).",
+                situation: "Thêm mới, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cấu hình phương thức xác thực</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ngừng sử dụng</b> các loại Chữ ký số (IntrustCA, USB Token, CKS khác).",
                 steps: [
-                    { text: "Thêm CKS chờ đăng ký hoặc chọn Thêm mới CKS ➔ Chọn loại CKS (IntrustCA SmartCA, USB Token, hoặc CKS khác).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033624/TKHDDT_060426-21.png" },
-                    { text: "Đối với IntrustCA SmartCA: Nhập UUID, hệ thống tự lấy Chứng thư số ➔ Chọn 1 trong 5 phương thức xác thực (Mật khẩu, Mã PIN, Ứng dụng IntrustCA, Tự động...).", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033650/TKHDDT_060426-25.png" },
-                    { text: "Đối với USB Token: Cắm USB Token ➔ Cài Token Manager ➔ Cài công cụ ký KV-Sign.", img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033711/TKHDDT_060426-27.png" }
+                    {
+                        text: "Thêm CKS chờ đăng ký hoặc chọn <b class=\"font-bold text-[#166def]\">Thêm mới CKS</b> ➔ Chọn loại CKS (IntrustCA SmartCA, USB Token, hoặc CKS khác).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033624/TKHDDT_060426-21.png"
+                    },
+                    {
+                        text: "Đối với IntrustCA SmartCA: Nhập UUID, hệ thống tự lấy Chứng thư số ➔ Chọn 1 trong 5 phương thức xác thực (Mật khẩu, Mã PIN, Ứng dụng IntrustCA, Tự động...).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033650/TKHDDT_060426-25.png"
+                    },
+                    {
+                        text: "Đối với USB Token: Cắm USB Token ➔ Cài Token Manager ➔ Cài công cụ ký KV-Sign.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/04/06033711/TKHDDT_060426-27.png"
+                    }
                 ],
                 flashcard: {
-                    situation: "Khách hỏi: Anh dùng Chữ ký số từ xa KiotViet IntrustCA thì trên tờ khai xác thực bằng cách nào thuận tiện nhất?",
+                    situation: "Anh dùng Chữ ký số từ xa KiotViet IntrustCA thì trên tờ khai xác thực bằng cách nào thuận tiện nhất?",
                     advice: "Dạ anh có thể chọn xác thực qua ứng dụng IntrustCA trên điện thoại hoặc cài chế độ 'Xác thực tự động' (nhập PIN/Mật khẩu lưu sẵn). Khi xuất hóa đơn hệ thống sẽ tự ký rất nhanh mà không cần cắm USB ạ!"
                 },
                 quiz: {
@@ -619,14 +832,21 @@
                 }
             },
             {
+                category: 'feature',
                 title: "Ghi nhận lịch sử thao tác",
-                situation: "Kiểm tra nhật ký hệ thống để biết chi tiết ai đã lập, chỉnh sửa hoặc gửi tờ khai thuế.",
+                situation: "Kiểm tra <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhật ký hệ thống</b> để biết chi tiết <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ai đã lập, chỉnh sửa hoặc gửi tờ khai thuế</b>.",
                 steps: [
-                    { text: "Mỗi khi tờ khai được lưu hoặc nộp thành công, hệ thống tự động ghi nhận lại nhật ký.", img: null },
-                    { text: "Thông tin lưu trữ bao gồm: Tên tài khoản thao tác, Hành động (Tạo mới/Thay đổi), Thời điểm chính xác và Địa chỉ IP thiết bị.", img: null }
+                    {
+                        text: "Mỗi khi tờ khai được lưu hoặc nộp thành công, hệ thống tự động ghi nhận lại nhật ký.",
+                        img: null
+                    },
+                    {
+                        text: "Thông tin lưu trữ bao gồm: Tên tài khoản thao tác, Hành động (Tạo mới/Thay đổi), Thời điểm chính xác và Địa chỉ IP thiết bị.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: "Chủ cửa hàng hỏi: Anh giao cho kế toán nộp tờ khai, làm sao anh biết bạn đó đã nộp lúc nào và từ máy tính nào?",
+                    situation: "Anh giao cho kế toán nộp tờ khai, làm sao anh biết bạn đó đã nộp lúc nào và từ máy tính nào?",
                     advice: "Dạ KiotViet có tính năng Lịch sử thao tác tự động ghi lại chi tiết: tên tài khoản nhân viên, thời gian chính xác bấm nộp và địa chỉ IP thiết bị. Anh vào kiểm tra là thấy ngay toàn bộ vết thao tác ạ!"
                 },
                 quiz: {
@@ -641,38 +861,125 @@
         let basicIndex = 0;
         let advancedIndex = 0;
         let userAnswers = {};
+        
+        let viewedLessons = {
+            basic: new Set(),
+            advanced: new Set()
+        };
 
-        function initApp() {
-            renderGlossary();
+        let activeAccordionKey = 'basic'; 
+        let currentStepTargetIdx = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
             renderOverviewLists();
+            renderSidebarAccordions();
+        });
+
+        function toggleAccordion(key) {
+            if (activeAccordionKey === key) {
+                activeAccordionKey = null;
+            } else {
+                activeAccordionKey = key;
+            }
+            updateAccordionDOM();
         }
 
-        function renderGlossary() {
-            const container = document.getElementById('glossary-list');
-            if (!container) return;
-            container.innerHTML = GLOSSARY_DATA.map((item, idx) => `
-                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
-                    <div class="flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-md bg-blue-100 text-blue-900 text-[10px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
-                        <h3 class="text-xs sm:text-sm font-black text-blue-900">${item.term}</h3>
-                    </div>
-                    <p class="text-xs text-slate-600 leading-relaxed pl-7">${item.definition}</p>
-                </div>
-            `).join('');
+        function handleBasicHeaderClick() {
+            navSelectTab('basic');
+            toggleAccordion('basic');
+        }
+
+        function updateAccordionDOM() {
+            const allKeys = ['basic', 'adv-features', 'adv-mobile', 'adv-pos'];
+            allKeys.forEach(k => {
+                const panel = document.getElementById(`accordion-panel-${k}`);
+                const icon = document.getElementById(`accordion-icon-${k}`);
+                if (panel) {
+                    if (activeAccordionKey === k) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (icon) {
+                    icon.style.transform = (activeAccordionKey === k) ? 'rotate(0deg)' : 'rotate(-90deg)';
+                }
+            });
+        }
+
+        function renderSidebarAccordions() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    const isActive = (currentViewState === 'basic-viewer' && basicIndex === idx);
+                    return `
+                        <button onclick="jumpToLesson('basic', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white font-bold' : 'text-slate-700 hover:bg-blue-100/60'}">
+                            <span class="break-words flex-1">${lesson.title}</span>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            const featuresContainer = document.getElementById('accordion-panel-adv-features');
+            const mobileContainer = document.getElementById('accordion-panel-adv-mobile');
+            const posContainer = document.getElementById('accordion-panel-adv-pos');
+
+            let featHTML = '', mobHTML = '', posHTML = '';
+
+            ADVANCED_LESSONS.forEach((lesson, idx) => {
+                const isViewed = viewedLessons.advanced.has(idx);
+                const isActive = (currentViewState === 'advanced-viewer' && advancedIndex === idx);
+                const itemHTML = `
+                    <button onclick="jumpToLesson('advanced', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white font-bold' : 'text-slate-700 hover:bg-emerald-100/60'}">
+                        <span class="break-words flex-1">${lesson.title}</span>
+                        ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                    </button>
+                `;
+
+                if (lesson.category === 'feature') featHTML += itemHTML;
+                else if (lesson.category === 'mobile') mobHTML += itemHTML;
+                else if (lesson.category === 'pos') posHTML += itemHTML;
+            });
+
+            if (featuresContainer) {
+                featuresContainer.innerHTML = featHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-features').style.display = featHTML ? 'block' : 'none';
+            }
+            if (mobileContainer) {
+                mobileContainer.innerHTML = mobHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-mobile').style.display = mobHTML ? 'block' : 'none';
+            }
+            if (posContainer) {
+                posContainer.innerHTML = posHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-pos').style.display = posHTML ? 'block' : 'none';
+            }
+
+            updateAccordionDOM();
         }
 
         function navSelectTab(tab) {
+            currentStepTargetIdx = 0;
             ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
                 const view = document.getElementById(`view-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (view) view.classList.add('hidden');
-                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
+                if (btn) {
+                    btn.classList.remove('active-guide', 'active-glossary', 'active-basic-tab', 'active-advanced-tab');
+                }
             });
 
             const activeView = document.getElementById(`view-${tab}`);
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeView) activeView.classList.remove('hidden');
-            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+            
+            if (activeBtn) {
+                if (tab === 'guide') activeBtn.classList.add('active-guide');
+                else if (tab === 'glossary') activeBtn.classList.add('active-glossary');
+                else if (tab === 'basic') activeBtn.classList.add('active-basic-tab');
+                else if (tab === 'advanced') activeBtn.classList.add('active-advanced-tab');
+            }
 
             if (tab === 'basic') {
                 currentViewState = 'basic-overview';
@@ -685,41 +992,51 @@
             } else {
                 currentViewState = tab;
             }
+            renderSidebarAccordions();
         }
 
         function jumpToLesson(scope, index) {
+            currentStepTargetIdx = 0;
+            viewedLessons[scope].add(index);
             navSelectTab(scope);
+            
             if (scope === 'basic') {
                 currentViewState = 'basic-viewer';
                 basicIndex = index;
+                activeAccordionKey = 'basic';
                 document.getElementById('overview-basic').classList.add('hidden');
                 document.getElementById('viewer-basic').classList.remove('hidden');
                 renderLesson('basic', basicIndex);
             } else {
                 currentViewState = 'advanced-viewer';
                 advancedIndex = index;
+                const cat = ADVANCED_LESSONS[index].category;
+                if (cat === 'feature') activeAccordionKey = 'adv-features';
+                else if (cat === 'mobile') activeAccordionKey = 'adv-mobile';
+                else if (cat === 'pos') activeAccordionKey = 'adv-pos';
+                
                 document.getElementById('overview-advanced').classList.add('hidden');
                 document.getElementById('viewer-advanced').classList.remove('hidden');
                 renderLesson('advanced', advancedIndex);
             }
+            renderSidebarAccordions();
+            renderOverviewLists();
         }
-
-        function startSectionContent(scope) { jumpToLesson(scope, 0); }
 
         function nextGlobal() {
             if (currentViewState === 'guide') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('basic'); }
-            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-overview') { jumpToLesson('basic', 0); }
             else if (currentViewState === 'basic-viewer') {
                 if (basicIndex < BASIC_LESSONS.length - 1) {
-                    basicIndex++; renderLesson('basic', basicIndex);
+                    jumpToLesson('basic', basicIndex + 1);
                 } else {
                     document.getElementById('modal-basic-complete').classList.remove('hidden');
                 }
-            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            } else if (currentViewState === 'advanced-overview') { jumpToLesson('advanced', 0); }
             else if (currentViewState === 'advanced-viewer') {
                 if (advancedIndex < ADVANCED_LESSONS.length - 1) {
-                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                    jumpToLesson('advanced', advancedIndex + 1);
                 } else {
                     document.getElementById('modal-advanced-complete').classList.remove('hidden');
                 }
@@ -728,21 +1045,74 @@
 
         function prevGlobal() {
             if (currentViewState === 'advanced-viewer') {
-                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                if (advancedIndex > 0) { jumpToLesson('advanced', advancedIndex - 1); }
                 else { navSelectTab('advanced'); }
             } else if (currentViewState === 'advanced-overview') {
                 jumpToLesson('basic', BASIC_LESSONS.length - 1);
             } else if (currentViewState === 'basic-viewer') {
-                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                if (basicIndex > 0) { jumpToLesson('basic', basicIndex - 1); }
                 else { navSelectTab('basic'); }
             } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('guide'); }
         }
 
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') { nextGlobal(); }
-            else if (e.key === 'ArrowLeft') { prevGlobal(); }
+            if (['guide', 'glossary', 'basic-viewer', 'advanced-viewer'].includes(currentViewState)) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateStepInLesson('next');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateStepInLesson('prev');
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    navigateStepInLesson('top');
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    navigateStepInLesson('bottom');
+                }
+            }
         });
+
+        function navigateStepInLesson(direction) {
+            let container = null;
+            if (currentViewState === 'guide') {
+                container = document.querySelector('#view-guide .lesson-scroll-container');
+            } else if (currentViewState === 'glossary') {
+                container = document.querySelector('#view-glossary .lesson-scroll-container');
+            } else if (currentViewState === 'basic-viewer') {
+                container = document.querySelector('#viewer-basic .lesson-scroll-container');
+            } else if (currentViewState === 'advanced-viewer') {
+                container = document.querySelector('#viewer-advanced .lesson-scroll-container');
+            }
+
+            if (!container) return;
+
+            const targets = container.querySelectorAll('[data-step-target="true"]');
+            if (!targets.length) return;
+
+            if (direction === 'top') {
+                currentStepTargetIdx = 0;
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (direction === 'bottom') {
+                currentStepTargetIdx = targets.length - 1;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            if (direction === 'next') {
+                currentStepTargetIdx = Math.min(currentStepTargetIdx + 1, targets.length - 1);
+            } else if (direction === 'prev') {
+                currentStepTargetIdx = Math.max(currentStepTargetIdx - 1, 0);
+            }
+
+            const targetElement = targets[currentStepTargetIdx];
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
 
         function toggleFlashcard3D(sceneEl) {
             const cardEl = sceneEl.querySelector('.flashcard-3d-card');
@@ -769,6 +1139,7 @@
         }
 
         function renderLesson(scope, index) {
+            currentStepTargetIdx = 0;
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
             const lesson = lessons[index];
             const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
@@ -778,19 +1149,46 @@
             const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
 
             viewer.innerHTML = `
-                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
-                    <div class="space-y-2 border-b border-slate-100 pb-4">
-                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
-                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
-                        </span>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
+                <!-- FLOAT ACTION BUTTONS ĐẶT Ở DƯỚI CÙNG BÊN PHẢI -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer shadow-md" style="background-color: ${scopeColor}" title="Xem bước sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem bước trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- NỘI DUNG CHI TIẾT BÀI HỌC -->
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto p-4 sm:p-6 pr-14 sm:pr-16 space-y-6 max-w-5xl mx-auto">
+                    
+                    <div data-step-target="true" class="space-y-2 border-b border-slate-100 pb-4 scroll-mt-4">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                            </span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-base" title="Đang học"></i>
+                        </div>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                            <span>${lesson.title}</span>
+                        </h2>
                     </div>
 
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
-                        </p>
-                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    <!-- PHẦN TÌNH HUỐNG THỰC TẾ -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-xs space-y-2.5">
+                        <div class="flex items-center gap-2 text-amber-900">
+                            <div class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-8">${lesson.situation}</p>
                     </div>
 
                     <!-- QUY TRÌNH THỰC HIỆN -->
@@ -798,10 +1196,10 @@
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
                         <div class="space-y-5">
                             ${lesson.steps.map((step, sIdx) => `
-                                <div class="space-y-2.5">
+                                <div data-step-target="true" class="space-y-2.5 scroll-mt-4">
                                     <div class="flex items-start gap-3">
-                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
-                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5 font-medium">${step.text}</div>
                                     </div>
                                     ${step.img ? `
                                         <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
@@ -813,8 +1211,8 @@
                         </div>
                     </div>
 
-                    <!-- FLASHCARD 3D TÌNH HUỐNG TƯ VẤN -->
-                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                    <!-- GÓC TƯ VẤN BÁN HÀNG -->
+                    <div data-step-target="true" class="pt-4 border-t border-slate-200 space-y-3 scroll-mt-4">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
                         <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
                             <div class="flashcard-3d-card">
@@ -849,7 +1247,7 @@
                     </div>
 
                     <!-- KIỂM TRA NHANH KIẾN THỨC -->
-                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                    <div data-step-target="true" class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6 scroll-mt-4">
                         <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
                             <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
                             <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
@@ -868,7 +1266,7 @@
                         <div id="quiz-feedback-${scope}-${index}" class="hidden"></div>
                     </div>
 
-                    <!-- NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
+                    <!-- KHỐI NÚT ĐIỀU HƯỚNG BÊN DƯỚI BÀI HỌC -->
                     <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <button onclick="navSelectTab('${scope}')" class="w-full sm:w-auto px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
                             <i class="fa-solid fa-arrow-left text-slate-500"></i> Về danh mục
@@ -886,21 +1284,31 @@
 
                 </div>
             `;
-            viewer.firstElementChild.scrollTop = 0;
+            viewer.querySelector('.lesson-scroll-container').scrollTop = 0;
         }
 
         function renderOverviewLists() {
             const basicList = document.getElementById('basic-overview-list');
             if (basicList && typeof BASIC_LESSONS !== 'undefined') {
-                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
-                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
-                        <div class="flex items-center gap-3 truncate">
-                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    return `
+                        <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3 truncate pr-2">
+                                <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
+                            </div>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-[#166def] hover:bg-[#1259c7] text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             if (typeof ADVANCED_LESSONS !== 'undefined') {
@@ -911,13 +1319,21 @@
                 let featureHTML = '', mobileHTML = '', posHTML = '';
 
                 ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedLessons.advanced.has(idx);
                     const itemHTML = `
                         <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
-                            <div class="flex items-center gap-3 truncate">
+                            <div class="flex items-center gap-3 truncate pr-2">
                                 <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
                                 <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
                             </div>
-                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
                     `;
 
@@ -953,8 +1369,6 @@
 
         function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
-
-        window.onload = initApp;
     </script>
 </body>
 </html>
