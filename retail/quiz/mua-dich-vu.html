@@ -24,11 +24,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Khử hoàn toàn viền đen mặc định của trình duyệt khi focus */
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none !important; }
         
         .sidebar-tab-btn.active-guide,
         .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
@@ -36,16 +45,17 @@
         .sidebar-tab-btn.active-glossary,
         .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
         
-        .sidebar-tab-btn.active-basic,
-        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
-        
-        .sidebar-tab-btn.active-advanced,
-        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-tab-btn.active-basic-tab { background-color: #dbeafe !important; color: #166def !important; font-weight: 800; }
+        .sidebar-tab-btn.active-advanced-tab { background-color: #dcfce7 !important; color: #16a34a !important; font-weight: 800; }
 
         .sidebar-tab-btn.active-guide i,
-        .sidebar-tab-btn.active-glossary i,
-        .sidebar-tab-btn.active-basic i,
-        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+        .sidebar-tab-btn.active-glossary i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
 
         .flashcard-3d-scene { perspective: 1000px; }
         .flashcard-3d-card {
@@ -71,10 +81,21 @@
         .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .btn-interact:hover { transform: translateY(-2px); }
         .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
-        .img-zoomable:hover { transform: scale(1.01); }
+        .img-zoomable:hover { transform: scale(1.008); }
+
+        .float-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s ease;
+        }
+        .float-nav-btn:hover {
+            transform: scale(1.12);
+        }
+        .float-nav-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f1f5f9] overflow-hidden">
 
     <!-- HEADER MAIN -->
     <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
@@ -88,219 +109,313 @@
                 <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
         </div>
-        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs" style="background-color: #166def;">
-            <i class="fa-solid fa-store text-white"></i>
-            <span>Ngành Bán buôn, Bán lẻ</span>
+        <!-- TAG BÁN BUÔN, BÁN LẺ NỀN CYAN NỔI BẬT -->
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-sm bg-cyan-400 border border-cyan-400/40">
+            <i class="fa-solid fa-store text-cyan-100"></i>
+            <span>Bán buôn, Bán lẻ</span>
         </div>
     </header>
 
-    <!-- RIGHT SIDEBAR NAVIGATION -->
-    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
-        <div class="p-2 space-y-1.5 overflow-y-auto">
-            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
-                <span class="hidden md:inline truncate">Hướng dẫn học</span>
-            </button>
-            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
-                <span class="hidden md:inline truncate">Thuật ngữ</span>
-            </button>
-            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
-            </button>
-            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
-            </button>
-        </div>
+    <!-- WRAPPER BODY: SIBLING FLEX ROW -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden">
 
-        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
-            <div class="relative group flex-1">
-                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
-                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác trước (&lt;)
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 min-w-0 h-full relative p-2 sm:p-4 overflow-hidden flex flex-col">
+            
+            <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+            <div id="view-guide" class="w-full h-full relative overflow-hidden">
+                <!-- FLOAT ACTION BUTTONS -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-[#166def] flex items-center justify-center cursor-pointer shadow-md" title="Xem phần tiếp theo (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem phần trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-6 pb-8">
+                        
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 scroll-mt-4" style="border-color: #166def40;">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Mua dịch vụ</h2>
+                            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                                Tính năng Mua dịch vụ cho phép cửa hàng ghi nhận chính xác các khoản chi phí dịch vụ phát sinh trong kinh doanh như tiền thuê mặt bằng, điện, nước, internet, phần mềm... thông qua Phiếu mua dịch vụ (PMDV) — một loại chứng từ mới, tách biệt hoàn toàn khỏi Phiếu chi. Cửa hàng có thể tạo phiếu thủ công hoặc liên kết trực tiếp với hóa đơn đầu vào từ nhà cung cấp, đồng thời tự động theo dõi công nợ phải trả và lịch sử thanh toán.
+                            </p>
+                        </div>
+
+                        <!-- INFOGRAPHIC SECTION -->
+                        <div class="space-y-6" id="guide-media-block">
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-infographic-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                                    <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083022/MDVR_200526-1.jpg" alt="Infographic Hướng dẫn Mua dịch vụ" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BENEFITS SECTION -->
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-benefits-block">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-receipt"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Ghi nhận đúng chi phí</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Phản ánh chi phí phát sinh thực tế, giúp báo cáo Lãi/Lỗ hàng tháng chính xác, không lẫn giữa chi phí và tiền đã trả.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-scale-balanced"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Quản lý công nợ NCC</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tự động ghi nhận nợ khi đã nhận dịch vụ nhưng chưa thanh toán, biết chính xác nợ nhà cung cấp nào, từ phiếu nào.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-copy"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Sao chép phiếu nhanh</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tiết kiệm thời gian cho các khoản dịch vụ cố định hàng tháng (mặt bằng, internet) chỉ với vài thao tác sao chép.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROADMAP SECTION -->
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                                <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-800/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-blue-800 uppercase">Phần 1</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-blue-800 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-800">Thuật ngữ nền tảng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                                </div>
+                                <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                                </div>
+                                <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            <div class="relative group flex-1">
-                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs" style="background-color: #166def;">
-                    <i class="fa-solid fa-chevron-right text-white"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác tiếp (&gt;)
+
+            <!-- SECTION 2: THUẬT NGỮ -->
+            <div id="view-glossary" class="hidden w-full h-full relative overflow-hidden">
+                <!-- FLOAT ACTION BUTTONS -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-blue-800 flex items-center justify-center cursor-pointer shadow-md" title="Xem thuật ngữ sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem thuật ngữ trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-4 pb-8">
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-800 shadow-xs space-y-2 scroll-mt-4">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-xl"></i>
+                                <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div id="glossary-list" class="space-y-3">
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Phiếu mua dịch vụ (PMDV)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Chứng từ ghi nhận các khoản chi phí dịch vụ phát sinh trong kinh doanh (thuê mặt bằng, điện, nước, internet...) độc lập hoàn toàn với Phiếu chi.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Công nợ nhà cung cấp</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Khoản tiền cửa hàng còn nợ nhà cung cấp khi đã ghi nhận phiếu mua dịch vụ nhưng chưa thanh toán hoặc mới thanh toán một phần.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Hóa đơn đầu vào</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Hóa đơn tài chính/điện tử từ nhà cung cấp, được đồng bộ để làm căn cứ tự động khởi tạo phiếu mua dịch vụ.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Phiếu chi (PCMDV)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Chứng từ xuất dòng tiền ghi nhận trên Sổ quỹ khi cửa hàng thực hiện thanh toán chi trả cho phiếu mua dịch vụ.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </aside>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
-        
-        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
-        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+            <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+            <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-basic" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-[#166def] shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div class="space-y-3 text-left pt-1">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                            </h4>
+                            <div id="basic-overview-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+            <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+            <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-advanced" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+
+                        <div class="space-y-5 text-left pt-2">
+                            <div id="adv-group-features" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                                </h4>
+                                <div id="advanced-list-features" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-mobile" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Điện thoại
+                                </h4>
+                                <div id="advanced-list-mobile" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-pos" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                                </h4>
+                                <div id="advanced-list-pos" class="space-y-2.5 pl-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR NAVIGATION -->
+        <aside class="w-64 lg:w-72 bg-white border-l border-slate-200 shrink-0 h-full flex flex-col shadow-sm overflow-hidden z-20">
+            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
                 
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4" style="border-color: #166def40;">
-                    <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Mua dịch vụ</h2>
-                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
-                        Tính năng Mua dịch vụ cho phép cửa hàng ghi nhận chính xác các khoản chi phí dịch vụ phát sinh trong kinh doanh như tiền thuê mặt bằng, điện, nước, internet, phần mềm... thông qua Phiếu mua dịch vụ (PMDV) — một loại chứng từ mới, tách biệt hoàn toàn khỏi Phiếu chi. Cửa hàng có thể tạo phiếu thủ công hoặc liên kết trực tiếp với hóa đơn đầu vào từ nhà cung cấp, đồng thời tự động theo dõi công nợ phải trả và lịch sử thanh toán.
-                    </p>
-                </div>
-
-                <div class="space-y-6" id="guide-media-block">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
-                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083022/MDVR_200526-1.jpg" alt="Infographic Hướng dẫn Mua dịch vụ" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
-                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm flex items-center gap-2 text-blue-600">
-                                <i class="fa-solid fa-receipt"></i> Ghi nhận đúng chi phí
-                            </h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Phản ánh chi phí phát sinh thực tế, giúp báo cáo Lãi/Lỗ hàng tháng chính xác, không lẫn giữa chi phí và tiền đã trả.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm flex items-center gap-2 text-blue-600">
-                                <i class="fa-solid fa-scale-balanced"></i> Quản lý công nợ NCC
-                            </h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tự động ghi nhận nợ khi đã nhận dịch vụ nhưng chưa thanh toán, biết chính xác nợ nhà cung cấp nào, từ phiếu nào.</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm flex items-center gap-2 text-blue-600">
-                                <i class="fa-solid fa-copy"></i> Sao chép phiếu nhanh
-                            </h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tiết kiệm thời gian cho các khoản dịch vụ cố định hàng tháng (mặt bằng, internet) chỉ với vài thao tác sao chép.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
-                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
-                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                        </div>
-                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                        </div>
-                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- SECTION 2: THUẬT NGỮ -->
-        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-4 pb-8">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
-                    <div class="flex items-center gap-2 text-blue-900">
-                        <i class="fa-solid fa-book-bookmark text-xl"></i>
-                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                </div>
-                <div id="glossary-list" class="space-y-3"></div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
-        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                    </div>
-                    <div class="space-y-3 text-left pt-1">
-                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
-                        </h4>
-                        <div id="basic-overview-list" class="space-y-2.5"></div>
-                    </div>
-                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                <!-- CỤM 1: NỀN XANH DƯƠNG NHẠT -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                        <span class="truncate text-left flex-1">Hướng dẫn học</span>
                     </button>
-                </div>
-            </div>
-            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
-
-        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
-        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                    </div>
-
-                    <div class="space-y-6 text-left pt-2">
-                        <div id="adv-group-features" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
-                            </h4>
-                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-mobile" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
-                            </h4>
-                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-pos" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
-                            </h4>
-                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
-                        </div>
-                    </div>
-
-                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    
+                    <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                        <span class="truncate text-left flex-1">Thuật ngữ</span>
                     </button>
+                    
+                    <!-- ACCORDION KIẾN THỨC CƠ BẢN -->
+                    <div class="rounded-xl overflow-hidden border border-blue-200/70 bg-white shadow-2xs">
+                        <button onclick="handleBasicHeaderClick()" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-blue-100/50 text-xs sm:text-sm font-bold cursor-pointer transition-all border-none outline-none focus:outline-none focus:ring-0">
+                            <div class="flex items-center gap-2.5 truncate">
+                                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                                <span class="truncate text-left">Kiến thức cơ bản</span>
+                            </div>
+                            <i id="accordion-icon-basic" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+                        </button>
+                        <div id="accordion-panel-basic" class="hidden space-y-1 p-1.5 bg-blue-50/40 border-t border-blue-100"></div>
+                    </div>
                 </div>
-            </div>
-            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
 
-    </main>
+                <!-- CỤM 2: NỀN XANH LÁ NHẠT -->
+                <div class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-800 hover:bg-white text-xs sm:text-sm font-black cursor-pointer transition-all border-none outline-none focus:outline-none">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                            <span class="truncate text-left">Kiến thức nâng cao</span>
+                        </div>
+                    </button>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAccordion('adv-features')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-sliders text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Tính năng nâng cao</span>
+                                </div>
+                                <i id="accordion-icon-adv-features" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-features" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile">
+                            <button onclick="toggleAccordion('adv-mobile')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Điện thoại</span>
+                                </div>
+                                <i id="accordion-icon-adv-mobile" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-mobile" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos">
+                            <button onclick="toggleAccordion('adv-pos')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-desktop text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Máy POS</span>
+                                </div>
+                                <i id="accordion-icon-adv-pos" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-pos" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
 
     <!-- POPUP HOÀN THÀNH CƠ BẢN -->
     <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
@@ -309,24 +424,30 @@
                 <i class="fa-solid fa-award"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
-                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng Mua dịch vụ.</p>
+                <h3 class="text-lg font-black text-slate-900">
+                    Chúc mừng hoàn thành!
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-600 text-left">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng
+                    <strong class="text-slate-900">Mua dịch vụ</strong>.
+                    <br><br>
+                    Tiếp theo, bạn có thể <strong class="text-slate-900">Kết thúc bài học</strong> và chuyển sang <strong class="text-slate-900">học tiếp bài học tiếp theo</strong> trong khóa học.
+                    <br><br>
+                    Ngoài ra, bạn có thể khám phá tiếp các thao tác nâng cao ít phổ biến hơn (nếu có nhu cầu và có đủ thời gian).
+                </p>
             </div>
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Đóng
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Kết thúc bài học
                 </button>
-                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Học lại từ đầu
-                </button>
-                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#12c74e] hover:bg-[#12c712] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
                     Học nâng cao
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- POPUP HOÀN THÀNH NÂNG CAO -->
+    <!-- POPUP HOÀN THÀNH TẤT CẢ -->
     <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -357,65 +478,76 @@
         </div>
     </div>
 
-    <!-- FULL JAVASCRIPT ENGINE V18.0 HOÀN CHỈNH 100% -->
+    <!-- JAVASCRIPT ENGINE V19.0 -->
     <script>
-        const GLOSSARY_ITEMS = [
-            { term: 'Phiếu mua dịch vụ (PMDV)', desc: 'Chứng từ ghi nhận các khoản chi phí dịch vụ phát sinh trong kinh doanh (thuê mặt bằng, điện, nước, internet...) độc lập hoàn toàn với Phiếu chi.' },
-            { term: 'Công nợ nhà cung cấp', desc: 'Khoản tiền cửa hàng còn nợ nhà cung cấp khi đã ghi nhận phiếu mua dịch vụ nhưng chưa thanh toán hoặc mới thanh toán một phần.' },
-            { term: 'Hóa đơn đầu vào', desc: 'Hóa đơn tài chính/điện tử từ nhà cung cấp, được đồng bộ để làm căn cứ tự động khởi tạo phiếu mua dịch vụ.' },
-            { term: 'Phiếu chi (PCMDV)', desc: 'Chứng từ xuất dòng tiền ghi nhận trên Sổ quỹ khi cửa hàng thực hiện thanh toán chi trả cho phiếu mua dịch vụ.' }
-        ];
-
         const BASIC_LESSONS = [
             {
-                title: 'Bật tính năng Mua dịch vụ',
-                situation: 'Chủ cửa hàng cần thiết lập bật hoặc tắt tính năng Mua dịch vụ để quản lý chi phí và phân quyền cho nhân viên sử dụng.',
+                title: "Bật tính năng Mua dịch vụ",
+                situation: "Chủ cửa hàng cần thiết lập <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bật hoặc tắt tính năng Mua dịch vụ</b> để quản lý chi phí và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phân quyền cho nhân viên</b> sử dụng.",
                 steps: [
-                    { text: 'Đăng nhập tài khoản admin chủ gian hàng, tại màn hình <strong>Quản lý</strong>, chọn menu <strong>Thiết lập</strong> → chọn <strong>Xem tất cả thiết lập</strong>.', img: null },
-                    { text: 'Tại mục <strong>Mua hàng</strong>, hệ thống mặc định đã bật <strong><em>Mua dịch vụ</em></strong>. Bạn có thể chủ động bật/tắt theo nhu cầu sử dụng.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083032/MDVR_200526-2.png' }
+                    {
+                        text: "Đăng nhập tài khoản admin chủ gian hàng, tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, chọn menu <b class=\"font-bold text-[#166def]\">Thiết lập</b> → chọn <b class=\"font-bold text-[#166def]\">\"Xem tất cả thiết lập\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Tại mục <b class=\"font-bold text-[#166def]\">Mua hàng</b>, hệ thống mặc định đã bật <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b>. Bạn có thể chủ động bật/tắt theo nhu cầu sử dụng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083032/MDVR_200526-2.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Khách hàng thắc mắc: "Cửa hàng anh dùng Phiếu chi rồi, sao KiotViet lại đẻ thêm Phiếu mua dịch vụ nữa làm gì cho rối?"',
-                    advice: 'Dạ anh/chị, Phiếu chi chỉ phản ánh dòng tiền thực xuất quỹ. Còn Phiếu mua dịch vụ giúp ghi nhận đúng chi phí phát sinh trong tháng để tính báo cáo Lãi/Lỗ chuẩn 100%, đồng thời giúp mình quản lý nợ gối đầu chính xác với bên nhà cung cấp điện, nước, mặt bằng đó ạ!'
+                    situation: "Cửa hàng anh dùng Phiếu chi rồi, sao KiotViet lại đẻ thêm Phiếu mua dịch vụ nữa làm gì cho rối em?",
+                    advice: "Dạ anh/chị, Phiếu chi chỉ phản ánh dòng tiền thực xuất quỹ. Còn Phiếu mua dịch vụ giúp ghi nhận đúng chi phí phát sinh trong tháng để tính báo cáo Lãi/Lỗ chuẩn 100%, đồng thời giúp mình quản lý nợ gối đầu chính xác với bên nhà cung cấp điện, nước, mặt bằng đó ạ!"
                 },
                 quiz: {
-                    question: 'Khi tắt tính năng Mua dịch vụ trong Thiết lập, toàn bộ các phiếu mua dịch vụ đã lập trước đó sẽ bị xóa vĩnh viễn khỏi hệ thống.',
+                    question: "Khi tắt tính năng Mua dịch vụ trong Thiết lập, toàn bộ các phiếu mua dịch vụ đã lập trước đó sẽ bị xóa vĩnh viễn khỏi hệ thống.",
                     answer: false,
-                    explanation: 'Khi tắt tính năng, toàn bộ dữ liệu các phiếu đã tạo trước đó không bị xóa mà chỉ ẩn khỏi giao diện quản lý.'
+                    explanation: "Khi tắt tính năng, toàn bộ dữ liệu các phiếu đã tạo trước đó không bị xóa mà chỉ ẩn khỏi giao diện quản lý."
                 }
             },
             {
-                title: 'Tạo phiếu mua dịch vụ thủ công',
-                situation: 'Người dùng chủ động ghi nhận một khoản chi phí dịch vụ (tiền điện, tiền nhà...) vào hệ thống khi chưa có hóa đơn điện tử.',
+                title: "Tạo phiếu mua dịch vụ thủ công",
+                situation: "Người dùng chủ động <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ghi nhận một khoản chi phí dịch vụ</b> (tiền điện, tiền nhà...) vào hệ thống khi <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chưa có hóa đơn điện tử</b>.",
                 steps: [
-                    { text: 'Tại màn hình <strong>Quản lý</strong> → chọn <strong>Mua hàng</strong> → <strong><em>Mua dịch vụ</em></strong> → bấm <strong><em>+ Tạo phiếu mua</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083041/MDVR_200526-3.png' },
-                    { text: 'Điền các thông tin: <strong><em>Số hóa đơn đầu vào</em></strong> (nếu có), <strong><em>Loại chi</em></strong>, <strong><em>Thời gian</em></strong>, <strong><em>Đối tượng nhận</em></strong>, số tiền <strong><em>Cần thanh toán</em></strong>, <strong><em>Ghi chú</em></strong> và thông tin thanh toán (nếu trả tiền ngay). Bấm <strong><em>Lưu</em></strong> để hoàn tất.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083055/MDVR_200526-4.png' }
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b> → chọn <b class=\"font-bold text-[#166def]\">Mua hàng</b> → <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b> → bấm <b class=\"font-bold text-[#166def]\">\"+ Tạo phiếu mua\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083041/MDVR_200526-3.png"
+                    },
+                    {
+                        text: "Điền các thông tin: <b class=\"font-bold text-[#166def]\">Số hóa đơn đầu vào</b> (nếu có), <b class=\"font-bold text-[#166def]\">Loại chi</b>, <b class=\"font-bold text-[#166def]\">Thời gian</b>, <b class=\"font-bold text-[#166def]\">Đối tượng nhận</b>, số tiền <b class=\"font-bold text-[#166def]\">Cần thanh toán</b>, <b class=\"font-bold text-[#166def]\">Ghi chú</b> và thông tin thanh toán (nếu trả tiền ngay). Bấm <b class=\"font-bold text-[#166def]\">\"Lưu\"</b> để hoàn tất.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083055/MDVR_200526-4.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Cửa hàng ghi nhận phiếu dịch vụ tiền nhà 15 triệu nhưng tháng này chưa trả tiền thì hệ thống tính Lãi Lỗ và Công nợ thế nào?',
-                    advice: 'Dạ anh/chị, khi chưa nhập số tiền thanh toán, hệ thống sẽ ghi nhận tròn 15 triệu vào chi phí tháng này (giúp Báo cáo Lãi/Lỗ chuẩn xác) và tự động chuyển 15 triệu vào Công nợ phải trả Nhà cung cấp mà không hề xuất Phiếu chi nào ạ!'
+                    situation: "Cửa hàng ghi nhận phiếu dịch vụ tiền nhà 15 triệu nhưng tháng này chưa trả tiền thì hệ thống tính Lãi Lỗ và Công nợ thế nào em?",
+                    advice: "Dạ anh/chị, khi chưa nhập số tiền thanh toán, hệ thống sẽ ghi nhận tròn 15 triệu vào chi phí tháng này (giúp Báo cáo Lãi/Lỗ chuẩn xác) và tự động chuyển 15 triệu vào Công nợ phải trả Nhà cung cấp mà không hề xuất Phiếu chi nào ạ!"
                 },
                 quiz: {
-                    question: 'Đối tượng nhận là Nhà cung cấp có thể được thêm mới trực tiếp ngay trong giao diện Tạo phiếu mua dịch vụ thủ công.',
+                    question: "Đối tượng nhận là Nhà cung cấp có thể được thêm mới trực tiếp ngay trong giao diện Tạo phiếu mua dịch vụ thủ công.",
                     answer: false,
-                    explanation: 'Nếu chọn Đối tượng nhận là Nhà cung cấp, người dùng bắt buộc phải chọn từ danh sách đã có sẵn trên hệ thống (không thể tạo mới tại màn hình này). Nếu chọn Đối tượng Khác thì mới tạo mới được.'
+                    explanation: "Nếu chọn Đối tượng nhận là Nhà cung cấp, người dùng bắt buộc phải chọn từ danh sách đã có sẵn trên hệ thống (không thể tạo mới tại màn hình này). Nếu chọn Đối tượng Khác thì mới tạo mới được."
                 }
             },
             {
-                title: 'Thanh toán phiếu mua dịch vụ',
-                situation: 'Người dùng ghi nhận số tiền thực tế đã chi trả cho nhà cung cấp đối với các phiếu mua dịch vụ đang ghi nợ trước đó.',
+                title: "Thanh toán phiếu mua dịch vụ",
+                situation: "Người dùng ghi nhận <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số tiền thực tế đã chi trả</b> cho nhà cung cấp đối với các phiếu mua dịch vụ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đang ghi nợ trước đó</b>.",
                 steps: [
-                    { text: 'Tại màn hình <strong>Mua dịch vụ</strong>, chọn phiếu cần thanh toán → bấm nút <strong><em>Thanh toán</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083110/MDVR_200526-5.png' },
-                    { text: 'Nhập <strong><em>Số tiền thanh toán</em></strong>, <strong><em>Người chi</em></strong>, <strong><em>Phương thức thanh toán</em></strong> (Tiền mặt/Chuyển khoản/Ví), kiểm tra <strong><em>Ngày thanh toán</em></strong> → bấm <strong><em>Thanh toán</em></strong> → xác nhận <strong><em>Đồng ý</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083120/MDVR_200526-6.png' }
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Mua dịch vụ</b>, chọn phiếu cần thanh toán → bấm nút <b class=\"font-bold text-[#166def]\">\"Thanh toán\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083110/MDVR_200526-5.png"
+                    },
+                    {
+                        text: "Nhập <b class=\"font-bold text-[#166def]\">Số tiền thanh toán</b>, <b class=\"font-bold text-[#166def]\">Người chi</b>, <b class=\"font-bold text-[#166def]\">Phương thức thanh toán</b> (Tiền mặt/Chuyển khoản/Ví), kiểm tra <b class=\"font-bold text-[#166def]\">Ngày thanh toán</b> → bấm <b class=\"font-bold text-[#166def]\">\"Thanh toán\"</b> → xác nhận <b class=\"font-bold text-[#166def]\">\"Đồng ý\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083120/MDVR_200526-6.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Khách thắc mắc: "Sao khi anh bấm Thanh toán phiếu mua dịch vụ, tiền bị trừ trong Sổ quỹ rồi mà Báo cáo Chi phí không tăng thêm tiền?"',
-                    advice: 'Dạ đúng rồi anh! Vì chi phí đã được ghi nhận 100% ngay từ lúc anh lập Phiếu mua dịch vụ rồi ạ. Khi anh bấm Thanh toán, hệ thống chỉ sinh Phiếu chi để trừ tiền Sổ quỹ và giảm Công nợ, tránh việc cộng trùng chi phí 2 lần ạ!'
+                    situation: "Sao khi anh bấm Thanh toán phiếu mua dịch vụ, tiền bị trừ trong Sổ quỹ rồi mà Báo cáo Chi phí không tăng thêm tiền vậy em?",
+                    advice: "Dạ đúng rồi anh! Vì chi phí đã được ghi nhận 100% ngay từ lúc anh lập Phiếu mua dịch vụ rồi ạ. Khi anh bấm Thanh toán, hệ thống chỉ sinh Phiếu chi để trừ tiền Sổ quỹ và giảm Công nợ, tránh việc cộng trùng chi phí 2 lần ạ!"
                 },
                 quiz: {
-                    question: 'Khi thực hiện thanh toán phiếu mua dịch vụ, hệ thống sẽ tự động tạo một Phiếu chi tương ứng (mã PCMDVxxxxxx) trong Sổ quỹ.',
+                    question: "Khi thực hiện thanh toán phiếu mua dịch vụ, hệ thống sẽ tự động tạo một Phiếu chi tương ứng (mã PCMDVxxxxxx) trong Sổ quỹ.",
                     answer: true,
-                    explanation: 'Chính xác! Hệ thống tự động khởi tạo Phiếu chi mã PCMDV trong Sổ quỹ để phản ánh đúng dòng tiền thực xuất.'
+                    explanation: "Hệ thống tự động khởi tạo Phiếu chi mã PCMDV trong Sổ quỹ để phản ánh đúng dòng tiền thực xuất."
                 }
             }
         ];
@@ -423,275 +555,374 @@
         const ADVANCED_LESSONS = [
             {
                 category: 'feature',
-                title: 'Tạo phiếu từ hóa đơn đầu vào',
-                situation: 'Tạo phiếu mua dịch vụ trực tiếp từ màn hình Hóa đơn đầu vào để tiết kiệm thời gian và tự động điền số tiền.',
+                title: "Tạo phiếu từ hóa đơn đầu vào",
+                situation: "Tạo phiếu mua dịch vụ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">trực tiếp từ màn hình Hóa đơn đầu vào</b> để tiết kiệm thời gian và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tự động điền số tiền</b>.",
                 steps: [
-                    { text: 'Trên màn hình <strong>Quản lý</strong> → chọn <strong>Mua hàng</strong> → <strong>Hóa đơn đầu vào</strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083134/MDVR_200526-7.png' },
-                    { text: 'Tìm kiếm và mở hóa đơn đầu vào tương ứng → chọn <strong><em>Lập phiếu</em></strong> → chọn <strong><em>Phiếu mua dịch vụ</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083145/MDVR_200526-8.png' },
-                    { text: 'Hệ thống tự động điền số tiền Cần thanh toán từ hóa đơn. Kiểm tra các thông tin còn lại và nhấn <strong><em>Lưu</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083158/MDVR_200526-9.png' }
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b> → chọn <b class=\"font-bold text-[#166def]\">Mua hàng</b> → <b class=\"font-bold text-[#166def]\">\"Hóa đơn đầu vào\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083134/MDVR_200526-7.png"
+                    },
+                    {
+                        text: "Tìm kiếm và mở hóa đơn đầu vào tương ứng → chọn <b class=\"font-bold text-[#166def]\">\"Lập phiếu\"</b> → chọn <b class=\"font-bold text-[#166def]\">\"Phiếu mua dịch vụ\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083145/MDVR_200526-8.png"
+                    },
+                    {
+                        text: "Hệ thống tự động điền số tiền Cần thanh toán từ hóa đơn. Kiểm tra các thông tin còn lại và nhấn <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083158/MDVR_200526-9.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Một hóa đơn đầu vào có thể liên kết lập được bao nhiêu phiếu mua dịch vụ?',
-                    advice: 'Dạ thưa anh/chị, để đảm bảo tính chính xác của sổ sách kế toán, mỗi hóa đơn đầu vào chỉ được phép liên kết duy nhất với một Phiếu mua dịch vụ ạ!'
+                    situation: "Một hóa đơn đầu vào có thể liên kết lập được bao nhiêu phiếu mua dịch vụ em?",
+                    advice: "Dạ thưa anh/chị, để đảm bảo tính chính xác của sổ sách kế toán, mỗi hóa đơn đầu vào chỉ được phép liên kết duy nhất với một Phiếu mua dịch vụ ạ!"
                 },
                 quiz: {
-                    question: 'Một hóa đơn đầu vào có thể liên kết và tạo thành nhiều phiếu mua dịch vụ khác nhau.',
+                    question: "Một hóa đơn đầu vào có thể liên kết và tạo thành nhiều phiếu mua dịch vụ khác nhau.",
                     answer: false,
-                    explanation: 'Mỗi hóa đơn đầu vào chỉ liên kết duy nhất với một phiếu mua dịch vụ.'
+                    explanation: "Mỗi hóa đơn đầu vào chỉ liên kết duy nhất với một phiếu mua dịch vụ."
                 }
             },
             {
                 category: 'feature',
-                title: 'Sao chép phiếu',
-                situation: 'Xử lý các khoản chi phí dịch vụ lặp lại hàng tháng (tiền nhà, internet) bằng cách sao chép phiếu cũ.',
+                title: "Sao chép phiếu",
+                situation: "Xử lý các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">khoản chi phí dịch vụ lặp lại hàng tháng</b> (tiền nhà, internet) bằng cách <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">sao chép phiếu cũ</b>.",
                 steps: [
-                    { text: 'Mở chi tiết phiếu mua dịch vụ cần sao chép → bấm nút <strong><em>Sao chép</em></strong>.', img: null },
-                    { text: 'Hệ thống khởi tạo phiếu mới giữ nguyên thông tin, cập nhật Thời gian về thời điểm hiện tại. Điều chỉnh nếu cần và nhấn <strong><em>Lưu</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083208/MDVR_200526-10.png' }
+                    {
+                        text: "Mở chi tiết phiếu mua dịch vụ cần sao chép → bấm nút <b class=\"font-bold text-[#166def]\">\"Sao chép\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Hệ thống khởi tạo phiếu mới giữ nguyên thông tin, cập nhật Thời gian về thời điểm hiện tại. Điều chỉnh nếu cần và nhấn <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083208/MDVR_200526-10.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Chức năng Sao chép phiếu mua dịch vụ đem lại giá trị gì lớn nhất cho chủ cửa hàng?',
-                    advice: 'Dạ, với các khoản chi cố định như tiền nhà 10 triệu/tháng hay Internet, anh/chị chỉ cần bấm Sao chép trong 3 giây là xong phiếu tháng mới, không mất công nhập lại thông tin nhà cung cấp hay loại chi ạ!'
+                    situation: "Chức năng Sao chép phiếu mua dịch vụ đem lại giá trị gì lớn nhất cho chủ cửa hàng em?",
+                    advice: "Dạ, với các khoản chi cố định như tiền nhà 10 triệu/tháng hay Internet, anh/chị chỉ cần bấm Sao chép trong 3 giây là xong phiếu tháng mới, không mất công nhập lại thông tin nhà cung cấp hay loại chi ạ!"
                 },
                 quiz: {
-                    question: 'Khi thực hiện sao chép phiếu, hệ thống tự động giữ nguyên thời gian giao dịch của phiếu gốc.',
+                    question: "Khi thực hiện sao chép phiếu, hệ thống tự động giữ nguyên thời gian giao dịch của phiếu gốc.",
                     answer: false,
-                    explanation: 'Khi sao chép, hệ thống tự động cập nhật thời gian giao dịch của phiếu mới về thời điểm hiện tại.'
+                    explanation: "Khi sao chép, hệ thống tự động cập nhật thời gian giao dịch của phiếu mới về thời điểm hiện tại."
                 }
             },
             {
                 category: 'feature',
-                title: 'Chỉnh sửa phiếu',
-                situation: 'Thực hiện cập nhật thông tin của phiếu mua dịch vụ do nhập nhầm hoặc có điều chỉnh từ nhà cung cấp.',
+                title: "Chỉnh sửa phiếu",
+                situation: "Thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cập nhật thông tin</b> của phiếu mua dịch vụ do <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhập nhầm hoặc có điều chỉnh</b> từ nhà cung cấp.",
                 steps: [
-                    { text: 'Mở chi tiết phiếu mua dịch vụ cần thay đổi → chọn <strong><em>Chỉnh sửa</em></strong>.', img: null },
-                    { text: 'Cập nhật lại các trường thông tin cần thiết và bấm <strong><em>Lưu</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083237/MDVR_200526-11.png' }
+                    {
+                        text: "Mở chi tiết phiếu mua dịch vụ cần thay đổi → chọn <b class=\"font-bold text-[#166def]\">\"Chỉnh sửa\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Cập nhật lại các trường thông tin cần thiết và bấm <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083237/MDVR_200526-11.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Có trường hợp nào hệ thống khóa không cho phép chỉnh sửa phiếu mua dịch vụ không?',
-                    advice: 'Dạ có ạ! Nếu phiếu mua dịch vụ được liên kết từ Hóa đơn đầu vào mà hóa đơn đó đã bị Hủy, hoặc Số hóa đơn đồng bộ từ Tổng cục Thuế thì hệ thống sẽ khóa chỉnh sửa để bảo đảm dữ liệu ạ.'
+                    situation: "Có trường hợp nào hệ thống khóa không cho phép chỉnh sửa phiếu mua dịch vụ không em?",
+                    advice: "Dạ có ạ! Nếu phiếu mua dịch vụ được liên kết từ Hóa đơn đầu vào mà hóa đơn đó đã bị Hủy, hoặc Số hóa đơn đồng bộ từ Tổng cục Thuế thì hệ thống sẽ khóa chỉnh sửa để bảo đảm dữ liệu ạ."
                 },
                 quiz: {
-                    question: 'Hệ thống cho phép chỉnh sửa bình thường các phiếu mua dịch vụ liên kết với hóa đơn đầu vào đã bị hủy.',
+                    question: "Hệ thống cho phép chỉnh sửa bình thường các phiếu mua dịch vụ liên kết với hóa đơn đầu vào đã bị hủy.",
                     answer: false,
-                    explanation: 'Hệ thống không cho phép chỉnh sửa phiếu nếu hóa đơn đầu vào liên kết đang ở trạng thái Đã hủy.'
+                    explanation: "Hệ thống không cho phép chỉnh sửa phiếu nếu hóa đơn đầu vào liên kết đang ở trạng thái Đã hủy."
                 }
             },
             {
                 category: 'feature',
-                title: 'Hủy phiếu (đơn lẻ và hàng loạt)',
-                situation: 'Xóa hiệu lực phiếu mua dịch vụ do nhập sai hoặc trùng lặp, giúp đảo ngược công nợ và dòng tiền.',
+                title: "Hủy phiếu (đơn lẻ và hàng loạt)",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Xóa hiệu lực</b> phiếu mua dịch vụ do <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhập sai hoặc trùng lặp</b>, giúp đảo ngược công nợ và dòng tiền.",
                 steps: [
-                    { text: '<strong>Cách 1 (Hủy lẻ):</strong> Mở chi tiết phiếu → bấm <strong><em>Hủy</em></strong> → xác nhận <strong><em>Đồng ý</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083254/MDVR_200526-12.png' },
-                    { text: '<strong>Cách 2 (Hủy hàng loạt):</strong> Tích chọn nhiều phiếu trên danh sách → chọn <strong><em>Hủy</em></strong> → xác nhận <strong><em>Đồng ý</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083304/MDVR_200526-13.png' }
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 1 (Hủy lẻ):</b> Mở chi tiết phiếu → bấm <b class=\"font-bold text-[#166def]\">\"Hủy\"</b> → xác nhận <b class=\"font-bold text-[#166def]\">\"Đồng ý\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083254/MDVR_200526-12.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 2 (Hủy hàng loạt):</b> Tích chọn nhiều phiếu trên danh sách → chọn <b class=\"font-bold text-[#166def]\">\"Hủy\"</b> → xác nhận <b class=\"font-bold text-[#166def]\">\"Đồng ý\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083304/MDVR_200526-13.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Nếu phiếu mua dịch vụ đã thanh toán một phần mà bị Hủy thì dòng tiền và công nợ xử lý thế nào?',
-                    advice: 'Dạ anh/chị yên tâm, khi hủy phiếu, toàn bộ các Phiếu chi thanh toán liên quan cũng sẽ bị hủy theo, tiền hoàn về Sổ quỹ và Công nợ nhà cung cấp tự động đảo ngược 100% ạ!'
+                    situation: "Nếu phiếu mua dịch vụ đã thanh toán một phần mà bị Hủy thì dòng tiền và công nợ xử lý thế nào em?",
+                    advice: "Dạ anh/chị yên tâm, khi hủy phiếu, toàn bộ các Phiếu chi thanh toán liên quan cũng sẽ bị hủy theo, tiền hoàn về Sổ quỹ và Công nợ nhà cung cấp tự động đảo ngược 100% ạ!"
                 },
                 quiz: {
-                    question: 'Khi hủy một phiếu mua dịch vụ đã thanh toán, các phiếu chi liên quan sẽ tự động bị hủy và tiền hoàn về Sổ quỹ.',
+                    question: "Khi hủy một phiếu mua dịch vụ đã thanh toán, các phiếu chi liên quan sẽ tự động bị hủy và tiền hoàn về Sổ quỹ.",
                     answer: true,
-                    explanation: 'Chính xác! Khi hủy phiếu mua dịch vụ, hệ thống sẽ hủy toàn bộ các phiếu chi liên quan, hoàn tiền về Sổ quỹ và điều chỉnh công nợ.'
+                    explanation: "Khi hủy phiếu mua dịch vụ, hệ thống sẽ hủy toàn bộ các phiếu chi liên quan, hoàn tiền về Sổ quỹ và điều chỉnh công nợ."
                 }
             },
             {
                 category: 'feature',
-                title: 'Xem danh sách và tìm kiếm phiếu',
-                situation: 'Tra cứu lại lịch sử các phiếu mua dịch vụ đã tạo để đối soát thông tin chi phí.',
+                title: "Xem danh sách và tìm kiếm phiếu",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Tra cứu lại lịch sử</b> các phiếu mua dịch vụ đã tạo để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đối soát thông tin chi phí</b>.",
                 steps: [
-                    { text: 'Tại màn hình <strong>Quản lý</strong> → <strong>Mua hàng</strong> → <strong>Mua dịch vụ</strong>.', img: null },
-                    { text: 'Sử dụng bộ lọc theo Thời gian phát sinh, Nhà cung cấp, Loại chi, Tình trạng tài chính (Còn nợ/Đã thanh toán đủ/Đã hủy).', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083313/MDVR_200526-14.png' }
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b> → <b class=\"font-bold text-[#166def]\">Mua hàng</b> → <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Sử dụng bộ lọc theo <b class=\"font-bold text-[#166def]\">Thời gian phát sinh</b>, <b class=\"font-bold text-[#166def]\">Nhà cung cấp</b>, <b class=\"font-bold text-[#166def]\">Loại chi</b>, <b class=\"font-bold text-[#166def]\">Tình trạng tài chính</b> (Còn nợ/Đã thanh toán đủ/Đã hủy).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083313/MDVR_200526-14.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Làm thế nào để biết nhanh một phiếu mua dịch vụ đã thanh toán hết hay còn nợ?',
-                    advice: 'Dạ, anh/chị chỉ cần nhìn vào 3 con số trên danh sách phiếu: Tổng tiền, Đã thanh toán, Còn nợ. Nếu Còn nợ bằng 0 tức là phiếu đã thanh toán đủ ạ!'
+                    situation: "Làm thế nào để biết nhanh một phiếu mua dịch vụ đã thanh toán hết hay còn nợ em?",
+                    advice: "Dạ, anh/chị chỉ cần nhìn vào 3 con số trên danh sách phiếu: Tổng tiền, Đã thanh toán, Còn nợ. Nếu Còn nợ bằng 0 tức là phiếu đã thanh toán đủ ạ!"
                 },
                 quiz: {
-                    question: 'Người dùng có thể lọc danh sách phiếu mua dịch vụ theo tình trạng tài chính như Còn nợ hoặc Đã thanh toán đủ.',
+                    question: "Người dùng có thể lọc danh sách phiếu mua dịch vụ theo tình trạng tài chính như Còn nợ hoặc Đã thanh toán đủ.",
                     answer: true,
-                    explanation: 'Chính xác! Bộ lọc hỗ trợ tra cứu chi tiết theo tình trạng tài chính còn nợ, đã thanh toán đủ hoặc đã hủy.'
+                    explanation: "Bộ lọc hỗ trợ tra cứu chi tiết theo tình trạng tài chính còn nợ, đã thanh toán đủ hoặc đã hủy."
                 }
             },
             {
                 category: 'feature',
-                title: 'Xuất danh sách ra Excel',
-                situation: 'Tải dữ liệu phiếu mua dịch vụ về máy tính để làm báo cáo hoặc đối chiếu với kế toán.',
+                title: "Xuất danh sách ra Excel",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Tải dữ liệu</b> phiếu mua dịch vụ về máy tính để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">làm báo cáo hoặc đối chiếu</b> với kế toán.",
                 steps: [
-                    { text: 'Lọc danh sách phiếu theo tiêu chí cần xuất trên màn hình Mua dịch vụ.', img: null },
-                    { text: 'Bấm nút <strong><em>Xuất file</em></strong> → hệ thống tự động tải file Excel về máy tính.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083322/MDVR_200526-15.png' }
+                    {
+                        text: "Lọc danh sách phiếu theo tiêu chí cần xuất trên màn hình <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Bấm nút <b class=\"font-bold text-[#166def]\">\"Xuất file\"</b> → hệ thống tự động tải file Excel về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083322/MDVR_200526-15.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Chức năng xuất Excel phiếu mua dịch vụ hỗ trợ công việc kế toán thế nào?',
-                    advice: 'Dạ, file Excel xuất ra đầy đủ mã phiếu, nhà cung cấp, loại chi và công nợ giúp chủ cửa hàng dễ dàng bàn giao dữ liệu cho kế toán thuế hoặc kiểm toán nội bộ ạ!'
+                    situation: "Chức năng xuất Excel phiếu mua dịch vụ hỗ trợ công việc kế toán thế nào em?",
+                    advice: "Dạ, file Excel xuất ra đầy đủ mã phiếu, nhà cung cấp, loại chi và công nợ giúp chủ cửa hàng dễ dàng bàn giao dữ liệu cho kế toán thuế hoặc kiểm toán nội bộ ạ!"
                 },
                 quiz: {
-                    question: 'Nút Xuất file Excel chỉ hiển thị khi người dùng chọn duy nhất 1 phiếu mua dịch vụ.',
+                    question: "Nút Xuất file Excel chỉ hiển thị khi người dùng chọn duy nhất 1 phiếu mua dịch vụ.",
                     answer: false,
-                    explanation: 'Nút Xuất file hỗ trợ xuất toàn bộ danh sách phiếu mua dịch vụ đang được hiển thị theo bộ lọc.'
+                    explanation: "Nút Xuất file hỗ trợ xuất toàn bộ danh sách phiếu mua dịch vụ đang được hiển thị theo bộ lọc."
                 }
             },
             {
                 category: 'feature',
-                title: 'In phiếu',
-                situation: 'In chứng từ phiếu mua dịch vụ để lưu trữ hồ sơ kế toán bản cứng hoặc gửi nhà cung cấp.',
+                title: "In phiếu",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">In chứng từ</b> phiếu mua dịch vụ để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lưu trữ hồ sơ kế toán</b> bản cứng hoặc gửi nhà cung cấp.",
                 steps: [
-                    { text: 'Mở chi tiết phiếu mua dịch vụ cần in.', img: null },
-                    { text: 'Bấm nút <strong><em>In</em></strong> → xem trước giao diện in và thực hiện in trực tiếp hoặc xuất PDF. Áp dụng cho cả phiếu đã hủy.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083331/MDVR_200526-16.png' }
+                    {
+                        text: "Mở chi tiết phiếu mua dịch vụ cần in.",
+                        img: null
+                    },
+                    {
+                        text: "Bấm nút <b class=\"font-bold text-[#166def]\">\"In\"</b> → xem trước giao diện in và thực hiện in trực tiếp hoặc xuất PDF. Áp dụng cho cả phiếu đã hủy.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083331/MDVR_200526-16.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Phiếu mua dịch vụ đã ở trạng thái Đã hủy thì có in được chứng từ ra giấy nữa không?',
-                    advice: 'Dạ hoàn toàn in được ạ! Thao tác in chứng từ áp dụng cho mọi trạng thái phiếu, kể cả phiếu đã hủy để phục vụ minh bạch hồ sơ ạ.'
+                    situation: "Phiếu mua dịch vụ đã ở trạng thái Đã hủy thì có in được chứng từ ra giấy nữa không em?",
+                    advice: "Dạ hoàn toàn in được ạ! Thao tác in chứng từ áp dụng cho mọi trạng thái phiếu, kể cả phiếu đã hủy để phục vụ minh bạch hồ sơ ạ."
                 },
                 quiz: {
-                    question: 'Hệ thống cho phép in phiếu mua dịch vụ ngay cả khi phiếu đó đã bị Hủy.',
+                    question: "Hệ thống cho phép in phiếu mua dịch vụ ngay cả khi phiếu đó đã bị Hủy.",
                     answer: true,
-                    explanation: 'Chính xác! Thao tác in phiếu áp dụng cho tất cả các trạng thái phiếu, bao gồm cả phiếu đã hủy.'
+                    explanation: "Thao tác in phiếu áp dụng cho tất cả các trạng thái phiếu, bao gồm cả phiếu đã hủy."
                 }
             },
             {
                 category: 'feature',
-                title: 'Theo dõi công nợ và lịch sử mua dịch vụ theo nhà cung cấp',
-                situation: 'Xem tổng hợp danh sách các phiếu mua dịch vụ và số tiền công nợ còn nợ của một nhà cung cấp cụ thể.',
+                title: "Theo dõi công nợ và lịch sử mua dịch vụ theo nhà cung cấp",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Xem tổng hợp danh sách</b> các phiếu mua dịch vụ và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số tiền công nợ còn nợ</b> của một nhà cung cấp cụ thể.",
                 steps: [
-                    { text: 'Truy cập vào chi tiết Nhà cung cấp → chọn tab <strong>Lịch sử mua dịch vụ</strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083340/MDVR_200526-17.png' },
-                    { text: 'Xem danh sách phiếu và dư nợ cần trả. Bấm vào mã phiếu bất kỳ để xem chi tiết.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083358/MDVR_200526-18.png' }
+                    {
+                        text: "Truy cập vào chi tiết Nhà cung cấp → chọn tab <b class=\"font-bold text-[#166def]\">\"Lịch sử mua dịch vụ\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083340/MDVR_200526-17.png"
+                    },
+                    {
+                        text: "Xem danh sách phiếu và dư nợ cần trả. Bấm vào mã phiếu bất kỳ để xem chi tiết.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083358/MDVR_200526-18.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Tại sao trong chi tiết một Nhà cung cấp mới không thấy hiển thị tab Lịch sử mua dịch vụ?',
-                    advice: 'Dạ anh/chị chú ý, tab Lịch sử mua dịch vụ chỉ tự động hiển thị khi nhà cung cấp đó đã phát sinh ít nhất một Phiếu mua dịch vụ trên hệ thống thôi ạ!'
+                    situation: "Tại sao trong chi tiết một Nhà cung cấp mới không thấy hiển thị tab Lịch sử mua dịch vụ em?",
+                    advice: "Dạ anh/chị chú ý, tab Lịch sử mua dịch vụ chỉ tự động hiển thị khi nhà cung cấp đó đã phát sinh ít nhất một Phiếu mua dịch vụ trên hệ thống thôi ạ!"
                 },
                 quiz: {
-                    question: 'Tab Lịch sử mua dịch vụ luôn hiển thị trong chi tiết của tất cả các nhà cung cấp.',
+                    question: "Tab Lịch sử mua dịch vụ luôn hiển thị trong chi tiết của tất cả các nhà cung cấp.",
                     answer: false,
-                    explanation: 'Tab Lịch sử mua dịch vụ chỉ hiển thị khi nhà cung cấp đó đã có ít nhất một phiếu mua dịch vụ phát sinh.'
+                    explanation: "Tab Lịch sử mua dịch vụ chỉ hiển thị khi nhà cung cấp đó đã có ít nhất một phiếu mua dịch vụ phát sinh."
                 }
             },
             {
                 category: 'feature',
-                title: 'Phân quyền tính năng Mua dịch vụ',
-                situation: 'Chủ cửa hàng thiết lập kiểm soát chi tiết các quyền thao tác của nhân viên đối với Mua dịch vụ.',
+                title: "Phân quyền tính năng Mua dịch vụ",
+                situation: "Chủ cửa hàng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thiết lập kiểm soát</b> chi tiết <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">các quyền thao tác</b> của nhân viên đối với Mua dịch vụ.",
                 steps: [
-                    { text: 'Quản lý → Thiết lập → Cửa hàng → Quản lý người dùng → Chọn nhân viên/vai trò → Sửa Phân quyền.', img: null },
-                    { text: 'Tìm nhóm quyền <strong>Mua dịch vụ</strong> và tích chọn các quyền cụ thể: Xem, Tạo, Chỉnh sửa, Hủy, Xuất file, Tạo/Sửa/Hủy Thanh toán.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/2008410/MDVR_200526-19.png' }
+                    {
+                        text: "Vào <b class=\"font-bold text-[#166def]\">Quản lý</b> → <b class=\"font-bold text-[#166def]\">Thiết lập</b> → <b class=\"font-bold text-[#166def]\">Cửa hàng</b> → <b class=\"font-bold text-[#166def]\">Quản lý người dùng</b> → Chọn nhân viên/vai trò → <b class=\"font-bold text-[#166def]\">\"Sửa Phân quyền\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Tìm nhóm quyền <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b> và tích chọn các quyền cụ thể: Xem, Tạo, Chỉnh sửa, Hủy, Xuất file, Tạo/Sửa/Hủy Thanh toán.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/2008410/MDVR_200526-19.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Tại sao mở màn hình Phân quyền người dùng lại không thấy nhóm quyền Mua dịch vụ?',
-                    advice: 'Dạ, nhóm quyền Mua dịch vụ chỉ xuất hiện khi tính năng này đang được BẬT trong Thiết lập gian hàng. Nếu anh/chị TẮT tính năng thì mục phân quyền tương ứng sẽ ẩn đi ạ!'
+                    situation: "Tại sao mở màn hình Phân quyền người dùng lại không thấy nhóm quyền Mua dịch vụ em?",
+                    advice: "Dạ, nhóm quyền Mua dịch vụ chỉ xuất hiện khi tính năng này đang được BẬT trong Thiết lập gian hàng. Nếu anh/chị TẮT tính năng thì mục phân quyền tương ứng sẽ ẩn đi ạ!"
                 },
                 quiz: {
-                    question: 'Nhóm quyền Mua dịch vụ trong màn hình Phân quyền vẫn hiển thị bình thường ngay cả khi tính năng bị Tắt.',
+                    question: "Nhóm quyền Mua dịch vụ trong màn hình Phân quyền vẫn hiển thị bình thường ngay cả khi tính năng bị Tắt.",
                     answer: false,
-                    explanation: 'Nhóm quyền Mua dịch vụ chỉ xuất hiện trong Phân quyền khi tính năng Mua dịch vụ đang được bật trong Thiết lập.'
+                    explanation: "Nhóm quyền Mua dịch vụ chỉ xuất hiện trong Phân quyền khi tính năng Mua dịch vụ đang được bật trong Thiết lập."
                 }
             },
             {
                 category: 'feature',
-                title: 'Thiết lập đa tiền tệ',
-                situation: 'Ghi nhận chi phí mua dịch vụ bằng các loại ngoại tệ khác nhau.',
+                title: "Thiết lập đa tiền tệ",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Ghi nhận chi phí</b> mua dịch vụ bằng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">các loại ngoại tệ</b> khác nhau.",
                 steps: [
-                    { text: 'Tính năng Mua dịch vụ hỗ trợ ghi nhận theo đa tiền tệ.', img: null },
-                    { text: 'Số tiền hiển thị trên phiếu mua dịch vụ sẽ được quy đổi và ghi nhận theo đơn vị tiền tệ mặc định đã thiết lập cho gian hàng.', img: null }
+                    {
+                        text: "Tính năng Mua dịch vụ hỗ trợ ghi nhận theo <b class=\"font-bold text-[#166def]\">đa tiền tệ</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Số tiền hiển thị trên phiếu mua dịch vụ sẽ được quy đổi và ghi nhận theo đơn vị tiền tệ mặc định đã thiết lập cho gian hàng.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: 'Cửa hàng có thể lập phiếu mua dịch vụ bằng ngoại tệ (USD) được không?',
-                    advice: 'Dạ được ạ! Hệ thống hỗ trợ đa tiền tệ và sẽ tự động quy đổi ghi nhận theo đơn vị tiền tệ mặc định mà anh/chị đã thiết lập cho gian hàng ạ!'
+                    situation: "Cửa hàng có thể lập phiếu mua dịch vụ bằng ngoại tệ (USD) được không em?",
+                    advice: "Dạ được ạ! Hệ thống hỗ trợ đa tiền tệ và sẽ tự động quy đổi ghi nhận theo đơn vị tiền tệ mặc định mà anh/chị đã thiết lập cho gian hàng ạ!"
                 },
                 quiz: {
-                    question: 'Giá trị hiển thị trên phiếu mua dịch vụ luôn tự động ghi nhận theo đơn vị tiền tệ mặc định của gian hàng.',
+                    question: "Giá trị hiển thị trên phiếu mua dịch vụ luôn tự động ghi nhận theo đơn vị tiền tệ mặc định của gian hàng.",
                     answer: true,
-                    explanation: 'Chính xác! Hệ thống ghi nhận số tiền theo đơn vị tiền tệ mặc định đã cài đặt cho cửa hàng.'
+                    explanation: "Hệ thống ghi nhận số tiền theo đơn vị tiền tệ mặc định đã cài đặt cho cửa hàng."
                 }
             },
             {
                 category: 'mobile',
-                title: 'Xem, tìm kiếm và sắp xếp phiếu (Mobile)',
-                situation: 'Tra cứu danh sách và lọc phiếu mua dịch vụ ngay trên ứng dụng di động KiotViet.',
+                title: "Xem, tìm kiếm và sắp xếp phiếu trên điện thoại",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Tra cứu danh sách</b> và lọc phiếu mua dịch vụ ngay trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ứng dụng di động KiotViet</b>.",
                 steps: [
-                    { text: 'Đăng nhập app KiotViet → Menu <strong>Nhiều hơn</strong> → chọn <strong>Mua dịch vụ</strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083424/MDVR_200526-20.png' },
-                    { text: 'Chạm kính lúp để tìm kiếm theo Mã phiếu/Số HĐ/Ghi chú.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083433/MDVR_200526-21.png' },
-                    { text: 'Chạm biểu tượng Bộ lọc để lọc theo Thời gian, Loại chi, Nhà cung cấp, Chi nhánh.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083442/MDVR_200526-22.png' },
-                    { text: 'Chạm biểu tượng Sắp xếp để đổi thứ tự hiển thị (Mới nhất, Cũ nhất, Giá trị). Chạm xem chi tiết phiếu và in/chia sẻ.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083517/MDVR_200526-25.png' }
+                    {
+                        text: "Đăng nhập app KiotViet → Menu <b class=\"font-bold text-[#166def]\">Nhiều hơn</b> → chọn <b class=\"font-bold text-[#166def]\">\"Mua dịch vụ\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083424/MDVR_200526-20.png"
+                    },
+                    {
+                        text: "Chạm kính lúp để tìm kiếm theo <b class=\"font-bold text-[#166def]\">Mã phiếu/Số HĐ/Ghi chú</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083433/MDVR_200526-21.png"
+                    },
+                    {
+                        text: "Chạm biểu tượng <b class=\"font-bold text-[#166def]\">Bộ lọc</b> để lọc theo Thời gian, Loại chi, Nhà cung cấp, Chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083442/MDVR_200526-22.png"
+                    },
+                    {
+                        text: "Chạm biểu tượng <b class=\"font-bold text-[#166def]\">Sắp xếp</b> để đổi thứ tự hiển thị (Mới nhất, Cũ nhất, Giá trị). Chạm xem chi tiết phiếu và in/chia sẻ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083517/MDVR_200526-25.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Ứng dụng di động KiotViet có hỗ trợ lọc phiếu mua dịch vụ theo thời gian và nhà cung cấp như trên Web không?',
-                    advice: 'Dạ có đầy đủ ạ! Bộ lọc trên điện thoại hỗ trợ lọc chính xác theo thời gian phát sinh, nhà cung cấp, chi nhánh và tình trạng tài chính đồng nhất với Web ạ!'
+                    situation: "Ứng dụng di động KiotViet có hỗ trợ lọc phiếu mua dịch vụ theo thời gian và nhà cung cấp như trên Web không em?",
+                    advice: "Dạ có đầy đủ ạ! Bộ lọc trên điện thoại hỗ trợ lọc chính xác theo thời gian phát sinh, nhà cung cấp, chi nhánh và tình trạng tài chính đồng nhất với Web ạ!"
                 },
                 quiz: {
-                    question: 'Trên điện thoại, người dùng có thể thực hiện chia sẻ hoặc in phiếu mua dịch vụ.',
+                    question: "Trên điện thoại, người dùng có thể thực hiện chia sẻ hoặc in phiếu mua dịch vụ.",
                     answer: true,
-                    explanation: 'Chính xác! Trong chi tiết phiếu trên app di động có nút tính năng hỗ trợ in phiếu hoặc chia sẻ.'
+                    explanation: "Trong chi tiết phiếu trên app di động có nút tính năng hỗ trợ in phiếu hoặc chia sẻ."
                 }
             },
             {
                 category: 'mobile',
-                title: 'Tạo phiếu mua dịch vụ thủ công (Mobile)',
-                situation: 'Ghi nhận tức thì chi phí dịch vụ phát sinh ngay tại cửa hàng bằng điện thoại di động.',
+                title: "Tạo phiếu mua dịch vụ thủ công trên điện thoại",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Ghi nhận tức thì chi phí</b> dịch vụ phát sinh ngay tại cửa hàng bằng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">điện thoại di động</b>.",
                 steps: [
-                    { text: 'Tại màn hình Mua dịch vụ trên app, chạm biểu tượng <strong>(+)</strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083528/MDVR_200526-26.png' },
-                    { text: 'Nhập Số HĐ đầu vào, chọn Loại chi, Thời gian, Đối tượng nhận, Số tiền Cần thanh toán, Ghi chú và Thông tin thanh toán. Chạm <strong><em>Lưu</em></strong> hoặc <strong><em>Lưu & In</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083551/MDVR_200526-27.png' }
+                    {
+                        text: "Tại màn hình Mua dịch vụ trên app, chạm biểu tượng <b class=\"font-bold text-[#166def]\">(+)</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083528/MDVR_200526-26.png"
+                    },
+                    {
+                        text: "Nhập Số HĐ đầu vào, chọn Loại chi, Thời gian, Đối tượng nhận, Số tiền Cần thanh toán, Ghi chú và Thông tin thanh toán. Chạm <b class=\"font-bold text-[#166def]\">\"Lưu\"</b> hoặc <b class=\"font-bold text-[#166def]\">\"Lưu & In\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083551/MDVR_200526-27.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Cách xử lý dòng tiền thanh toán trên điện thoại có khác gì so với giao diện máy tính không?',
-                    advice: 'Dạ không khác gì ạ! Cách tự động tính công nợ và sinh phiếu chi trên app di động hoàn toàn đồng nhất 100% với phiên bản trên máy tính ạ!'
+                    situation: "Cách xử lý dòng tiền thanh toán trên điện thoại có khác gì so với giao diện máy tính không em?",
+                    advice: "Dạ không khác gì ạ! Cách tự động tính công nợ và sinh phiếu chi trên app di động hoàn toàn đồng nhất 100% với phiên bản trên máy tính ạ!"
                 },
                 quiz: {
-                    question: 'Ứng dụng di động hỗ trợ tùy chọn "Lưu & In" ngay sau khi tạo xong phiếu mua dịch vụ.',
+                    question: "Ứng dụng di động hỗ trợ tùy chọn 'Lưu & In' ngay sau khi tạo xong phiếu mua dịch vụ.",
                     answer: true,
-                    explanation: 'Chính xác! Người dùng có thể chọn "Lưu" hoặc "Lưu & In" ngay trên màn hình tạo phiếu mobile.'
+                    explanation: "Người dùng có thể chọn 'Lưu' hoặc 'Lưu & In' ngay trên màn hình tạo phiếu mobile."
                 }
             },
             {
                 category: 'mobile',
-                title: 'Thanh toán phiếu mua dịch vụ (Mobile)',
-                situation: 'Thực hiện thanh toán ghi nhận dòng tiền trả nợ nhà cung cấp dịch vụ ngay trên điện thoại.',
+                title: "Thanh toán phiếu mua dịch vụ trên điện thoại",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Thực hiện thanh toán</b> ghi nhận <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">dòng tiền trả nợ</b> nhà cung cấp dịch vụ ngay trên điện thoại.",
                 steps: [
-                    { text: 'Mở chi tiết phiếu mua dịch vụ cần thanh toán trên app di động.', img: null },
-                    { text: 'Chạm nút <strong><em>Thanh toán</em></strong> → nhập Số tiền, Người chi, Phương thức thanh toán → chạm <strong><em>Xác nhận</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083603/MDVR_200526-28.png' }
+                    {
+                        text: "Mở chi tiết phiếu mua dịch vụ cần thanh toán trên app di động.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm nút <b class=\"font-bold text-[#166def]\">\"Thanh toán\"</b> → nhập Số tiền, Người chi, Phương thức thanh toán → chạm <b class=\"font-bold text-[#166def]\">\"Xác nhận\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083603/MDVR_200526-28.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Khi đã thanh toán đủ tiền phiếu dịch vụ trên điện thoại thì nút Thanh toán xử lý ra sao?',
-                    advice: 'Dạ, sau khi thanh toán hoàn tất và số tiền Còn nợ giảm về 0, nút Thanh toán sẽ tự động ẩn đi để tránh thao tác bấm nhầm nhiều lần ạ!'
+                    situation: "Khi đã thanh toán đủ tiền phiếu dịch vụ trên điện thoại thì nút Thanh toán xử lý ra sao em?",
+                    advice: "Dạ, sau khi thanh toán hoàn tất và số tiền Còn nợ giảm về 0, nút Thanh toán sẽ tự động ẩn đi để tránh thao tác bấm nhầm nhiều lần ạ!"
                 },
                 quiz: {
-                    question: 'Khi phiếu mua dịch vụ đã hết nợ (Còn nợ bằng 0), nút Thanh toán trên app vẫn giữ nguyên hiển thị.',
+                    question: "Khi phiếu mua dịch vụ đã hết nợ (Còn nợ bằng 0), nút Thanh toán trên app vẫn giữ nguyên hiển thị.",
                     answer: false,
-                    explanation: 'Nút Thanh toán sẽ tự động ẩn đi khi phiếu đã được thanh toán hết (Còn nợ bằng 0).'
+                    explanation: "Nút Thanh toán sẽ tự động ẩn đi khi phiếu đã được thanh toán hết (Còn nợ bằng 0)."
                 }
             },
             {
                 category: 'mobile',
-                title: 'Chỉnh sửa phiếu (Mobile)',
-                situation: 'Cập nhật lại thông tin phiếu mua dịch vụ bị nhập sai trên giao diện di động.',
+                title: "Chỉnh sửa phiếu trên điện thoại",
+                situation: "<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Cập nhật lại thông tin</b> phiếu mua dịch vụ bị nhập sai trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">giao diện di động</b>.",
                 steps: [
-                    { text: 'Mở xem chi tiết phiếu mua dịch vụ trên app → chạm <strong><em>Sửa</em></strong>.', img: null },
-                    { text: 'Cập nhật lại các trường thông tin (Loại chi, Số tiền, Ghi chú...) → chạm <strong><em>Lưu</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083621/MDVR_200526-29.png' }
+                    {
+                        text: "Mở xem chi tiết phiếu mua dịch vụ trên app → chạm <b class=\"font-bold text-[#166def]\">\"Sửa\"</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Cập nhật lại các trường thông tin (Loại chi, Số tiền, Ghi chú...) → chạm <b class=\"font-bold text-[#166def]\">\"Lưu\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083621/MDVR_200526-29.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Sửa phiếu mua dịch vụ trên điện thoại có làm đồng bộ sang giao diện máy tính ngay không?',
-                    advice: 'Dạ có chứ ạ! Mọi thông tin cập nhật trên app di động sẽ được đồng bộ tức thì lên hệ thống đám mây KiotViet ạ!'
+                    situation: "Sửa phiếu mua dịch vụ trên điện thoại có làm đồng bộ sang giao diện máy tính ngay không em?",
+                    advice: "Dạ có chứ ạ! Mọi thông tin cập nhật trên app di động sẽ được đồng bộ tức thì lên hệ thống đám mây KiotViet ạ!"
                 },
                 quiz: {
-                    question: 'Người dùng có thể thay đổi Loại chi và Số tiền khi chỉnh sửa phiếu trên điện thoại.',
+                    question: "Người dùng có thể thay đổi Loại chi và Số tiền khi chỉnh sửa phiếu trên điện thoại.",
                     answer: true,
-                    explanation: 'Chính xác! Thao tác sửa trên mobile cho phép cập nhật lại Loại chi, Số tiền, Ghi chú và các thông tin liên quan.'
+                    explanation: "Thao tác sửa trên mobile cho phép cập nhật lại Loại chi, Số tiền, Ghi chú và các thông tin liên quan."
                 }
             },
             {
                 category: 'mobile',
-                title: 'Hủy phiếu (Mobile)',
-                situation: 'Thực hiện hủy phiếu mua dịch vụ do nhập trùng hoặc giao dịch bị hủy ngay trên app di động.',
+                title: "Hủy phiếu trên điện thoại",
+                situation: "Thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hủy phiếu mua dịch vụ</b> do <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhập trùng hoặc giao dịch bị hủy</b> ngay trên app di động.",
                 steps: [
-                    { text: 'Mở xem chi tiết phiếu mua dịch vụ cần hủy trên app.', img: null },
-                    { text: 'Chạm biểu tượng 3 chấm ở góc trên → chọn <strong><em>Hủy phiếu</em></strong> → chạm <strong><em>Xác nhận</em></strong>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083638/MDVR_200526-30.png' }
+                    {
+                        text: "Mở xem chi tiết phiếu mua dịch vụ cần hủy trên app.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm biểu tượng 3 chấm ở góc trên → chọn <b class=\"font-bold text-[#166def]\">\"Hủy phiếu\"</b> → chạm <b class=\"font-bold text-[#166def]\">\"Xác nhận\"</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/05/20083638/MDVR_200526-30.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Hủy phiếu mua dịch vụ trên di động có hồi đáp lại hóa đơn đầu vào liên kết không?',
-                    advice: 'Dạ có ạ! Nếu phiếu bị hủy có liên kết Hóa đơn đầu vào, hóa đơn đó sẽ lập tức trở về trạng thái Mới để anh/chị có thể lập phiếu khác ạ!'
+                    situation: "Hủy phiếu mua dịch vụ trên di động có hồi đáp lại hóa đơn đầu vào liên kết không em?",
+                    advice: "Dạ có ạ! Nếu phiếu bị hủy có liên kết Hóa đơn đầu vào, hóa đơn đó sẽ lập tức trở về trạng thái Mới để anh/chị có thể lập phiếu khác ạ!"
                 },
                 quiz: {
-                    question: 'Thao tác hủy phiếu mua dịch vụ trên điện thoại nằm trong menu biểu tượng 3 chấm ở góc màn hình chi tiết.',
+                    question: "Thao tác hủy phiếu mua dịch vụ trên điện thoại nằm trong menu biểu tượng 3 chấm ở góc màn hình chi tiết.",
                     answer: true,
-                    explanation: 'Chính xác! Để hủy phiếu trên di động, người dùng bấm vào icon 3 chấm và chọn Hủy phiếu.'
+                    explanation: "Để hủy phiếu trên di động, người dùng bấm vào icon 3 chấm và chọn Hủy phiếu."
                 }
             }
         ];
@@ -700,32 +931,125 @@
         let basicIndex = 0;
         let advancedIndex = 0;
         let userAnswers = {};
+        
+        let viewedLessons = {
+            basic: new Set(),
+            advanced: new Set()
+        };
 
-        function renderGlossary() {
-            const listEl = document.getElementById('glossary-list');
-            if (!listEl) return;
-            listEl.innerHTML = GLOSSARY_ITEMS.map(item => `
-                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
-                    <h3 class="font-black text-sm text-blue-900 flex items-center gap-2">
-                        <i class="fa-solid fa-bookmark text-xs text-blue-600"></i> ${item.term}
-                    </h3>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed pl-5">${item.desc}</p>
-                </div>
-            `).join('');
+        let activeAccordionKey = 'basic'; 
+        let currentStepTargetIdx = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderOverviewLists();
+            renderSidebarAccordions();
+        });
+
+        function toggleAccordion(key) {
+            if (activeAccordionKey === key) {
+                activeAccordionKey = null;
+            } else {
+                activeAccordionKey = key;
+            }
+            updateAccordionDOM();
+        }
+
+        function handleBasicHeaderClick() {
+            navSelectTab('basic');
+            toggleAccordion('basic');
+        }
+
+        function updateAccordionDOM() {
+            const allKeys = ['basic', 'adv-features', 'adv-mobile', 'adv-pos'];
+            allKeys.forEach(k => {
+                const panel = document.getElementById(`accordion-panel-${k}`);
+                const icon = document.getElementById(`accordion-icon-${k}`);
+                if (panel) {
+                    if (activeAccordionKey === k) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (icon) {
+                    icon.style.transform = (activeAccordionKey === k) ? 'rotate(0deg)' : 'rotate(-90deg)';
+                }
+            });
+        }
+
+        function renderSidebarAccordions() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    const isActive = (currentViewState === 'basic-viewer' && basicIndex === idx);
+                    return `
+                        <button onclick="jumpToLesson('basic', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white font-bold' : 'text-slate-700 hover:bg-blue-100/60'}">
+                            <span class="break-words flex-1">${lesson.title}</span>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            const featuresContainer = document.getElementById('accordion-panel-adv-features');
+            const mobileContainer = document.getElementById('accordion-panel-adv-mobile');
+            const posContainer = document.getElementById('accordion-panel-adv-pos');
+
+            let featHTML = '', mobHTML = '', posHTML = '';
+
+            ADVANCED_LESSONS.forEach((lesson, idx) => {
+                const isViewed = viewedLessons.advanced.has(idx);
+                const isActive = (currentViewState === 'advanced-viewer' && advancedIndex === idx);
+                const itemHTML = `
+                    <button onclick="jumpToLesson('advanced', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white font-bold' : 'text-slate-700 hover:bg-emerald-100/60'}">
+                        <span class="break-words flex-1">${lesson.title}</span>
+                        ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                    </button>
+                `;
+
+                if (lesson.category === 'feature') featHTML += itemHTML;
+                else if (lesson.category === 'mobile') mobHTML += itemHTML;
+                else if (lesson.category === 'pos') posHTML += itemHTML;
+            });
+
+            if (featuresContainer) {
+                featuresContainer.innerHTML = featHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-features').style.display = featHTML ? 'block' : 'none';
+            }
+            if (mobileContainer) {
+                mobileContainer.innerHTML = mobHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-mobile').style.display = mobHTML ? 'block' : 'none';
+            }
+            if (posContainer) {
+                posContainer.innerHTML = posHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-pos').style.display = posHTML ? 'block' : 'none';
+            }
+
+            updateAccordionDOM();
         }
 
         function navSelectTab(tab) {
+            currentStepTargetIdx = 0;
             ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
                 const view = document.getElementById(`view-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (view) view.classList.add('hidden');
-                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
+                if (btn) {
+                    btn.classList.remove('active-guide', 'active-glossary', 'active-basic-tab', 'active-advanced-tab');
+                }
             });
 
             const activeView = document.getElementById(`view-${tab}`);
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeView) activeView.classList.remove('hidden');
-            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+            
+            if (activeBtn) {
+                if (tab === 'guide') activeBtn.classList.add('active-guide');
+                else if (tab === 'glossary') activeBtn.classList.add('active-glossary');
+                else if (tab === 'basic') activeBtn.classList.add('active-basic-tab');
+                else if (tab === 'advanced') activeBtn.classList.add('active-advanced-tab');
+            }
 
             if (tab === 'basic') {
                 currentViewState = 'basic-overview';
@@ -738,41 +1062,51 @@
             } else {
                 currentViewState = tab;
             }
+            renderSidebarAccordions();
         }
 
         function jumpToLesson(scope, index) {
+            currentStepTargetIdx = 0;
+            viewedLessons[scope].add(index);
             navSelectTab(scope);
+            
             if (scope === 'basic') {
                 currentViewState = 'basic-viewer';
                 basicIndex = index;
+                activeAccordionKey = 'basic';
                 document.getElementById('overview-basic').classList.add('hidden');
                 document.getElementById('viewer-basic').classList.remove('hidden');
                 renderLesson('basic', basicIndex);
             } else {
                 currentViewState = 'advanced-viewer';
                 advancedIndex = index;
+                const cat = ADVANCED_LESSONS[index].category;
+                if (cat === 'feature') activeAccordionKey = 'adv-features';
+                else if (cat === 'mobile') activeAccordionKey = 'adv-mobile';
+                else if (cat === 'pos') activeAccordionKey = 'adv-pos';
+                
                 document.getElementById('overview-advanced').classList.add('hidden');
                 document.getElementById('viewer-advanced').classList.remove('hidden');
                 renderLesson('advanced', advancedIndex);
             }
+            renderSidebarAccordions();
+            renderOverviewLists();
         }
-
-        function startSectionContent(scope) { jumpToLesson(scope, 0); }
 
         function nextGlobal() {
             if (currentViewState === 'guide') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('basic'); }
-            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-overview') { jumpToLesson('basic', 0); }
             else if (currentViewState === 'basic-viewer') {
                 if (basicIndex < BASIC_LESSONS.length - 1) {
-                    basicIndex++; renderLesson('basic', basicIndex);
+                    jumpToLesson('basic', basicIndex + 1);
                 } else {
                     document.getElementById('modal-basic-complete').classList.remove('hidden');
                 }
-            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            } else if (currentViewState === 'advanced-overview') { jumpToLesson('advanced', 0); }
             else if (currentViewState === 'advanced-viewer') {
                 if (advancedIndex < ADVANCED_LESSONS.length - 1) {
-                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                    jumpToLesson('advanced', advancedIndex + 1);
                 } else {
                     document.getElementById('modal-advanced-complete').classList.remove('hidden');
                 }
@@ -781,21 +1115,74 @@
 
         function prevGlobal() {
             if (currentViewState === 'advanced-viewer') {
-                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                if (advancedIndex > 0) { jumpToLesson('advanced', advancedIndex - 1); }
                 else { navSelectTab('advanced'); }
             } else if (currentViewState === 'advanced-overview') {
                 jumpToLesson('basic', BASIC_LESSONS.length - 1);
             } else if (currentViewState === 'basic-viewer') {
-                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                if (basicIndex > 0) { jumpToLesson('basic', basicIndex - 1); }
                 else { navSelectTab('basic'); }
             } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('guide'); }
         }
 
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') { nextGlobal(); }
-            else if (e.key === 'ArrowLeft') { prevGlobal(); }
+            if (['guide', 'glossary', 'basic-viewer', 'advanced-viewer'].includes(currentViewState)) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateStepInLesson('next');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateStepInLesson('prev');
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    navigateStepInLesson('top');
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    navigateStepInLesson('bottom');
+                }
+            }
         });
+
+        function navigateStepInLesson(direction) {
+            let container = null;
+            if (currentViewState === 'guide') {
+                container = document.querySelector('#view-guide .lesson-scroll-container');
+            } else if (currentViewState === 'glossary') {
+                container = document.querySelector('#view-glossary .lesson-scroll-container');
+            } else if (currentViewState === 'basic-viewer') {
+                container = document.querySelector('#viewer-basic .lesson-scroll-container');
+            } else if (currentViewState === 'advanced-viewer') {
+                container = document.querySelector('#viewer-advanced .lesson-scroll-container');
+            }
+
+            if (!container) return;
+
+            const targets = container.querySelectorAll('[data-step-target="true"]');
+            if (!targets.length) return;
+
+            if (direction === 'top') {
+                currentStepTargetIdx = 0;
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (direction === 'bottom') {
+                currentStepTargetIdx = targets.length - 1;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            if (direction === 'next') {
+                currentStepTargetIdx = Math.min(currentStepTargetIdx + 1, targets.length - 1);
+            } else if (direction === 'prev') {
+                currentStepTargetIdx = Math.max(currentStepTargetIdx - 1, 0);
+            }
+
+            const targetElement = targets[currentStepTargetIdx];
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
 
         function toggleFlashcard3D(sceneEl) {
             const cardEl = sceneEl.querySelector('.flashcard-3d-card');
@@ -822,6 +1209,7 @@
         }
 
         function renderLesson(scope, index) {
+            currentStepTargetIdx = 0;
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
             const lesson = lessons[index];
             const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
@@ -831,30 +1219,57 @@
             const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
 
             viewer.innerHTML = `
-                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
-                    <div class="space-y-2 border-b border-slate-100 pb-4">
-                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
-                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
-                        </span>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
+                <!-- FLOAT ACTION BUTTONS -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer shadow-md" style="background-color: ${scopeColor}" title="Xem bước sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem bước trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- NỘI DUNG CHI TIẾT BÀI HỌC -->
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto p-4 sm:p-6 pr-14 sm:pr-16 space-y-6 max-w-5xl mx-auto">
+                    
+                    <div data-step-target="true" class="space-y-2 border-b border-slate-100 pb-4 scroll-mt-4">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                            </span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-base" title="Đang học"></i>
+                        </div>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                            <span>${lesson.title}</span>
+                        </h2>
                     </div>
 
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
-                        </p>
-                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    <!-- TÌNH HUỐNG THỰC TẾ -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-xs space-y-2.5">
+                        <div class="flex items-center gap-2 text-amber-900">
+                            <div class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-8">${lesson.situation}</p>
                     </div>
 
-                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN -->
                     <div class="space-y-5">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
                         <div class="space-y-5">
                             ${lesson.steps.map((step, sIdx) => `
-                                <div class="space-y-2.5">
+                                <div data-step-target="true" class="space-y-2.5 scroll-mt-4">
                                     <div class="flex items-start gap-3">
-                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
-                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5 font-medium">${step.text}</div>
                                     </div>
                                     ${step.img ? `
                                         <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
@@ -866,8 +1281,8 @@
                         </div>
                     </div>
 
-                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN -->
-                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                    <!-- 2️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                    <div data-step-target="true" class="pt-4 border-t border-slate-200 space-y-3 scroll-mt-4">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
                         <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
                             <div class="flashcard-3d-card">
@@ -901,8 +1316,8 @@
                         </div>
                     </div>
 
-                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC (NỀN SÁNG CHỮ ĐEN) -->
-                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                    <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                    <div data-step-target="true" class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6 scroll-mt-4">
                         <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
                             <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
                             <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
@@ -939,21 +1354,31 @@
 
                 </div>
             `;
-            viewer.firstElementChild.scrollTop = 0;
+            viewer.querySelector('.lesson-scroll-container').scrollTop = 0;
         }
 
         function renderOverviewLists() {
             const basicList = document.getElementById('basic-overview-list');
             if (basicList && typeof BASIC_LESSONS !== 'undefined') {
-                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
-                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
-                        <div class="flex items-center gap-3 truncate">
-                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    return `
+                        <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3 truncate pr-2">
+                                <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
+                            </div>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-[#166def] hover:bg-[#1259c7] text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             if (typeof ADVANCED_LESSONS !== 'undefined') {
@@ -964,13 +1389,21 @@
                 let featureHTML = '', mobileHTML = '', posHTML = '';
 
                 ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedLessons.advanced.has(idx);
                     const itemHTML = `
                         <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
-                            <div class="flex items-center gap-3 truncate">
+                            <div class="flex items-center gap-3 truncate pr-2">
                                 <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
                                 <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
                             </div>
-                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
                     `;
 
@@ -1006,12 +1439,6 @@
 
         function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
-
-        // INITIALIZATION
-        window.addEventListener('DOMContentLoaded', () => {
-            renderGlossary();
-            renderOverviewLists();
-        });
     </script>
 </body>
 </html>
