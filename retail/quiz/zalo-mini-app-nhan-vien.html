@@ -24,11 +24,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; font-size: 15px; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Khử hoàn toàn viền đen mặc định của trình duyệt */
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-tab-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none !important; }
         
         .sidebar-tab-btn.active-guide,
         .sidebar-tab-btn.active-guide:hover { background-color: #166def !important; color: #ffffff !important; }
@@ -36,16 +45,17 @@
         .sidebar-tab-btn.active-glossary,
         .sidebar-tab-btn.active-glossary:hover { background-color: #1e3a8a !important; color: #ffffff !important; }
         
-        .sidebar-tab-btn.active-basic,
-        .sidebar-tab-btn.active-basic:hover { background-color: #166def !important; color: #ffffff !important; }
-        
-        .sidebar-tab-btn.active-advanced,
-        .sidebar-tab-btn.active-advanced:hover { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-tab-btn.active-basic-tab { background-color: #dbeafe !important; color: #166def !important; font-weight: 800; }
+        .sidebar-tab-btn.active-advanced-tab { background-color: #dcfce7 !important; color: #16a34a !important; font-weight: 800; }
 
         .sidebar-tab-btn.active-guide i,
-        .sidebar-tab-btn.active-glossary i,
-        .sidebar-tab-btn.active-basic i,
-        .sidebar-tab-btn.active-advanced i { color: #ffffff !important; }
+        .sidebar-tab-btn.active-glossary i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
 
         .flashcard-3d-scene { perspective: 1000px; }
         .flashcard-3d-card {
@@ -71,10 +81,21 @@
         .btn-interact { transition: transform 0.15s ease, box-shadow 0.15s ease; }
         .btn-interact:hover { transform: translateY(-2px); }
         .img-zoomable { cursor: zoom-in; transition: transform 0.2s ease; }
-        .img-zoomable:hover { transform: scale(1.01); }
+        .img-zoomable:hover { transform: scale(1.008); }
+
+        .float-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s ease;
+        }
+        .float-nav-btn:hover {
+            transform: scale(1.12);
+        }
+        .float-nav-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f8fafc] overflow-hidden">
+<body class="text-slate-800 antialiased flex flex-col h-screen w-screen bg-[#f1f5f9] overflow-hidden">
 
     <!-- HEADER MAIN -->
     <header class="h-[52px] shrink-0 text-white shadow-sm z-30 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
@@ -88,209 +109,319 @@
                 <p class="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase truncate">Chuyên trang Học liệu Đào tạo sản phẩm KiotViet</p>
             </div>
         </div>
-        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-xs bg-[#166def]">
-            <i class="fa-solid fa-store text-white"></i>
-            <span>BÁN LẺ / BÁN BUÔN</span>
+        <!-- TAG BÁN BUÔN, BÁN LẺ NỀN CYAN NỔI BẬT -->
+        <div class="shrink-0 flex items-center gap-1.5 font-bold px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs text-white shadow-sm bg-cyan-400 border border-cyan-400/40">
+            <i class="fa-solid fa-store text-cyan-100"></i>
+            <span>Bán buôn, Bán lẻ</span>
         </div>
     </header>
 
-    <!-- RIGHT SIDEBAR NAVIGATION -->
-    <aside class="fixed right-0 top-[52px] bottom-0 w-14 md:w-60 bg-white/95 border-l border-slate-200/80 z-40 flex flex-col justify-between shadow-xl backdrop-blur-md transition-all">
-        <div class="p-2 space-y-1.5 overflow-y-auto">
-            <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-compass text-base shrink-0 text-[#166def]"></i>
-                <span class="hidden md:inline truncate">Hướng dẫn học</span>
-            </button>
-            <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
-                <span class="hidden md:inline truncate">Thuật ngữ</span>
-            </button>
-            <button onclick="navSelectTab('basic')" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức cơ bản</span>
-            </button>
-            <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all">
-                <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
-                <span class="hidden md:inline truncate">Kiến thức nâng cao</span>
-            </button>
-        </div>
+    <!-- WRAPPER BODY: SIDEBAR CẠNH NỘI DUNG CHÍNH (FLEX ROW) -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden">
 
-        <div class="p-2 border-t border-slate-200 bg-slate-50/80 flex items-center justify-around gap-1">
-            <div class="relative group flex-1">
-                <button onclick="prevGlobal()" class="w-full py-2.5 bg-white hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs">
-                    <i class="fa-solid fa-chevron-left text-slate-700"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác trước (&lt;)
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 min-w-0 h-full relative p-2 sm:p-4 overflow-hidden flex flex-col">
+            
+            <!-- SECTION 1: HƯỚNG DẪN HỌC -->
+            <div id="view-guide" class="w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-[#166def] flex items-center justify-center cursor-pointer shadow-md" title="Xem phần tiếp theo (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem phần trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-6 pb-8">
+                        
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 scroll-mt-4" style="border-color: #166def40;">
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white" style="background-color: #166def;">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: #166def;">Zalo Mini App – KiotViet Nhân viên</h2>
+                            <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
+                                Zalo Mini App – KiotViet Nhân viên là giải pháp quản lý thu nhập và công việc dành cho nhân viên tại các cửa hàng sử dụng phần mềm KiotViet. Chạy trực tiếp trên nền tảng Zalo, ứng dụng giúp nhân viên dễ dàng chấm công nhanh chóng qua định vị (GPS), theo dõi bảng chấm công, lịch làm việc, cũng như xem phiếu lương chi tiết ngay trên Zalo mà không cần cài thêm ứng dụng nào khác.
+                            </p>
+                        </div>
+
+                        <div class="space-y-6" id="guide-media-block">
+                            <!-- UUTIEN 1: INFOGRAPHIC -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-infographic-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
+                                    <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155043/ZLM_280726-4.jpg" alt="Infographic Hướng dẫn Zalo Mini App" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
+                                </div>
+                            </div>
+
+                            <!-- UUTIEN 2: YOUTUBE VIDEO (Ẩn nếu không có) -->
+                            <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4 hidden" id="guide-video-container">
+                                <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                    <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
+                                </h3>
+                                <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
+                                    <iframe id="guide-video-iframe" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4" id="guide-benefits-block">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list">
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-qrcode"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">QR &amp; Link truy cập nhanh</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tự động tạo mã QR và link chấm công qua Zalo, nhân viên truy cập tức thì không cần tải app ngoài.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-user-check"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tự động hóa hồ sơ</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nhân viên tự gửi thông tin tạo hồ sơ, đổi số điện thoại trực tiếp từ Zalo để quản lý duyệt 1-touch.</p>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                                    <div class="w-8 h-8 rounded-xl bg-[#166def] text-white flex items-center justify-center font-black text-sm">
+                                        <i class="fa-solid fa-bolt"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs sm:text-sm text-slate-800">Tiết kiệm thời gian</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Bỏ bớt quy trình xác thực phức tạp, tối ưu vận hành cho cả quản lý gian hàng và nhân viên.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 scroll-mt-4">
+                            <h3 class="text-base sm:text-lg font-black flex items-center gap-2" style="color: #166def;">
+                                <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
+                            </h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
+                                <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-800/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-blue-800 uppercase">Phần 1</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-blue-800 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-800">Thuật ngữ nền tảng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                                </div>
+                                <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                                </div>
+                                <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
+                                        <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                    <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            <div class="relative group flex-1">
-                <button onclick="nextGlobal()" class="w-full py-2.5 text-white rounded-xl font-black text-sm flex items-center justify-center transition-all cursor-pointer shadow-2xs bg-[#166def]">
-                    <i class="fa-solid fa-chevron-right text-white"></i>
-                </button>
-                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold py-1 px-2.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                    Thao tác tiếp (&gt;)
+
+            <!-- SECTION 2: THUẬT NGỮ -->
+            <div id="view-glossary" class="hidden w-full h-full relative overflow-hidden">
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white bg-blue-800 flex items-center justify-center cursor-pointer shadow-md" title="Xem thuật ngữ sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem thuật ngữ trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto pr-14 sm:pr-16 p-2 sm:p-4">
+                    <div class="w-full max-w-5xl mx-auto space-y-4 pb-8">
+                        <div data-step-target="true" class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-800 shadow-xs space-y-2 scroll-mt-4">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-xl"></i>
+                                <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+                        <div id="glossary-list" class="space-y-3">
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Zalo Mini App</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Ứng dụng nhỏ chạy trực tiếp trong nền tảng Zalo, giúp nhân viên chấm công, xem bảng công và phiếu lương mà không cần cài đặt thêm ứng dụng ngoài.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Chấm công GPS</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Phương thức ghi nhận thời gian vào/ra ca dựa trên vị trí định vị toàn cầu của thiết bị di động trong bán kính phạm vi cửa hàng cho phép.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Phiếu lương Tạm tính / Đã chốt</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Bảng kê chi tiết thu nhập từng kỳ của nhân viên. Trạng thái Tạm tính hiển thị ước tính thu nhập theo thời gian thực; Đã chốt là số liệu lương chính thức được quản lý phê duyệt.</p>
+                            </div>
+                            <div data-step-target="true" class="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-2xs scroll-mt-4">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Xác thực thiết bị</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Quy trình kiểm tra và ghi nhận điện thoại cá nhân của nhân viên lần đầu truy cập nhằm đảm bảo tính chính xác và chống gian lận chấm công.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </aside>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 min-h-0 relative p-3 sm:p-5 pr-16 md:pr-64 flex flex-col items-center justify-center overflow-hidden">
-        
-        <!-- SECTION 1: HƯỚNG DẪN HỌC -->
-        <div id="view-guide" class="w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-6 pb-8">
+            <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
+            <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-basic" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-[#166def] shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
+                        </div>
+                        <div class="space-y-3 text-left pt-1">
+                            <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
+                            </h4>
+                            <div id="basic-overview-list" class="space-y-2.5"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+            <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
+            <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
+                <div id="overview-advanced" class="w-full h-full overflow-y-auto p-2 sm:p-4 flex items-center justify-center">
+                    <div class="w-full max-w-5xl bg-white p-6 sm:p-10 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-6 text-center my-auto">
+                        <div class="space-y-2">
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
+                        </div>
+
+                        <div class="space-y-5 text-left pt-2">
+                            <div id="adv-group-features" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
+                                </h4>
+                                <div id="advanced-list-features" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-mobile" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Điện thoại
+                                </h4>
+                                <div id="advanced-list-mobile" class="space-y-2.5 pl-2"></div>
+                            </div>
+
+                            <div id="adv-group-pos" class="space-y-3">
+                                <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
+                                </h4>
+                                <div id="advanced-list-pos" class="space-y-2.5 pl-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs relative"></div>
+            </div>
+
+        </main>
+
+        <!-- RIGHT SIDEBAR NAVIGATION -->
+        <aside class="w-64 lg:w-72 bg-white border-l border-slate-200 shrink-0 h-full flex flex-col shadow-sm overflow-hidden z-20">
+            <div class="p-2 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
                 
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 shadow-xs space-y-4 border-[#166def]/30">
-                    <div class="flex items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-black tracking-tight text-[#166def]">Zalo Mini App – KiotViet Nhân viên</h2>
-                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed" id="guide-intro-text">
-                        Zalo Mini App – KiotViet Nhân viên là giải pháp quản lý thu nhập và công việc dành cho nhân viên tại các cửa hàng sử dụng phần mềm KiotViet. Chạy trực tiếp trên nền tảng Zalo, ứng dụng giúp nhân viên dễ dàng chấm công nhanh chóng qua định vị (GPS), theo dõi bảng chấm công, lịch làm việc, cũng như xem phiếu lương chi tiết ngay trên Zalo mà không cần cài thêm ứng dụng nào khác.
-                    </p>
-                </div>
-
-                <div class="space-y-6" id="guide-media-block">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-infographic-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
-                            <i class="fa-solid fa-image"></i> Hướng dẫn trực quan
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md relative">
-                            <img id="guide-banner-img" src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155043/ZLM_280726-4.jpg" alt="Infographic Hướng dẫn" class="w-full h-full object-cover img-zoomable" onclick="openLightbox(this.src)">
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4 hidden" id="guide-video-container">
-                        <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
-                            <i class="fa-solid fa-circle-play"></i> Video hướng dẫn thao tác
-                        </h3>
-                        <div class="w-full aspect-video rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-                            <iframe id="guide-video-iframe" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4" id="guide-benefits-block">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
-                        <i class="fa-solid fa-star"></i> Lợi ích nổi bật dành cho Cửa hàng
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5" id="guide-benefits-list"></div>
-                </div>
-
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-                    <h3 class="text-base sm:text-lg font-black flex items-center gap-2 text-[#166def]">
-                        <i class="fa-solid fa-route"></i> Lộ trình học tối ưu cho Chuyên viên tư vấn
-                    </h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5" id="guide-roadmap-grid">
-                        <div onclick="navSelectTab('glossary')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-900/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-blue-900 uppercase">Phần 1</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-blue-900 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-blue-900">Thuật ngữ nền tảng</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                        </div>
-                        <div onclick="navSelectTab('basic')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-[#166def] uppercase">Phần 2</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-[#166def]">Kiến thức cơ bản</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                        </div>
-                        <div id="roadmap-part-3" onclick="navSelectTab('advanced')" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/50 transition-all cursor-pointer space-y-2 group">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-emerald-700 uppercase">Phần 3</span>
-                                <i class="fa-solid fa-arrow-right text-xs text-emerald-700 group-hover:translate-x-1 transition-transform"></i>
-                            </div>
-                            <h4 class="font-black text-slate-800 text-xs sm:text-sm group-hover:text-emerald-800">Kiến thức nâng cao</h4>
-                            <p class="text-[11px] text-slate-600 leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- SECTION 2: THUẬT NGỮ -->
-        <div id="view-glossary" class="hidden w-full h-full overflow-y-auto custom-scrollbar">
-            <div class="max-w-4xl mx-auto space-y-4 pb-8">
-                <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-900 shadow-xs space-y-2">
-                    <div class="flex items-center gap-2 text-blue-900">
-                        <i class="fa-solid fa-book-bookmark text-xl"></i>
-                        <h2 class="text-lg sm:text-xl font-black uppercase">Thuật ngữ nền tảng</h2>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
-                </div>
-                <div id="glossary-list" class="space-y-3"></div>
-            </div>
-        </div>
-
-        <!-- SECTION 3: KIẾN THỨC CƠ BẢN -->
-        <div id="view-basic" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-basic" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-[#166def] shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức cơ bản</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Ưu tiên học kỹ, thành thạo thao tác phổ biến thường gặp, sẵn sàng vận dụng ngay.</p>
-                    </div>
-                    <div class="space-y-3 text-left pt-1">
-                        <h4 class="text-xs sm:text-sm font-black uppercase text-slate-700 tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-[#166def]"></i> Danh sách các thao tác đào tạo:
-                        </h4>
-                        <div id="basic-overview-list" class="space-y-2.5"></div>
-                    </div>
-                    <button onclick="startSectionContent('basic')" class="bg-[#166def] hover:bg-[#1259c7] text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-circle-play"></i> Bắt đầu bài học Kiến thức cơ bản
+                <!-- CỤM 1: NỀN XANH DƯƠNG NHẠT -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('guide')" id="tab-btn-guide" class="sidebar-tab-btn active-guide w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-compass text-base shrink-0" style="color: #166def;"></i>
+                        <span class="truncate text-left flex-1">Hướng dẫn học</span>
                     </button>
-                </div>
-            </div>
-            <div id="viewer-basic" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
-
-        <!-- SECTION 4: KIẾN THỨC NÂNG CAO -->
-        <div id="view-advanced" class="hidden w-full h-full flex flex-col overflow-hidden">
-            <div id="overview-advanced" class="w-full h-full overflow-y-auto custom-scrollbar p-3 sm:p-6 flex items-center justify-center">
-                <div class="max-w-4xl w-full bg-white p-8 sm:p-12 rounded-3xl border-2 border-emerald-600 shadow-xs space-y-8 sm:space-y-10 text-center my-auto">
-                    <div class="space-y-3">
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-900">Kiến thức nâng cao</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">Nên học khi có nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</p>
-                    </div>
-
-                    <div class="space-y-6 text-left pt-2">
-                        <div id="adv-group-features" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-sliders text-emerald-600"></i> Tính năng nâng cao
-                            </h4>
-                            <div id="advanced-list-features" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-mobile" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-mobile-screen text-emerald-600"></i> Giao diện Mobile
-                            </h4>
-                            <div id="advanced-list-mobile" class="space-y-2.5 pl-3"></div>
-                        </div>
-
-                        <div id="adv-group-pos" class="space-y-3">
-                            <h4 class="text-xs sm:text-sm font-black uppercase text-emerald-800 tracking-wider flex items-center gap-2">
-                                <i class="fa-solid fa-desktop text-emerald-600"></i> Giao diện Máy POS
-                            </h4>
-                            <div id="advanced-list-pos" class="space-y-2.5 pl-3"></div>
-                        </div>
-                    </div>
-
-                    <button onclick="startSectionContent('advanced')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 py-3.5 rounded-2xl shadow-md text-xs sm:text-sm uppercase tracking-wider btn-interact inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-sliders"></i> Khám phá bài học Kiến thức nâng cao
+                    
+                    <button onclick="navSelectTab('glossary')" id="tab-btn-glossary" class="sidebar-tab-btn w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-white text-xs sm:text-sm font-bold cursor-pointer transition-all">
+                        <i class="fa-solid fa-book-bookmark text-base text-slate-700 shrink-0"></i>
+                        <span class="truncate text-left flex-1">Thuật ngữ</span>
                     </button>
+                    
+                    <!-- ACCORDION KIẾN THỨC CƠ BẢN: ĐÃ XỬ LÝ BO GÓC & BỎ HOÀN TOÀN VIỀN ĐEN FOCUS -->
+                    <div class="rounded-xl overflow-hidden border border-blue-200/70 bg-white shadow-2xs">
+                        <button onclick="handleBasicHeaderClick()" id="tab-btn-basic" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2.5 text-slate-700 hover:bg-blue-100/50 text-xs sm:text-sm font-bold cursor-pointer transition-all border-none outline-none focus:outline-none focus:ring-0">
+                            <div class="flex items-center gap-2.5 truncate">
+                                <i class="fa-solid fa-circle-play text-base text-[#166def] shrink-0"></i>
+                                <span class="truncate text-left">Kiến thức cơ bản</span>
+                            </div>
+                            <i id="accordion-icon-basic" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+                        </button>
+                        <div id="accordion-panel-basic" class="hidden space-y-1 p-1.5 bg-blue-50/40 border-t border-blue-100"></div>
+                    </div>
                 </div>
-            </div>
-            <div id="viewer-advanced" class="hidden w-full h-full flex flex-col overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-xs"></div>
-        </div>
 
-    </main>
+                <!-- CỤM 2: NỀN XANH LÁ NHẠT -->
+                <div class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1.5 shadow-2xs">
+                    <button onclick="navSelectTab('advanced')" id="tab-btn-advanced" class="sidebar-tab-btn w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-800 hover:bg-white text-xs sm:text-sm font-black cursor-pointer transition-all border-none outline-none focus:outline-none">
+                        <div class="flex items-center gap-2.5 truncate">
+                            <i class="fa-solid fa-sliders text-base text-emerald-600 shrink-0"></i>
+                            <span class="truncate text-left">Kiến thức nâng cao</span>
+                        </div>
+                    </button>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAccordion('adv-features')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-sliders text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Tính năng nâng cao</span>
+                                </div>
+                                <i id="accordion-icon-adv-features" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-features" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile">
+                            <button onclick="toggleAccordion('adv-mobile')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-mobile-screen text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Điện thoại</span>
+                                </div>
+                                <i id="accordion-icon-adv-mobile" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-mobile" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos">
+                            <button onclick="toggleAccordion('adv-pos')" class="w-full flex items-center justify-between px-3 py-2 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer transition-all border-none outline-none focus:outline-none">
+                                <div class="flex items-center gap-2 truncate">
+                                    <i class="fa-solid fa-desktop text-emerald-600 text-xs shrink-0"></i>
+                                    <span class="truncate">Giao diện Máy POS</span>
+                                </div>
+                                <i id="accordion-icon-adv-pos" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                            </button>
+                            <div id="accordion-panel-adv-pos" class="hidden space-y-1 p-1.5 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+    </div>
 
     <!-- POPUP HOÀN THÀNH CƠ BẢN -->
     <div id="modal-basic-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
@@ -300,22 +431,26 @@
             </div>
             <div class="space-y-1">
                 <h3 class="text-lg font-black text-slate-900">Chúc mừng hoàn thành!</h3>
-                <p class="text-xs sm:text-sm text-slate-600">Bạn đã hoàn thành nội dung học cơ bản của tính năng.</p>
+                <p class="text-xs sm:text-sm text-slate-600 text-left">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng <strong class="text-slate-900">Zalo Mini App – KiotViet Nhân viên</strong>.
+                    <br><br>
+                    Tiếp theo, bạn có thể <strong class="text-slate-900">Kết thúc bài học</strong> và chuyển sang <strong class="text-slate-900">học tiếp bài học tiếp theo</strong> trong khóa học.
+                    <br><br>
+                    Ngoài ra, bạn có thể khám phá tiếp các thao tác nâng cao ít phổ biến hơn (nếu có nhu cầu và có đủ thời gian).
+                </p>
             </div>
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Đóng
+            <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="closeModal('modal-basic-complete')" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                    Kết thúc bài học
                 </button>
-                <button onclick="restartSection('basic')" class="w-full py-2.5 px-2 bg-blue-50 hover:bg-blue-100 text-[#166def] font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
-                    Học lại từ đầu
-                </button>
-                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
+                <button onclick="goToAdvancedFromModal()" class="w-full py-2.5 px-2 bg-[#12c74e] hover:bg-[#12c712] text-white font-bold rounded-xl text-xs whitespace-nowrap cursor-pointer">
                     Học nâng cao
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- POPUP HOÀN THÀNH TẤT CẢ -->
     <div id="modal-advanced-complete" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl border-2 border-emerald-600">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -346,159 +481,254 @@
         </div>
     </div>
 
-    <!-- FULL JAVASCRIPT ENGINE V18.0 HOÀN CHỈNH 100% -->
+    <!-- JAVASCRIPT ENGINE V19.0 FULL-FRAME -->
     <script>
-        const GLOSSARY_DATA = [
-            { term: 'Zalo Mini App', desc: 'Ứng dụng nhỏ chạy trực tiếp trong nền tảng Zalo, giúp nhân viên chấm công, xem bảng công và phiếu lương mà không cần cài đặt thêm ứng dụng ngoài.' },
-            { term: 'Chấm công GPS', desc: 'Phương thức ghi nhận thời gian vào/ra ca dựa trên vị trí định vị toàn cầu của thiết bị di động trong bán kính phạm vi cửa hàng cho phép.' },
-            { term: 'Phiếu lương Tạm tính / Đã chốt', desc: 'Bảng kê chi tiết thu nhập từng kỳ của nhân viên. Trạng thái Tạm tính hiển thị ước tính thu nhập theo thời gian thực; Đã chốt là số liệu lương chính thức được quản lý phê duyệt.' },
-            { term: 'Xác thực thiết bị', desc: 'Quy trình kiểm tra và ghi nhận điện thoại cá nhân của nhân viên lần đầu truy cập nhằm đảm bảo tính chính xác và chống gian lận chấm công.' }
-        ];
-
         const BASIC_LESSONS = [
             {
-                title: 'Thiết lập chấm công',
-                situation: 'Quản lý cửa hàng cần cài đặt vị trí định vị chấm công chi nhánh, phân quyền tính năng và chia sẻ đường dẫn/mã QR Zalo Mini App cho nhân viên.',
+                title: "Thiết lập chấm công",
+                situation: "Quản lý cửa hàng cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cài đặt vị trí định vị chấm công chi nhánh</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phân quyền tính năng</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chia sẻ đường dẫn/mã QR</b> Zalo Mini App cho nhân viên.",
                 steps: [
-                    { text: 'Trên màn hình Quản lý ➔ chọn <b>Nhân viên</b> ➔ <b>Thiết lập nhân viên</b>.', img: '' },
-                    { text: 'Tại mục Khởi tạo ➔ chọn Hình thức chấm công hoặc chọn menu <b>Zalo mini App</b> (thực hiện trên website hoặc ứng dụng điện thoại) ➔ bật xanh tính năng.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073831/ZLRT_N_-1.png' },
-                    { text: 'Nhấn <b>Thêm địa chỉ chấm công</b> cho các chi nhánh.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073820/ZLRT_N_-2.png' },
-                    { text: 'Xác nhận GPS vị trí chấm công: Chọn Chi nhánh, Tỉnh/Thành phố, Xã/Phường/Đặc khu và nhập Địa chỉ, Phạm vi (m) được phép chấm công ➔ bấm <b>Lưu</b>, sau đó bấm <b>Xong</b>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073810/ZLRT_N_-3.png' },
-                    { text: 'Chọn các tính năng mà nhân viên được phép sử dụng (Bảng chấm công, Bảng lương).', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073802/ZLRT_N_-4.png' },
-                    { text: 'Chia sẻ đường dẫn hoặc mã QR vào Zalo Mini App: Bấm <b>Chia sẻ đường dẫn</b> ➔ Sao chép gửi nhân viên hoặc in/gửi <b>mã QR</b> cho nhân viên quét.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073743/ZLRT_N_-6.png' }
+                    {
+                        text: "Trên màn hình Quản lý, chọn menu <b class=\"font-bold text-[#166def]\">Nhân viên</b> → chọn <b class=\"font-bold text-[#166def]\">Thiết lập nhân viên</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Tại mục Khởi tạo, chọn Hình thức chấm công hoặc chọn menu <b class=\"font-bold text-[#166def]\">Zalo mini App</b> (thực hiện trên website hoặc ứng dụng điện thoại) → bật xanh tính năng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073831/ZLRT_N_-1.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Thêm địa chỉ chấm công</b> cho các chi nhánh cửa hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073820/ZLRT_N_-2.png"
+                    },
+                    {
+                        text: "Xác nhận GPS vị trí chấm công: Chọn Chi nhánh, Tỉnh/Thành phố, Xã/Phường/Đặc khu và nhập Địa chỉ, Phạm vi (m) được phép chấm công → bấm <b class=\"font-bold text-[#166def]\">Lưu</b>, sau đó bấm <b class=\"font-bold text-[#166def]\">Xong</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073810/ZLRT_N_-3.png"
+                    },
+                    {
+                        text: "Tích chọn các tính năng mà nhân viên được phép sử dụng (<b class=\"font-bold text-[#166def]\">Bảng chấm công</b>, <b class=\"font-bold text-[#166def]\">Bảng lương</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073802/ZLRT_N_-4.png"
+                    },
+                    {
+                        text: "Chia sẻ đường dẫn hoặc mã QR vào Zalo Mini App: Bấm <b class=\"font-bold text-[#166def]\">Chia sẻ đường dẫn</b> để sao chép gửi nhân viên hoặc in/gửi <b class=\"font-bold text-[#166def]\">mã QR</b> cho nhân viên quét.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073743/ZLRT_N_-6.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Dùng Zalo Mini App này có phức tạp không em? Quản lý như anh có tốn thời gian cài đặt và gửi tài khoản cho từng đứa không?',
-                    advice: 'Dạ anh/chị yên tâm hoàn toàn ạ! Quản lý chỉ cần bật tính năng một lần, cài đặt vị trí vị trí cửa hàng rồi xuất mã QR dán ở quầy. Nhân viên chỉ việc lấy Zalo quét mã là vào chấm công ngay, không cần quản lý phải khởi tạo tài khoản hay mật khẩu thủ công cho từng người, tiết kiệm 90% thời gian vận hành ạ.'
+                    situation: "Dùng Zalo Mini App này có phức tạp không em? Quản lý như anh có tốn thời gian cài đặt và gửi tài khoản cho từng đứa không?",
+                    advice: "Dạ anh/chị yên tâm hoàn toàn ạ! Quản lý chỉ cần bật tính năng một lần, cài đặt vị trí cửa hàng rồi xuất mã QR dán ở quầy. Nhân viên chỉ việc lấy Zalo quét mã là vào chấm công ngay, không cần quản lý phải khởi tạo tài khoản hay mật khẩu thủ công cho từng người, tiết kiệm 90% thời gian vận hành ạ."
                 },
                 quiz: {
-                    question: 'Quản lý cửa hàng có thể bật tính năng Zalo Mini App trên cả giao diện website lẫn ứng dụng KiotViet di động?',
+                    question: "Quản lý cửa hàng có thể bật tính năng Zalo Mini App trên cả giao diện website lẫn ứng dụng KiotViet di động?",
                     answer: true,
-                    explanation: 'Tính năng thiết lập Zalo Mini App hỗ trợ thực hiện linh hoạt trên giao diện website lẫn ứng dụng KiotViet trên điện thoại.'
+                    explanation: "Tính năng thiết lập Zalo Mini App hỗ trợ thực hiện linh hoạt trên giao diện website lẫn ứng dụng KiotViet trên điện thoại."
                 }
             },
             {
-                title: 'Nhân viên chấm công',
-                situation: 'Nhân viên sử dụng điện thoại cá nhân có kết nối GPS để truy cập Zalo Mini App và thực hiện chấm công ca làm việc.',
+                title: "Nhân viên chấm công",
+                situation: "Nhân viên sử dụng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">điện thoại cá nhân có kết nối GPS</b> để truy cập Zalo Mini App và thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chấm công ca làm việc</b>.",
                 steps: [
-                    { text: 'Sử dụng điện thoại đã bật định vị GPS, truy cập đường dẫn hoặc quét mã QR Zalo Mini App.', img: '' },
-                    { text: 'Chạm <b>Tiếp tục</b> ➔ kiểm tra số điện thoại ➔ chạm <b>Tiếp tục</b>.', img: '' },
-                    { text: 'Với lần đầu truy cập khi thiết bị chưa được xác nhận, chạm <b>Gửi yêu cầu xác nhận</b> và chờ quản lý phê duyệt.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073735/ZLRT_N_-7.png' },
-                    { text: 'Sau khi được quản lý duyệt thành công, quay lại màn hình Đăng nhập ➔ chạm <b>Tiếp tục</b>.', img: '' },
-                    { text: 'Chọn <b>Chi nhánh</b> làm việc và <b>Chọn ca</b> làm việc tương ứng.', img: '' },
-                    { text: 'Chạm nút <b>Vào</b> hoặc <b>Ra</b> tương ứng để hệ thống ghi nhận thời gian chấm công.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073721/ZLRT_N_-8.png' }
+                    {
+                        text: "Sử dụng điện thoại đã bật định vị GPS, truy cập đường dẫn hoặc quét mã QR Zalo Mini App.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm <b class=\"font-bold text-[#166def]\">Tiếp tục</b> → kiểm tra số điện thoại → chạm <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Với lần đầu truy cập khi thiết bị chưa được xác nhận, chạm <b class=\"font-bold text-[#166def]\">Gửi yêu cầu xác nhận</b> và chờ quản lý phê duyệt.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073735/ZLRT_N_-7.png"
+                    },
+                    {
+                        text: "Sau khi được quản lý duyệt thành công, quay lại màn hình Đăng nhập → chạm <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Chọn <b class=\"font-bold text-[#166def]\">Chi nhánh</b> làm việc và <b class=\"font-bold text-[#166def]\">Chọn ca</b> làm việc tương ứng.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm nút <b class=\"font-bold text-[#166def]\">Vào</b> hoặc <b class=\"font-bold text-[#166def]\">Ra</b> tương ứng để hệ thống ghi nhận thời gian chấm công.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073721/ZLRT_N_-8.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Nếu nhân viên đứng ngoài đường hoặc ở nhà bấm chấm công trên Zalo thì hệ thống có nhận không em?',
-                    advice: 'Dạ không đâu anh/chị! Hệ thống bắt buộc bật định vị toàn cầu GPS và kiểm tra khoảng cách thực tế. Nhân viên phải đứng đúng trong phạm vi méter mà anh/chị đã cài đặt tại chi nhánh thì nút chấm công mới có hiệu lực, ngăn chặn triệt để tình trạng chấm công dùm hay chấm công từ xa ạ.'
+                    situation: "Nếu nhân viên đứng ngoài đường hoặc ở nhà bấm chấm công trên Zalo thì hệ thống có nhận không em?",
+                    advice: "Dạ không đâu anh/chị! Hệ thống bắt buộc bật định vị toàn cầu GPS và kiểm tra khoảng cách thực tế. Nhân viên phải đứng đúng trong phạm vi đã cài đặt tại chi nhánh thì nút chấm công mới có hiệu lực, ngăn chặn triệt để tình trạng chấm công hộ hay chấm công từ xa ạ."
                 },
                 quiz: {
-                    question: 'Nhân viên chỉ cần gửi yêu cầu xác nhận thiết bị ở lần đăng nhập đầu tiên khi thiết bị chưa được quản lý phê duyệt?',
+                    question: "Nhân viên chỉ cần gửi yêu cầu xác nhận thiết bị ở lần đăng nhập đầu tiên khi thiết bị chưa được quản lý phê duyệt?",
                     answer: true,
-                    explanation: 'Thiết bị di động lần đầu chấm công cần gửi yêu cầu để quản lý xác nhận nhằm bảo mật và tránh gian lận thiết bị.'
+                    explanation: "Thiết bị di động lần đầu chấm công cần gửi yêu cầu để quản lý xác nhận nhằm bảo mật và tránh gian lận thiết bị."
                 }
             },
             {
-                title: 'Xem bảng chấm công',
-                situation: 'Nhân viên kiểm tra lại lịch sử các ca làm việc, giờ vào/ra thực tế và trạng thái chấm công của mình.',
+                title: "Xem bảng chấm công",
+                situation: "Nhân viên kiểm tra lại <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lịch sử các ca làm việc</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">giờ vào/ra thực tế</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">trạng thái chấm công</b> của mình.",
                 steps: [
-                    { text: 'Tại <b>Trang chủ</b> Zalo Mini App ➔ KiotViet Nhân Viên, xem thông tin tổng quan bảng chấm công tháng hiện tại.', img: '' },
-                    { text: 'Chạm vào <b>Bảng chấm công</b> hoặc từng trạng thái (Đi làm, Đi muộn, Về sớm, Nghỉ làm, Làm thêm) để xem các ca làm việc liệt kê theo từng ngày.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073707/ZLRT_N_-9.png' },
-                    { text: 'Trên menu <b>Bảng chấm công</b> ở thanh phía dưới màn hình, xem danh sách tất cả các ca theo <b>Tuần này</b> với các trạng thái (Đúng giờ, Đi muộn/Về sớm, Chưa đến ca, Chưa chấm công, Chấm công thiếu).', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073658/ZLRT_N_-10.png' }
+                    {
+                        text: "Tại <b class=\"font-bold text-[#166def]\">Trang chủ</b> Zalo Mini App → KiotViet Nhân Viên, xem thông tin tổng quan bảng chấm công tháng hiện tại.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm vào <b class=\"font-bold text-[#166def]\">Bảng chấm công</b> hoặc từng trạng thái (Đi làm, Đi muộn, Về sớm, Nghỉ làm, Làm thêm) để xem các ca làm việc liệt kê theo từng ngày.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073707/ZLRT_N_-9.png"
+                    },
+                    {
+                        text: "Trên menu <b class=\"font-bold text-[#166def]\">Bảng chấm công</b> ở thanh phía dưới màn hình, xem danh sách tất cả các ca theo <b class=\"font-bold text-[#166def]\">Tuần này</b> với các trạng thái (Đúng giờ, Đi muộn/Về sớm, Chưa đến ca, Chưa chấm công, Chấm công thiếu).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073658/ZLRT_N_-10.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Mỗi lần nhân viên hỏi lại công cán hay thắc mắc ngày đó có đi làm đúng giờ không lại bắt anh mở máy tra, mệt quá!',
-                    advice: 'Dạ chính vì vậy Zalo Mini App giúp anh/chị giải phóng hẳn việc này ạ! Nhân viên chủ động tự mở Zalo lên xem toàn bộ lịch làm việc, giờ vào/giờ ra và trạng thái đúng giờ hay đi muộn của từng ngày minh bạch 100%, không cần phiền đến quản lý tra cứu nữa ạ.'
+                    situation: "Mỗi lần nhân viên hỏi lại công cán hay thắc mắc ngày đó có đi làm đúng giờ không lại bắt anh mở máy tra, mệt quá!",
+                    advice: "Dạ chính vì vậy Zalo Mini App giúp anh/chị giải phóng hẳn việc này ạ! Nhân viên chủ động tự mở Zalo lên xem toàn bộ lịch làm việc, giờ vào/giờ ra và trạng thái đúng giờ hay đi muộn của từng ngày minh bạch 100%, không cần phiền đến quản lý tra cứu nữa ạ."
                 },
                 quiz: {
-                    question: 'Nhân viên có thể chủ động xem thông tin ca làm việc và trạng thái chấm công của mình trực tiếp trên ứng dụng Zalo?',
+                    question: "Nhân viên có thể chủ động xem thông tin ca làm việc và trạng thái chấm công của mình trực tiếp trên ứng dụng Zalo?",
                     answer: true,
-                    explanation: 'Ứng dụng Zalo Mini App hiển thị chi tiết lịch làm việc, giờ vào ra và phân loại trạng thái chấm công trực quan cho từng nhân viên.'
+                    explanation: "Ứng dụng Zalo Mini App hiển thị chi tiết lịch làm việc, giờ vào ra và phân loại trạng thái chấm công trực quan cho từng nhân viên."
                 }
             },
             {
-                title: 'Xem phiếu lương',
-                situation: 'Nhân viên tra cứu chi tiết các khoản thu nhập, lương chính, hoa hồng, phụ cấp, thưởng và giảm trừ trong kỳ tính lương.',
+                title: "Xem phiếu lương",
+                situation: "Nhân viên tra cứu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chi tiết các khoản thu nhập</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lương chính, hoa hồng, phụ cấp, thưởng</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">giảm trừ</b> trong kỳ tính lương.",
                 steps: [
-                    { text: 'Trên ứng dụng Zalo Mini App ➔ KiotViet Nhân Viên, chọn <b>Phiếu lương</b>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155001/ZLM_280726-2.png' },
-                    { text: 'Xem danh sách phiếu lương theo tháng gồm mã phiếu, kỳ lương, tổng lương và trạng thái (Tạm tính hoặc Đã chốt).', img: '' },
-                    { text: 'Sử dụng bộ lọc trạng thái để xem phiếu Tạm tính, Đã chốt hoặc Đã hủy.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073647/ZLRT_N_-11.png' },
-                    { text: 'Nhấn vào một phiếu lương cụ thể để xem chi tiết các khoản: Lương chính, Làm thêm giờ, Hoa hồng, Phụ cấp, Thưởng, Giảm trừ, Bảo hiểm bắt buộc, Thuế TNCN.', img: '' },
-                    { text: 'Nhấn dấu mũi tên (>) bên phải từng khoản để xem diễn giải giải trình chi tiết.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155015/ZLM_280726-1.png' }
+                    {
+                        text: "Trên ứng dụng Zalo Mini App → KiotViet Nhân Viên, chọn <b class=\"font-bold text-[#166def]\">Phiếu lương</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155001/ZLM_280726-2.png"
+                    },
+                    {
+                        text: "Xem danh sách phiếu lương theo tháng gồm mã phiếu, kỳ lương, tổng lương và trạng thái (Tạm tính hoặc Đã chốt).",
+                        img: null
+                    },
+                    {
+                        text: "Sử dụng bộ lọc trạng thái để xem phiếu Tạm tính, Đã chốt hoặc Đã hủy.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073647/ZLRT_N_-11.png"
+                    },
+                    {
+                        text: "Nhấn vào một phiếu lương cụ thể để xem chi tiết các khoản: Lương chính, Làm thêm giờ, Hoa hồng, Phụ cấp, Thưởng, Giảm trừ, Bảo hiểm bắt buộc, Thuế TNCN.",
+                        img: null
+                    },
+                    {
+                        text: "Nhấn dấu mũi tên (<b class=\"font-bold text-[#166def]\">&gt;</b>) bên phải từng khoản để xem diễn giải giải trình chi tiết.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28155015/ZLM_280726-1.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Cuối tháng in phiếu lương giấy vừa tốn chi phí vừa dễ mất, nhân viên lại hay khiếu nại hoa hồng sai thì làm sao?',
-                    advice: 'Dạ khi dùng tính năng Phiếu lương trên Zalo Mini App, mọi khoản thu nhập từ lương cố định, thưởng, hoa hồng bán hàng đến phụ cấp đều hiển thị chi tiết minh bạch. Nhân viên có thể bấm vào từng khoản để xem diễn giải công thức tính, giúp giảm 99% khiếu nại lương cuối tháng ạ.'
+                    situation: "Cuối tháng in phiếu lương giấy vừa tốn chi phí vừa dễ mất, nhân viên lại hay khiếu nại hoa hồng sai thì làm sao?",
+                    advice: "Dạ khi dùng tính năng Phiếu lương trên Zalo Mini App, mọi khoản thu nhập từ lương cố định, thưởng, hoa hồng bán hàng đến phụ cấp đều hiển thị chi tiết minh bạch. Nhân viên có thể bấm vào từng khoản để xem diễn giải công thức tính, giúp giảm 99% khiếu nại lương cuối tháng ạ."
                 },
                 quiz: {
-                    question: 'Phiếu lương trên Zalo Mini App chỉ hiển thị con số tổng thu nhập chứ không xem được chi tiết từng khoản phụ cấp hay hoa hồng?',
+                    question: "Phiếu lương trên Zalo Mini App chỉ hiển thị con số tổng thu nhập chứ không xem được chi tiết từng khoản phụ cấp hay hoa hồng?",
                     answer: false,
-                    explanation: 'Nhân viên có thể bấm vào dấu mũi tên bên phải từng khoản thu nhập (lương chính, thưởng, hoa hồng, giảm trừ...) để xem diễn giải chi tiết.'
+                    explanation: "Nhân viên có thể bấm vào dấu mũi tên bên phải từng khoản thu nhập (lương chính, thưởng, hoa hồng, giảm trừ...) để xem diễn giải chi tiết."
                 }
             }
         ];
 
         const ADVANCED_LESSONS = [
             {
-                title: 'Xử lý các tình huống đặc biệt',
                 category: 'feature',
-                situation: 'Giải quyết các vấn đề đăng nhập phát sinh như sai số điện thoại, chưa có hồ sơ nhân viên, đổi thiết bị, tài khoản báo đã nghỉ việc.',
+                title: "Xử lý các tình huống đặc biệt",
+                situation: "Giải quyết các vấn đề đăng nhập phát sinh như <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">sai số điện thoại</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chưa có hồ sơ nhân viên</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đổi thiết bị</b>, tài khoản báo đã nghỉ việc.",
                 steps: [
-                    { text: 'Tại màn hình Đăng nhập, sau khi chạm <b>Tiếp tục</b> ➔ nếu thông tin không khớp, chọn phương án xử lý do hệ thống gợi ý.', img: '' },
-                    { text: 'Nếu yêu cầu từ chối do thao tác nhầm, chạm <b>Gửi lại yêu cầu</b> (tối đa 2 lần) ➔ chạm <b>Đồng ý</b> và liên hệ quản lý phê duyệt.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073626/ZLRT_N_-13.png' },
-                    { text: 'Trường hợp chưa có hồ sơ nhân viên: Chạm <b>Chưa có, tôi là nhân viên mới</b> ➔ Cho phép ứng dụng nhận thông tin ➔ chỉnh sửa Họ tên ➔ chạm <b>Gửi yêu cầu tạo hồ sơ</b>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073606/ZLRT_N_-14.png' },
-                    { text: 'Trường hợp đổi số điện thoại: Chọn <b>Đã có, nhưng tôi đã đổi số điện thoại</b> ➔ điền số điện thoại cũ ➔ chạm <b>Gửi yêu cầu cập nhật</b>.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073544/ZLRT_N_-15.png' },
-                    { text: 'Trường hợp nhân viên đã nghỉ việc: Hệ thống hiển thị thông báo và không cho phép đăng nhập.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073526/ZLRT_N_-16.png' }
+                    {
+                        text: "Tại màn hình Đăng nhập, sau khi chạm <b class=\"font-bold text-[#166def]\">Tiếp tục</b> → nếu thông tin không khớp, chọn phương án xử lý do hệ thống gợi ý.",
+                        img: null
+                    },
+                    {
+                        text: "Nếu yêu cầu từ chối do thao tác nhầm, chạm <b class=\"font-bold text-[#166def]\">Gửi lại yêu cầu</b> (tối đa 2 lần) → chạm <b class=\"font-bold text-[#166def]\">Đồng ý</b> và liên hệ quản lý phê duyệt.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073626/ZLRT_N_-13.png"
+                    },
+                    {
+                        text: "Trường hợp chưa có hồ sơ nhân viên: Chạm <b class=\"font-bold text-[#166def]\">Chưa có, tôi là nhân viên mới</b> → Cho phép ứng dụng nhận thông tin → chỉnh sửa Họ tên → chạm <b class=\"font-bold text-[#166def]\">Gửi yêu cầu tạo hồ sơ</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073606/ZLRT_N_-14.png"
+                    },
+                    {
+                        text: "Trường hợp đổi số điện thoại: Chọn <b class=\"font-bold text-[#166def]\">Đã có, nhưng tôi đã đổi số điện thoại</b> → điền số điện thoại cũ → chạm <b class=\"font-bold text-[#166def]\">Gửi yêu cầu cập nhật</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073544/ZLRT_N_-15.png"
+                    },
+                    {
+                        text: "Trường hợp nhân viên đã nghỉ việc: Hệ thống hiển thị thông báo và không cho phép đăng nhập.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073526/ZLRT_N_-16.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Nhân viên mới vào làm mà chưa kịp tạo hồ sơ trên máy tính thì có tự đăng ký trên Zalo được không em?',
-                    advice: 'Dạ hoàn toàn được ạ! Nhân viên mới chỉ cần quét mã QR Zalo Mini App, chọn "Tôi là nhân viên mới" và gửi yêu cầu tạo hồ sơ. Quản lý nhận thông báo trên điện thoại bấm nút "Duyệt" một cái là xong ngay, không cần ngồi gõ tay tạo từng nhân viên nữa ạ.'
+                    situation: "Nhân viên mới vào làm mà chưa kịp tạo hồ sơ trên máy tính thì có tự đăng ký trên Zalo được không em?",
+                    advice: "Dạ hoàn toàn được ạ! Nhân viên mới chỉ cần quét mã QR Zalo Mini App, chọn 'Tôi là nhân viên mới' và gửi yêu cầu tạo hồ sơ. Quản lý nhận thông báo trên điện thoại bấm nút 'Duyệt' một cái là xong ngay, không cần ngồi gõ tay tạo từng nhân viên nữa ạ."
                 },
                 quiz: {
-                    question: 'Nhân viên có thể gửi lại yêu cầu xác nhận tối đa 2 lần nếu yêu cầu trước đó bị từ chối?',
+                    question: "Nhân viên có thể gửi lại yêu cầu xác nhận tối đa 2 lần nếu yêu cầu trước đó bị từ chối?",
                     answer: true,
-                    explanation: 'Nếu yêu cầu duyệt bị từ chối do thao tác nhầm, nhân viên được phép nhấn Gửi lại yêu cầu tối đa 2 lần.'
+                    explanation: "Nếu yêu cầu duyệt bị từ chối do thao tác nhầm, nhân viên được phép nhấn Gửi lại yêu cầu tối đa 2 lần."
                 }
             },
             {
-                title: 'Quản lý xét duyệt yêu cầu',
                 category: 'feature',
-                situation: 'Quản lý cửa hàng nhận thông báo tự động và thực hiện phê duyệt/từ chối các yêu cầu từ nhân viên gửi lên.',
+                title: "Quản lý xét duyệt yêu cầu",
+                situation: "Quản lý cửa hàng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhận thông báo tự động</b> và thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phê duyệt hoặc từ chối</b> các yêu cầu từ nhân viên gửi lên.",
                 steps: [
-                    { text: 'Nhận thông báo tự động khi nhân viên gửi yêu cầu: Trên website (màn hình Danh sách nhân viên/Bảng chấm công ➔ Duyệt yêu cầu) hoặc trên ứng dụng KiotViet điện thoại (Tổng quan ➔ quả chuông hoặc Menu 3 chấm ➔ Duyệt yêu cầu / Xét duyệt chấm công).', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073517/ZLRT_N_-17.png' },
-                    { text: 'Giao diện ứng dụng KiotViet hiển thị quả chuông thông báo và menu duyệt yêu cầu tiện lợi trên điện thoại.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073508/ZLRT_N_-18.png' },
-                    { text: 'Bấm trực tiếp vào thông báo nhận được hoặc nhấn <b>Duyệt yêu cầu</b> trên màn hình.', img: '' },
-                    { text: 'Kiểm tra danh sách yêu cầu gồm 2 tab: <b>Nhân viên</b> và <b>Chấm công</b> ghi nhận thời gian, tên nhân viên, loại yêu cầu và nội dung chi tiết. Có thể lọc theo chi nhánh hoặc tìm theo tên.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073424/ZLRT_N_-20.png' },
-                    { text: 'Giao diện điện thoại hiển thị chi tiết nội dung yêu cầu trực quan.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28154949/ZLM_280726-3.png' },
-                    { text: 'Nhấn <b>Xác nhận</b> để đồng ý phê duyệt hoặc <b>Từ chối</b> nếu không phê duyệt.', img: '' }
+                    {
+                        text: "Nhận thông báo tự động khi nhân viên gửi yêu cầu: Trên website (màn hình Danh sách nhân viên/Bảng chấm công → Duyệt yêu cầu) hoặc trên ứng dụng KiotViet điện thoại (Tổng quan → quả chuông hoặc Menu 3 chấm → <b class=\"font-bold text-[#166def]\">Duyệt yêu cầu</b> / <b class=\"font-bold text-[#166def]\">Xét duyệt chấm công</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073517/ZLRT_N_-17.png"
+                    },
+                    {
+                        text: "Giao diện ứng dụng KiotViet hiển thị quả chuông thông báo và menu duyệt yêu cầu tiện lợi trên điện thoại.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073508/ZLRT_N_-18.png"
+                    },
+                    {
+                        text: "Bấm trực tiếp vào thông báo nhận được hoặc nhấn <b class=\"font-bold text-[#166def]\">Duyệt yêu cầu</b> trên màn hình.",
+                        img: null
+                    },
+                    {
+                        text: "Kiểm tra danh sách yêu cầu gồm 2 tab: <b class=\"font-bold text-[#166def]\">Nhân viên</b> và <b class=\"font-bold text-[#166def]\">Chấm công</b> ghi nhận thời gian, tên nhân viên, loại yêu cầu và nội dung chi tiết. Có thể lọc theo chi nhánh hoặc tìm theo tên.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073424/ZLRT_N_-20.png"
+                    },
+                    {
+                        text: "Giao diện điện thoại hiển thị chi tiết nội dung yêu cầu trực quan.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/07/28154949/ZLM_280726-3.png"
+                    },
+                    {
+                        text: "Nhấn <b class=\"font-bold text-[#166def]\">Xác nhận</b> để đồng ý phê duyệt hoặc <b class=\"font-bold text-[#166def]\">Từ chối</b> nếu không phê duyệt.",
+                        img: null
+                    }
                 ],
                 flashcard: {
-                    situation: 'Anh đi công tác xa thì làm sao biết nhân viên nào gửi yêu cầu cập nhật thông tin hay thiết bị chấm công để duyệt?',
-                    advice: 'Dạ ứng dụng KiotViet trên điện thoại của anh/chị sẽ tự động nổ thông báo đẩy ngay lập tức ạ. Anh/chị chỉ cần chạm vào thông báo, xem tên nhân viên và lý do rồi bấm Xác nhận ngay trên điện thoại dù đang ở bất kỳ đâu ạ.'
+                    situation: "Anh đi công tác xa thì làm sao biết nhân viên nào gửi yêu cầu cập nhật thông tin hay thiết bị chấm công để duyệt?",
+                    advice: "Dạ ứng dụng KiotViet trên điện thoại của anh/chị sẽ tự động nổ thông báo đẩy ngay lập tức ạ. Anh/chị chỉ cần chạm vào thông báo, xem tên nhân viên và lý do rồi bấm Xác nhận ngay trên điện thoại dù đang ở bất kỳ đâu ạ."
                 },
                 quiz: {
-                    question: 'Quản lý chỉ có thể xét duyệt yêu cầu của nhân viên khi ngồi tại cửa hàng thao tác trên máy tính?',
+                    question: "Quản lý chỉ có thể xét duyệt yêu cầu của nhân viên khi ngồi tại cửa hàng thao tác trên máy tính?",
                     answer: false,
-                    explanation: 'Quản lý có thể nhận thông báo đẩy và xét duyệt yêu cầu trực tiếp ngay trên ứng dụng KiotViet di động ở mọi lúc mọi nơi.'
+                    explanation: "Quản lý có thể nhận thông báo đẩy và xét duyệt yêu cầu trực tiếp ngay trên ứng dụng KiotViet di động ở mọi lúc mọi nơi."
                 }
             },
             {
-                title: 'Nhập mã xác nhận khi quản lý không thể duyệt yêu cầu',
                 category: 'feature',
-                situation: 'Quản lý bận không thể truy cập phê duyệt trực tiếp, cung cấp mã xác nhận tạm thời để nhân viên tự kích hoạt.',
+                title: "Nhập mã xác nhận khi quản lý không thể duyệt yêu cầu",
+                situation: "Quản lý bận không thể truy cập phê duyệt trực tiếp, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cung cấp mã xác nhận tạm thời</b> để nhân viên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tự kích hoạt</b>.",
                 steps: [
-                    { text: 'Trên KiotViet (Web hoặc App di động), quản lý mở chi tiết nhân viên ➔ nhấn <b>Lấy mã xác nhận</b> (Mã có hiệu lực trong 5 phút).', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073356/ZLRT_N_-23.png' },
-                    { text: 'Tại màn hình thông báo Đang chờ duyệt yêu cầu trên Zalo Mini App, nhân viên chạm Nhập mã xác nhận <b>tại đây</b>.', img: '' },
-                    { text: 'Nhập chính xác mã xác nhận ➔ chạm <b>Tiếp tục</b>. Nếu hợp lệ, hệ thống phê duyệt ngay và chuyển vào màn hình KiotViet Nhân viên.', img: 'https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073342/ZLRT_N_-24.png' }
+                    {
+                        text: "Trên KiotViet (Web hoặc App di động), quản lý mở chi tiết nhân viên → nhấn <b class=\"font-bold text-[#166def]\">Lấy mã xác nhận</b> (Mã có hiệu lực trong 5 phút).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073356/ZLRT_N_-23.png"
+                    },
+                    {
+                        text: "Tại màn hình thông báo Đang chờ duyệt yêu cầu trên Zalo Mini App, nhân viên chạm Nhập mã xác nhận <b class=\"font-bold text-[#166def]\">tại đây</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Nhập chính xác mã xác nhận → chạm <b class=\"font-bold text-[#166def]\">Tiếp tục</b>. Nếu hợp lệ, hệ thống phê duyệt ngay và chuyển vào màn hình KiotViet Nhân viên.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/06/19073342/ZLRT_N_-24.png"
+                    }
                 ],
                 flashcard: {
-                    situation: 'Nếu máy điện thoại anh mất mạng không vô app duyệt được thì nhân viên có cách nào đăng nhập chấm công cho kịp ca không?',
-                    advice: 'Dạ có giải pháp cấp bách rất tiện lợi ạ! Anh/chị chỉ cần đọc hoặc nhắn mã xác nhận 5 phút cho nhân viên. Nhân viên tự gõ mã này vào màn hình Zalo Mini App là hệ thống tự động kích hoạt cho vào chấm công ngay lập tức ạ.'
+                    situation: "Nếu máy điện thoại anh mất mạng không vô app duyệt được thì nhân viên có cách nào đăng nhập chấm công cho kịp ca không?",
+                    advice: "Dạ có giải pháp cấp bách rất tiện lợi ạ! Anh/chị chỉ cần đọc hoặc nhắn mã xác nhận 5 phút cho nhân viên. Nhân viên tự gõ mã này vào màn hình Zalo Mini App là hệ thống tự động kích hoạt cho vào chấm công ngay lập tức ạ."
                 },
                 quiz: {
-                    question: 'Mã xác nhận do quản lý lấy từ chi tiết nhân viên có thời hạn hiệu lực trong vòng 5 phút?',
+                    question: "Mã xác nhận do quản lý lấy từ chi tiết nhân viên có thời hạn hiệu lực trong vòng 5 phút?",
                     answer: true,
-                    explanation: 'Mã xác nhận tạm thời để nhân viên nhập trực tiếp có thời gian hiệu lực tối đa trong 5 phút.'
+                    explanation: "Mã xác nhận tạm thời để nhân viên nhập trực tiếp có thời gian hiệu lực tối đa trong 5 phút."
                 }
             }
         ];
@@ -507,54 +737,125 @@
         let basicIndex = 0;
         let advancedIndex = 0;
         let userAnswers = {};
+        
+        let viewedLessons = {
+            basic: new Set(),
+            advanced: new Set()
+        };
 
-        function renderGuideContent() {
-            const benefitsList = document.getElementById('guide-benefits-list');
-            if (benefitsList) {
-                benefitsList.innerHTML = `
-                    <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1">
-                        <p class="text-xs font-black text-[#166def] flex items-center gap-1.5"><i class="fa-solid fa-qrcode"></i> QR & Link truy cập nhanh</p>
-                        <p class="text-xs text-slate-600 leading-relaxed">Tự động tạo mã QR và link chấm công qua Zalo, nhân viên truy cập tức thì không cần tải app ngoài.</p>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1">
-                        <p class="text-xs font-black text-[#166def] flex items-center gap-1.5"><i class="fa-solid fa-user-check"></i> Tự động hóa hồ sơ</p>
-                        <p class="text-xs text-slate-600 leading-relaxed">Nhân viên tự gửi thông tin tạo hồ sơ, đổi số điện thoại trực tiếp từ Zalo để quản lý duyệt 1-touch.</p>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-1">
-                        <p class="text-xs font-black text-[#166def] flex items-center gap-1.5"><i class="fa-solid fa-bolt"></i> Tiết kiệm thời gian</p>
-                        <p class="text-xs text-slate-600 leading-relaxed">Bỏ bớt quy trình xác thực phức tạp, tối ưu vận hành cho cả quản lý gian hàng và nhân viên.</p>
-                    </div>
-                `;
+        let activeAccordionKey = 'basic'; 
+        let currentStepTargetIdx = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderOverviewLists();
+            renderSidebarAccordions();
+        });
+
+        function toggleAccordion(key) {
+            if (activeAccordionKey === key) {
+                activeAccordionKey = null;
+            } else {
+                activeAccordionKey = key;
             }
+            updateAccordionDOM();
         }
 
-        function renderGlossary() {
-            const gList = document.getElementById('glossary-list');
-            if (gList) {
-                gList.innerHTML = GLOSSARY_DATA.map((item, idx) => `
-                    <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1">
-                        <h4 class="text-xs sm:text-sm font-black text-blue-900 flex items-center gap-2">
-                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-900 text-[10px] flex items-center justify-center font-black">${idx + 1}</span>
-                            ${item.term}
-                        </h4>
-                        <p class="text-xs text-slate-600 leading-relaxed pl-7">${item.desc}</p>
-                    </div>
-                `).join('');
+        function handleBasicHeaderClick() {
+            navSelectTab('basic');
+            toggleAccordion('basic');
+        }
+
+        function updateAccordionDOM() {
+            const allKeys = ['basic', 'adv-features', 'adv-mobile', 'adv-pos'];
+            allKeys.forEach(k => {
+                const panel = document.getElementById(`accordion-panel-${k}`);
+                const icon = document.getElementById(`accordion-icon-${k}`);
+                if (panel) {
+                    if (activeAccordionKey === k) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+                if (icon) {
+                    icon.style.transform = (activeAccordionKey === k) ? 'rotate(0deg)' : 'rotate(-90deg)';
+                }
+            });
+        }
+
+        function renderSidebarAccordions() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    const isActive = (currentViewState === 'basic-viewer' && basicIndex === idx);
+                    return `
+                        <button onclick="jumpToLesson('basic', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white font-bold' : 'text-slate-700 hover:bg-blue-100/60'}">
+                            <span class="break-words flex-1">${lesson.title}</span>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
             }
+
+            const featuresContainer = document.getElementById('accordion-panel-adv-features');
+            const mobileContainer = document.getElementById('accordion-panel-adv-mobile');
+            const posContainer = document.getElementById('accordion-panel-adv-pos');
+
+            let featHTML = '', mobHTML = '', posHTML = '';
+
+            ADVANCED_LESSONS.forEach((lesson, idx) => {
+                const isViewed = viewedLessons.advanced.has(idx);
+                const isActive = (currentViewState === 'advanced-viewer' && advancedIndex === idx);
+                const itemHTML = `
+                    <button onclick="jumpToLesson('advanced', ${idx})" class="sidebar-item-btn w-full text-left p-2 rounded-lg text-xs font-semibold flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white font-bold' : 'text-slate-700 hover:bg-emerald-100/60'}">
+                        <span class="break-words flex-1">${lesson.title}</span>
+                        ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã xem"></i>` : ''}
+                    </button>
+                `;
+
+                if (lesson.category === 'feature') featHTML += itemHTML;
+                else if (lesson.category === 'mobile') mobHTML += itemHTML;
+                else if (lesson.category === 'pos') posHTML += itemHTML;
+            });
+
+            if (featuresContainer) {
+                featuresContainer.innerHTML = featHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-features').style.display = featHTML ? 'block' : 'none';
+            }
+            if (mobileContainer) {
+                mobileContainer.innerHTML = mobHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-mobile').style.display = mobHTML ? 'block' : 'none';
+            }
+            if (posContainer) {
+                posContainer.innerHTML = posHTML || '<p class="text-[11px] text-slate-400 italic p-1">Không có thao tác</p>';
+                document.getElementById('sidebar-subgroup-pos').style.display = posHTML ? 'block' : 'none';
+            }
+
+            updateAccordionDOM();
         }
 
         function navSelectTab(tab) {
+            currentStepTargetIdx = 0;
             ['guide', 'glossary', 'basic', 'advanced'].forEach(t => {
                 const view = document.getElementById(`view-${t}`);
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (view) view.classList.add('hidden');
-                if (btn) btn.className = 'sidebar-tab-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold cursor-pointer transition-all';
+                if (btn) {
+                    btn.classList.remove('active-guide', 'active-glossary', 'active-basic-tab', 'active-advanced-tab');
+                }
             });
 
             const activeView = document.getElementById(`view-${tab}`);
             const activeBtn = document.getElementById(`tab-btn-${tab}`);
             if (activeView) activeView.classList.remove('hidden');
-            if (activeBtn) activeBtn.classList.add(`active-${tab}`);
+            
+            if (activeBtn) {
+                if (tab === 'guide') activeBtn.classList.add('active-guide');
+                else if (tab === 'glossary') activeBtn.classList.add('active-glossary');
+                else if (tab === 'basic') activeBtn.classList.add('active-basic-tab');
+                else if (tab === 'advanced') activeBtn.classList.add('active-advanced-tab');
+            }
 
             if (tab === 'basic') {
                 currentViewState = 'basic-overview';
@@ -567,41 +868,51 @@
             } else {
                 currentViewState = tab;
             }
+            renderSidebarAccordions();
         }
 
         function jumpToLesson(scope, index) {
+            currentStepTargetIdx = 0;
+            viewedLessons[scope].add(index);
             navSelectTab(scope);
+            
             if (scope === 'basic') {
                 currentViewState = 'basic-viewer';
                 basicIndex = index;
+                activeAccordionKey = 'basic';
                 document.getElementById('overview-basic').classList.add('hidden');
                 document.getElementById('viewer-basic').classList.remove('hidden');
                 renderLesson('basic', basicIndex);
             } else {
                 currentViewState = 'advanced-viewer';
                 advancedIndex = index;
+                const cat = ADVANCED_LESSONS[index].category;
+                if (cat === 'feature') activeAccordionKey = 'adv-features';
+                else if (cat === 'mobile') activeAccordionKey = 'adv-mobile';
+                else if (cat === 'pos') activeAccordionKey = 'adv-pos';
+                
                 document.getElementById('overview-advanced').classList.add('hidden');
                 document.getElementById('viewer-advanced').classList.remove('hidden');
                 renderLesson('advanced', advancedIndex);
             }
+            renderSidebarAccordions();
+            renderOverviewLists();
         }
-
-        function startSectionContent(scope) { jumpToLesson(scope, 0); }
 
         function nextGlobal() {
             if (currentViewState === 'guide') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('basic'); }
-            else if (currentViewState === 'basic-overview') { startSectionContent('basic'); }
+            else if (currentViewState === 'basic-overview') { jumpToLesson('basic', 0); }
             else if (currentViewState === 'basic-viewer') {
                 if (basicIndex < BASIC_LESSONS.length - 1) {
-                    basicIndex++; renderLesson('basic', basicIndex);
+                    jumpToLesson('basic', basicIndex + 1);
                 } else {
                     document.getElementById('modal-basic-complete').classList.remove('hidden');
                 }
-            } else if (currentViewState === 'advanced-overview') { startSectionContent('advanced'); }
+            } else if (currentViewState === 'advanced-overview') { jumpToLesson('advanced', 0); }
             else if (currentViewState === 'advanced-viewer') {
                 if (advancedIndex < ADVANCED_LESSONS.length - 1) {
-                    advancedIndex++; renderLesson('advanced', advancedIndex);
+                    jumpToLesson('advanced', advancedIndex + 1);
                 } else {
                     document.getElementById('modal-advanced-complete').classList.remove('hidden');
                 }
@@ -610,21 +921,74 @@
 
         function prevGlobal() {
             if (currentViewState === 'advanced-viewer') {
-                if (advancedIndex > 0) { advancedIndex--; renderLesson('advanced', advancedIndex); }
+                if (advancedIndex > 0) { jumpToLesson('advanced', advancedIndex - 1); }
                 else { navSelectTab('advanced'); }
             } else if (currentViewState === 'advanced-overview') {
                 jumpToLesson('basic', BASIC_LESSONS.length - 1);
             } else if (currentViewState === 'basic-viewer') {
-                if (basicIndex > 0) { basicIndex--; renderLesson('basic', basicIndex); }
+                if (basicIndex > 0) { jumpToLesson('basic', basicIndex - 1); }
                 else { navSelectTab('basic'); }
             } else if (currentViewState === 'basic-overview') { navSelectTab('glossary'); }
             else if (currentViewState === 'glossary') { navSelectTab('guide'); }
         }
 
         window.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') { nextGlobal(); }
-            else if (e.key === 'ArrowLeft') { prevGlobal(); }
+            if (['guide', 'glossary', 'basic-viewer', 'advanced-viewer'].includes(currentViewState)) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateStepInLesson('next');
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateStepInLesson('prev');
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    navigateStepInLesson('top');
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    navigateStepInLesson('bottom');
+                }
+            }
         });
+
+        function navigateStepInLesson(direction) {
+            let container = null;
+            if (currentViewState === 'guide') {
+                container = document.querySelector('#view-guide .lesson-scroll-container');
+            } else if (currentViewState === 'glossary') {
+                container = document.querySelector('#view-glossary .lesson-scroll-container');
+            } else if (currentViewState === 'basic-viewer') {
+                container = document.querySelector('#viewer-basic .lesson-scroll-container');
+            } else if (currentViewState === 'advanced-viewer') {
+                container = document.querySelector('#viewer-advanced .lesson-scroll-container');
+            }
+
+            if (!container) return;
+
+            const targets = container.querySelectorAll('[data-step-target="true"]');
+            if (!targets.length) return;
+
+            if (direction === 'top') {
+                currentStepTargetIdx = 0;
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            if (direction === 'bottom') {
+                currentStepTargetIdx = targets.length - 1;
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                return;
+            }
+
+            if (direction === 'next') {
+                currentStepTargetIdx = Math.min(currentStepTargetIdx + 1, targets.length - 1);
+            } else if (direction === 'prev') {
+                currentStepTargetIdx = Math.max(currentStepTargetIdx - 1, 0);
+            }
+
+            const targetElement = targets[currentStepTargetIdx];
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
 
         function toggleFlashcard3D(sceneEl) {
             const cardEl = sceneEl.querySelector('.flashcard-3d-card');
@@ -651,6 +1015,7 @@
         }
 
         function renderLesson(scope, index) {
+            currentStepTargetIdx = 0;
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
             const lesson = lessons[index];
             const viewerId = scope === 'basic' ? 'viewer-basic' : 'viewer-advanced';
@@ -660,30 +1025,57 @@
             const nextTitle = index < lessons.length - 1 ? lessons[index + 1].title : null;
 
             viewer.innerHTML = `
-                <div class="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-7 space-y-6 max-w-4xl mx-auto">
-                    <div class="space-y-2 border-b border-slate-100 pb-4">
-                        <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
-                            ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
-                        </span>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-900">${lesson.title}</h2>
+                <!-- FLOAT ACTION BUTTONS ĐẶT Ở DƯỚI CÙNG BÊN PHẢI -->
+                <div class="absolute right-3.5 bottom-6 flex flex-col gap-2 z-40 select-none">
+                    <button onclick="navigateStepInLesson('next')" class="float-nav-btn w-9 h-9 rounded-full text-white flex items-center justify-center cursor-pointer shadow-md" style="background-color: ${scopeColor}" title="Xem bước sau (Phím Mũi tên Xuống)">
+                        <i class="fa-solid fa-arrow-down text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('prev')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xem bước trước (Phím Mũi tên Lên)">
+                        <i class="fa-solid fa-arrow-up text-xs font-black"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('bottom')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Xuống cuối trang (Phím End)">
+                        <i class="fa-solid fa-angles-down text-xs"></i>
+                    </button>
+                    <button onclick="navigateStepInLesson('top')" class="float-nav-btn w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 flex items-center justify-center cursor-pointer" title="Lên đầu trang (Phím Home)">
+                        <i class="fa-solid fa-angles-up text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- NỘI DUNG CHI TIẾT BÀI HỌC -->
+                <div class="lesson-scroll-container w-full h-full overflow-y-auto p-4 sm:p-6 pr-14 sm:pr-16 space-y-6 max-w-5xl mx-auto">
+                    
+                    <div data-step-target="true" class="space-y-2 border-b border-slate-100 pb-4 scroll-mt-4">
+                        <div class="flex items-center gap-2">
+                            <span class="px-3 py-1 text-[11px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                            </span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-base" title="Đang học"></i>
+                        </div>
+                        <h2 class="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
+                            <span>${lesson.title}</span>
+                        </h2>
                     </div>
 
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                        <p class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Tình huống thực tế:
-                        </p>
-                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${lesson.situation}</p>
+                    <!-- PHẦN TÌNH HUỐNG THỰC TẾ -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-xs space-y-2.5">
+                        <div class="flex items-center gap-2 text-amber-900">
+                            <div class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-8">${lesson.situation}</p>
                     </div>
 
-                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN ĐAN XEN UI -->
+                    <!-- 1️⃣ QUY TRÌNH THỰC HIỆN -->
                     <div class="space-y-5">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
                         <div class="space-y-5">
                             ${lesson.steps.map((step, sIdx) => `
-                                <div class="space-y-2.5">
+                                <div data-step-target="true" class="space-y-2.5 scroll-mt-4">
                                     <div class="flex items-start gap-3">
-                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5" style="background-color: ${scopeColor}">${sIdx + 1}</span>
-                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5">${step.text}</div>
+                                        <span class="w-6 h-6 rounded-full text-white text-xs font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-0.5 font-medium">${step.text}</div>
                                     </div>
                                     ${step.img ? `
                                         <div class="ml-9 rounded-2xl overflow-hidden border border-slate-200 shadow-xs bg-slate-100">
@@ -695,8 +1087,8 @@
                         </div>
                     </div>
 
-                    <!-- 2️⃣ FLASHCARD 3D TÌNH HUỐNG TƯ VẤN -->
-                    <div class="pt-4 border-t border-slate-200 space-y-3">
+                    <!-- 2️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                    <div data-step-target="true" class="pt-4 border-t border-slate-200 space-y-3 scroll-mt-4">
                         <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
                         <div class="flashcard-3d-scene mx-auto max-w-xl w-full aspect-[2/1] my-4 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
                             <div class="flashcard-3d-card">
@@ -731,7 +1123,7 @@
                     </div>
 
                     <!-- 3️⃣ KIỂM TRA NHANH KIẾN THỨC -->
-                    <div class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6">
+                    <div data-step-target="true" class="p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-xs space-y-3 mt-6 scroll-mt-4">
                         <div class="flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-2">
                             <i class="fa-solid fa-circle-question text-base" style="color: ${scopeColor}"></i>
                             <h4 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Kiểm tra nhanh kiến thức</h4>
@@ -768,21 +1160,31 @@
 
                 </div>
             `;
-            viewer.firstElementChild.scrollTop = 0;
+            viewer.querySelector('.lesson-scroll-container').scrollTop = 0;
         }
 
         function renderOverviewLists() {
             const basicList = document.getElementById('basic-overview-list');
             if (basicList && typeof BASIC_LESSONS !== 'undefined') {
-                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => `
-                    <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
-                        <div class="flex items-center gap-3 truncate">
-                            <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
-                            <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                basicList.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedLessons.basic.has(idx);
+                    return `
+                        <div onclick="jumpToLesson('basic', ${idx})" class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 hover:border-[#166def] hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-between group">
+                            <div class="flex items-center gap-3 truncate pr-2">
+                                <span class="w-6 h-6 rounded-full bg-[#166def] text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
+                                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-[#166def]">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
+                            </div>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-[#166def] hover:bg-[#1259c7] text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
-                        <i class="fa-solid fa-chevron-right text-xs text-[#166def] group-hover:translate-x-1 transition-transform shrink-0"></i>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
             if (typeof ADVANCED_LESSONS !== 'undefined') {
@@ -793,13 +1195,21 @@
                 let featureHTML = '', mobileHTML = '', posHTML = '';
 
                 ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedLessons.advanced.has(idx);
                     const itemHTML = `
                         <div onclick="jumpToLesson('advanced', ${idx})" class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer flex items-center justify-between group my-1.5">
-                            <div class="flex items-center gap-3 truncate">
+                            <div class="flex items-center gap-3 truncate pr-2">
                                 <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">${idx + 1}</span>
                                 <span class="text-xs sm:text-sm font-bold text-slate-800 truncate group-hover:text-emerald-800">${lesson.title}</span>
+                                ${isViewed ? `<i class="fa-solid fa-circle-check text-emerald-500 text-xs shrink-0" title="Đã học"></i>` : ''}
                             </div>
-                            <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            ${idx === 0 ? `
+                                <button class="shrink-0 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs flex items-center gap-1.5 btn-interact">
+                                    <span>Bắt đầu học</span> <i class="fa-solid fa-play text-[10px]"></i>
+                                </button>
+                            ` : `
+                                <i class="fa-solid fa-chevron-right text-xs text-emerald-600 group-hover:translate-x-1 transition-transform shrink-0"></i>
+                            `}
                         </div>
                     `;
 
@@ -835,13 +1245,6 @@
 
         function openLightbox(src) { document.getElementById('lightbox-img').src = src; document.getElementById('lightbox-modal').classList.remove('hidden'); }
         function closeLightbox() { document.getElementById('lightbox-modal').classList.add('hidden'); }
-
-        window.onload = function() {
-            renderGuideContent();
-            renderGlossary();
-            renderOverviewLists();
-            navSelectTab('guide');
-        };
     </script>
 </body>
 </html>
