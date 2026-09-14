@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KiotViet E-Learning - Gửi tin chăm sóc khách hàng (ZNS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* TỐI ƯU VIEWPORT ĐỘNG TƯƠNG THÍCH MỌI MÔI TRƯỜNG */
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* SAFE AREA PADDING: CHỈ ÁP DỤNG TRÊN MOBILE */
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR CHUẨN RESPONSIVE (42px) -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Cài đặt">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+
+            <span class="text-white/40 text-xs sm:text-sm font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Gửi tin chăm sóc khách hàng (ZNS)</h1>
+            </div>
+        </div>
+
+        <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-cyan-400 border border-cyan-400/40 uppercase tracking-wider">
+            Retail
+        </div>
+    </header>
+
+    <!-- KHUNG BODY -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <!-- LỚP BACKDROP MỜ TRÊN MOBILE -->
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR DRAWER CHO MOBILE & SIBLING CHO DESKTOP -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-64 sm:w-60 lg:w-64 bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM 2: KIẾN THỨC CƠ BẢN (TOÀN BỘ 10 THAO TÁC) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản (10)</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW TRUNG TÂM -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            
+            <!-- NÚT MŨI TÊN BÊN TRÁI -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- NÚT MŨI TÊN BÊN PHẢI -->
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- VÙNG HIỂN THỊ NỘI DUNG -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+                <!-- Rendered dynamically -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL CÀI ĐẶT -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-gear text-[#166def]"></i>
+                    <h3 class="text-sm font-black uppercase">Cài đặt giao diện &amp; học tập</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- TỶ LỆ THU PHÓNG -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tỷ lệ thu phóng (Zoom):</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                </div>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeSettingsModal()" class="w-full py-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs">
+                    Xác nhận &amp; Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH BÀI HỌC CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành toàn bộ nội dung của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Gửi tin chăm sóc khách hàng (ZNS)
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043214/ZNSR_120926-1.jpg" 
+                     alt="Infographic Gửi tin chăm sóc khách hàng (ZNS)" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        // ZERO-HALLUCINATION: Nguồn tài liệu không có video cụ thể -> null
+        const LESSON_VIDEO_ID = null;
+
+        // TẬP HỢP TOÀN BỘ 10 THAO TÁC VÀO DANH MỤC CƠ BẢN
+        const BASIC_LESSONS = [
+            {
+                title: "1. Kích hoạt tính năng",
+                situation: "Khi bạn muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bắt đầu tiếp cận</b> và sử dụng tính năng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">gửi tin nhắn ZNS</b> chăm sóc khách hàng trên phần mềm KiotViet.",
+                steps: [
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, chọn menu <b class=\"font-bold text-[#166def]\">Khách hàng</b> ➔ tại cột <b class=\"font-bold text-[#166def]\">Kênh tiếp cận</b> chọn <b class=\"font-bold text-[#166def]\">Gửi tin nhắn chăm sóc khách hàng</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043208/ZNSR_120926-2.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị màn hình Gửi tin nhắn Zalo tới khách hàng. Nhấn <b class=\"font-bold text-[#166def]\">Gửi thử tin</b> ➔ chọn mẫu tin nhắn bạn muốn xem thử để kiểm tra thực tế trên ứng dụng Zalo người nhận trước khi triển khai.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043202/ZNSR_120926-3.png"
+                    },
+                    {
+                        text: "Nhập số điện thoại Zalo của bạn vào ô tương ứng và nhấn <b class=\"font-bold text-[#166def]\">Gửi tin</b>. Sau khi hệ thống thông báo gửi thành công, nhấn <b class=\"font-bold text-[#166def]\">Đã hiểu</b> (Mỗi cửa hàng được KiotViet tài trợ 1 lượt gửi thử miễn phí).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043155/ZNSR_120926-4.png"
+                    },
+                    {
+                        text: "Nhấn <b class=\"font-bold text-[#166def]\">Bắt đầu ngay</b> để bắt đầu các bước thiết lập tài khoản gửi tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043149/ZNSR_120926-5.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Shop anh chưa từng gửi ZNS bao giờ, không biết tin nhắn tới máy khách nhìn ra sao, có bị lỗi hiển thị không em?",
+                    advice: "Dạ anh/chị hoàn toàn yên tâm ạ! KiotViet tặng ngay 1 lượt gửi thử miễn phí về chính số Zalo của anh/chị. Anh/chị bấm 'Gửi thử tin' là xem được chính xác giao diện thực tế trước khi gửi thật cho khách ạ!"
+                },
+                quiz: {
+                    question: "Mỗi cửa hàng KiotViet được tài trợ tối đa 1 lượt gửi thử tin nhắn ZNS miễn phí để trải nghiệm giao diện thực tế trên Zalo trước khi chạy chiến dịch.",
+                    answer: true,
+                    explanation: "KiotViet tài trợ 1 lượt gửi thử miễn phí về số điện thoại cá nhân của chủ gian hàng để đối soát giao diện hiển thị mà không bị trừ cước."
+                }
+            },
+            {
+                title: "2. Lựa chọn tài khoản Zalo gửi tin",
+                situation: "Bạn cần lựa chọn tài khoản gửi tin phù hợp: dùng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">OA MyKiot có sẵn</b> để gửi ngay không cần thủ tục hoặc kết nối <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Zalo OA của cửa hàng</b> để nhận diện thương hiệu.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 1 - Dùng tài khoản Zalo OA có sẵn 'MyKiot' (Khuyến nghị)</b>: Tại màn hình Chọn tài khoản Zalo để gửi tin nhắn, hệ thống mặc định chọn thẻ <b class=\"font-bold text-[#166def]\">MyKiot</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043141/ZNSR_120926-6.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị popup Thiết lập hoàn tất! Bạn nhấn <b class=\"font-bold text-[#166def]\">Tạo chiến dịch gửi tin</b> để bắt đầu ngay, hoặc đóng popup để về màn hình tổng quan.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043130/ZNSR_120926-8.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 2 - Dùng tài khoản Zalo OA của cửa hàng</b>: Chọn thẻ <b class=\"font-bold text-[#166def]\">Zalo OA của bạn</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Kết nối ngay</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043118/ZNSR_120926-10.png"
+                    },
+                    {
+                        text: "Đăng nhập tài khoản Zalo quản trị (bằng số điện thoại hoặc quét mã QR), chọn Zalo OA muốn kết nối, tích xác nhận điều khoản và chọn <b class=\"font-bold text-[#166def]\">Cấp quyền</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043100/ZNSR_120926-13.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị thông báo <b class=\"font-bold text-[#166def]\">Kết nối thành công</b> kèm thông tin OA ID. Bạn có thể bấm <b class=\"font-bold text-[#166def]\">Tạo chiến dịch gửi tin</b> ngay.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043048/ZNSR_120926-15.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng anh là hộ kinh doanh nhỏ, chưa đăng ký Zalo OA doanh nghiệp thì có gửi tin ZNS được không em?",
+                    advice: "Dạ hoàn toàn được anh/chị nhé! Anh/chị chọn ngay tài khoản 'MyKiot' có sẵn của KiotViet ạ. Không cần giấy phép kinh doanh, không thủ tục xác thực Zalo phức tạp, kích hoạt là gửi tin ưu đãi tới khách liền ạ!"
+                },
+                quiz: {
+                    question: "Cửa hàng bắt buộc phải sở hữu tài khoản Zalo OA đã xác thực của riêng mình thì mới có thể sử dụng tính năng gửi tin ZNS trên KiotViet.",
+                    answer: false,
+                    explanation: "KiotViet cung cấp sẵn tài khoản OA 'MyKiot', cho phép cửa hàng gửi tin ZNS ngay tức thì mà không yêu cầu phải có Zalo OA riêng."
+                }
+            },
+            {
+                title: "3. Nạp tiền vào số dư tin nhắn",
+                situation: "Khi bạn cần kiểm tra <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số dư gửi tin</b>, nạp thêm tiền để đảm bảo chiến dịch liên tục hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đối soát lịch sử trừ cước</b>.",
+                steps: [
+                    {
+                        text: "Tại màn hình Gửi tin nhắn chăm sóc khách hàng, kiểm tra <b class=\"font-bold text-[#166def]\">Số dư tin nhắn</b> ở góc trên bên phải (Đủ: trên 50.000đ; Sắp hết: 660đ - 50.000đ hiển thị banner cam; Không đủ: dưới 660đ hiển thị banner đỏ cảnh báo).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043030/ZNSR_120926-18.png"
+                    },
+                    {
+                        text: "Để nạp tiền, nhấn <b class=\"font-bold text-[#166def]\">+ Nạp tiền ngay</b> ➔ nhập số tiền cần nạp, lựa chọn hình thức Chuyển khoản hoặc thẻ ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục nạp tiền</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043025/ZNSR_120926-19.png"
+                    },
+                    {
+                        text: "Quét mã QR thanh toán bằng ứng dụng ngân hàng. Sau khi thanh toán thành công, chọn <b class=\"font-bold text-[#166def]\">Hoàn tất</b>. Khi nạp đủ tiền, các chiến dịch đang tạm dừng do hết số dư sẽ tự động gửi tiếp.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043013/ZNSR_120926-21.png"
+                    },
+                    {
+                        text: "Để đối chiếu chi tiết các giao dịch phát sinh cước gửi tin, nhấn <b class=\"font-bold text-[#166def]\">↺ Xem giao dịch</b> để chuyển đến màn hình Thanh toán trên ví KiotCash.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043007/ZNSR_120926-22.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Đang gửi tin cho 1.000 khách mà tài khoản bị hết tiền giữa chừng thì các tin còn lại có bị hủy luôn không em?",
+                    advice: "Dạ không bị hủy đâu ạ! Hệ thống sẽ tạm dừng chiến dịch ở trạng thái 'Tạm dừng — Hết số dư'. Ngay khi anh/chị nạp thêm tiền vào ví KiotCash, hệ thống sẽ tự động gửi tiếp cho các khách còn lại mà không cần bấm gì thêm ạ!"
+                },
+                quiz: {
+                    question: "Khi chiến dịch bị tạm dừng do hết số dư tin nhắn, nếu người dùng nạp đủ tiền thì hệ thống sẽ tự động tiếp tục gửi tin mà không cần thao tác thủ công.",
+                    answer: true,
+                    explanation: "KiotViet có cơ chế tự động khôi phục luồng gửi tin cho các chiến dịch tạm dừng vì thiếu số dư ngay khi tài khoản được nạp bổ sung."
+                }
+            },
+            {
+                title: "4. Tạo chiến dịch gửi tin",
+                situation: "Khi bạn muốn triển khai đợt gửi tin thông báo <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chương trình khuyến mại</b>, giảm giá hoặc quà tặng tới <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhóm khách hàng cụ thể</b>.",
+                steps: [
+                    {
+                        text: "Tại màn hình Gửi tin nhắn chăm sóc khách hàng, nhấn <b class=\"font-bold text-[#166def]\">+ Tạo chiến dịch</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042955/ZNSR_120926-24.png"
+                    },
+                    {
+                        text: "Bước 1 - Thông tin chung: Đặt <b class=\"font-bold text-[#166def]\">Tên chiến dịch</b> (tối đa 100 ký tự để quản lý nội bộ), giữ nguyên loại tin là Tin tức khuyến mại ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042949/ZNSR_120926-25.png"
+                    },
+                    {
+                        text: "Bước 2 - Thiết lập nội dung: Chọn <b class=\"font-bold text-[#166def]\">Hình thức khuyến mại</b> (Giảm giá HĐ, Giảm giá hàng hóa, Tặng quà), định dạng tin <b class=\"font-bold text-[#166def]\">Hình ảnh</b> hoặc <b class=\"font-bold text-[#166def]\">Logo</b>, điền thông tin và điều kiện áp dụng. Có thể bấm <b class=\"font-bold text-[#166def]\">Đổi mẫu</b> nếu cần ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042942/ZNSR_120926-26.png"
+                    },
+                    {
+                        text: "Bước 3 - Khách nhận & Thời điểm gửi: Tích chọn <b class=\"font-bold text-[#166def]\">Khách nhận tin</b> (Tất cả khách hàng hoặc nhóm khách cụ thể), thiết lập <b class=\"font-bold text-[#166def]\">Thời điểm gửi</b> (Gửi ngay hoặc Hẹn mốc cụ thể) ➔ nhấn <b class=\"font-bold text-[#166def]\">Tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042859/ZNSR_120926-33.png"
+                    },
+                    {
+                        text: "Bước 4 - Xác nhận: Kiểm tra thông tin tóm tắt và chi phí ước tính (bằng đơn giá x số người nhận) ➔ nhấn <b class=\"font-bold text-[#166def]\">Hoàn tất và kích hoạt</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042847/ZNSR_120926-35.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh muốn chèn link website mua hàng hoặc số hotline của shop vào nội dung tin nhắn ZNS khuyến mại có được không em?",
+                    advice: "Dạ theo quy định kiểm duyệt của Zalo, nội dung mẫu tin ZNS không được chèn link liên kết, số điện thoại hay biểu tượng cảm xúc (emoji) đâu ạ. Thông tin cửa hàng đã được định danh rõ ở tiêu đề tin nhắn rồi anh/chị nhé!"
+                },
+                quiz: {
+                    question: "Người dùng có thể chèn link website mua hàng trực tiếp và các biểu tượng cảm xúc (emoji) vào nội dung tin nhắn ZNS.",
+                    answer: false,
+                    explanation: "Nội dung ZNS chuẩn Zalo nghiêm cấm chèn liên kết (link), số điện thoại và ký tự biểu cảm emoji vào phần nhập liệu văn bản."
+                }
+            },
+            {
+                title: "5. Theo dõi và vận hành chiến dịch",
+                situation: "Khi bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kiểm tra tiến độ gửi tin</b>, tra cứu lịch sử chi tiết và thực hiện các thao tác <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tạm dừng, tiếp tục hoặc kết thúc</b> chiến dịch.",
+                steps: [
+                    {
+                        text: "Tại màn hình Gửi tin nhắn chăm sóc khách hàng, theo dõi bảng <b class=\"font-bold text-[#166def]\">Chiến dịch gửi tin</b> hiển thị phân trang 15 chiến dịch/trang, ưu tiên mới nhất (gồm các trạng thái: Đang chạy, Tạm dừng, Tạm dừng — Hết số dư, Tạm dừng — OA gián đoạn, Hoàn thành, Đã kết thúc).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042838/ZNSR_120926-36.png"
+                    },
+                    {
+                        text: "Sử dụng ô tìm kiếm theo tên chiến dịch hoặc <b class=\"font-bold text-[#166def]\">Bộ lọc</b> theo Trạng thái, Loại tin ➔ nhấn <b class=\"font-bold text-[#166def]\">Áp dụng</b> để tra cứu nhanh thông tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042833/ZNSR_120926-37.png"
+                    },
+                    {
+                        text: "Nhấn vào dòng chiến dịch để xem chi tiết: Tab <b class=\"font-bold text-[#166def]\">Thông tin</b> xem toàn bộ cấu hình thiết lập và bản xem trước; Tab <b class=\"font-bold text-[#166def]\">Lịch sử gửi tin</b> theo dõi 4 thẻ thống kê (Dự kiến, Thực tế, Thành công, Lỗi) cùng bảng chi tiết từng người nhận.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042827/ZNSR_120926-38.png"
+                    },
+                    {
+                        text: "Để can thiệp tiến độ gửi tin, nhấn vào nút chức năng tương ứng: <b class=\"font-bold text-[#166def]\">Tạm dừng</b>, <b class=\"font-bold text-[#166def]\">Tiếp tục</b> hoặc <b class=\"font-bold text-[#166def]\">Kết thúc</b> ➔ xác nhận hành động.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042815/ZNSR_120926-40.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chiến dịch gửi tin có hẹn giờ lúc 10h sáng, nhưng 11h trưa anh mới bấm 'Tiếp tục' chạy lại thì tin có bị gửi ồ ạt ngay lập tức không em?",
+                    advice: "Dạ không đâu ạ! Để bảo vệ trải nghiệm khách hàng và tránh làm phiền ngoài giờ mong muốn, hệ thống sẽ tự động dời lịch gửi sang đúng khung 10h sáng của ngày tiếp theo ạ!"
+                },
+                quiz: {
+                    question: "Khi một chiến dịch gửi tin đã chuyển sang trạng thái 'Đã kết thúc' hoặc 'Hoàn thành', người dùng có thể kích hoạt để chạy lại chiến dịch đó.",
+                    answer: false,
+                    explanation: "Trạng thái Hoàn thành hoặc Đã kết thúc là trạng thái đóng cuối cùng của vòng đời chiến dịch, hệ thống không cho phép kích hoạt chạy lại."
+                }
+            },
+            {
+                title: "6. Đặt tên cửa hàng hiển thị trên OA MyKiot",
+                situation: "Khi bạn gửi tin thông qua tài khoản OA MyKiot và muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cài đặt hoặc điều chỉnh tên thương hiệu</b> xuất hiện trong nội dung tin nhắn gửi tới khách hàng.",
+                steps: [
+                    {
+                        text: "Tại màn hình Gửi tin nhắn chăm sóc khách hàng, bạn nhấn vào tên cửa hàng hoặc <b class=\"font-bold text-[#166def]\">biểu tượng cây bút</b> bên cạnh tên.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042807/ZNSR_120926-41.png"
+                    },
+                    {
+                        text: "Nhập <b class=\"font-bold text-[#166def]\">Tên cửa hàng</b> mong muốn hiển thị (tối đa 40 ký tự và không hỗ trợ các biểu tượng cảm xúc emoji).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042801/ZNSR_120926-42.png"
+                    },
+                    {
+                        text: "Nhấn <b class=\"font-bold text-[#166def]\">Lưu</b> để hệ thống ghi nhận và áp dụng tên thương hiệu này vào nội dung tin nhắn ZNS gửi tới khách hàng.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Gửi qua OA MyKiot thì khách nhận tin có biết là tin nhắn của tiệm anh gửi hay tưởng là tin rác của bên khác em?",
+                    advice: "Dạ khách biết ngay thương hiệu của mình anh/chị nhé! Anh/chị chỉ cần bấm icon cây bút để đặt tên shop (tối đa 40 ký tự), tên cửa hàng sẽ hiện nổi bật ngay trong dòng mở đầu của tin nhắn Zalo gửi đến khách ạ!"
+                },
+                quiz: {
+                    question: "Tên cửa hàng hiển thị trên tin nhắn ZNS gửi qua OA MyKiot có thể tùy chỉnh tối đa 40 ký tự và không hỗ trợ chèn emoji.",
+                    answer: true,
+                    explanation: "Tên cửa hàng được giới hạn 40 ký tự thuần văn bản theo đúng tiêu chuẩn duyệt tin của Zalo OA."
+                }
+            },
+            {
+                title: "7. Quy tắc tính phí và hoàn tiền gửi tin",
+                situation: "Bạn cần nắm rõ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">cơ chế trừ tiền theo thời gian thực</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chính sách hoàn tiền tự động</b> khi gửi tin ZNS thất bại.",
+                steps: [
+                    {
+                        text: "Cước phí được khấu trừ theo từng tin nhắn ngay tại thời điểm tin được gửi đi. Mỗi tin nhắn thành công tương ứng với một giao dịch <b class=\"font-bold text-[#166def]\">Chi tiêu ZNS</b> trong ví KiotCash.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042755/ZNSR_120926-43.png"
+                    },
+                    {
+                        text: "Đối với các tin nhắn gửi đi thất bại (do lỗi mạng hoặc hệ thống), KiotViet sẽ <b class=\"font-bold text-[#166def]\">hoàn lại tiền cước ngay lập tức</b> vào số dư ví của cửa hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042749/ZNSR_120926-44.png"
+                    },
+                    {
+                        text: "Đơn giá áp dụng: 660đ/tin (định dạng Hình ảnh) và 330đ/tin (định dạng Logo, đã bao gồm VAT). Mỗi khách hàng trong tệp chỉ bị trừ cước tối đa một lần trong suốt chiến dịch. Khách hàng không có số điện thoại hoặc đã xóa khỏi nhóm sẽ tự động được lọc bỏ, không bị trừ tiền.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Nếu gửi tin ZNS mà số điện thoại khách bị lỗi hoặc tin gửi không thành công thì shop có bị mất tiền oan không em?",
+                    advice: "Dạ anh/chị hoàn toàn yên tâm ạ! KiotViet có cơ chế hoàn tiền tức thì: Bất kỳ tin nhắn nào gửi thất bại, hệ thống sẽ tự động hoàn 100% tiền cước về ví KiotCash ngay lập tức ạ!"
+                },
+                quiz: {
+                    question: "Hệ thống KiotViet sẽ tự động hoàn lại tiền cước ngay lập tức vào ví KiotCash đối với các tin nhắn ZNS gửi đi thất bại.",
+                    answer: true,
+                    explanation: "Cơ chế hoàn tiền tự động đảm bảo cửa hàng chỉ chi trả cước phí cho các tin nhắn được phân phối thành công tới khách hàng."
+                }
+            },
+            {
+                title: "8. Tải và kiểm duyệt logo cho Zalo OA của cửa hàng",
+                situation: "Bạn sử dụng Zalo OA của cửa hàng và cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đưa logo thương hiệu lên tin nhắn</b> nhằm <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tiết kiệm 50% chi phí gửi tin</b> (chỉ 330đ/tin).",
+                steps: [
+                    {
+                        text: "Tại màn hình Gửi tin nhắn chăm sóc khách hàng, bạn nhấn <b class=\"font-bold text-[#166def]\">Tải logo</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042743/ZNSR_120926-45.png"
+                    },
+                    {
+                        text: "Đọc kỹ các hướng dẫn quy chuẩn về kích thước và tỷ lệ logo theo quy định của Zalo ➔ nhấn <b class=\"font-bold text-[#166def]\">Đã hiểu và tiếp tục</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042737/ZNSR_120926-46.png"
+                    },
+                    {
+                        text: "Tải lên hai tệp hình ảnh logo dành cho <b class=\"font-bold text-[#166def]\">Giao diện sáng</b> và <b class=\"font-bold text-[#166def]\">Giao diện tối</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Xác nhận</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042731/ZNSR_120926-47.png"
+                    },
+                    {
+                        text: "Tiếp tục chọn <b class=\"font-bold text-[#166def]\">Xác nhận</b> để gửi hình ảnh sang Zalo xét duyệt (chỉ chọn được định dạng Logo với giá 330đ/tin khi trạng thái hiển thị là Đã duyệt).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042725/ZNSR_120926-48.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Shop gửi hàng chục ngàn tin ZNS mỗi tháng, có cách nào giảm chi phí gửi tin từ 660đ xuống thấp hơn không em?",
+                    advice: "Dạ có giải pháp tuyệt vời luôn ạ! Anh/chị kết nối Zalo OA riêng của shop rồi tải logo lên duyệt định dạng Logo nhé. Chi phí giảm ngay 50% chỉ còn 330đ/tin, tiết kiệm hàng triệu đồng mỗi tháng luôn ạ!"
+                },
+                quiz: {
+                    question: "Định dạng tin nhắn Logo với đơn giá ưu đãi 330đ/tin có thể sử dụng được ngay khi người dùng vừa tải ảnh logo lên hệ thống.",
+                    answer: false,
+                    explanation: "Người dùng chỉ có thể chọn định dạng gửi Logo sau khi logo đã được Zalo xét duyệt thành công và hiển thị trạng thái 'Đã duyệt'."
+                }
+            },
+            {
+                title: "9. Xử lý lỗi kết nối Zalo OA cửa hàng",
+                situation: "Khi bạn thực hiện thao tác liên kết Zalo OA của cửa hàng nhưng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hệ thống trả về thông báo lỗi</b> khiến <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kết nối bị gián đoạn</b>.",
+                steps: [
+                    {
+                        text: "Kiểm tra nội dung thông báo lỗi xuất hiện trên màn hình kết nối để nhận diện nguyên nhân cụ thể.",
+                        img: null
+                    },
+                    {
+                        text: "Nếu lỗi <b class=\"font-bold text-[#166def]\">Tài khoản Zalo OA chưa xác thực</b>: Hoàn tất xác thực doanh nghiệp trên trang Zalo (từ 5–7 ngày làm việc) hoặc nhấn chọn <b class=\"font-bold text-[#166def]\">Dùng MyKiot có sẵn</b> để gửi tin ngay lập tức.",
+                        img: null
+                    },
+                    {
+                        text: "Nếu thông báo <b class=\"font-bold text-[#166def]\">Bạn cần nâng cấp gói dịch vụ OA</b>: Mua hoặc gia hạn gói dịch vụ trên nền tảng Zalo, hoặc chọn chuyển sang dùng OA MyKiot.",
+                        img: null
+                    },
+                    {
+                        text: "Nếu gặp <b class=\"font-bold text-[#166def]\">Lỗi hệ thống</b> hoặc <b class=\"font-bold text-[#166def]\">Phiên làm việc đã hết hạn</b>: Nhấn <b class=\"font-bold text-[#166def]\">Kết nối lại</b> để thực hiện lại thao tác đăng nhập và cấp quyền quản trị.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Shop đang vội gửi tin khuyến mại cuối tuần mà kết nối Zalo OA riêng cứ báo lỗi chưa xác thực thì làm sao kịp em?",
+                    advice: "Dạ anh/chị đừng lo gián đoạn đơn hàng ạ! Anh/chị chỉ cần bấm chọn 'Dùng MyKiot có sẵn' là kích hoạt gửi tin được ngay tức thì, trong lúc chờ Zalo xét duyệt OA riêng của cửa hàng sau ạ!"
+                },
+                quiz: {
+                    question: "Khi Zalo OA riêng của cửa hàng gặp lỗi chưa xác thực hoặc hết hạn phiên kết nối, người dùng có thể chọn dùng ngay OA MyKiot có sẵn để tránh gián đoạn chiến dịch.",
+                    answer: true,
+                    explanation: "Tùy chọn OA 'MyKiot' đóng vai trò là phương án dự phòng tức thì, giúp cửa hàng không bị lỡ kế hoạch gửi tin chăm sóc khách hàng."
+                }
+            },
+            {
+                title: "10. Xử lý khi Zalo OA cửa hàng hết hạn gói dịch vụ",
+                situation: "Tài khoản Zalo OA của cửa hàng bị <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hết hạn gói cước bên Zalo</b> dẫn đến các chiến dịch gửi tin đang chạy bị <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tạm ngưng đột ngột</b>.",
+                steps: [
+                    {
+                        text: "Hệ thống KiotViet hiển thị thông báo cảnh báo và tạm ngưng các chiến dịch đang chạy do OA hết hạn gói cước.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042719/ZNSR_120926-49.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hướng 1 - Gia hạn tài khoản OA bên Zalo</b>: Nhấn vào <b class=\"font-bold text-[#166def]\">Chi tiết gói dịch vụ</b> để chuyển sang trang quản lý Zalo và gia hạn. Sau khi hoàn tất, các chiến dịch đang tạm dừng sẽ tự động gửi tiếp.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042713/ZNSR_120926-50.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hướng 2 - Chuyển sang OA MyKiot</b>: Chọn <b class=\"font-bold text-[#166def]\">Đổi sang OA \"MyKiot\" có sẵn</b> trên hệ thống để khôi phục việc gửi tin ngay lập tức mà không cần chờ gia hạn gói Zalo của cửa hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12042707/ZNSR_120926-51.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "OA của cửa hàng vừa hết hạn gói Zalo hôm nay, chiến dịch đang chạy bị tạm dừng thì xử lý nhanh thế nào em?",
+                    advice: "Dạ anh/chị có 2 cách siêu linh hoạt ạ: Hoặc bấm 'Chi tiết gói dịch vụ' để nạp gia hạn bên Zalo (hệ thống tự chạy lại), hoặc bấm 'Đổi sang OA MyKiot có sẵn' để tiếp tục gửi tin ngay tắp lự ạ!"
+                },
+                quiz: {
+                    question: "Khi Zalo OA của cửa hàng hết hạn gói dịch vụ, người dùng bắt buộc phải gia hạn xong gói dịch vụ bên Zalo mới có thể tiếp tục gửi tin trên KiotViet.",
+                    answer: false,
+                    explanation: "Cửa hàng có thể chọn nút 'Đổi sang OA MyKiot có sẵn' để chuyển luồng gửi tin tức thì qua tài khoản MyKiot mà không cần chờ gia hạn gói Zalo riêng."
+                }
+            }
+        ];
+
+        let currentPage = 'intro-infographic';
+        let currentZoom = 80;
+        let isSidebarCollapsed = false;
+        let viewedPages = new Set(['intro-infographic']);
+        let userAnswers = {};
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function getLinearNavigationList() {
+            let list = [
+                { id: 'intro-infographic', title: 'Infographic' },
+                { id: 'intro-overview', title: 'Lợi ích nổi bật' }
+            ];
+
+            if (LESSON_VIDEO_ID) {
+                list.push({ id: 'intro-video', title: 'Video hướng dẫn' });
+            }
+
+            list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
+
+            BASIC_LESSONS.forEach((l, idx) => {
+                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+            });
+
+            return list;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setAppZoom(80);
+            renderSidebar();
+            navGoToPage('intro-infographic');
+        });
+
+        function setAppZoom(val) {
+            currentZoom = val;
+            const fontMap = {
+                70: '11.5px',
+                80: '13px',
+                90: '14.5px',
+                100: '16px'
+            };
+            document.documentElement.style.fontSize = fontMap[val] || '13px';
+            document.getElementById('zoom-label').innerText = val + '%';
+            
+            document.querySelectorAll('.zoom-btn').forEach(b => {
+                if (parseInt(b.getAttribute('data-zoom')) === val) {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer';
+                } else {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
+                }
+            });
+        }
+
+        function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+
+            if (isMobile()) {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                    icon.className = 'fa-solid fa-xmark text-xs';
+                }
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.style.width = '0px';
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.style.opacity = '0';
+                    icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+                } else {
+                    sidebar.style.width = '';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.opacity = '1';
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+        }
+
+        function renderSidebar() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedPages.has(`basic-${idx}`);
+                    const isActive = (currentPage === `basic-${idx}`);
+                    return `
+                        <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            const introSubButtons = ['intro-infographic', 'intro-overview', 'intro-glossary'];
+            if (LESSON_VIDEO_ID) introSubButtons.splice(2, 0, 'intro-video');
+
+            introSubButtons.forEach(id => {
+                const el = document.getElementById(`subbtn-${id}`);
+                if (el) {
+                    if (currentPage === id) {
+                        el.classList.add('active-sub');
+                    } else {
+                        el.classList.remove('active-sub');
+                    }
+                }
+            });
+        }
+
+        function updateSideNavButtons() {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            const prevBtn = document.getElementById('nav-btn-prev');
+            const nextBtn = document.getElementById('nav-btn-next');
+            if (!prevBtn || !nextBtn) return;
+
+            if (curIdx <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navGoToPage(pageId) {
+            currentPage = pageId;
+            viewedPages.add(pageId);
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            
+            if (isMobile()) {
+                const sidebar = document.getElementById('app-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+
+            const container = document.getElementById('dynamic-content-view');
+            if (container) container.scrollTop = 0;
+        }
+
+        function navStepLinear(direction) {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            if (curIdx === -1) return;
+
+            if (direction === 'next') {
+                if (curIdx === list.length - 1) {
+                    document.getElementById('modal-basic-complete').classList.remove('hidden');
+                    return;
+                }
+                const nextItem = list[curIdx + 1];
+                navGoToPage(nextItem.id);
+            } else if (direction === 'prev') {
+                if (curIdx > 0) {
+                    const prevItem = list[curIdx - 1];
+                    navGoToPage(prevItem.id);
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            closeModal('modal-basic-complete');
+            navGoToPage('intro-infographic');
+        }
+
+        // RENDER GIAO DIỆN NỘI DUNG
+        function renderCurrentPageView() {
+            const container = document.getElementById('dynamic-content-view');
+            if (!container) return;
+
+            // TRANG 1: INFOGRAPHIC
+            if (currentPage === 'intro-infographic') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/12043214/ZNSR_120926-1.jpg" 
+                                 alt="Infographic Gửi tin chăm sóc khách hàng (ZNS)" 
+                                 class="w-full h-full object-contain select-none">
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 2: LỢI ÍCH NỔI BẬT
+            if (currentPage === 'intro-overview') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Gửi tin chăm sóc khách hàng (ZNS)</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Tính năng Gửi tin chăm sóc khách hàng (ZNS) cho phép bạn chủ động gửi tin nhắn Zalo (ZNS) tới nhóm khách hàng đã lưu trên KiotViet để thông báo các chương trình khuyến mại nhanh chóng, hiệu quả. Tin nhắn có thể được gửi thông qua OA "MyKiot" (OA có sẵn của KiotViet) hoặc thông qua Zalo OA của chính cửa hàng. Cước phí của mỗi tin nhắn sẽ được trừ trực tiếp từ số dư tin nhắn trên hệ thống.
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-comments"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Tỷ lệ mở tin vượt trội</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tiếp cận trực tiếp khách hàng mục tiêu qua kênh Zalo cá nhân với thông báo nổi bật và mức độ tương tác cao.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Khởi chạy tức thì</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Linh hoạt gửi qua OA "MyKiot" có sẵn (không cần làm thủ tục xét duyệt) hoặc gửi qua Zalo OA riêng của cửa hàng.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Chi phí minh bạch</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Quy trình gửi tin tự động hóa, theo dõi trạng thái chi tiết theo từng người nhận và tự động hoàn tiền nếu gửi lỗi.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Điều kiện sử dụng tính năng:
+                            </h4>
+                            <ul class="text-xs text-amber-950 space-y-0.5 list-disc pl-5 font-medium leading-relaxed">
+                                <li>Tài khoản KiotViet của cửa hàng đang trong trạng thái hoạt động bình thường.</li>
+                                <li>Đã có nhóm khách hàng lưu số điện thoại hợp lệ trên hệ thống KiotViet.</li>
+                                <li>Đã nạp đủ tiền vào số dư tin nhắn (thông qua ví KiotCash).</li>
+                                <li>Nếu dùng Zalo OA của cửa hàng: Cần tài khoản Zalo OA đã xác thực thành công và còn hạn gói dịch vụ Zalo (nếu chưa đủ điều kiện, có thể chuyển sang dùng OA "MyKiot" có sẵn).</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 3: THUẬT NGỮ NỀN TẢNG
+            if (currentPage === 'intro-glossary') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-base"></i>
+                                <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng Gửi tin ZNS.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Tin nhắn ZNS (Zalo Notification Service)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Dịch vụ tin nhắn thông báo chăm sóc khách hàng chính thức từ Zalo Official Account gửi trực tiếp đến số điện thoại tài khoản Zalo cá nhân của khách hàng.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Tài khoản OA "MyKiot"</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Zalo Official Account tích hợp sẵn của KiotViet, cho phép các cửa hàng kích hoạt và gửi tin tức khuyến mại ngay mà không cần sở hữu giấy phép kinh doanh hay làm thủ tục xác thực Zalo phức tạp.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Zalo OA của cửa hàng</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tài khoản Zalo Official Account riêng của cửa hàng đã được Zalo xét duyệt xác thực doanh nghiệp, hiển thị trực tiếp thương hiệu riêng và hỗ trợ gửi tin định dạng Logo.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Số dư tin nhắn &amp; Ví KiotCash</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tài khoản thanh toán trả trước trên hệ thống KiotViet dùng để thanh toán cước phí gửi tin ZNS tự động theo thời gian thực và nhận tiền hoàn khi có lỗi gửi tin.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Định dạng tin (Hình ảnh vs Logo)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Hai định dạng mẫu tin ZNS: Định dạng Hình ảnh (gửi kèm banner ảnh minh họa ưu đãi, cước 660đ/tin) và Định dạng Logo (gửi kèm logo thương hiệu thu nhỏ, cước ưu đãi 330đ/tin sau khi duyệt logo).</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG BÀI HỌC CƠ BẢN (1 -> 10)
+            if (currentPage.startsWith('basic-')) {
+                const index = parseInt(currentPage.split('-')[1]);
+                const lesson = BASIC_LESSONS[index];
+                const isLastLesson = (index === BASIC_LESSONS.length - 1);
+
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                        <!-- TIÊU ĐỀ BÀI HỌC -->
+                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider bg-[#166def]">
+                                    Kiến thức cơ bản - Thao tác ${index + 1}/${BASIC_LESSONS.length}
+                                </span>
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <span>${lesson.title}</span>
+                            </h2>
+                        </div>
+
+                        <!-- TÌNH HUỐNG THỰC TẾ -->
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                            <div class="flex items-center gap-2 text-amber-900">
+                                <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                            </div>
+                            <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                        </div>
+
+                        <!-- QUY TRÌNH THỰC HIỆN -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                            <div class="space-y-3">
+                                ${lesson.steps.map((step, sIdx) => `
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs bg-[#166def]">${sIdx + 1}</span>
+                                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                        </div>
+                                        ${step.img ? `
+                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                                <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                                <div class="flashcard-3d-card">
+                                    <!-- MẶT TRƯỚC -->
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                        </div>
+                                    </div>
+
+                                    <!-- MẶT SAU -->
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                                <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap text-[#166def]">
+                                        <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                    </span>
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                        Đúng / Sai
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                    <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                    <div id="quiz-feedback-${index}" class="hidden w-full mt-2 text-left"></div>
+                                </div>
+
+                                <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                    <button onclick="checkQuiz(${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                        ✓ ĐÚNG
+                                    </button>
+                                    <button onclick="checkQuiz(${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                        ✕ SAI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH BÀI HỌC (Ở BÀI CUỐI CÙNG SỐ 10) -->
+                        ${isLastLesson ? `
+                            <div class="pt-5 sm:pt-6">
+                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-trophy text-amber-300"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành toàn bộ bài học!</h4>
+                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong 10 nội dung của tính năng. Chạm vào đây để xem tổng kết.</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }
+        }
+
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
+        }
+
+        function checkQuiz(index, choice) {
+            const lesson = BASIC_LESSONS[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`basic_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+            const feedbackEl = document.getElementById(`quiz-feedback-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                `;
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
