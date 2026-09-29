@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KiotViet E-Learning - Trợ lý KiCi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* TỐI ƯU VIEWPORT ĐỘNG TƯƠNG THÍCH MỌI MÔI TRƯỜNG */
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* SAFE AREA PADDING CHO THIẾT BỊ DI ĐỘNG */
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR CHUẨN RESPONSIVE (42px) -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Cài đặt">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+
+            <span class="text-white/40 text-xs sm:text-sm font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Trợ lý KiCi</h1>
+            </div>
+        </div>
+
+        <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-cyan-400 border border-cyan-400/40 uppercase tracking-wider">
+            Retail
+        </div>
+    </header>
+
+    <!-- KHUNG BODY -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <!-- LỚP BACKDROP MỜ TRÊN MOBILE -->
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR DRAWER CHO MOBILE & SIBLING CHO DESKTOP -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-64 sm:w-60 lg:w-64 bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN - TỰ ĐỘNG LƯỢC BỎ VIDEO THEO NGUYÊN TẮC ZERO-HALLUCINATION) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM 2: KIẾN THỨC CƠ BẢN (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+                <!-- CỤM 3: KIẾN THỨC NÂNG CAO (KHI MỞ KHÓA) -->
+                <div id="sidebar-advanced-cluster" class="hidden p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                    </div>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Tính năng nâng cao</span>
+                                <i id="icon-adv-features" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-features" class="space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile" class="hidden">
+                            <button onclick="toggleAdvChildGroup('mobile')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Điện thoại</span>
+                                <i id="icon-adv-mobile" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-mobile" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos" class="hidden">
+                            <button onclick="toggleAdvChildGroup('pos')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Máy POS</span>
+                                <i id="icon-adv-pos" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-pos" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW TRUNG TÂM -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            
+            <!-- NÚT MŨI TÊN BÊN TRÁI -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- NÚT MŨI TÊN BÊN PHẢI -->
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- VÙNG HIỂN THỊ NỘI DUNG -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+                <!-- Nội dung được render tự động -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL CÀI ĐẶT -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-gear text-[#166def]"></i>
+                    <h3 class="text-sm font-black uppercase">Cài đặt giao diện &amp; học tập</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- TỶ LỆ THU PHÓNG -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tỷ lệ thu phóng (Zoom):</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                </div>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+            </div>
+
+            <!-- MỞ KHÓA NÂNG CAO -->
+            <div class="pt-3 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed font-medium">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeSettingsModal()" class="w-full py-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs">
+                    Xác nhận &amp; Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH BÀI HỌC CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Trợ lý KiCi
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022502/TLKCR_240926-1.jpg" 
+                     alt="Infographic Trợ lý KiCi" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH TOÀN BỘ KHÓA HỌC (NÂNG CAO) -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl border-2 border-emerald-600">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">Tuyệt vời! Bạn đã hoàn thành tất cả các thao tác cơ bản và nâng cao của tính năng Trợ lý KiCi.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer">
+                    Học lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        // NGUYÊN TẮC ZERO-HALLUCINATION: BÀI GỐC KHÔNG CÓ LINK VIDEO CỤ THỂ -> ĐẶT NULL ĐỂ TỰ ĐỘNG BỎ QUA
+        const LESSON_VIDEO_ID = null;
+
+        const BASIC_LESSONS = [
+            {
+                title: "Mở và làm quen với Trợ lý KiCi",
+                situation: "Bạn muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tìm hiểu phạm vi hỗ trợ</b> và bắt đầu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tương tác với trợ lý ảo KiCi</b> trực tiếp trên màn hình Quản lý.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b> ➔ trên thanh menu đầu trang ➔ bạn nhấn nút <b class=\"font-bold text-[#166def]\">Trợ lý KiCi</b> ➔ khung chat trượt vào từ bên phải màn hình, hiển thị <b class=\"font-bold text-[#166def]\">KiCi xin chào!</b> cùng các gợi ý nhanh mặc định.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022457/TLKCR_240926-2.png"
+                    },
+                    {
+                        text: "Bạn nhấn vào gợi ý <b class=\"font-bold text-[#166def]\">Xem trợ lý AI có thể hỗ trợ những gì?</b> để KiCi bắt đầu phân loại chi tiết các nhóm nghiệp vụ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022451/TLKCR_240926-3.png"
+                    },
+                    {
+                        text: "KiCi liệt kê toàn bộ các tác vụ có thể hỗ trợ (tra cứu số liệu, hướng dẫn tính năng, chẩn đoán lỗi...).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022444/TLKCR_240926-4.png"
+                    },
+                    {
+                        text: "Để trở lại màn hình <b class=\"font-bold text-[#166def]\">KiCi xin chào!</b> ban đầu, bạn nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Cuộc hội thoại mới</b> (hình cây bút) ở góc trên bên phải khung chat.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022439/TLKCR_240926-5.png"
+                    },
+                    {
+                        text: "Để đóng khung chat, bạn có thể: Nhấn dấu <b class=\"font-bold text-[#166def]\">X</b> ở góc trên bên phải, nhấn nút <b class=\"font-bold text-[#166def]\">Trợ lý KiCi</b> trên thanh menu, nhấp chuột ra ngoài vùng khung chat, hoặc nhấn phím <b class=\"font-bold text-[#166def]\">Esc</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022434/TLKCR_240926-6.png"
+                    },
+                    {
+                        text: "Nếu đã đóng khung chat, bạn nhấn nút <b class=\"font-bold text-[#166def]\">Trợ lý KiCi</b> ngay trên thanh menu đầu trang để mở lại bất kỳ lúc nào.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022429/TLKCR_240926-7.png"
+                    },
+                    {
+                        text: "Bạn có thể rê chuột vào <b class=\"font-bold text-[#166def]\">cạnh trái khung chat</b> và kéo sang trái để mở rộng kích thước hiển thị theo nhu cầu đọc số liệu.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022423/TLKCR_240926-8.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chị bận bán hàng lu bu quá, làm sao mở trợ lý ảo KiCi để hỏi nhanh mà không bị che mất màn hình tính tiền?",
+                    advice: "Dạ chị chỉ cần bấm nút 'Trợ lý KiCi' trên thanh menu là khung chat trượt ra ngay ạ. Chị có thể kéo mép trái để co giãn hoặc bấm phím Esc đóng lại tức thì, giao diện quản lý bên dưới vẫn thao tác hoàn toàn bình thường ạ!"
+                },
+                quiz: {
+                    question: "Bạn có thể đóng khung chat Trợ lý KiCi nhanh chóng bằng cách nhấn phím Esc trên bàn phím hoặc nhấp chuột ra ngoài vùng khung chat.",
+                    answer: true,
+                    explanation: "Hệ thống hỗ trợ đóng khung chat linh hoạt qua phím Esc, nhấp chuột ra ngoài vùng chat, bấm dấu X hoặc bấm lại nút Trợ lý KiCi trên thanh menu."
+                }
+            },
+            {
+                title: "Câu hỏi kinh doanh",
+                situation: "Khi bạn cần nắm nhanh <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số liệu kinh doanh</b> thuộc 5 mảng: <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Bán hàng, Chi phí &amp; Lợi nhuận, Hàng hóa, Tồn kho, Khách hàng &amp; Công nợ</b> mà không cần mở từng báo cáo chi tiết.",
+                steps: [
+                    {
+                        text: "Mở <b class=\"font-bold text-[#166def]\">Trợ lý KiCi</b> ➔ chọn câu gợi ý có sẵn hoặc nhập trực tiếp câu hỏi bằng ngôn ngữ tự nhiên vào ô chat ở cuối màn hình rồi nhấn <b class=\"font-bold text-[#166def]\">mũi tên gửi</b> (hoặc nhấn <b class=\"font-bold text-[#166def]\">Enter</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022413/TLKCR_240926-10.png"
+                    },
+                    {
+                        text: "Xem phản hồi của KiCi. Cấu trúc câu trả lời chuẩn gồm: <b class=\"font-bold text-[#166def]\">Câu mở đầu</b> (kèm mốc thời gian), <b class=\"font-bold text-[#166def]\">Số liệu chính</b> (in đậm kèm tỷ lệ tăng/giảm), <b class=\"font-bold text-[#166def]\">Biểu đồ/bảng số liệu trực quan</b>, <b class=\"font-bold text-[#166def]\">Phân tích nguyên nhân</b>, <b class=\"font-bold text-[#166def]\">Gợi ý hành động thực tế</b> và câu hỏi đào sâu tiếp theo.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022407/TLKCR_240926-11.png"
+                    },
+                    {
+                        text: "Nhấn vào câu gợi ý bên dưới hoặc tiếp tục nhập câu hỏi mới để khai thác sâu hơn (Ví dụ: sau khi xem doanh thu tháng này, bạn gõ tiếp <b class=\"font-bold text-[#166def]\">\"còn tháng trước?\"</b>, KiCi sẽ tự liên kết ngữ cảnh trước đó để phản hồi).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022402/TLKCR_240926-12.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh muốn biết hôm nay bán được bao nhiêu, nhóm hàng nào kéo doanh thu thì hỏi KiCi thế nào cho tiện?",
+                    advice: "Dạ anh chỉ cần gõ tự nhiên 'Doanh thu hôm nay thế nào?' vào ô chat ạ. KiCi sẽ báo ngay tổng tiền, vẽ biểu đồ so sánh với hôm qua và liệt kê top mặt hàng bán chạy nhất cho anh xem trong 2 giây ạ!"
+                },
+                quiz: {
+                    question: "Nếu câu hỏi kinh doanh không nêu rõ mốc thời gian cụ thể, KiCi sẽ mặc định tổng hợp dữ liệu trong 30 ngày gần nhất.",
+                    answer: true,
+                    explanation: "Khi người dùng không chỉ định thời gian cụ thể trong câu hỏi, KiCi tự động lấy chu kỳ mặc định là 30 ngày gần nhất để tổng hợp số liệu."
+                }
+            },
+            {
+                title: "Hướng dẫn sử dụng phần mềm",
+                situation: "Khi bạn chưa rõ thao tác, muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tìm vị trí chức năng</b>, cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">các bước thiết lập nghiệp vụ</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">xử lý tình huống vướng mắc</b> phát sinh trong quá trình sử dụng KiotViet.",
+                steps: [
+                    {
+                        text: "Mở <b class=\"font-bold text-[#166def]\">Trợ lý KiCi</b> ➔ chọn câu gợi ý có sẵn hoặc nhập tác vụ bạn cần thực hiện vào ô chat (Ví dụ: <b class=\"font-bold text-[#166def]\">Cách tạo cửa hàng trên zalo</b>) ➔ nhấn nút gửi (hoặc nhấn <b class=\"font-bold text-[#166def]\">Enter</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022353/TLKCR_240926-14.png"
+                    },
+                    {
+                        text: "Thực hiện lần lượt theo các bước hướng dẫn cụ thể của KiCi (chỉ rõ <b class=\"font-bold text-[#166def]\">đường dẫn menu</b> và <b class=\"font-bold text-[#166def]\">nút thao tác</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022348/TLKCR_240926-15.png"
+                    },
+                    {
+                        text: "Nếu giao diện thực tế khác với mô tả, nhấn câu gợi ý bên dưới hoặc mô tả lại điểm vướng mắc để KiCi điều chỉnh hướng dẫn.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Nhân viên mới vào chưa biết cách xuất file kiểm kho, gọi tổng đài thì máy bận, giờ xử lý sao em?",
+                    advice: "Dạ chị bảo bạn mở ngay KiCi gõ 'Cách xuất file kiểm kho' ạ! KiCi sẽ chỉ dẫn từng bước từ menu nào đến nút bấm nào, thao tác được ngay tại chỗ mà không cần chờ tổng đài viên ạ!"
+                },
+                quiz: {
+                    question: "Trợ lý KiCi có thể tự ý thay đổi dữ liệu gian hàng như tạo hóa đơn bán lẻ, sửa đơn nhập hàng hoặc xóa công nợ theo yêu cầu của bạn qua chat.",
+                    answer: false,
+                    explanation: "KiCi tuyệt đối không tự ý thay đổi dữ liệu (không tạo đơn, không sửa/xóa dữ liệu, không nhập hàng, không thu nợ). Bạn luôn là người trực tiếp thực hiện thao tác trên màn hình phần mềm."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Quản lý cuộc hội thoại",
+                situation: "Khi bạn muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">mở cuộc trò chuyện mới</b> theo từng chủ đề riêng biệt, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tra cứu lại số liệu phiên trước</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">xóa các cuộc hội thoại</b> không còn nhu cầu lưu trữ.",
+                steps: [
+                    {
+                        text: "Tại khung chat ➔ nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Menu ba gạch</b> ở góc trên bên trái.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022337/TLKCR_240926-17.png"
+                    },
+                    {
+                        text: "Để bắt đầu chủ đề mới ➔ nhấn <b class=\"font-bold text-[#166def]\">Cuộc hội thoại mới</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022331/TLKCR_240926-18.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị Lịch sử hội thoại tối đa trong <b class=\"font-bold text-[#166def]\">90 ngày</b>. Bạn có thể nhập từ khóa tìm kiếm và nhấn vào cuộc hội thoại cần mở lại để KiCi tiếp tục duy trì đúng mạch trao đổi trước đó.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022326/TLKCR_240926-19.png"
+                    },
+                    {
+                        text: "Để xóa hội thoại: Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">dấu ba chấm (...)</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Xóa hội thoại</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022321/TLKCR_240926-20.png"
+                    },
+                    {
+                        text: "Xác nhận <b class=\"font-bold text-[#166def]\">Xóa</b>. Cuộc hội thoại đã xóa sẽ không thể phục hồi.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022316/TLKCR_240926-21.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh tra cứu doanh thu hôm qua rồi, giờ muốn hỏi tiếp về hàng tồn kho mà không muốn số liệu bị lẫn lộn thì làm sao?",
+                    advice: "Dạ anh bấm vào menu ba gạch rồi chọn 'Cuộc hội thoại mới' ạ. Mỗi chủ đề tạo một phiên chat riêng sẽ giúp KiCi phản hồi chính xác 100% ngữ cảnh mà không bị chồng chéo số liệu cũ ạ!"
+                },
+                quiz: {
+                    question: "Lịch sử trò chuyện và hình ảnh tải lên trên Trợ lý KiCi được hệ thống lưu trữ tối đa trong thời hạn 90 ngày.",
+                    answer: true,
+                    explanation: "Toàn bộ lịch sử trò chuyện được lưu trữ trong 90 ngày, gắn liền với tài khoản đăng nhập và không thể khôi phục sau khi xóa."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Câu hỏi kèm ảnh chụp màn hình",
+                situation: "Khi gặp <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thông báo lỗi</b> hoặc phát sinh <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tình huống phức tạp khó diễn đạt bằng lời</b>, bạn muốn gửi ảnh chụp màn hình để KiCi nhận diện, chẩn đoán nguyên nhân và hướng dẫn xử lý.",
+                steps: [
+                    {
+                        text: "Tại ô nhập tin nhắn ở cuối khung chat, bạn nhấn <b class=\"font-bold text-[#166def]\">dấu cộng (+)</b> ➔ <b class=\"font-bold text-[#166def]\">Thêm hình ảnh</b> để tải ảnh từ máy tính hoặc dán trực tiếp (<b class=\"font-bold text-[#166def]\">Ctrl + V</b>) ảnh chụp màn hình vào ô nhập.",
+                        img: null
+                    },
+                    {
+                        text: "Nhập nội dung câu hỏi hoặc mô tả vướng mắc đi kèm với ảnh ➔ nhấn mũi tên gửi (hoặc nhấn <b class=\"font-bold text-[#166def]\">Enter</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022307/TLKCR_240926-23.png"
+                    },
+                    {
+                        text: "Thực hiện theo chỉ dẫn xử lý từ KiCi. Nếu sự cố bắt nguồn từ lỗi hệ thống, KiCi sẽ gợi ý nút chức năng để bạn kết nối trực tiếp với chuyên viên hỗ trợ.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Màn hình bán hàng hiện bảng thông báo lỗi màu đỏ lạ hoắc, anh không biết gõ chữ giải thích thế nào cho KiCi hiểu?",
+                    advice: "Dạ anh chỉ cần chụp màn hình rồi bấm Ctrl + V dán thẳng vào ô chat của KiCi kèm dòng chữ 'Lỗi này sửa sao em'. KiCi sẽ quét hình ảnh, chẩn đoán nguyên nhân và hướng dẫn anh khắc phục ngay ạ!"
+                },
+                quiz: {
+                    question: "Khi gửi ảnh chụp màn hình cho KiCi, bạn có thể gửi ảnh trắng mà không cần nhập bất kỳ nội dung văn bản nào đi kèm.",
+                    answer: false,
+                    explanation: "Mỗi lượt gửi đính kèm tối đa 01 ảnh (định dạng JPG, PNG, WebP, dung lượng tối đa 20MB) và bắt buộc phải có nội dung văn bản gửi kèm."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Tùy biến truy vấn số liệu kinh doanh",
+                situation: "Khi bạn muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bóc tách số liệu chuyên sâu</b> theo từng chi nhánh, nhân viên, mặt hàng cụ thể; <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phân tích mối quan hệ đa mảng</b> hoặc yêu cầu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">định dạng hiển thị trực quan</b> theo ý muốn.",
+                steps: [
+                    {
+                        text: "Để truy vấn theo đối tượng cụ thể, nhập kèm tên đối tượng vào câu hỏi (Ví dụ: <b class=\"font-bold text-[#166def]\">\"Chi nhánh trung tâm tháng này lãi bao nhiêu?\"</b>, <b class=\"font-bold text-[#166def]\">\"Phân tích sản phẩm túi tote\"</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022302/TLKCR_240926-24.png"
+                    },
+                    {
+                        text: "Để truy vấn liên kết nhiều mảng, lồng ghép các nội dung cần đối chiếu vào câu hỏi (Ví dụ: <b class=\"font-bold text-[#166def]\">\"Giá vốn tháng này tăng do nhóm hàng nào?\"</b>) ➔ KiCi sẽ tự động trích xuất đồng thời Bán hàng, Chi phí và Hàng hóa để trả lời logic theo nguyên nhân - kết quả.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022257/TLKCR_240926-25.png"
+                    },
+                    {
+                        text: "Để thay đổi cách trình bày số liệu, nhập trực tiếp yêu cầu định dạng vào ô chat (Ví dụ: <b class=\"font-bold text-[#166def]\">\"Vẽ biểu đồ cột\"</b>, <b class=\"font-bold text-[#166def]\">\"Kẻ bảng số liệu\"</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022251/TLKCR_240926-26.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chị muốn xem so sánh doanh thu của 3 chi nhánh dạng bảng kẻ ô cho dễ nhìn vào báo cáo, KiCi có làm được không?",
+                    advice: "Dạ được chứ chị! Chị chỉ cần gõ: 'So sánh doanh thu 3 chi nhánh tuần này, kẻ dạng bảng số liệu nhé'. KiCi sẽ tổng hợp và kẻ sẵn bảng đối chiếu chi tiết cực kỳ rõ ràng cho chị ạ!"
+                },
+                quiz: {
+                    question: "Bạn có thể yêu cầu KiCi thay đổi cách trình bày số liệu kinh doanh sang dạng biểu đồ cột hoặc kẻ bảng số liệu trực quan ngay trong khung chat.",
+                    answer: true,
+                    explanation: "KiCi hỗ trợ tùy biến định dạng trực quan (vẽ biểu đồ cột, kẻ bảng số liệu) theo câu lệnh yêu cầu của người dùng."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Hỏi cách làm cho nền tảng khác",
+                situation: "Khi bạn đang thao tác trên Web KiotViet nhưng muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tra cứu quy trình thực hiện nghiệp vụ</b> trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ứng dụng điện thoại</b> hoặc trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">máy POS bán hàng</b>.",
+                steps: [
+                    {
+                        text: "Nêu rõ tên nền tảng mục tiêu ngay trong câu hỏi (Ví dụ: <b class=\"font-bold text-[#166def]\">\"Trên app\"</b>, <b class=\"font-bold text-[#166def]\">\"Trên điện thoại\"</b>, <b class=\"font-bold text-[#166def]\">\"Trên máy POS\"</b>, <b class=\"font-bold text-[#166def]\">\"Trên máy tính tiền\"</b>).",
+                        img: null
+                    },
+                    {
+                        text: "KiCi sẽ nhận diện ngữ cảnh và hướng dẫn chi tiết từng bước theo đúng nền tảng ứng dụng KiotViet trên điện thoại hoặc máy bán hàng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022246/TLKCR_240926-27.png"
+                    },
+                    {
+                        text: "Sau khi chuyển đổi, KiCi sẽ duy trì hướng dẫn theo nền tảng đó cho các câu hỏi tiếp theo cho đến khi bạn yêu cầu đổi sang nền tảng khác.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh ngồi máy tính nhưng đang cần chỉ cho bạn thu ngân ngoài quầy thao tác trên máy POS cảm ứng thì hỏi sao em?",
+                    advice: "Dạ anh chỉ cần thêm từ khóa 'trên máy POS' vào câu hỏi, ví dụ: 'Cách hủy hóa đơn trên máy POS'. KiCi sẽ chuyển hướng dẫn chi tiết đúng giao diện máy POS cho anh chỉ bạn làm liền ạ!"
+                },
+                quiz: {
+                    question: "Mặc định KiCi hướng dẫn theo nền tảng Web, nhưng bạn có thể yêu cầu hướng dẫn trên App điện thoại hoặc máy POS bằng cách thêm từ khóa chỉ định nền tảng vào câu hỏi.",
+                    answer: true,
+                    explanation: "KiCi nhận diện các từ khóa chỉ định nền tảng trong câu hỏi để tự động chuyển đổi tài liệu hướng dẫn tương ứng."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Đổi ngôn ngữ trả lời",
+                situation: "Khi bạn muốn KiCi <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phân tích số liệu</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hướng dẫn thao tác bằng tiếng Anh</b> hoặc một <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">ngôn ngữ khác</b> phù hợp với nhu cầu quản trị.",
+                steps: [
+                    {
+                        text: "Mặc định KiCi hiển thị theo cài đặt ngôn ngữ của tài khoản bạn đang đăng nhập, bao gồm danh sách câu gợi ý lúc mới mở.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022239/TLKCR_240926-28.png"
+                    },
+                    {
+                        text: "Trực tiếp nhập câu hỏi bằng ngôn ngữ bạn muốn giao tiếp vào khung chat.",
+                        img: null
+                    },
+                    {
+                        text: "KiCi tự động phát hiện ngôn ngữ và phản hồi hoàn toàn bằng ngôn ngữ đó. Các danh từ riêng trong hệ thống dữ liệu (<b class=\"font-bold text-[#166def]\">tên chi nhánh, tên mặt hàng, tên nhân viên...</b>) luôn được bảo lưu nguyên gốc, không tự động dịch.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022233/TLKCR_240926-29.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Cửa hàng anh có quản lý người nước ngoài chỉ đọc được tiếng Anh, KiCi có hỗ trợ giải đáp bằng tiếng Anh không?",
+                    advice: "Dạ có anh nhé! Người quản lý chỉ cần gõ câu hỏi bằng tiếng Anh vào ô chat, KiCi sẽ tự động nhận diện và phân tích toàn bộ số liệu bằng tiếng Anh chuyên nghiệp, các tên sản phẩm tiếng Việt vẫn được giữ nguyên ạ!"
+                },
+                quiz: {
+                    question: "Khi đổi ngôn ngữ trả lời sang tiếng Anh, KiCi sẽ tự động dịch toàn bộ tên riêng của hàng hóa, chi nhánh và tên nhân viên sang tiếng Anh.",
+                    answer: false,
+                    explanation: "Các danh từ riêng trong hệ thống dữ liệu (tên chi nhánh, tên mặt hàng, tên nhân viên...) luôn được bảo lưu nguyên gốc, không tự động dịch để đảm bảo tính chính xác."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Nhiệm vụ đặt lịch",
+                situation: "Khi bạn muốn KiCi <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tự động tổng hợp dữ liệu</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">gửi báo cáo kinh doanh</b> định kỳ hàng ngày, hàng tuần hoặc hàng tháng theo các chỉ số quan trọng (doanh thu, đơn hàng, lợi nhuận, hàng sắp hết...).",
+                steps: [
+                    {
+                        text: "Nhận thông báo nhiệm vụ ngay tại màn hình bắt đầu của KiCi (Ví dụ: <b class=\"font-bold text-[#166def]\">\"Báo cáo doanh thu đã sẵn sàng\"</b>).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022228/TLKCR_240926-30.png"
+                    },
+                    {
+                        text: "Bạn nhấn vào thông báo cụ thể trong danh sách để KiCi khởi tạo phiên hội thoại riêng và hiển thị báo cáo chi tiết kèm biểu đồ trực quan, phân tích đánh giá.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022222/TLKCR_240926-31.png"
+                    },
+                    {
+                        text: "Tại khung chat ➔ nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Menu ba gạch</b> ở góc trên bên trái.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022213/TLKCR_240926-33.png"
+                    },
+                    {
+                        text: "Tại khu vực <b class=\"font-bold text-[#166def]\">Nhiệm vụ đặt lịch</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Xem tất cả</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022208/TLKCR_240926-34.png"
+                    },
+                    {
+                        text: "Trên từng nhiệm vụ, nhấn biểu tượng 3 chấm ➔ chọn <b class=\"font-bold text-[#166def]\">Điều chỉnh</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022202/TLKCR_240926-35.png"
+                    },
+                    {
+                        text: "Thiết lập lịch gửi gồm: <b class=\"font-bold text-[#166def]\">Lặp lại</b> (Hàng ngày/Hàng tuần/Hàng tháng), <b class=\"font-bold text-[#166def]\">Ngày</b> và <b class=\"font-bold text-[#166def]\">Giờ chạy</b>. Nhấn <b class=\"font-bold text-[#166def]\">Lưu lịch gửi</b> để hoàn tất (nhiệm vụ chuyển sang trạng thái Đang chạy).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022157/TLKCR_240926-36.png"
+                    },
+                    {
+                        text: "Để tắt nhiệm vụ khi không muốn nhận thông báo: Nhấn 3 chấm ➔ chọn <b class=\"font-bold text-[#166def]\">Tắt nhiệm vụ</b> ➔ xác nhận <b class=\"font-bold text-[#166def]\">Tắt nhiệm vụ</b> (bật lại tương tự khi có nhu cầu).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022151/TLKCR_240926-37.png"
+                    },
+                    {
+                        text: "Hệ thống xác nhận trạng thái tắt nhiệm vụ thành công.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022146/TLKCR_240926-38.png"
+                    },
+                    {
+                        text: "Giao diện danh sách nhiệm vụ sau khi điều chỉnh trạng thái hoạt động.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022141/TLKCR_240926-39.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Mỗi sáng mở mắt ra anh đều phải vào xem doanh thu ngày hôm qua, có cách nào KiCi tự gom sẵn gửi thông báo cho anh không?",
+                    advice: "Dạ anh dùng tính năng 'Nhiệm vụ đặt lịch' nhé! Anh cài đặt báo cáo Doanh thu gửi lúc 8h sáng hàng ngày, KiCi sẽ tự động tổng hợp số liệu ngày hôm trước, anh chỉ cần bấm xem là có đủ biểu đồ và phân tích chi tiết ạ!"
+                },
+                quiz: {
+                    question: "Hệ thống KiCi chỉ thực sự chạy số liệu và khởi tạo báo cáo khi bạn chủ động nhấn xem thông báo nhiệm vụ.",
+                    answer: true,
+                    explanation: "Báo cáo chỉ thực sự khởi tạo khi bạn chủ động xem thông tin; các lần xem lại tiếp theo giữ nguyên không chạy lại số liệu."
+                }
+            }
+        ];
+
+        let currentPage = 'intro-infographic';
+        let currentZoom = 80;
+        let isAdvancedUnlocked = false;
+        let isSidebarCollapsed = false;
+        let viewedPages = new Set(['intro-infographic']);
+        let userAnswers = {};
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function getLinearNavigationList() {
+            let list = [
+                { id: 'intro-infographic', title: 'Infographic' },
+                { id: 'intro-overview', title: 'Lợi ích nổi bật' }
+            ];
+
+            // NGUYÊN TẮC ZERO-HALLUCINATION: CHỈ THÊM TRANG VIDEO NẾU CÓ LINK HỢP LỆ
+            if (LESSON_VIDEO_ID) {
+                list.push({ id: 'intro-video', title: 'Video hướng dẫn' });
+            }
+
+            list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
+
+            BASIC_LESSONS.forEach((l, idx) => {
+                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+            });
+
+            if (isAdvancedUnlocked) {
+                ADVANCED_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `advanced-${idx}`, title: l.title, scope: 'advanced', index: idx });
+                });
+            }
+            return list;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setAppZoom(80);
+            renderSidebar();
+            navGoToPage('intro-infographic');
+        });
+
+        function setAppZoom(val) {
+            currentZoom = val;
+            const fontMap = {
+                70: '11.5px',
+                80: '13px',
+                90: '14.5px',
+                100: '16px'
+            };
+            document.documentElement.style.fontSize = fontMap[val] || '13px';
+            document.getElementById('zoom-label').innerText = val + '%';
+            
+            document.querySelectorAll('.zoom-btn').forEach(b => {
+                if (parseInt(b.getAttribute('data-zoom')) === val) {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer';
+                } else {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
+                }
+            });
+        }
+
+        function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+        function handleAdvancedToggle(checked) {
+            isAdvancedUnlocked = checked;
+            const clusterEl = document.getElementById('sidebar-advanced-cluster');
+
+            if (checked) {
+                clusterEl.classList.remove('hidden');
+            } else {
+                clusterEl.classList.add('hidden');
+                if (currentPage.startsWith('advanced-')) {
+                    navGoToPage('basic-0');
+                }
+            }
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+        }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+
+            if (isMobile()) {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                    icon.className = 'fa-solid fa-xmark text-xs';
+                }
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.style.width = '0px';
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.style.opacity = '0';
+                    icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+                } else {
+                    sidebar.style.width = '';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.opacity = '1';
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+        }
+
+        function toggleAdvChildGroup(sub) {
+            const p = document.getElementById(`panel-adv-${sub}`);
+            const icon = document.getElementById(`icon-adv-${sub}`);
+            if (!p || !icon) return;
+            p.classList.toggle('hidden');
+            icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
+
+        function renderSidebar() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedPages.has(`basic-${idx}`);
+                    const isActive = (currentPage === `basic-${idx}`);
+                    return `
+                        <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            if (isAdvancedUnlocked) {
+                const fPanel = document.getElementById('panel-adv-features');
+                const mPanel = document.getElementById('panel-adv-mobile');
+                const pPanel = document.getElementById('panel-adv-pos');
+
+                let fHTML = '', mHTML = '', pHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedPages.has(`advanced-${idx}`);
+                    const isActive = (currentPage === `advanced-${idx}`);
+                    const btnHTML = `
+                        <button onclick="navGoToPage('advanced-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white' : 'text-slate-700 hover:bg-emerald-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-emerald-600'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                    if (lesson.category === 'feature') fHTML += btnHTML;
+                    else if (lesson.category === 'mobile') mHTML += btnHTML;
+                    else if (lesson.category === 'pos') pHTML += btnHTML;
+                });
+
+                if (fPanel) fPanel.innerHTML = fHTML;
+                if (mPanel) mPanel.innerHTML = mHTML;
+                if (pPanel) pPanel.innerHTML = pHTML;
+
+                const mSub = document.getElementById('sidebar-subgroup-mobile');
+                const pSub = document.getElementById('sidebar-subgroup-pos');
+                if (mSub) mSub.style.display = mHTML ? 'block' : 'none';
+                if (pSub) pSub.style.display = pHTML ? 'block' : 'none';
+            }
+
+            ['intro-infographic', 'intro-overview', 'intro-glossary'].forEach(id => {
+                const el = document.getElementById(`subbtn-${id}`);
+                if (el) {
+                    if (currentPage === id) {
+                        el.classList.add('active-sub');
+                    } else {
+                        el.classList.remove('active-sub');
+                    }
+                }
+            });
+        }
+
+        function updateSideNavButtons() {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            const prevBtn = document.getElementById('nav-btn-prev');
+            const nextBtn = document.getElementById('nav-btn-next');
+            if (!prevBtn || !nextBtn) return;
+
+            if (curIdx <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navGoToPage(pageId) {
+            currentPage = pageId;
+            viewedPages.add(pageId);
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            
+            if (isMobile()) {
+                const sidebar = document.getElementById('app-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+
+            const container = document.getElementById('dynamic-content-view');
+            if (container) container.scrollTop = 0;
+        }
+
+        function navStepLinear(direction) {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            if (curIdx === -1) return;
+
+            if (direction === 'next') {
+                if (curIdx === list.length - 1) {
+                    if (!isAdvancedUnlocked) {
+                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                    }
+                    return;
+                }
+                const nextItem = list[curIdx + 1];
+                navGoToPage(nextItem.id);
+            } else if (direction === 'prev') {
+                if (curIdx > 0) {
+                    const prevItem = list[curIdx - 1];
+                    navGoToPage(prevItem.id);
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            closeModal('modal-basic-complete');
+            closeModal('modal-advanced-complete');
+            navGoToPage('intro-infographic');
+        }
+
+        // RENDER GIAO DIỆN CHÍNH
+        function renderCurrentPageView() {
+            const container = document.getElementById('dynamic-content-view');
+            if (!container) return;
+
+            // TRANG 1: INFOGRAPHIC (16:9 RESPONSIVE FULL-FRAME)
+            if (currentPage === 'intro-infographic') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/09/24022502/TLKCR_240926-1.jpg" 
+                                 alt="Infographic Trợ lý KiCi" 
+                                 class="w-full h-full object-contain select-none">
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 2: LỢI ÍCH NỔI BẬT
+            if (currentPage === 'intro-overview') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Trợ lý KiCi</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Trợ lý KiCi là trợ lý trí tuệ nhân tạo (AI) được tích hợp trực tiếp trên KiotViet, hỗ trợ bạn tra cứu số liệu kinh doanh và giải đáp nghiệp vụ tức thì bằng ngôn ngữ tự nhiên như nhắn tin thông thường mà không cần tìm kiếm thủ công qua nhiều màn hình báo cáo.
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-bolt"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Tra cứu số liệu tức thì</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Cung cấp số liệu kinh doanh theo câu hỏi tự nhiên, loại bỏ thao tác lọc kỳ, chọn chi nhánh hay tìm báo cáo phức tạp.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Phân tích &amp; gợi ý hành động</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tự động trực quan hóa bằng biểu đồ, chỉ rõ nguyên nhân biến động (mặt hàng kéo số, chi nhánh sụt giảm...) và đề xuất giải pháp tiếp theo.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Hướng dẫn thao tác tại chỗ</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Chỉ dẫn từng bước sử dụng tính năng ngay trong ca làm việc, bám sát đúng nền tảng bạn đang dùng mà không cần chờ đợi tổng đài viên.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-stethoscope"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Sàng lọc &amp; chẩn đoán sự cố</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Hỗ trợ nhận diện nhanh nguyên nhân lỗi (do thao tác, phân quyền, dữ liệu hay sự cố hệ thống) để đưa ra hướng xử lý phù hợp.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1.5">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Lưu ý quan trọng về quyền hạn &amp; bảo mật:
+                            </h4>
+                            <ul class="text-xs text-amber-950 space-y-1 list-disc pl-5 font-medium leading-relaxed">
+                                <li><strong>Quyền riêng tư hội thoại:</strong> Lịch sử trò chuyện gắn liền với từng tài khoản đăng nhập. Thành viên khác trong cửa hàng không thể tra cứu, xem hay xóa hội thoại của bạn.</li>
+                                <li><strong>Quyền hạn hệ thống:</strong> KiCi <strong class="text-amber-900">không tự ý thay đổi dữ liệu</strong> (không tạo đơn, không sửa/xóa dữ liệu, không nhập hàng, không thu nợ, không tạo khuyến mại). Bạn luôn là người trực tiếp thực hiện thao tác.</li>
+                                <li><strong>Phạm vi dữ liệu:</strong> KiCi chỉ làm việc trên dữ liệu nội bộ của cửa hàng bạn; không truy cập dữ liệu gian hàng khác và không so sánh với đối thủ cạnh tranh cụ thể.</li>
+                                <li><strong>Thời hạn lưu trữ:</strong> Lịch sử trò chuyện và hình ảnh tải lên được lưu trữ trong <strong class="text-amber-900">90 ngày</strong>. Hội thoại đã xóa sẽ mất vĩnh viễn.</li>
+                                <li><strong>Bảo mật thông tin:</strong> Tuyệt đối không nhập mật khẩu, mã OTP hoặc thông tin thẻ vào khung chat; KiCi không bao giờ yêu cầu các dữ liệu này.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 3: THUẬT NGỮ NỀN TẢNG
+            if (currentPage === 'intro-glossary') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-base"></i>
+                                <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng Trợ lý KiCi.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Trợ lý AI KiCi</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Trợ lý trí tuệ nhân tạo đàm thoại chuyên biệt cho nhà bán hàng trên KiotViet, cho phép truy vấn số liệu kinh doanh và hướng dẫn nghiệp vụ bằng tiếng Việt tự nhiên.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Truy vấn ngôn ngữ tự nhiên</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Khả năng hiểu và xử lý các câu hỏi thông thường của chủ shop (ví dụ: "Doanh thu hôm nay", "Mặt hàng nào bán chạy nhất") mà không cần thao tác lọc báo cáo thủ công qua nhiều bước.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Nhiệm vụ đặt lịch</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tính năng tự động tổng hợp số liệu định kỳ (hàng ngày, hàng tuần, hàng tháng) và chủ động gửi thông báo báo cáo đến chủ cửa hàng vào khung giờ cố định đã cài đặt.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Phân tích nguyên nhân - kết quả</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Khả năng liên kết chéo dữ liệu giữa Bán hàng, Chi phí và Hàng hóa để chỉ ra nguồn gốc cụ thể của biến động doanh thu hoặc lợi nhuận của cửa hàng.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Bảo lưu danh từ riêng</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Cơ chế giữ nguyên bản tên cửa hàng, tên chi nhánh, tên mặt hàng và tên nhân viên khi chuyển đổi ngôn ngữ phản hồi sang tiếng Anh hoặc các ngôn ngữ khác.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // CHI TIẾT BÀI HỌC CƠ BẢN HOẶC NÂNG CAO
+            let scope = '';
+            let index = 0;
+            if (currentPage.startsWith('basic-')) {
+                scope = 'basic';
+                index = parseInt(currentPage.split('-')[1]);
+            } else if (currentPage.startsWith('advanced-')) {
+                scope = 'advanced';
+                index = parseInt(currentPage.split('-')[1]);
+            }
+
+            if (scope) {
+                const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                const lesson = lessons[index];
+                const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
+                const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
+
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                        <!-- TIÊU ĐỀ BÀI HỌC -->
+                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                    ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                                </span>
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <span>${lesson.title}</span>
+                            </h2>
+                        </div>
+
+                        <!-- TÌNH HUỐNG THỰC TẾ -->
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                            <div class="flex items-center gap-2 text-amber-900">
+                                <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                            </div>
+                            <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                        </div>
+
+                        <!-- QUY TRÌNH THỰC HIỆN -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                            <div class="space-y-3">
+                                ${lesson.steps.map((step, sIdx) => `
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                        </div>
+                                        ${step.img ? `
+                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                                <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG (FLASHCARD 3D TỶ LỆ 4:3) -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                                <div class="flashcard-3d-card">
+                                    <!-- MẶT TRƯỚC -->
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                        </div>
+                                    </div>
+
+                                    <!-- MẶT SAU -->
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC (QUIZ TỶ LỆ 4:3) -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                                <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
+                                        <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                    </span>
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                        Đúng / Sai
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                    <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                    <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                                </div>
+
+                                <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                    <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                        ✓ ĐÚNG
+                                    </button>
+                                    <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                        ✕ SAI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH (BÀI CƠ BẢN CUỐI CÙNG) -->
+                        ${isLastBasicLesson ? `
+                            <div class="pt-5 sm:pt-6">
+                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-trophy text-amber-300"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
+                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }
+        }
+
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
+        }
+
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                `;
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
