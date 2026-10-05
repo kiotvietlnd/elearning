@@ -525,16 +525,14 @@
             </section>
 
             <!-- ========================================================
-                 SLIDE 3: TRA CỨU HỌC LIỆU (TEMPLATE 2 CỘT CHUẨN: 1/3 TRÁI & 2/3 PHẢI)
-                 - TRÁI (1/3): TÌM KIẾM, NÚT TẤT CẢ BÀI HỌC & THÔNG TIN BÀI HỌC
-                 - PHẢI (2/3): INFOGRAPHIC TO RÕ Ở TRÊN + 3 NÚT TÁC VỤ BẰNG NHAU Ở DƯỚI
+                 SLIDE 3: TRA CỨU HỌC LIỆU
             ======================================================== -->
             <section id="slide-3" class="slide-deck-item">
                 <div class="bg-white p-4 sm:p-7 rounded-2xl border border-slate-300 shadow-xs flex-1 flex flex-col justify-between gap-4">
                     
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start flex-1">
                         
-                        <!-- Cột Trái 1/3 (4 Cột): Search & Thông tin chi tiết bài học -->
+                        <!-- Cột Trái 1/3: Search & Thông tin chi tiết bài học -->
                         <div class="lg:col-span-4 flex flex-col justify-between h-full gap-3.5">
                             
                             <!-- Search Bar & Nút xem toàn bộ -->
@@ -572,9 +570,9 @@
 
                         </div>
 
-                        <!-- Cột Phải 2/3 (8 Cột): Infographic Ở Trên + 3 NÚT BẰNG NHAU Ở DƯỚI -->
+                        <!-- Cột Phải 2/3: Infographic Ở Trên + 3 NÚT BẰNG NHAU Ở DƯỚI -->
                         <div class="lg:col-span-8 flex flex-col justify-between h-full gap-3">
-                            <!-- Khung ảnh Infographic to rõ sắc nét -->
+                            <!-- Khung ảnh Infographic -->
                             <div id="resultContainer" class="w-full flex-1 flex items-center justify-center min-h-[320px]">
                                 <div class="bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-400 text-xs w-full">
                                     <i class="fa-solid fa-circle-notch fa-spin text-sm mb-1.5 block text-blue-600"></i>
@@ -582,7 +580,7 @@
                                 </div>
                             </div>
 
-                            <!-- 3 BUTTON NỔI BẬT, TO RÕ RÀNG, KÍCH THƯỚC BẰNG NHAU ĐẶT DƯỚI INFOGRAPHIC -->
+                            <!-- 3 BUTTON TÁC VỤ DƯỚI INFOGRAPHIC -->
                             <div id="lessonActionsUnderImg" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full mt-2">
                                 <!-- Render tự động bằng Javascript -->
                             </div>
@@ -855,13 +853,22 @@
             }, { passive: true });
         }
 
-        // --- TRA CỨU HỌC LIỆU TOÀN HỆ THỐNG ---
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/1qofU1zM9WJ9fDrxxrmziBUHiMQ0K9BQxh5fKthGrKYI/gviz/tq?tqx=out:csv&gid=0';
+        // =========================================================================
+        // SỬA ĐỔI CSV: DÙNG ĐÚNG LINK RAW CSV EXPORT ĐỂ KHÔNG BỊ NUỐT DÒNG ĐẦU
+        // =========================================================================
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/1qofU1zM9WJ9fDrxxrmziBUHiMQ0K9BQxh5fKthGrKYI/export?format=csv&gid=0';
         let lessonsData = [];
 
+        // Hỗ trợ khử ký tự BOM \uFEFF thường gặp ở file CSV Google Sheets
         function removeVietnameseTones(str) {
             if (!str) return '';
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+            return str.toString()
+                      .replace(/^\ufeff/, '')
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .replace(/đ/g, "d")
+                      .replace(/Đ/g, "D")
+                      .toLowerCase();
         }
         function cleanCourseName(name) { return name ? name.replace(/\s*\d+\s*$/, '').trim() : ''; }
         function cleanYoutubeUrl(url) { return url ? url.replace(/\s+/g, '').replace(/you\s*tube/gi, 'youtube') : ''; }
@@ -878,7 +885,13 @@
         function loadData() {
             if (typeof Papa === 'undefined') return;
             Papa.parse(csvUrl, {
-                download: true, header: true, skipEmptyLines: true,
+                download: true,
+                header: true,
+                skipEmptyLines: 'greedy',
+                // Tự động chuẩn hóa header cột loại bỏ khoảng trắng thừa và mã BOM ẩn
+                transformHeader: function(header) {
+                    return header.trim().replace(/^\ufeff/, '');
+                },
                 complete: function(results) {
                     if (!results?.data?.length) return;
                     lessonsData = results.data.map(row => {
@@ -887,27 +900,25 @@
                             return Object.keys(row).find(k => removeVietnameseTones(k).replace(/\s/g, '') === target) || name;
                         };
                         return {
-                            khoaHoc: row[findKey('Khóa học')] || '', 
-                            noiDung: row[findKey('Nội dung')] || '',
-                            hdsd: row[findKey('HDSD')] || '', 
+                            khoaHoc: (row[findKey('Khóa học')] || '').trim(), 
+                            noiDung: (row[findKey('Nội dung')] || '').trim(),
+                            hdsd: (row[findKey('HDSD')] || '').trim(), 
                             youtube: cleanYoutubeUrl(row[findKey('Youtube')] || ''),
-                            infographic: row[findKey('Infographic')] || '', 
-                            github: row[findKey('Github')] || '', 
-                            moTa: row[findKey('Mô tả')] || ''
+                            infographic: (row[findKey('Infographic')] || '').trim(), 
+                            github: (row[findKey('Github')] || '').trim(), 
+                            moTa: (row[findKey('Mô tả')] || '').trim()
                         };
-                    }).filter(item => item.noiDung);
+                    }).filter(item => item.noiDung && item.khoaHoc);
 
                     autoLoadDefaultSearch();
                 }
             });
         }
 
-        // TỰ ĐỘNG TẢI BÀI HỌC MẶC ĐỊNH: "Kết nối GrabMart"
+        // TỰ ĐỘNG HIỂN THỊ ĐÚNG BÀI HỌC ĐẦU TIÊN CỦA BẢNG DỮ LIỆU
         function autoLoadDefaultSearch() {
             if (lessonsData.length > 0) {
-                const target = "Thanh toán VietQRGlobal - NAPAS";
-                const match = lessonsData.find(item => removeVietnameseTones(`${item.noiDung} ${item.moTa}`).includes(removeVietnameseTones(target))) || lessonsData[0];
-                if (match) selectLesson(match, false);
+                selectLesson(lessonsData[0], false);
             }
         }
 
@@ -937,15 +948,12 @@
             }
         }
 
-        // BỐ CỤC 2 CỘT (THEO CHUẨN TEMPLATE RETAIL):
-        // Cột Trái (1/3): Badge, Tiêu đề, Mô tả
-        // Cột Phải (2/3): Ảnh Infographic to sắc nét + 3 Button bằng nhau phía dưới
+        // BỐ CỤC 2 CỘT: Cột Trái (1/3) & Cột Phải (2/3)
         function selectLesson(item, shouldClose = false) {
             const sInput = document.getElementById('searchInput');
             const sugList = document.getElementById('suggestionsList');
             if (shouldClose && sInput && sugList) { sInput.value = item.noiDung; sugList.classList.add('hidden'); }
 
-            // 1. Cập nhật khối Text bên Cột Trái (1/3)
             const badgeEl = document.getElementById('lessonCourseBadge');
             const titleEl = document.getElementById('lessonTitle');
             const descEl = document.getElementById('lessonDesc');
@@ -954,7 +962,6 @@
             if (titleEl) titleEl.innerText = item.noiDung;
             if (descEl) descEl.innerText = item.moTa || 'Chưa có thông tin mô tả chi tiết cho bài học này.';
 
-            // 2. Render ảnh Infographic to rõ sang Cột Phải (2/3)
             const container = document.getElementById('resultContainer');
             if (!container) return;
 
@@ -969,7 +976,6 @@
             }
             container.innerHTML = img;
 
-            // 3. Render 3 BUTTON NỔI BẬT, TO RÕ, KÍCH THƯỚC BẰNG NHAU ĐẶT DƯỚI INFOGRAPHIC (CỘT PHẢI)
             const actionsUnderImg = document.getElementById('lessonActionsUnderImg');
             if (actionsUnderImg) {
                 let ytBtn = item.youtube ? `
@@ -1003,7 +1009,7 @@
             }
         }
 
-        // --- MODAL TOÀN BỘ CHỦ ĐỀ HỌC LIỆU ---
+        // MODAL TOÀN BỘ CHỦ ĐỀ HỌC LIỆU
         function openAllTopicsModal() {
             document.getElementById('allTopicsModal').classList.remove('hidden');
             renderModalTopics(lessonsData);
@@ -1034,7 +1040,7 @@
             renderModalTopics(lessonsData.filter(i => removeVietnameseTones(`${i.noiDung} ${i.moTa}`).includes(val)));
         }
 
-        // --- TIỆN ÍCH COPY LINK & MODAL ---
+        // TIỆN ÍCH COPY LINK & MODAL
         function copyShortcutLink() {
             navigator.clipboard.writeText('https://tinyurl.com/hockiotviet').then(() => {
                 const toast = document.getElementById('copy-toast');
