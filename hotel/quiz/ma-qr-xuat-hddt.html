@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>KiotViet E-Learning - Mã QR xuất hóa đơn điện tử</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR SIÊU MỎNG 42PX -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Cài đặt">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+
+            <span class="text-white/40 text-xs sm:text-sm font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Mã QR xuất hóa đơn điện tử</h1>
+            </div>
+        </div>
+
+        <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-emerald-600 border border-emerald-400/40 uppercase tracking-wider">
+            Hotel
+        </div>
+    </header>
+
+    <!-- MAIN WRAPPER -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR BÊN TRÁI -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-64 sm:w-60 lg:w-64 bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM GIỚI THIỆU CHUNG (TỰ ĐỘNG BỎ NÚT VIDEO KHI KHÔNG CÓ SOURCE) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM KIẾN THỨC CƠ BẢN -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+                <!-- CỤM KIẾN THỨC NÂNG CAO (NẾU MỞ KHÓA) -->
+                <div id="sidebar-advanced-cluster" class="hidden p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                    </div>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Tính năng nâng cao</span>
+                                <i id="icon-adv-features" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-features" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            <!-- ĐIỀU HƯỚNG MŨI TÊN 2 BÊN -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- KHUNG NỘI DUNG CUỘN -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL CÀI ĐẶT -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-gear text-[#166def]"></i>
+                    <h3 class="text-sm font-black uppercase">Cài đặt giao diện &amp; học tập</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tỷ lệ thu phóng (Zoom):</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                </div>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed font-medium">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeSettingsModal()" class="w-full py-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs">
+                    Xác nhận &amp; Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CHÚC MỪNG HOÀN THÀNH CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Mã QR xuất hóa đơn điện tử
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034205/MQRH_141026-1.jpg" 
+                     alt="Infographic Mã QR xuất hóa đơn điện tử" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HOÀN THÀNH TOÀN BỘ -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl border-2 border-emerald-600">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">Tuyệt vời! Bạn đã hoàn thành tất cả các thao tác của tính năng Mã QR xuất hóa đơn điện tử.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer">
+                    Học lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+    // ZERO-HALLUCINATION: BÀI GỐC KHÔNG CÓ LINK VIDEO CỤ THỂ ➔ ĐẶT NULL
+    const LESSON_VIDEO_ID = null;
+
+    const BASIC_LESSONS = [
+        {
+            title: "Bật thiết lập mã QR xuất hóa đơn điện tử",
+            situation: "Khách sạn muốn khách lưu trú quét mã QR trên hóa đơn để <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chủ động cung cấp thông tin xuất HĐĐT</b>, đồng thời cài đặt <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thời gian hiệu lực cho mã QR</b> có giá trị trong <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">24 giờ</b> kể từ lúc thanh toán.",
+            steps: [
+                {
+                    text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Xem tất cả thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Hóa đơn điện tử</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034158/MQRH_141026-1.png"
+                },
+                {
+                    text: "Nhấn vào <b class=\"font-bold text-[#166def]\">biểu tượng cây bút</b> (chỉnh sửa) tại chi nhánh có trạng thái <b class=\"font-bold text-[#166def]\">Đã kết nối</b>.",
+                    img: null
+                },
+                {
+                    text: "Bật xanh tùy chọn <b class=\"font-bold text-[#166def]\">Sử dụng mã QR để khách quét và tự điền thông tin xuất hóa đơn</b>.",
+                    img: null
+                },
+                {
+                    text: "Nhập <b class=\"font-bold text-[#166def]\">Hiệu lực của mã QR</b> theo đơn vị giờ (số nguyên từ 1 trở lên, hệ thống mặc định 1 giờ tính từ lúc thanh toán).",
+                    img: null
+                },
+                {
+                    text: "Tùy chọn <b class=\"font-bold text-[#166def]\">Mã QR chỉ có hiệu lực trong ngày bán</b> nếu muốn mã hết hạn muộn nhất vào 23:59:59 cùng ngày thanh toán.",
+                    img: null
+                },
+                {
+                    text: "Nhấn <b class=\"font-bold text-[#166def]\">Kết nối</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Đồng ý</b> để xác nhận thay đổi thiết lập.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034151/MQRH_141026-2.png"
+                }
+            ],
+            flashcard: {
+                situation: "Khách trả phòng lúc 21h đêm hỏi mai mới gửi thông tin xuất hóa đơn đỏ công ty được không em?",
+                advice: "Dạ được chứ anh/chị! Khách sạn cài đặt mã QR có hiệu lực 24 giờ. Anh/chị chỉ cần cầm phiếu thanh toán có mã QR về khách sạn/văn phòng, mở điện thoại quét mã điền trong vòng 24h là hóa đơn tự động phát hành gửi về email công ty ngay ạ!"
+            },
+            quiz: {
+                question: "Nếu tích chọn 'Mã QR chỉ có hiệu lực trong ngày bán', hóa đơn thanh toán lúc 20:00 với hiệu lực 24 giờ vẫn sẽ hết hạn vào lúc 23:59:59 cùng ngày.",
+                answer: true,
+                explanation: "Tùy chọn này ép mã QR hết hạn muộn nhất vào cuối ngày thanh toán (23:59:59) để hỗ trợ chốt sổ sách kế toán trong ngày."
+            }
+        },
+        {
+            title: "Cài đặt mẫu in hóa đơn",
+            situation: "Sau khi kích hoạt thiết lập, bạn cần chèn mã QR vào <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">mẫu in hóa đơn thanh toán</b> (ví dụ khổ giấy K80 đặt ở cuối bill) để khách hàng dễ dàng quét bằng camera điện thoại.",
+            steps: [
+                {
+                    text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Xem tất cả thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Quản lý mẫu in</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034137/MQRH_141026-4.png"
+                },
+                {
+                    text: "Chọn mẫu in đang dùng của giao dịch <b class=\"font-bold text-[#166def]\">Hóa đơn</b> và nhấn <b class=\"font-bold text-[#166def]\">Sửa mẫu</b>.",
+                    img: null
+                },
+                {
+                    text: "Sao chép hoặc nhập token <b class=\"font-bold text-[#166def]\">{Ma_QR_Xuat_HDDT}</b> vào vị trí mong muốn (thường đặt ở cuối hóa đơn).",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034130/MQRH_141026-5.png"
+                },
+                {
+                    text: "Kiểm tra hiển thị trên khung <b class=\"font-bold text-[#166def]\">Xem trước mẫu in</b> và nhấn <b class=\"font-bold text-[#166def]\">Lưu</b> để hoàn tất.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034122/MQRH_141026-6.png"
+                }
+            ],
+            flashcard: {
+                situation: "Khách sạn in hóa đơn khổ nhỏ K80 thì mã QR có bị tràn hay cắt viền mất mã không em?",
+                advice: "Dạ anh/chị hoàn toàn yên tâm ạ! Hệ thống KiotViet tự động co giãn kích thước mã QR vừa vặn 100% với khổ giấy K80 và K58, khách quét camera cực kỳ nhạy ạ!"
+            },
+            quiz: {
+                question: "Các mẫu in mặc định gợi ý trên KiotViet đã được chèn sẵn token {Ma_QR_Xuat_HDDT} mà người dùng không cần chỉnh sửa.",
+                answer: false,
+                explanation: "Các mẫu in gợi ý không chèn sẵn token này; người dùng cần chủ động chèn token {Ma_QR_Xuat_HDDT} vào mẫu in hóa đơn đang sử dụng tại chi nhánh."
+            }
+        },
+        {
+            title: "In hóa đơn có kèm mã QR xuất HĐĐT",
+            situation: "Khách đoàn trả phòng vội ra sân bay cần lấy hóa đơn nhưng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chưa kịp cung cấp thông tin công ty</b>, lễ tân thực hiện thanh toán và in hóa đơn có mã QR để khách tự nhập sau.",
+            steps: [
+                {
+                    text: "Khi thanh toán trên màn hình <b class=\"font-bold text-[#166def]\">Lễ tân</b>, bỏ tích chọn <b class=\"font-bold text-[#166def]\">Phát hành hóa đơn điện tử</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034112/MQRH_141026-7.png"
+                },
+                {
+                    text: "Nhấn <b class=\"font-bold text-[#166def]\">Hoàn thành</b> ➔ In hóa đơn kèm mã QR và dòng hướng dẫn hiệu lực giao cho khách hàng.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034105/MQRH_141026-8.png"
+                },
+                {
+                    text: "Khách hàng quét mã QR bằng camera điện thoại ➔ nhập <b class=\"font-bold text-[#166def]\">Mã số thuế</b> và chạm <b class=\"font-bold text-[#166def]\">Tra cứu</b> để tự động điền Tên đơn vị, Địa chỉ từ Tổng cục Thuế ➔ Chạm <b class=\"font-bold text-[#166def]\">Gửi thông tin xuất HĐĐT</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034058/MQRH_141026-9.png"
+                },
+                {
+                    text: "Hệ thống tự động cập nhật dữ liệu khách vừa gửi vào chi tiết hóa đơn điện tử trên KiotViet.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034043/MQRH_141026-11.png"
+                }
+            ],
+            flashcard: {
+                situation: "Lễ tân ghi tay mã số thuế của khách hay bị sai chính tả tên công ty hoặc nhầm số, kế toán phải hủy hóa đơn xuất lại hoài.",
+                advice: "Dạ khách quét mã QR chỉ cần gõ MST và chạm 'Tra cứu', hệ thống tự động kéo chuẩn 100% tên công ty và địa chỉ từ Tổng cục Thuế về máy, triệt tiêu hoàn toàn sai sót chính tả ạ!"
+            },
+            quiz: {
+                question: "Sau khi giao dịch hoàn tất trên màn hình Lễ tân, nếu lễ tân thực hiện thao tác in lại hóa đơn thì mã QR xuất HĐĐT vẫn sẽ được in ra như lần đầu.",
+                answer: false,
+                explanation: "Mỗi hóa đơn chỉ cấp một mã QR duy nhất và chỉ in ngay khi bấm Hoàn thành trên màn hình Lễ tân; thao tác in lại sau đó sẽ không hiển thị mã QR xuất HĐĐT để tránh bảo mật và trùng lặp."
+            }
+        },
+        {
+            title: "Theo dõi hóa đơn chờ khách cung cấp thông tin",
+            situation: "Kế toán hoặc lễ tân cần kiểm tra xem <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">khách đã điền thông tin qua mã QR chưa</b> hoặc lọc các hóa đơn đang chờ để phát hành HĐĐT chính thức.",
+            steps: [
+                {
+                    text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Giao dịch</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Hóa đơn</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034033/MQRH_141026-12.png"
+                },
+                {
+                    text: "Nhấn vào hóa đơn cần kiểm tra để xem thông tin chi tiết.",
+                    img: null
+                },
+                {
+                    text: "Kiểm tra mục <b class=\"font-bold text-[#166def]\">Hóa đơn điện tử</b>: Nếu khách chưa gửi và QR còn hạn, hiển thị dòng cam: <b class=\"font-bold text-[#166def]\">\"Chờ khách hàng cung cấp thông tin xuất HĐĐT qua mã QR\"</b>.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034026/MQRH_141026-13.png"
+                },
+                {
+                    text: "Khi khách gửi thành công, hệ thống hiển thị đầy đủ MST, Tên đơn vị, Địa chỉ, Email và nút phát hành hóa đơn.",
+                    img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034018/MQRH_141026-14.png"
+                }
+            ],
+            flashcard: {
+                situation: "Kế toán làm sao phân biệt được hóa đơn nào khách chưa điền thông tin để không bấm phát hành nhầm?",
+                advice: "Dạ trong danh sách Hóa đơn, mục HĐĐT có ghi chú chữ màu cam 'Chờ khách hàng cung cấp thông tin xuất HĐĐT qua mã QR'. Khi khách gửi xong, hệ thống tự điền đủ tên công ty, MST để kế toán duyệt phát hành an toàn 100% ạ!"
+            },
+            quiz: {
+                question: "Khi khách hàng gửi thông tin xuất hóa đơn qua mã QR thành công, hệ thống KiotViet sẽ tự động cập nhật dữ liệu người mua vào mục chi tiết HĐĐT của hóa đơn đó.",
+                answer: true,
+                explanation: "Hệ thống tự động đồng bộ tức thì thông tin khách gửi vào chi tiết hóa đơn điện tử mà nhân viên không cần gõ lại."
+            }
+        }
+    ];
+
+    const ADVANCED_LESSONS = [];
+
+    let currentPage = 'intro-infographic';
+    let currentZoom = 80;
+    let isAdvancedUnlocked = false;
+    let isSidebarCollapsed = false;
+    let viewedPages = new Set(['intro-infographic']);
+    let userAnswers = {};
+
+    function isMobile() {
+        return window.innerWidth < 768;
+    }
+
+    function getLinearNavigationList() {
+        let list = [
+            { id: 'intro-infographic', title: 'Infographic' },
+            { id: 'intro-overview', title: 'Lợi ích nổi bật' }
+        ];
+
+        // CHỈ THÊM VIDEO NẾU SOURCE GỐC CÓ VIDEO
+        if (LESSON_VIDEO_ID) {
+            list.push({ id: 'intro-video', title: 'Video hướng dẫn' });
+        }
+
+        list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
+
+        BASIC_LESSONS.forEach((l, idx) => {
+            list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+        });
+
+        if (isAdvancedUnlocked && ADVANCED_LESSONS.length > 0) {
+            ADVANCED_LESSONS.forEach((l, idx) => {
+                list.push({ id: `advanced-${idx}`, title: l.title, scope: 'advanced', index: idx });
+            });
+        }
+        return list;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        setAppZoom(80);
+        renderSidebar();
+        navGoToPage('intro-infographic');
+    });
+
+    function setAppZoom(val) {
+        currentZoom = val;
+        const fontMap = {
+            70: '11.5px',
+            80: '13px',
+            90: '14.5px',
+            100: '16px'
+        };
+        document.documentElement.style.fontSize = fontMap[val] || '13px';
+        document.getElementById('zoom-label').innerText = val + '%';
+        
+        document.querySelectorAll('.zoom-btn').forEach(b => {
+            if (parseInt(b.getAttribute('data-zoom')) === val) {
+                b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer';
+            } else {
+                b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
+            }
+        });
+    }
+
+    function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+    function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+    function handleAdvancedToggle(checked) {
+        isAdvancedUnlocked = checked;
+        const clusterEl = document.getElementById('sidebar-advanced-cluster');
+
+        if (checked && ADVANCED_LESSONS.length > 0) {
+            clusterEl.classList.remove('hidden');
+        } else {
+            clusterEl.classList.add('hidden');
+            if (currentPage.startsWith('advanced-')) {
+                navGoToPage('basic-0');
+            }
+        }
+        renderSidebar();
+        renderCurrentPageView();
+        updateSideNavButtons();
+    }
+
+    function toggleSidebarCollapse() {
+        const sidebar = document.getElementById('app-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const icon = document.getElementById('sidebar-toggle-icon');
+
+        if (isMobile()) {
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+                icon.className = 'fa-solid fa-bars-staggered text-xs';
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                icon.className = 'fa-solid fa-xmark text-xs';
+            }
+        } else {
+            isSidebarCollapsed = !isSidebarCollapsed;
+            if (isSidebarCollapsed) {
+                sidebar.style.width = '0px';
+                sidebar.style.transform = 'translateX(-100%)';
+                sidebar.style.opacity = '0';
+                icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+            } else {
+                sidebar.style.width = '';
+                sidebar.style.transform = 'translateX(0)';
+                sidebar.style.opacity = '1';
+                icon.className = 'fa-solid fa-bars-staggered text-xs';
+            }
+        }
+    }
+
+    function toggleAdvChildGroup(sub) {
+        const p = document.getElementById(`panel-adv-${sub}`);
+        const icon = document.getElementById(`icon-adv-${sub}`);
+        if (!p || !icon) return;
+        p.classList.toggle('hidden');
+        icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+    }
+
+    function renderSidebar() {
+        const basicContainer = document.getElementById('accordion-panel-basic');
+        if (basicContainer) {
+            basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                const isViewed = viewedPages.has(`basic-${idx}`);
+                const isActive = (currentPage === `basic-${idx}`);
+                return `
+                    <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                        <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                            <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                            <span class="break-words flex-1">${lesson.title}</span>
+                        </div>
+                        ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        ['intro-infographic', 'intro-overview', 'intro-glossary'].forEach(id => {
+            const el = document.getElementById(`subbtn-${id}`);
+            if (el) {
+                if (currentPage === id) {
+                    el.classList.add('active-sub');
+                } else {
+                    el.classList.remove('active-sub');
+                }
+            }
+        });
+    }
+
+    function updateSideNavButtons() {
+        const list = getLinearNavigationList();
+        const curIdx = list.findIndex(item => item.id === currentPage);
+        const prevBtn = document.getElementById('nav-btn-prev');
+        const nextBtn = document.getElementById('nav-btn-next');
+        if (!prevBtn || !nextBtn) return;
+
+        if (curIdx <= 0) {
+            prevBtn.disabled = true;
+            prevBtn.classList.add('opacity-0', 'pointer-events-none');
+        } else {
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+        }
+    }
+
+    function navGoToPage(pageId) {
+        currentPage = pageId;
+        viewedPages.add(pageId);
+        renderSidebar();
+        renderCurrentPageView();
+        updateSideNavButtons();
+        
+        if (isMobile()) {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+            if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+                if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+            }
+        }
+
+        const container = document.getElementById('dynamic-content-view');
+        if (container) container.scrollTop = 0;
+    }
+
+    function navStepLinear(direction) {
+        const list = getLinearNavigationList();
+        const curIdx = list.findIndex(item => item.id === currentPage);
+        if (curIdx === -1) return;
+
+        if (direction === 'next') {
+            if (curIdx === list.length - 1) {
+                document.getElementById('modal-basic-complete').classList.remove('hidden');
+                return;
+            }
+            const nextItem = list[curIdx + 1];
+            navGoToPage(nextItem.id);
+        } else if (direction === 'prev') {
+            if (curIdx > 0) {
+                const prevItem = list[curIdx - 1];
+                navGoToPage(prevItem.id);
+            }
+        }
+    }
+
+    function restartFromBeginning() {
+        closeModal('modal-basic-complete');
+        closeModal('modal-advanced-complete');
+        navGoToPage('intro-infographic');
+    }
+
+    function renderCurrentPageView() {
+        const container = document.getElementById('dynamic-content-view');
+        if (!container) return;
+
+        // TRANG 1: INFOGRAPHIC
+        if (currentPage === 'intro-infographic') {
+            container.innerHTML = `
+                <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                    <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                         style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                        <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/14034205/MQRH_141026-1.jpg" 
+                             alt="Infographic Mã QR xuất hóa đơn điện tử" 
+                             class="w-full h-full object-contain select-none">
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // TRANG 2: LỢI ÍCH NỔI BẬT
+        if (currentPage === 'intro-overview') {
+            container.innerHTML = `
+                <div class="w-full space-y-3.5 pb-6">
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                        </div>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Mã QR xuất hóa đơn điện tử</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Tính năng Mã QR xuất hóa đơn điện tử cho phép khách hàng tự quét mã QR in trên hóa đơn thanh toán để chủ động điền các thông tin xuất hóa đơn điện tử (tên đơn vị, mã số thuế, địa chỉ, email...). Nhờ đó, lễ tân không cần ghi chép thủ công và kế toán không phải nhập lại thông tin người mua.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                        <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Khách sạn &amp; Cơ sở lưu trú
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                    <i class="fa-solid fa-shield-check"></i>
+                                </div>
+                                <h4 class="font-bold text-xs text-slate-800">Giảm sai sót thông tin</h4>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">Khách tự nhập MST và tự động tra cứu tên, địa chỉ từ Tổng cục Thuế, hạn chế tối đa nhầm lẫn so với ghi chép thủ công.</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                    <i class="fa-solid fa-bolt"></i>
+                                </div>
+                                <h4 class="font-bold text-xs text-slate-800">Rút ngắn thời gian trả phòng</h4>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">Lễ tân in hóa đơn kèm mã QR trong vài giây, khách tự điền sau trên xe hoặc văn phòng, giải phóng quầy thu ngân giờ cao điểm.</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                </div>
+                                <h4 class="font-bold text-xs text-slate-800">Quản lý &amp; Theo dõi rõ ràng</h4>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">Kế toán nắm bắt chính xác hóa đơn nào đang chờ khách gửi thông tin qua mã QR để kiểm soát luồng phát hành chuẩn xác.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Điều kiện và lưu ý vận hành cốt lõi:
+                        </h4>
+                        <ul class="text-xs text-amber-950 space-y-0.5 list-disc pl-5 font-medium leading-relaxed">
+                            <li>Chi nhánh bắt buộc phải <strong class="text-amber-900">đã kết nối với nhà cung cấp hóa đơn điện tử</strong>.</li>
+                            <li>Mỗi hóa đơn chỉ sinh <strong class="text-amber-900">1 mã QR duy nhất</strong> và chỉ in ra ngay khi hoàn thành thanh toán trên màn hình Lễ tân (thao tác in lại sau đó sẽ không có mã QR).</li>
+                            <li>Mỗi mã QR chỉ tiếp nhận thông tin thành công đúng 1 lần duy nhất trong thời gian còn hiệu lực.</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // TRANG 3: THUẬT NGỮ
+        if (currentPage === 'intro-glossary') {
+            container.innerHTML = `
+                <div class="w-full space-y-3 pb-6">
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                        <div class="flex items-center gap-2 text-blue-800">
+                            <i class="fa-solid fa-book-bookmark text-base"></i>
+                            <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                        </div>
+                        <p class="text-xs text-slate-600">Tra cứu các khái niệm và từ khóa nghiệp vụ trong tính năng Mã QR xuất hóa đơn điện tử.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                            <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Token {Ma_QR_Xuat_HDDT}</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">Mã tham chiếu động được chèn vào mẫu in hóa đơn của KiotViet, hệ thống sẽ tự động chuyển đổi thành hình ảnh mã QR thật và số giờ hiệu lực tương ứng khi in bill thanh toán.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                            <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Hiệu lực mã QR</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">Khoảng thời gian (tính bằng giờ, tối thiểu 1 giờ) mà mã QR cho phép khách hàng truy cập vào trang điền thông tin xuất HĐĐT. Hết thời gian này, đường dẫn sẽ tự động khóa.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                            <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Hiệu lực trong ngày bán</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">Cơ chế giới hạn mã QR hết hạn muộn nhất vào 23:59:59 của ngày thanh toán hóa đơn, giúp kế toán chốt sổ sách thuế và phát hành hóa đơn kịp thời trong kỳ báo cáo ngày.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                            <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Tra cứu tự động Tổng cục Thuế</h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">Tính năng cho phép khách hàng chỉ cần nhập Mã số thuế, hệ thống sẽ tự động kết nối và trích xuất Tên công ty và Địa chỉ đăng ký kinh doanh chính thức, người dùng vẫn có thể chỉnh sửa nếu cần.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // CHI TIẾT BÀI HỌC CƠ BẢN
+        let scope = '';
+        let index = 0;
+        if (currentPage.startsWith('basic-')) {
+            scope = 'basic';
+            index = parseInt(currentPage.split('-')[1]);
+        }
+
+        if (scope === 'basic') {
+            const lesson = BASIC_LESSONS[index];
+            const scopeColor = '#166def';
+            const isLastBasicLesson = (index === BASIC_LESSONS.length - 1);
+
+            container.innerHTML = `
+                <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                    <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                Kiến thức cơ bản - Thao tác ${index + 1}/${BASIC_LESSONS.length}
+                            </span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                        </div>
+                        <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                            <span>${lesson.title}</span>
+                        </h2>
+                    </div>
+
+                    <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                        <div class="flex items-center gap-2 text-amber-900">
+                            <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                <i class="fa-solid fa-lightbulb"></i>
+                            </div>
+                            <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                        <div class="space-y-3">
+                            ${lesson.steps.map((step, sIdx) => `
+                                <div class="space-y-1.5">
+                                    <div class="flex items-start gap-2.5">
+                                        <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                    </div>
+                                    ${step.img ? `
+                                        <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                            <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- FLASHCARD 3D TƯ VẤN BÁN HÀNG -->
+                    <div class="pt-3 border-t border-slate-200 space-y-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                        
+                        <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-card">
+                                <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                            <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                            Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                    </div>
+
+                                    <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                        <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                    </div>
+                                </div>
+
+                                <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                    <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                        <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                            <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                        </span>
+                                        <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                            Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                    </div>
+
+                                    <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                        <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QUIZ KIỂM TRA NHANH -->
+                    <div class="pt-3 border-t border-slate-200 space-y-2">
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                        <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                            <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
+                                    <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                </span>
+                                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                    Đúng / Sai
+                                </span>
+                            </div>
+
+                            <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                            </div>
+
+                            <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                    ✓ ĐÚNG
+                                </button>
+                                <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                    ✕ SAI
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${isLastBasicLesson ? `
+                        <div class="pt-5 sm:pt-6">
+                            <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                 class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                    <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                        <i class="fa-solid fa-trophy text-amber-300"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
+                                        <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
+                                    </div>
+                                </div>
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                </div>
+            `;
+        }
+    }
+
+    function toggleFlashcard3D(sceneEl) {
+        const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+        if (cardEl) cardEl.classList.toggle('is-flipped');
+    }
+
+    function checkQuiz(scope, index, choice) {
+        const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+        const lesson = lessons[index];
+        const isCorrect = (choice === lesson.quiz.answer);
+        userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+        const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+        if (feedbackEl) {
+            feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+            feedbackEl.innerHTML = `
+                <p class="font-black text-xs flex items-center gap-1.5">
+                    <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                    ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                </p>
+                <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+            `;
+        }
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
