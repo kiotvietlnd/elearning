@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KiotViet E-Learning - Sổ nhà thuốc</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* TỐI ƯU VIEWPORT ĐỘNG TƯƠNG THÍCH MỌI MÔI TRƯỜNG */
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* PHÂN TÁCH SAFE AREA RIÊNG BIỆT: CHỈ ÁP DỤNG ĐỆM ĐÁY CAO TRÊN MOBILE */
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR CHUẨN RESPONSIVE (42px) -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Cài đặt">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+
+            <span class="text-white/40 text-xs sm:text-sm font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Sổ nhà thuốc</h1>
+            </div>
+        </div>
+
+        <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-cyan-400 border border-cyan-400/40 uppercase tracking-wider">
+            Retail
+        </div>
+    </header>
+
+    <!-- KHUNG BODY -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <!-- LỚP BACKDROP MỜ TRÊN MOBILE -->
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR DRAWER CHO MOBILE & SIBLING CHO DESKTOP -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-64 sm:w-60 lg:w-64 bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-video')" id="subbtn-intro-video" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-circle-play text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Video hướng dẫn</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM 2: KIẾN THỨC CƠ BẢN (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+                <!-- CỤM 3: KIẾN THỨC NÂNG CAO (KHI MỞ KHÓA) -->
+                <div id="sidebar-advanced-cluster" class="hidden p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                    </div>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Tính năng nâng cao</span>
+                                <i id="icon-adv-features" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-features" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile" class="hidden">
+                            <button onclick="toggleAdvChildGroup('mobile')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Điện thoại</span>
+                                <i id="icon-adv-mobile" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-mobile" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos" class="hidden">
+                            <button onclick="toggleAdvChildGroup('pos')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Máy POS</span>
+                                <i id="icon-adv-pos" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-pos" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW TRUNG TÂM -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            
+            <!-- NÚT MŨI TÊN BÊN TRÁI -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- NÚT MŨI TÊN BÊN PHẢI -->
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- VÙNG HIỂN THỊ NỘI DUNG -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+                <!-- Nội dung được render tự động -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL CÀI ĐẶT -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-gear text-[#166def]"></i>
+                    <h3 class="text-sm font-black uppercase">Cài đặt giao diện &amp; học tập</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- TỶ LỆ THU PHÓNG -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tỷ lệ thu phóng (Zoom):</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                </div>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+            </div>
+
+            <!-- MỞ KHÓA NÂNG CAO -->
+            <div class="pt-3 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed font-medium">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeSettingsModal()" class="w-full py-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs">
+                    Xác nhận &amp; Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH BÀI HỌC -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Sổ nhà thuốc
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024812/SNTR_281026-1.jpg" 
+                     alt="Infographic Sổ nhà thuốc" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH TOÀN BỘ KHÓA HỌC -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl border-2 border-emerald-600">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">Tuyệt vời! Bạn đã hoàn thành tất cả các thao tác cơ bản và nâng cao của tính năng Sổ nhà thuốc.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer">
+                    Học lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        const BASIC_LESSONS = [
+            {
+                title: "Sổ mua bán thuốc",
+                situation: "Khi bạn cần theo dõi chi tiết từng lần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">xuất hoặc nhập thuốc</b> theo <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số lô, hạn dùng</b> từ các giao dịch thực tế để quản lý dòng luân chuyển thuốc hoặc xuất trình khi có <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thanh kiểm tra GPP</b>.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ mua bán thuốc</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024756/SNTR_281026-1.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị dữ liệu theo chi nhánh đang đăng nhập với thời gian là <b class=\"font-bold text-[#166def]\">Tháng này</b>. Dữ liệu được tổng hợp tự động từ phiếu nhập, hóa đơn, phiếu kiểm kho... gồm các cột: STT, Ngày giao dịch, Mã phiếu, Tên thuốc, Số lô/HSD, ĐVT, SL nhập, SL xuất.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024744/SNTR_281026-2.png"
+                    },
+                    {
+                        text: "Tìm kiếm theo mã phiếu hoặc sử dụng bộ lọc bên trái: chọn <b class=\"font-bold text-[#166def]\">Chi nhánh</b> (có thể tích chọn nhiều chi nhánh), <b class=\"font-bold text-[#166def]\">Thời gian</b>, <b class=\"font-bold text-[#166def]\">Loại phiếu</b> (Nhập hàng, Kiểm kho, Hóa đơn, Chuyển hàng, Xuất hủy).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024731/SNTR_281026-3.png"
+                    },
+                    {
+                        text: "Để ẩn hoặc hiện các cột hiển thị trên màn hình, bạn nhấn vào biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải và tích chọn thông tin cần xem.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024718/SNTR_281026-4.png"
+                    },
+                    {
+                        text: "Để mở và kiểm tra chi tiết chứng từ gốc phát sinh, bạn nhấp chuột trực tiếp vào <b class=\"font-bold text-[#166def]\">Mã phiếu</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024705/SNTR_281026-5.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> để mở cửa sổ thiết lập in ấn sổ sách theo biểu mẫu quy định.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024648/SNTR_281026-6.png"
+                    },
+                    {
+                        text: "Xem trước mẫu in văn bản Sổ mua bán thuốc chuẩn GPP có đầy đủ chữ ký người lập và người phụ trách chuyên môn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024634/SNTR_281026-7.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> trên thanh công cụ để tải toàn bộ bảng dữ liệu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024619/SNTR_281026-8.png"
+                    },
+                    {
+                        text: "Kiểm tra file Excel Sổ mua bán thuốc đã xuất để phục vụ lưu trữ, rà soát hoặc nộp báo cáo cơ quan chức năng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024607/SNTR_281026-9.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Đoàn kiểm tra GPP tới đột xuất yêu cầu xuất trình sổ mua bán thuốc trong 6 tháng qua, tiệm mình in kịp không em?",
+                    advice: "Dạ anh/chị yên tâm ạ! KiotViet tự động ghi nhận từng lần nhập, bán, kiểm kho theo đúng số lô và HSD. Anh/chị chỉ cần chọn khoảng thời gian 6 tháng rồi bấm 'In sổ' là có ngay mẫu in chuẩn văn bản GPP xuất trình trong 30 giây ạ!"
+                },
+                quiz: {
+                    question: "Dữ liệu trên Sổ mua bán thuốc được hệ thống KiotViet tự động tổng hợp từ các chứng từ nhập hàng, hóa đơn bán hàng và phiếu kiểm kho phát sinh thực tế.",
+                    answer: true,
+                    explanation: "Hệ thống tự động liên kết mọi chứng từ phát sinh có chứa số lô và hạn dùng để ghi vào sổ mua bán thuốc mà không cần ghi chép thủ công."
+                }
+            },
+            {
+                title: "Sổ theo dõi hạn dùng",
+                situation: "Khi bạn cần kiểm soát danh sách <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">các lô thuốc đang tồn kho</b> để biết chính xác lô nào sẽ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">hết hạn vào tháng nào trong năm</b>, từ đó chủ động lên phương án <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">giải phóng hàng cận date</b> hoặc hoàn trả nhà cung cấp.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi hạn dùng</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024555/SNTR_281026-10.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị dữ liệu theo chi nhánh đang đăng nhập với thời gian là <b class=\"font-bold text-[#166def]\">Năm hiện tại</b>. Hệ thống hiển thị các lô thuốc tồn kho chia theo lưới 12 cột tương ứng từ tháng 1 đến tháng 12.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024539/SNTR_281026-11.png"
+                    },
+                    {
+                        text: "Tìm kiếm nhanh theo tên hàng, mã hàng hoặc số đăng ký thuốc, hoặc sử dụng bộ lọc bên trái để chọn <b class=\"font-bold text-[#166def]\">Chi nhánh</b> và <b class=\"font-bold text-[#166def]\">Năm</b> cần theo dõi.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024525/SNTR_281026-12.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> để chuẩn bị in theo mẫu văn bản quy định GPP.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024513/SNTR_281026-13.png"
+                    },
+                    {
+                        text: "Kiểm tra bản in Sổ theo dõi hạn sử dụng thuốc được căn chỉnh khoa học theo 12 tháng quy chuẩn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024456/SNTR_281026-14.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải dữ liệu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024444/SNTR_281026-15.png"
+                    },
+                    {
+                        text: "Mở file Excel Sổ theo dõi hạn dùng thuốc để phân tích danh sách các lô thuốc cận date theo từng tháng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024429/SNTR_281026-16.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Nhà thuốc có cả nghìn loại thuốc, làm sao biết trong quý tới có những loại nào cận date để xả hàng trước?",
+                    advice: "Dạ anh/chị mở 'Sổ theo dõi hạn dùng' nhé. KiotViet hiển thị theo lưới 12 cột tương ứng từ tháng 1 đến tháng 12 trong năm. Nhìn vào cột tháng là biết ngay lô thuốc nào sắp hết date để ưu tiên bán trước hoặc đổi trả nhà cung cấp ạ!"
+                },
+                quiz: {
+                    question: "Sổ theo dõi hạn dùng trên KiotViet hiển thị hạn sử dụng của các lô thuốc tồn kho theo lưới 12 cột tương ứng từ tháng 1 đến tháng 12 trong năm.",
+                    answer: true,
+                    explanation: "Bố cục lưới 12 tháng giúp dược sĩ quan sát trực quan tiến độ hết hạn của từng lô hàng theo từng tháng cụ thể trong năm."
+                }
+            },
+            {
+                title: "Sổ theo dõi nhiệt độ - độ ẩm",
+                situation: "Bạn cần ghi nhận điều kiện bảo quản (<b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">nhiệt độ và độ ẩm</b>) tại khu vực bảo quản thuốc định kỳ <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">2 lần mỗi ngày (ca 9h và ca 15h)</b> nhằm tuân thủ quy chuẩn GPP và xuất trình hồ sơ kiểm tra.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 1 - Ghi nhanh hằng ngày:</b> Trên thanh tiêu đề màn hình Quản lý, nhấn <b class=\"font-bold text-[#166def]\">Nhập nhiệt độ - độ ẩm</b> (biểu tượng nhiệt kế) ➔ nhập chỉ số Nhiệt độ (°C) và Độ ẩm (%) ➔ hệ thống tự động nhận diện ca đo theo giờ thực tế ➔ nhấn <b class=\"font-bold text-[#166def]\">Lưu</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024416/SNTR_281026-17.png"
+                    },
+                    {
+                        text: "Hệ thống thông báo lưu thành công, chỉ số nhiệt độ - độ ẩm hiển thị ngay trên thanh tiêu đề và tự động cập nhật vào sổ theo dõi của tháng tương ứng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024400/SNTR_281026-18.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 2 - Tạo mới sổ tháng:</b> Tại màn hình Quản lý, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi nhiệt độ - độ ẩm</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024348/SNTR_281026-19.png"
+                    },
+                    {
+                        text: "Tại màn hình danh sách các sổ tháng, bạn nhấn nút <b class=\"font-bold text-[#166def]\">+ Tạo mới</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024333/SNTR_281026-20.png"
+                    },
+                    {
+                        text: "Chọn <b class=\"font-bold text-[#166def]\">Tháng</b> cần ghi chép ➔ hệ thống mở bảng danh sách tất cả các ngày trong tháng. Điền Nhiệt độ, Độ ẩm cho từng ca (ca 9h, ca 15h), tên Người thực hiện, Người kiểm tra và Ghi chú ➔ nhấn <b class=\"font-bold text-[#166def]\">Lưu</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024315/SNTR_281026-21.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Cách 3 - Import file từ Excel:</b> Trên màn hình Sổ nhiệt độ - độ ẩm, nhấn <b class=\"font-bold text-[#166def]\">Import file</b> và chọn 1 trong 2 loại: \"Thêm mới từ file Excel\" hoặc \"Thêm mới từ file Elitech Excel\".",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024301/SNTR_281026-22.png"
+                    },
+                    {
+                        text: "Với file Excel thường: Nhấn <b class=\"font-bold text-[#166def]\">Excel file</b> để tải file mẫu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024250/SNTR_281026-23.png"
+                    },
+                    {
+                        text: "Mở file Excel mẫu và điền đầy đủ các thông tin nhiệt độ, độ ẩm ca sáng, ca chiều và người ký cho các ngày trong tháng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024239/SNTR_281026-24.png"
+                    },
+                    {
+                        text: "Quay lại phần mềm, nhấn <b class=\"font-bold text-[#166def]\">Chọn file dữ liệu</b>, chọn file đã lưu ➔ nhấn <b class=\"font-bold text-[#166def]\">Thực hiện</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024228/SNTR_281026-25.png"
+                    },
+                    {
+                        text: "Hệ thống thông báo import thành công, bạn nhấn <b class=\"font-bold text-[#166def]\">F5</b> để cập nhật dữ liệu mới nhất lên sổ tháng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024217/SNTR_281026-26.png"
+                    },
+                    {
+                        text: "Với file máy đo Elitech: Xuất file Excel từ phần mềm thiết bị Elitech ➔ nhấn <b class=\"font-bold text-[#166def]\">Chọn file dữ liệu</b> ➔ chọn file ➔ nhấn <b class=\"font-bold text-[#166def]\">Thực hiện</b> (hệ thống tự động đọc và điền đúng ca 9h và ca 15h).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024202/SNTR_281026-27.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Xem, chỉnh sửa hoặc xóa sổ tháng:</b> Nhấn vào dòng tháng muốn xem. Lưu ý hệ thống hiển thị cảnh báo đỏ khi nhiệt độ > 30°C hoặc độ ẩm > 75%. Tại đây có thể nhấn <b class=\"font-bold text-[#166def]\">Chỉnh sửa</b>, <b class=\"font-bold text-[#166def]\">In</b> hoặc <b class=\"font-bold text-[#166def]\">Xóa</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024151/SNTR_281026-28.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Nhân viên hay quên ghi chép nhiệt độ độ ẩm hàng ngày, cuối tháng làm sổ chạy mệt quá, KiotViet có cách nào ghi nhanh không?",
+                    advice: "Dạ có 3 cách siêu tiện lợi ạ: Hằng ngày nhân viên chỉ cần bấm biểu tượng nhiệt kế trên thanh tiêu đề gõ 2 số là xong; hoặc cuối tháng anh/chị import thẳng file Excel từ nhiệt kế tự ghi Elitech vào phần mềm là máy tự chia đúng ca 9h và 15h cho cả tháng ạ!"
+                },
+                quiz: {
+                    question: "Khi nhiệt độ vượt quá 30°C hoặc độ ẩm vượt quá 75%, hệ thống KiotViet sẽ tự động hiển thị cảnh báo màu đỏ trên Sổ theo dõi nhiệt độ - độ ẩm.",
+                    answer: true,
+                    explanation: "Cảnh báo đỏ nhằm giúp dược sĩ phát hiện ngay điều kiện bảo quản thuốc không đạt chuẩn GPP để có biện pháp xử lý kịp thời."
+                }
+            },
+            {
+                title: "Sổ theo dõi thông tin bệnh nhân",
+                situation: "Khi bạn cần tra cứu hoặc trích xuất danh sách <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bệnh nhân đã mua thuốc kê đơn</b> tại cửa hàng cùng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chẩn đoán bệnh</b> và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">danh mục thuốc đã bán</b> để báo cáo theo yêu cầu của cơ quan y tế.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi thông tin bệnh nhân</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024140/SNTR_281026-29.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị dữ liệu trích xuất tự động từ hóa đơn có đơn thuốc: STT, Mã hóa đơn, Ngày bán, Ngày kê, Bệnh nhân, Chẩn đoán bệnh, Thuốc sử dụng, ĐVT, Số lượng (mỗi dòng hiển thị 1 loại thuốc trong đơn).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024129/SNTR_281026-30.png"
+                    },
+                    {
+                        text: "Tìm kiếm theo tên bệnh nhân, tên bác sĩ, mã đơn thuốc, mã hóa đơn, tên hoặc mã thuốc hoặc sử dụng bộ lọc bên trái để chọn <b class=\"font-bold text-[#166def]\">Chi nhánh</b>, <b class=\"font-bold text-[#166def]\">Thời gian</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024119/SNTR_281026-31.png"
+                    },
+                    {
+                        text: "Để ẩn hoặc hiện các cột hiển thị trên màn hình, bạn nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải và tích chọn thông tin cần xem.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024107/SNTR_281026-32.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> để chuẩn bị in theo mẫu văn bản quy định.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024052/SNTR_281026-33.png"
+                    },
+                    {
+                        text: "Kiểm tra bản in Sổ theo dõi thông tin bệnh nhân có đầy đủ chữ ký người bán và người lập sổ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024041/SNTR_281026-34.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải dữ liệu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024030/SNTR_281026-35.png"
+                    },
+                    {
+                        text: "File Excel Sổ theo dõi thông tin bệnh nhân xuất ra đầy đủ, chi tiết từng dòng thuốc phục vụ đối soát nghiệp vụ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024018/SNTR_281026-36.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Thanh tra y tế hỏi danh sách bệnh nhân mua thuốc kháng sinh hoặc thuốc kê đơn trong tháng, tìm ở đâu ra nhanh nhất?",
+                    advice: "Dạ anh/chị chỉ cần nhập thông tin đơn thuốc khi bán lẻ tại quầy, KiotViet sẽ tự động gom về 'Sổ theo dõi thông tin bệnh nhân'. Mở sổ này ra là có đủ tên bệnh nhân, bác sĩ kê, chẩn đoán và từng loại thuốc đã cấp kèm nút in sổ chuẩn quy định ạ!"
+                },
+                quiz: {
+                    question: "Hệ thống chỉ tự động trích xuất dữ liệu vào Sổ thông tin bệnh nhân đối với các hóa đơn bán hàng có kê khai thông tin đơn thuốc tại quầy.",
+                    answer: true,
+                    explanation: "Nếu hóa đơn bán lẻ không nhập thông tin đơn thuốc (bệnh nhân, bác sĩ, chẩn đoán), giao dịch đó sẽ không được ghi nhận vào sổ này."
+                }
+            },
+            {
+                title: "Báo cáo Xuất nhập tồn thuốc kiểm soát đặc biệt",
+                situation: "Khi bạn cần báo cáo định kỳ hoặc kiểm tra riêng biệt tình hình biến động <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">xuất, nhập, tồn kho, hao hụt và thất thoát</b> của các mặt hàng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thuốc gây nghiện, thuốc hướng thần, tiền chất</b> thuộc danh mục kiểm soát đặc biệt (KSĐB).",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Xuất nhập tồn thuốc kiểm soát đặc biệt</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024006/SNTR_281026-37.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị dữ liệu theo chi nhánh đang đăng nhập với thời gian là <b class=\"font-bold text-[#166def]\">Tháng này</b>. Sổ chỉ lấy các hàng hóa loại Thuốc có phân loại KHÁC với \"Thuốc không kiểm soát đặc biệt\" và đang liên thông Danh mục thuốc.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023950/SNTR_281026-38.png"
+                    },
+                    {
+                        text: "Kiểm tra các chỉ số: STT, Mã hàng, Tên hàng, Số lô, Hạn dùng, ĐVT, Tồn đầu, Nhập, Xuất, Thất thoát nhầm lẫn (tổng hợp từ phiếu kiểm kho đã cân bằng), Hao hụt (trích xuất từ phiếu xuất hủy), Tồn cuối.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023939/SNTR_281026-39.png"
+                    },
+                    {
+                        text: "Tìm kiếm theo mã hoặc tên hàng hóa, hoặc sử dụng bộ lọc bên trái để chọn <b class=\"font-bold text-[#166def]\">Chi nhánh</b>, <b class=\"font-bold text-[#166def]\">Thời gian</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023928/SNTR_281026-40.png"
+                    },
+                    {
+                        text: "Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải để tích chọn các thông tin cần hiển thị.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023916/SNTR_281026-41.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải báo cáo về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023903/SNTR_281026-42.png"
+                    },
+                    {
+                        text: "Kiểm tra file Excel Báo cáo xuất nhập tồn thuốc kiểm soát đặc biệt hoàn chỉnh, sẵn sàng nộp cơ quan quản lý.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023847/SNTR_281026-43.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Thuốc gây nghiện, hướng thần bị quản lý rất gắt gao, số liệu hao hụt và thất thoát phần mềm lấy từ đâu ra để khớp sổ sách?",
+                    advice: "Dạ trên KiotViet, cột 'Thất thoát nhầm lẫn' tự động tổng hợp từ các phiếu kiểm kho đã cân bằng, còn cột 'Hao hụt' lấy từ các phiếu xuất hủy ạ. Mọi biến động đều có chứng từ gốc minh bạch, xuất Excel nộp báo cáo cơ quan quản lý cực kỳ an tâm ạ!"
+                },
+                quiz: {
+                    question: "Cột Hao hụt trên Báo cáo xuất nhập tồn thuốc kiểm soát đặc biệt được trích xuất tự động từ các phiếu xuất hủy trên hệ thống.",
+                    answer: true,
+                    explanation: "Các phiếu xuất hủy ghi nhận lượng thuốc hao hụt, hư hỏng thực tế để khấu trừ vào báo cáo kiểm soát đặc biệt."
+                }
+            },
+            {
+                title: "Sổ theo dõi xuất - nhập thuốc",
+                situation: "Khi bạn cần theo dõi bảng cân đối tổng quát giữa <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tồn kho đầu kỳ, lượng nhập, lượng xuất và tồn kho cuối kỳ</b> của toàn bộ thuốc theo từng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">số lô và hạn dùng</b> để đánh giá tốc độ tiêu thụ và biến động kho.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi xuất - nhập thuốc</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023835/SNTR_281026-44.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị theo chi nhánh đăng nhập với thời gian là <b class=\"font-bold text-[#166def]\">Tháng này</b>. Có dòng tổng cộng trên cùng. Hàng hóa đã xóa khỏi danh mục vẫn hiển thị với mã kèm hậu tố <b class=\"font-bold text-[#166def]\">{DEL}</b> để bảo toàn lịch sử.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023824/SNTR_281026-45.png"
+                    },
+                    {
+                        text: "Tìm kiếm theo mã, tên hàng hóa hoặc sử dụng bộ lọc bên trái: <b class=\"font-bold text-[#166def]\">Chi nhánh, Thời gian, Hạn sử dụng, Trạng thái hàng hóa, Tồn kho, Loại hàng hóa, Nhóm hàng</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023813/SNTR_281026-46.png"
+                    },
+                    {
+                        text: "Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải để lựa chọn ẩn hoặc hiện các cột thông tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023802/SNTR_281026-47.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> trên thanh công cụ để mở giao diện in ấn sổ sách.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023751/SNTR_281026-48.png"
+                    },
+                    {
+                        text: "Kiểm tra bản in Sổ theo dõi xuất - nhập thuốc có đầy đủ các cột số lượng đầu kỳ, nhập, xuất và cuối kỳ theo từng số lô.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023735/SNTR_281026-49.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải dữ liệu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023724/SNTR_281026-50.png"
+                    },
+                    {
+                        text: "Mở file Excel Sổ theo dõi xuất - nhập thuốc để rà soát chi tiết dòng luân chuyển hàng hóa.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023712/SNTR_281026-51.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Nếu nhà thuốc lỡ xóa một mặt hàng cũ khỏi danh mục thì trên Sổ theo dõi xuất - nhập thuốc có bị mất lịch sử không em?",
+                    advice: "Dạ hoàn toàn không mất ạ! KiotViet luôn bảo toàn dữ liệu lịch sử bằng cách hiển thị mã hàng kèm hậu tố {DEL}. Sổ sách của anh/chị luôn nguyên vẹn, đảm bảo cân đối xuất nhập tồn tuyệt đối chính xác ạ!"
+                },
+                quiz: {
+                    question: "Hàng hóa dù đã bị xóa khỏi danh mục hàng hóa vẫn được hiển thị trên Sổ theo dõi xuất - nhập thuốc với mã hàng có đuôi {DEL} để bảo toàn số liệu lịch sử.",
+                    answer: true,
+                    explanation: "Cơ chế gắn hậu tố {DEL} giúp lưu trữ trọn vẹn số liệu xuất nhập tồn quá khứ mà không làm đứt gãy tính toán cân đối kho."
+                }
+            },
+            {
+                title: "Sổ theo dõi thu hồi thuốc",
+                situation: "Khi nhà thuốc nhận được <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">công văn của cơ quan quản lý y tế</b> về việc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">thu hồi hoặc đình chỉ lưu hành</b> một lô thuốc và bạn cần lập hồ sơ theo dõi việc thu hồi, tiếp nhận trả lại từ khách hàng và ghi nhận phương án xử lý.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi thu hồi thuốc</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023659/SNTR_281026-52.png"
+                    },
+                    {
+                        text: "Tạo mới phiếu thu hồi: Bạn nhấn nút <b class=\"font-bold text-[#166def]\">+ Thêm mới</b> ở góc phải trên danh sách.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023647/SNTR_281026-53.png"
+                    },
+                    {
+                        text: "Điền đầy đủ thông tin: <b class=\"font-bold text-[#166def]\">Số công văn, Thời gian ban hành, Cơ quan ban hành, Hàng hóa thu hồi, Số lô - HSD</b> (máy tự điền SL đã mua, đã bán, tồn kho), nhập <b class=\"font-bold text-[#166def]\">Số lượng thu hồi</b>, chọn <b class=\"font-bold text-[#166def]\">Khách hàng trả lại</b>, người nhận, ghi rõ <b class=\"font-bold text-[#166def]\">Xử lý của cơ sở</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Lưu</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023630/SNTR_281026-54.png"
+                    },
+                    {
+                        text: "Quản lý danh sách: Tìm kiếm theo mã hàng, tên hàng, hàm lượng, số đăng ký, công văn hoặc lọc theo <b class=\"font-bold text-[#166def]\">Chi nhánh, Thời gian ban hành</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023619/SNTR_281026-55.png"
+                    },
+                    {
+                        text: "Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải để tích chọn thông tin cột cần hiển thị.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023607/SNTR_281026-56.png"
+                    },
+                    {
+                        text: "Nhấn vào từng dòng phiếu để xem chi tiết. Tại đây, bạn có thể nhấn <b class=\"font-bold text-[#166def]\">Chỉnh sửa, Xóa, In</b> phiếu thu hồi riêng lẻ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023555/SNTR_281026-57.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> trên danh sách để chuẩn bị in toàn bộ sổ thu hồi thuốc.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023536/SNTR_281026-58.png"
+                    },
+                    {
+                        text: "Kiểm tra bản in Sổ theo dõi thu hồi thuốc chuẩn mẫu xuất trình cho đoàn kiểm tra.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023521/SNTR_281026-59.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải dữ liệu về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023509/SNTR_281026-60.png"
+                    },
+                    {
+                        text: "Kiểm tra file Excel Sổ theo dõi thu hồi thuốc đã xuất đầy đủ các trường thông tin xử lý của cơ sở.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023458/SNTR_281026-61.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Có công văn khẩn thu hồi một lô kháng sinh, làm sao biết lô đó nhà thuốc đã nhập bao nhiêu, bán cho ai bao nhiêu để thu hồi?",
+                    advice: "Dạ khi tạo phiếu thu hồi trên KiotViet, anh/chị chọn tên thuốc và số lô thì hệ thống tự động điền sẵn số lượng đã mua, đã bán và lượng tồn hiện tại ạ! Anh/chị chỉ cần nhập số lượng thu hồi và lưu phương án xử lý là xong hồ sơ chuẩn GPP ạ!"
+                },
+                quiz: {
+                    question: "Khi tạo mới phiếu thu hồi thuốc, nếu chưa điền các thông tin bắt buộc như Số công văn, Cơ quan ban hành, Lô - HSD và Xử lý của cơ sở, hệ thống sẽ ngăn chặn việc lưu phiếu.",
+                    answer: true,
+                    explanation: "Hệ thống kiểm soát các trường thông tin pháp lý bắt buộc để biên bản thu hồi thuốc đạt chuẩn giá trị pháp lý theo quy định y tế."
+                }
+            },
+            {
+                title: "Sổ theo dõi bán thuốc theo đơn",
+                situation: "Khi bạn cần kiểm tra, trích xuất <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">danh sách tất cả các loại thuốc kê đơn đã bán</b> kèm theo chi tiết <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">người bệnh, ngày kê đơn, ngày bán</b> để chứng minh tuân thủ đúng quy định về bán thuốc kê đơn.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Sổ theo dõi bán thuốc theo đơn</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023446/SNTR_281026-62.png"
+                    },
+                    {
+                        text: "Màn hình mặc định hiển thị theo chi nhánh đăng nhập với thời gian là <b class=\"font-bold text-[#166def]\">Tháng này</b>. Hệ thống chỉ tổng hợp các hóa đơn có gắn thông tin đơn thuốc của bác sĩ: STT, Mã hóa đơn, Ngày bán, Ngày kê, Tên bệnh nhân, Tên thuốc, Số lượng (kèm ĐVT).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023435/SNTR_281026-63.png"
+                    },
+                    {
+                        text: "Tìm kiếm theo mã hóa đơn, tên bệnh nhân, tên bác sĩ, tên hoặc mã thuốc hoặc sử dụng bộ lọc bên trái để chọn <b class=\"font-bold text-[#166def]\">Chi nhánh, Thời gian</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023421/SNTR_281026-64.png"
+                    },
+                    {
+                        text: "Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải để tích chọn thông tin cột cần hiển thị.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023408/SNTR_281026-65.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">In sổ</b> để chuẩn bị in theo mẫu văn bản quy định.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023350/SNTR_281026-66.png"
+                    },
+                    {
+                        text: "Kiểm tra mẫu in văn bản Sổ theo dõi bán thuốc theo đơn chuẩn GPP có đầy đủ thông tin bệnh nhân và dược sĩ bán thuốc.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023336/SNTR_281026-67.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> để tải toàn bộ bảng theo dõi về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023324/SNTR_281026-68.png"
+                    },
+                    {
+                        text: "Mở file Excel Sổ theo dõi bán thuốc theo đơn để phục vụ báo cáo và lưu trữ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023310/SNTR_281026-69.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Quy định mới bắt buộc nhà thuốc phải theo dõi việc bán thuốc theo đơn của bác sĩ, nhân viên ghi sổ tay hay thất lạc quá.",
+                    advice: "Dạ anh/chị không cần ghi sổ tay nữa đâu ạ. Khi bán hàng, thu ngân chỉ cần nhập mã đơn thuốc hoặc tên bác sĩ, ngày kê đơn là toàn bộ hóa đơn sẽ tự động nhảy vào 'Sổ theo dõi bán thuốc theo đơn'. Bấm in hoặc xuất Excel nộp thanh tra trong 1 nốt nhạc ạ!"
+                },
+                quiz: {
+                    question: "Sổ theo dõi bán thuốc theo đơn tổng hợp tất cả các giao dịch bán hàng kể cả hóa đơn bán lẻ thông thường không có kê đơn.",
+                    answer: false,
+                    explanation: "Sổ này CHỈ tổng hợp các giao dịch bán hàng có gắn thông tin đơn thuốc của bác sĩ; các đơn thuốc không kê đơn sẽ không được đưa vào sổ này."
+                }
+            },
+            {
+                title: "Sổ kiểm tra chất lượng định kỳ và đột xuất",
+                situation: "Khi nhà thuốc thực hiện các đợt kiểm tra, đánh giá <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chất lượng thuốc tại quầy</b> (cảm quan, bao bì, nhãn mác, hạn dùng) theo <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">định kỳ hoặc đột xuất</b> và cần lập biên bản lưu trữ hồ sơ GPP.",
+                steps: [
+                    {
+                        text: "Tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, vào menu <b class=\"font-bold text-[#166def]\">Sổ nhà thuốc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Kiểm tra chất lượng định kỳ và đột xuất</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023255/SNTR_281026-70.png"
+                    },
+                    {
+                        text: "Khởi tạo đợt kiểm tra mới: Bạn nhấn nút <b class=\"font-bold text-[#166def]\">+ Thêm mới</b> ở góc phải phía trên màn hình.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023244/SNTR_281026-71.png"
+                    },
+                    {
+                        text: "Thêm các mặt hàng thuốc cần kiểm tra bằng cách tìm mã/tên hàng tại ô tìm kiếm, hoặc nhấn <b class=\"font-bold text-[#166def]\">Chọn file dữ liệu</b> để nhập từ file Excel mẫu (\"Excel file\").",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023231/SNTR_281026-72.png"
+                    },
+                    {
+                        text: "Tại từng dòng thuốc: Chọn ĐVT ➔ <b class=\"font-bold text-[#166def]\">Chọn lô</b> và điền số lượng cần kiểm tra ➔ Chọn <b class=\"font-bold text-[#166def]\">Lý do</b> (Định kỳ/Đột xuất) ➔ Chọn <b class=\"font-bold text-[#166def]\">Nhận xét chất lượng</b> (Đạt/Không đạt) ➔ Nhập <b class=\"font-bold text-[#166def]\">Biện pháp xử lý</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023219/SNTR_281026-73.png"
+                    },
+                    {
+                        text: "Ở khung bên phải: Chọn người thực hiện, thời gian kiểm tra, điền lý do và ghi chú chung ➔ nhấn <b class=\"font-bold text-[#166def]\">Lưu</b> (Lưu ý: Mỗi ngày tại mỗi chi nhánh chỉ được phép khởi tạo một sổ kiểm tra duy nhất).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023208/SNTR_281026-74.png"
+                    },
+                    {
+                        text: "Quản lý danh sách: Tìm kiếm theo mã, tên thuốc hoặc sử dụng bộ lọc bên trái để chọn <b class=\"font-bold text-[#166def]\">Chi nhánh, Thời gian</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023148/SNTR_281026-75.png"
+                    },
+                    {
+                        text: "Nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chỉnh cột</b> ở góc phải để tích chọn thông tin cột cần hiển thị trên danh sách.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023136/SNTR_281026-76.png"
+                    },
+                    {
+                        text: "Nhấn vào từng dòng đợt kiểm tra để xem chi tiết. Tại đây, bạn có thể nhấn <b class=\"font-bold text-[#166def]\">Chỉnh sửa, Xóa, Xuất file, In</b> phiếu kiểm tra riêng lẻ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023119/SNTR_281026-77.png"
+                    },
+                    {
+                        text: "Nhấn nút <b class=\"font-bold text-[#166def]\">Xuất Excel</b> trên thanh công cụ để tải dữ liệu các đợt kiểm tra theo bộ lọc về máy tính.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023105/SNTR_281026-78.png"
+                    },
+                    {
+                        text: "Kiểm tra file Excel Sổ kiểm tra chất lượng định kỳ và đột xuất hoàn chỉnh phục vụ hồ sơ thẩm định GPP.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023050/SNTR_281026-79.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Mỗi lần kiểm tra chất lượng thuốc tại quầy xong có làm thay đổi số lượng tồn kho của tiệm không em?",
+                    advice: "Dạ thông tin ghi nhận trong Sổ kiểm tra chất lượng hoàn toàn không làm thay đổi số lượng tồn kho hàng hóa đâu ạ! Đây là biên bản ghi nhận cảm quan, bao bì và đánh giá chất lượng phục vụ lưu trữ hồ sơ GPP ạ."
+                },
+                quiz: {
+                    question: "Thông tin ghi chép trong Sổ kiểm tra chất lượng định kỳ và đột xuất sẽ tự động trừ giảm tồn kho hàng hóa của cửa hàng.",
+                    answer: false,
+                    explanation: "Sổ kiểm tra chất lượng chỉ có chức năng lưu trữ hồ sơ đánh giá cảm quan/chất lượng GPP, hoàn toàn không làm biến động số lượng tồn kho thực tế."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Phân quyền sử dụng các loại sổ",
+                situation: "Khi chủ nhà thuốc muốn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">giới hạn quyền thao tác</b> của từng nhân viên đối với từng loại sổ sách nhằm đảm bảo <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">an toàn và tính bảo mật</b> của dữ liệu GPP.",
+                steps: [
+                    {
+                        text: "Hệ thống thiết lập nhóm quyền chi tiết cho từng loại sổ, bao gồm các hành động cụ thể: <b class=\"font-bold text-[#166def]\">Xem, Tạo, Import, Chỉnh sửa, Xóa, In, Xuất file...</b>",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28023038/SNTR_281026-80.png"
+                    },
+                    {
+                        text: "Quy tắc bắt buộc: Để thực hiện bất kỳ hành động nào, tài khoản người dùng bắt buộc phải được cấp quyền <b class=\"font-bold text-[#166def]\">Xem</b> đối với sổ đó. Khi tài khoản không được phân quyền thực hiện hành động nào, nút chức năng tương ứng sẽ tự động ẩn trên giao diện làm việc.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Tôi muốn nhân viên chỉ được xem và nhập nhiệt độ độ ẩm hàng ngày, không cho sửa hay xóa các sổ thu hồi, kiểm tra chất lượng thì cài đặt sao?",
+                    advice: "Dạ trong phần Phân quyền, KiotViet chia chi tiết quyền Xem, Tạo, Chỉnh sửa, Xóa, In, Xuất file cho từng loại sổ riêng biệt. Nhân viên không được cấp quyền nào thì nút bấm tương ứng sẽ tự động ẩn trên màn hình, cực kỳ an toàn ạ!"
+                },
+                quiz: {
+                    question: "Để có thể thực hiện bất kỳ hành động nào (Tạo, Sửa, Xóa, In) trên một sổ nhà thuốc, tài khoản người dùng bắt buộc phải được cấp quyền Xem đối với sổ đó trước.",
+                    answer: true,
+                    explanation: "Quyền Xem là điều kiện tiên quyết để hiển thị và truy cập vào giao diện làm việc của từng loại sổ."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Hướng dẫn xử lý các tình huống & lỗi thường gặp",
+                situation: "Khi gặp các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">trạng thái dữ liệu trống</b>, thông báo cảnh báo lỗi hoặc các thắc mắc thường gặp trong quá trình <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">vận hành sổ sách nhà thuốc GPP</b>.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Không có dữ liệu trong khoảng thời gian đang chọn:</b> Giao diện hiển thị bảng trống kèm thông báo \"Chưa có phiếu nào trong khoảng ngày đang lọc.\" Bạn chỉ cần thay đổi điều kiện tại bộ lọc <b class=\"font-bold text-[#166def]\">Thời gian</b> (chuyển sang \"Năm nay\" hoặc chọn \"Tùy chỉnh\" khoảng ngày rộng hơn) rồi bấm Tạo báo cáo.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Sổ bệnh nhân hoặc Sổ bán thuốc theo đơn không thấy xuất hiện hóa đơn vừa bán:</b> Do hóa đơn đó chưa được nhập thông tin đơn thuốc (tên bệnh nhân, bác sĩ, chẩn đoán) tại màn hình bán hàng. Cần kê khai thông tin đơn thuốc ngay trong lúc thực hiện giao dịch.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Báo cáo Xuất nhập tồn thuốc KSĐB bị trống dù cửa hàng có bán thuốc gây nghiện, hướng thần:</b> Do hàng hóa đó chưa được thiết lập Phân loại thuốc kiểm soát đặc biệt trong danh mục, hoặc chưa kích hoạt liên thông Danh mục thuốc quốc gia.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hệ thống báo lỗi khi tạo thêm sổ kiểm tra chất lượng trong cùng ngày:</b> Xuất hiện thông báo \"Mỗi ngày chỉ tạo được một sổ.\" Quy định hệ thống chỉ cho phép mỗi chi nhánh có 1 sổ kiểm tra/ngày. Bạn bấm vào sổ đã có để <b class=\"font-bold text-[#166def]\">Chỉnh sửa</b> hoặc chọn ngày khác.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Hàng hóa đã xóa khỏi danh mục:</b> Mặt hàng đã xóa vẫn được hiển thị trong các báo cáo sổ sách lịch sử với mã hàng kèm hậu tố <b class=\"font-bold text-[#166def]\">{DEL}</b> nhằm bảo đảm tính toàn vẹn và chính xác của dữ liệu quá khứ.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Số lượng hiển thị số thập phân:</b> Đối với các giao dịch bán lẻ chia nhỏ theo đơn vị tính phụ (ví dụ bán lẻ từng viên từ vỉ/hộp), hệ thống sẽ hiển thị số lượng lẻ dưới dạng số thập phân (ví dụ: 10.5 Viên).",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Lô thuốc không xuất hiện trong danh sách khi tạo phiếu thu hồi:</b> Do mặt hàng chưa được cấu hình quản lý theo lô - hạn sử dụng hoặc lô thuốc đó không còn phát sinh giao dịch tồn kho tại chi nhánh.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Lỗi thiếu thông tin bắt buộc khi lưu phiếu thu hồi thuốc:</b> Bắt buộc điền đủ tất cả các trường có dấu sao đỏ: Số công văn, Cơ quan ban hành, Lô - hạn dùng, Khách hàng trả lại, Xử lý của cơ sở trước khi bấm Lưu.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Số liệu nhiệt độ - độ ẩm bị ghi nhận nhầm ca:</b> Do nhân viên \"Ghi nhanh\" ngoài khung giờ quy định. Khắc phục bằng cách mở chi tiết sổ tháng đó và bấm <b class=\"font-bold text-[#166def]\">Chỉnh sửa</b> để chuyển số liệu về đúng ca 9h hoặc 15h.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Sổ hiển thị thiếu dữ liệu của một số chi nhánh:</b> Do chưa tích chọn chi nhánh trong khung bộ lọc bên trái hoặc tài khoản đang sử dụng chưa được phân quyền truy cập chi nhánh đó.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Sao tôi tạo thêm sổ kiểm tra chất lượng trong ngày mà hệ thống báo lỗi không cho lưu?",
+                    advice: "Dạ theo quy định nghiệp vụ, mỗi chi nhánh chỉ được phép khởi tạo duy nhất một sổ kiểm tra chất lượng trong 1 ngày ạ. Anh/chị chỉ cần bấm vào sổ đã tạo của ngày hôm đó và chọn 'Chỉnh sửa' để thêm mặt hàng cần kiểm tra nhé!"
+                },
+                quiz: {
+                    question: "Mỗi ngày tại mỗi chi nhánh, hệ thống KiotViet cho phép tạo không giới hạn số lượng Sổ kiểm tra chất lượng thuốc.",
+                    answer: false,
+                    explanation: "Hệ thống quy định mỗi ngày tại mỗi chi nhánh chỉ được phép khởi tạo một sổ kiểm tra chất lượng duy nhất; muốn bổ sung thuốc cần vào sổ đã có để Chỉnh sửa."
+                }
+            }
+        ];
+
+        let currentPage = 'intro-infographic';
+        let currentZoom = 80;
+        let isAdvancedUnlocked = false;
+        let isSidebarCollapsed = false;
+        let viewedPages = new Set(['intro-infographic']);
+        let userAnswers = {};
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function getLinearNavigationList() {
+            let list = [
+                { id: 'intro-infographic', title: 'Infographic' },
+                { id: 'intro-overview', title: 'Lợi ích nổi bật' },
+                { id: 'intro-video', title: 'Video hướng dẫn' },
+                { id: 'intro-glossary', title: 'Thuật ngữ nền tảng' }
+            ];
+
+            BASIC_LESSONS.forEach((l, idx) => {
+                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+            });
+
+            if (isAdvancedUnlocked) {
+                ADVANCED_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `advanced-${idx}`, title: l.title, scope: 'advanced', index: idx });
+                });
+            }
+            return list;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setAppZoom(80);
+            renderSidebar();
+            navGoToPage('intro-infographic');
+        });
+
+        function setAppZoom(val) {
+            currentZoom = val;
+            const fontMap = {
+                70: '11.5px',
+                80: '13px',
+                90: '14.5px',
+                100: '16px'
+            };
+            document.documentElement.style.fontSize = fontMap[val] || '13px';
+            document.getElementById('zoom-label').innerText = val + '%';
+            
+            document.querySelectorAll('.zoom-btn').forEach(b => {
+                if (parseInt(b.getAttribute('data-zoom')) === val) {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer';
+                } else {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
+                }
+            });
+        }
+
+        function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+        function handleAdvancedToggle(checked) {
+            isAdvancedUnlocked = checked;
+            const clusterEl = document.getElementById('sidebar-advanced-cluster');
+
+            if (checked) {
+                clusterEl.classList.remove('hidden');
+            } else {
+                clusterEl.classList.add('hidden');
+                if (currentPage.startsWith('advanced-')) {
+                    navGoToPage('basic-0');
+                }
+            }
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+        }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+
+            if (isMobile()) {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                    icon.className = 'fa-solid fa-xmark text-xs';
+                }
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.style.width = '0px';
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.style.opacity = '0';
+                    icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+                } else {
+                    sidebar.style.width = '';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.opacity = '1';
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+        }
+
+        function toggleAdvChildGroup(sub) {
+            const p = document.getElementById(`panel-adv-${sub}`);
+            const icon = document.getElementById(`icon-adv-${sub}`);
+            p.classList.toggle('hidden');
+            icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
+
+        function renderSidebar() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedPages.has(`basic-${idx}`);
+                    const isActive = (currentPage === `basic-${idx}`);
+                    return `
+                        <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            if (isAdvancedUnlocked) {
+                const fPanel = document.getElementById('panel-adv-features');
+                const mPanel = document.getElementById('panel-adv-mobile');
+                const pPanel = document.getElementById('panel-adv-pos');
+
+                const fGroup = document.getElementById('sidebar-subgroup-features');
+                const mGroup = document.getElementById('sidebar-subgroup-mobile');
+                const pGroup = document.getElementById('sidebar-subgroup-pos');
+
+                let fHTML = '', mHTML = '', pHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedPages.has(`advanced-${idx}`);
+                    const isActive = (currentPage === `advanced-${idx}`);
+                    const btnHTML = `
+                        <button onclick="navGoToPage('advanced-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white' : 'text-slate-700 hover:bg-emerald-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-emerald-600'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                    if (lesson.category === 'feature') fHTML += btnHTML;
+                    else if (lesson.category === 'mobile') mHTML += btnHTML;
+                    else if (lesson.category === 'pos') pHTML += btnHTML;
+                });
+
+                if (fPanel) fPanel.innerHTML = fHTML;
+                if (mPanel) mPanel.innerHTML = mHTML;
+                if (pPanel) pPanel.innerHTML = pHTML;
+
+                if (fGroup) fGroup.classList.toggle('hidden', !fHTML);
+                if (mGroup) mGroup.classList.toggle('hidden', !mHTML);
+                if (pGroup) pGroup.classList.toggle('hidden', !pHTML);
+            }
+
+            ['intro-infographic', 'intro-overview', 'intro-video', 'intro-glossary'].forEach(id => {
+                const el = document.getElementById(`subbtn-${id}`);
+                if (el) {
+                    if (currentPage === id) {
+                        el.classList.add('active-sub');
+                    } else {
+                        el.classList.remove('active-sub');
+                    }
+                }
+            });
+        }
+
+        function updateSideNavButtons() {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            const prevBtn = document.getElementById('nav-btn-prev');
+            const nextBtn = document.getElementById('nav-btn-next');
+            if (!prevBtn || !nextBtn) return;
+
+            if (curIdx <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navGoToPage(pageId) {
+            currentPage = pageId;
+            viewedPages.add(pageId);
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            
+            if (isMobile()) {
+                const sidebar = document.getElementById('app-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+
+            const container = document.getElementById('dynamic-content-view');
+            if (container) container.scrollTop = 0;
+        }
+
+        function navStepLinear(direction) {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            if (curIdx === -1) return;
+
+            if (direction === 'next') {
+                if (curIdx === list.length - 1) {
+                    if (!isAdvancedUnlocked) {
+                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                    }
+                    return;
+                }
+                const nextItem = list[curIdx + 1];
+                navGoToPage(nextItem.id);
+            } else if (direction === 'prev') {
+                if (curIdx > 0) {
+                    const prevItem = list[curIdx - 1];
+                    navGoToPage(prevItem.id);
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            closeModal('modal-basic-complete');
+            closeModal('modal-advanced-complete');
+            navGoToPage('intro-infographic');
+        }
+
+        // RENDER GIAO DIỆN CHÍNH
+        function renderCurrentPageView() {
+            const container = document.getElementById('dynamic-content-view');
+            if (!container) return;
+
+            // TRANG 1: INFOGRAPHIC (16:9 RESPONSIVE)
+            if (currentPage === 'intro-infographic') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/28024812/SNTR_281026-1.jpg" 
+                                 alt="Infographic Sổ nhà thuốc" 
+                                 class="w-full h-full object-contain select-none">
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 2: LỢI ÍCH NỔI BẬT
+            if (currentPage === 'intro-overview') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Sổ nhà thuốc (Chuẩn GPP)</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Tính năng <strong>Sổ nhà thuốc</strong> là bộ 14 sổ sách điện tử giúp nhà thuốc ghi chép, theo dõi và in ấn các loại sổ bắt buộc theo tiêu chuẩn Thực hành tốt cơ sở bán lẻ thuốc (GPP). Phần lớn dữ liệu sổ được hệ thống tự động tổng hợp từ các giao dịch nhập hàng, bán hàng, kiểm kho. Nhà thuốc có thể dễ dàng tra cứu, xuất dữ liệu ra file Excel hoặc in sổ theo mẫu chuẩn để xuất trình khi cơ quan quản lý kiểm tra.
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Nhà thuốc
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-book-medical"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Không cần ghi sổ tay</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Dữ liệu mua, bán, tồn kho theo lô và hạn dùng được ghi nhận tự động từ các giao dịch phát sinh, giảm thiểu sai sót do thao tác thủ công.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-print"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Sổ sách luôn sẵn sàng</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Dễ dàng xem lại hoặc in ấn bất kỳ lúc nào với vài thao tác xuất file Excel hoặc in theo mẫu văn bản quy chuẩn GPP.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Chủ động kiểm soát rủi ro</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nắm bắt kịp thời các lô thuốc sắp hết hạn, danh mục thuốc kiểm soát đặc biệt, thuốc có quyết định thu hồi và điều kiện bảo quản thực tế.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-sitemap"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Quản lý tập trung đa chi nhánh</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Linh hoạt lọc, tra cứu số liệu tập trung theo từng chi nhánh và từng mốc thời gian cụ thể với phân quyền bảo mật chặt chẽ.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Điều kiện &amp; Quy tắc vận hành chung:
+                            </h4>
+                            <ul class="text-xs text-amber-950 space-y-0.5 list-disc pl-5 font-medium leading-relaxed">
+                                <li><strong class="text-amber-900">Phân quyền:</strong> Menu Sổ nhà thuốc chỉ hiển thị với các gian hàng đăng ký ngành hàng Nhà thuốc (Bán buôn, Bán lẻ). Để thao tác trên từng sổ, tài khoản phải được cấp quyền Xem sổ tương ứng.</li>
+                                <li><strong class="text-amber-900">Phân tách dòng theo lô:</strong> Nếu một chứng từ phát sinh nhiều lô thuốc khác nhau, hệ thống tự động tách thành nhiều dòng tương ứng (mỗi dòng hiển thị 1 số lô cụ thể).</li>
+                                <li><strong class="text-amber-900">Số lượng bán lẻ:</strong> Các giao dịch bán lẻ chia nhỏ theo đơn vị tính phụ (như viên từ vỉ hoặc hộp) có thể hiển thị dưới dạng số thập phân (ví dụ: 10.5 Viên).</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 3: VIDEO (16:9 RESPONSIVE, TẮT PHỤ ĐỀ MẶC ĐỊNH & KHÓA MORE VIDEOS NGOÀI LUỒNG)
+            if (currentPage === 'intro-video') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-md bg-black border border-slate-200 my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/Bhk8r7yBLog?rel=0&cc_load_policy=0&iv_load_policy=3&playsinline=1&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 4: THUẬT NGỮ
+            if (currentPage === 'intro-glossary') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-base"></i>
+                                <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs text-slate-600">Tra cứu các khái niệm, quy tắc nghiệp vụ và tiêu chuẩn GPP để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Tiêu chuẩn GPP (Good Pharmacy Practice)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Bộ nguyên tắc, tiêu chuẩn Thực hành tốt cơ sở bán lẻ thuốc do Bộ Y tế ban hành, bắt buộc các nhà thuốc phải ghi chép, lưu trữ và xuất trình đầy đủ các loại sổ sách theo dõi nguồn gốc và luân chuyển thuốc.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Thuốc kiểm soát đặc biệt (KSĐB)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Nhóm dược phẩm bao gồm thuốc gây nghiện, thuốc hướng thần, tiền chất và thuốc dạng phối hợp có chứa hoạt chất gây nghiện, hướng thần. Nhóm này chịu sự giám sát nghiêm ngặt về xuất nhập tồn, thất thoát và hao hụt.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Quy tắc phân tách dòng theo lô</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Cơ chế tự động của KiotViet khi một hóa đơn hoặc phiếu nhập có nhiều số lô khác nhau của cùng một loại thuốc, hệ thống sẽ tự động tách thành nhiều dòng riêng biệt để quản lý chính xác từng số lô và hạn dùng.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Bảo toàn dữ liệu lịch sử {DEL}</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Quy tắc giữ nguyên dữ liệu sổ sách khi một mặt hàng bị xóa khỏi danh mục hàng hóa. Mã hàng sẽ được gắn thêm hậu tố {DEL} trên các báo cáo lịch sử để đảm bảo tính toàn vẹn và không làm sai lệch số liệu tồn kho quá khứ.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Sổ theo dõi nhiệt độ - độ ẩm 2 ca/ngày</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Quy định ghi chép điều kiện môi trường bảo quản thuốc định kỳ 2 lần mỗi ngày (ca 9h sáng và ca 15h chiều). Hệ thống cảnh báo đỏ khi nhiệt độ vượt 30°C hoặc độ ẩm vượt 75%.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">6. Liên thông Danh mục thuốc Quốc gia</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Trạng thái đồng bộ dữ liệu mặt hàng với Cơ sở dữ liệu Dược Quốc gia. Đây là điều kiện tiên quyết để thuốc hiển thị và tổng hợp vào các báo cáo theo dõi thuốc KSĐB và bán thuốc theo đơn.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // CHI TIẾT BÀI HỌC CƠ BẢN HOẶC NÂNG CAO
+            let scope = '';
+            let index = 0;
+            if (currentPage.startsWith('basic-')) {
+                scope = 'basic';
+                index = parseInt(currentPage.split('-')[1]);
+            } else if (currentPage.startsWith('advanced-')) {
+                scope = 'advanced';
+                index = parseInt(currentPage.split('-')[1]);
+            }
+
+            if (scope) {
+                const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                const lesson = lessons[index];
+                const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
+                const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
+
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                        <!-- TIÊU ĐỀ BÀI HỌC -->
+                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                    ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                                </span>
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <span>${lesson.title}</span>
+                            </h2>
+                        </div>
+
+                        <!-- TÌNH HUỐNG THỰC TẾ -->
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                            <div class="flex items-center gap-2 text-amber-900">
+                                <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                            </div>
+                            <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                        </div>
+
+                        <!-- QUY TRÌNH THỰC HIỆN -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                            <div class="space-y-3">
+                                ${lesson.steps.map((step, sIdx) => `
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                        </div>
+                                        ${step.img ? `
+                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                                <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                                <div class="flashcard-3d-card">
+                                    <!-- MẶT TRƯỚC -->
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                        </div>
+                                    </div>
+
+                                    <!-- MẶT SAU -->
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                                <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
+                                        <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                    </span>
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                        Đúng / Sai
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                    <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                    <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                                </div>
+
+                                <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                    <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                        ✓ ĐÚNG
+                                    </button>
+                                    <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                        ✕ SAI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH -->
+                        ${isLastBasicLesson ? `
+                            <div class="pt-5 sm:pt-6">
+                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-trophy text-amber-300"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
+                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản của tính năng Sổ nhà thuốc. Chạm vào đây để xem tổng kết.</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }
+        }
+
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
+        }
+
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                `;
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
