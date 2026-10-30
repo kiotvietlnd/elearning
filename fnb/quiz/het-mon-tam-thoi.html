@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KiotViet E-Learning - Hết món tạm thời</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* TỐI ƯU VIEWPORT ĐỘNG TƯƠNG THÍCH MỌI MÔI TRƯỜNG */
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* PHÂN TÁCH SAFE AREA RIÊNG BIỆT: CHỈ ÁP DỤNG ĐỆM ĐÁY CAO TRÊN MOBILE */
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR CHUẨN RESPONSIVE (42px) -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Cài đặt">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+
+            <span class="text-white/40 text-xs sm:text-sm font-light">|</span>
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Hết món tạm thời</h1>
+            </div>
+        </div>
+
+        <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-orange-500 border border-orange-400/40 uppercase tracking-wider">
+            FNB
+        </div>
+    </header>
+
+    <!-- KHUNG BODY -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <!-- LỚP BACKDROP MỜ TRÊN MOBILE -->
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR DRAWER CHO MOBILE & SIBLING CHO DESKTOP -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-64 sm:w-60 lg:w-64 bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM 2: KIẾN THỨC CƠ BẢN (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+                <!-- CỤM 3: KIẾN THỨC NÂNG CAO (KHI MỞ KHÓA) -->
+                <div id="sidebar-advanced-cluster" class="hidden p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                    </div>
+
+                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Tính năng nâng cao</span>
+                                <i id="icon-adv-features" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-features" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile">
+                            <button onclick="toggleAdvChildGroup('mobile')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Điện thoại</span>
+                                <i id="icon-adv-mobile" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-mobile" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos">
+                            <button onclick="toggleAdvChildGroup('pos')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Máy POS</span>
+                                <i id="icon-adv-pos" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-pos" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW TRUNG TÂM -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            
+            <!-- NÚT MŨI TÊN BÊN TRÁI -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- NÚT MŨI TÊN BÊN PHẢI -->
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- VÙNG HIỂN THỊ NỘI DUNG -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+                <!-- Nội dung được render tự động -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL CÀI ĐẶT -->
+    <div id="modal-settings" class="fixed inset-0 bg-black/70 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2 text-slate-800">
+                    <i class="fa-solid fa-gear text-[#166def]"></i>
+                    <h3 class="text-sm font-black uppercase">Cài đặt giao diện &amp; học tập</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- TỶ LỆ THU PHÓNG -->
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+                    <span>Tỷ lệ thu phóng (Zoom):</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                </div>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+            </div>
+
+            <!-- MỞ KHÓA NÂNG CAO -->
+            <div class="pt-3 border-t border-slate-100 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed font-medium">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeSettingsModal()" class="w-full py-2 bg-[#166def] hover:bg-[#1259c7] text-white font-bold rounded-xl text-xs cursor-pointer shadow-xs">
+                    Xác nhận &amp; Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH BÀI HỌC -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Hết món tạm thời
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29105343/HM_291026.png" 
+                     alt="Infographic Hết món tạm thời" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH TOÀN BỘ KHÓA HỌC -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl border-2 border-emerald-600">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">Tuyệt vời! Bạn đã hoàn thành tất cả các thao tác cơ bản và nâng cao của tính năng Hết món tạm thời.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer">
+                    Học lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        const BASIC_LESSONS = [
+            {
+                title: "Thiết lập tính năng Hết món tạm thời",
+                situation: "Bạn muốn thiết lập tính năng trên hệ thống quản lý để thu ngân có thể <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chủ động chuyển món sang Hết món tại quầy</b>, đồng thời cấu hình <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tự động mở bán lại món</b> vào mốc giờ mong muốn hàng ngày.",
+                steps: [
+                    {
+                        text: "Tài khoản Admin của chủ gian hàng truy cập màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b> ➔ nhấn vào biểu tượng bánh răng <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Đơn hàng</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092557/HM_291026-2.png"
+                    },
+                    {
+                        text: "Bật xanh <b class=\"font-bold text-[#166def]\">Cài đặt hết món tạm thời</b> và thiết lập tùy chọn <b class=\"font-bold text-[#166def]\">Áp dụng cho thực đơn điện tử</b> (bật xanh nếu muốn món đang ở trạng thái Hết món cũng hiển thị hết món trên thực đơn điện tử và khách không gọi được món đó; khi tắt, món ở trạng thái Hết món vẫn được gọi qua thực đơn điện tử QR).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092541/HM_291026-3.png"
+                    },
+                    {
+                        text: "Thiết lập <b class=\"font-bold text-[#166def]\">Tự động bỏ Hết món hàng ngày</b>: Bật xanh nếu muốn hệ thống tự động bỏ trạng thái Hết món cho tất cả các món của toàn bộ cửa hàng vào mốc giờ đã thiết lập (mặc định 00:00) theo từng chi nhánh. Để chỉnh sửa mốc giờ, nhấn <b class=\"font-bold text-[#166def]\">Thiết lập cho từng chi nhánh</b> ➔ thay đổi mốc giờ trên từng chi nhánh hoặc tích chọn các chi nhánh cần thay đổi ➔ chọn mốc thời gian <b class=\"font-bold text-[#166def]\">Chuyển sang</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Áp dụng</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">Xong</b> để ghi nhận thông tin (khi tắt, hệ thống không tự động bỏ trạng thái Hết món).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092528/HM_291026-4.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Lưu ý:</b> Khi bạn tắt <b class=\"font-bold text-[#166def]\">Cài đặt hết món tạm thời</b> ➔ mọi món đang Hết món ở tất cả chi nhánh sẽ trở lại bán bình thường ngay lập tức và ẩn mục <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b> trên màn hình Thu ngân. Nếu bật lại tính năng sẽ không phục hồi trạng thái Hết món trước đó.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Quán anh bán tới 2h sáng mới đóng cửa, nếu để mặc định 00:00 tự động mở lại món thì khách khuya lại đặt nhầm món đã hết mất em ơi!",
+                    advice: "Dạ anh/chị hoàn toàn tùy chỉnh được mốc giờ tự động bỏ Hết món riêng cho từng chi nhánh ạ! Mình chỉ cần nhấn 'Thiết lập cho từng chi nhánh' rồi đổi mốc giờ sang 04:00 hoặc 06:00 sáng hôm sau là chuẩn nhịp vận hành của quán luôn ạ!"
+                },
+                quiz: {
+                    question: "Khi Admin tắt 'Cài đặt hết món tạm thời' rồi bật lại ngay sau đó, hệ thống sẽ tự động khôi phục lại danh sách các món đang Hết món trước đó.",
+                    answer: false,
+                    explanation: "Khi tắt Cài đặt hết món tạm thời, mọi món đang Hết món ở tất cả chi nhánh sẽ trở lại bán bình thường ngay lập tức và việc bật lại tính năng sẽ không phục hồi trạng thái Hết món trước đó."
+                }
+            },
+            {
+                title: "Cập nhật trạng thái Hết món trên màn hình Thu ngân",
+                situation: "Khi bếp báo hết món hoặc vừa nhập thêm nguyên liệu, bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chủ động khóa gọi món</b>, <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">mở bán lại từng món</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">mở bán lại toàn bộ thực đơn</b> ngay trên màn hình Thu ngân.",
+                steps: [
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Thu ngân</b>, bạn nhấn biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chọn (3 gạch)</b> ở góc trên bên phải ➔ chọn <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092504/HM_291026-6.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị popup <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b> với danh sách toàn bộ món đang bán tại chi nhánh. Bạn tìm kiếm theo tên, mã món hoặc chọn nhóm tại mục <b class=\"font-bold text-[#166def]\">Tất cả nhóm món</b> để tìm món cần chuyển trạng thái.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092444/HM_291026-7.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Chuyển sang Hết món:</b> Tại dòng của món đã hết ➔ tắt xám để chuyển trạng thái thành <b class=\"font-bold text-[#166def]\">Hết món</b>. Hệ thống hiển thị thông báo <b class=\"font-bold text-[#166def]\">[Món] đã chuyển sang hết món</b> và đồng bộ ngay sang tất cả thiết bị, tài khoản khác trong cùng chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092428/HM_291026-8.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Mở bán lại từng món:</b> Mỗi lần mở popup <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b> ➔ các món có trạng thái <b class=\"font-bold text-[#166def]\">Hết món</b> sẽ được ưu tiên xếp ở đầu danh sách.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092413/HM_291026-9.png"
+                    },
+                    {
+                        text: "Tại dòng của món đã có lại ➔ bật xanh để chuyển trạng thái thành <b class=\"font-bold text-[#166def]\">Còn món</b>. Hệ thống hiển thị thông báo <b class=\"font-bold text-[#166def]\">Đã bỏ hết món cho [món]</b> và đồng bộ ngay sang tất cả thiết bị, tài khoản khác trong cùng chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092358/HM_291026-10.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Mở bán lại toàn bộ thực đơn:</b> Nhấn <b class=\"font-bold text-[#166def]\">Bật tất cả</b> để đưa toàn bộ món đang Hết món của chi nhánh trở lại bán bình thường ngay lập tức.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092335/HM_291026-11.png"
+                    },
+                    {
+                        text: "Hệ thống báo <b class=\"font-bold text-[#166def]\">Đã bỏ hết món cho [X] món</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092314/HM_291026-12.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Giờ cao điểm bếp báo hết 5 món cùng lúc, thu ngân không có quyền sửa hàng hóa trên trang Quản lý thì làm sao khóa món kịp để nhân viên phục vụ không bấm nhầm?",
+                    advice: "Dạ thu ngân không cần quyền sửa hàng hóa đâu ạ! Chỉ cần bấm menu 3 gạch ngay trên màn hình Thu ngân chọn 'Hết món tạm thời' rồi gạt tắt món đó. Tất cả máy POS và điện thoại order trong chi nhánh sẽ khóa món đó ngay lập tức ạ!"
+                },
+                quiz: {
+                    question: "Mỗi khi mở popup Hết món tạm thời, các món đang ở trạng thái Hết món sẽ luôn được ưu tiên sắp xếp ở đầu danh sách.",
+                    answer: true,
+                    explanation: "Việc ưu tiên xếp các món đang Hết món lên đầu danh sách giúp thu ngân dễ dàng rà soát và bật bán lại nhanh chóng khi bếp có nguyên liệu trở lại."
+                }
+            },
+            {
+                title: "Kiểm tra và bán hàng khi có món Hết món",
+                situation: "Bạn thực hiện <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">mở ca bán hàng</b> để đối chiếu danh sách món hết với nhà bếp, đồng thời tiến hành <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">gọi món cho khách</b> khi thực đơn có món đang tạm hết.",
+                steps: [
+                    {
+                        text: "Sau khi đăng nhập vào màn hình <b class=\"font-bold text-[#166def]\">Thu ngân</b> và mở ca làm việc thành công ➔ hệ thống hiển thị thông báo kèm <b class=\"font-bold text-[#166def]\">số lượng món đang hết tạm thời</b> (nếu có) để bạn nắm thông tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092300/HM_291026-13.png"
+                    },
+                    {
+                        text: "Mở popup <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b> từ tùy chọn (biểu tượng <b class=\"font-bold text-[#166def]\">3 gạch</b>) và chọn bộ lọc <b class=\"font-bold text-[#166def]\">Đang hết món</b> để rà soát chi tiết, bật xanh chuyển trạng thái sang <b class=\"font-bold text-[#166def]\">Còn món</b> cho món quán đã sẵn sàng phục vụ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092224/HM_291026-15.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Bán hàng tại màn hình Thu ngân:</b> Khi tìm kiếm hoặc xem danh sách món tại tab <b class=\"font-bold text-[#166def]\">Thực đơn</b> ➔ hệ thống hiển thị nhãn <b class=\"font-bold text-[#166def]\">Hết món</b>, tên món bị mờ và không thể thêm vào đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092208/HM_291026-16.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Món có sẵn trong đơn:</b> Món đã thêm vào đơn từ trước khi chuyển thành <b class=\"font-bold text-[#166def]\">Hết món</b> vẫn được bảo lưu, gửi lệnh in bếp và thanh toán bình thường. Hệ thống chỉ chặn thao tác tăng số lượng hoặc thêm dòng mới.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092149/HM_291026-17.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Gọi món qua mã QR:</b> Khi bật <b class=\"font-bold text-[#166def]\">Áp dụng cho thực đơn điện tử</b> ➔ khách quét mã sẽ thấy nhãn <b class=\"font-bold text-[#166def]\">Hết món</b> và không thể chọn các món này. Các lượt gọi món QR khách đã gửi trước thời điểm chuyển thành <b class=\"font-bold text-[#166def]\">Hết món</b> vẫn được đẩy vào đơn và báo bếp bình thường (Lưu ý: Nếu đang mở sẵn trang ➔ trạng thái món được cập nhật sau khi khách tải lại).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092135/HM_291026-18.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Bàn số 5 đã gọi món Cá nướng từ lúc 7h tối, đến 7h30 bếp báo hết Cá nướng và thu ngân khóa món. Vậy lúc bàn số 5 thanh toán thì món Cá nướng có bị xóa khỏi hóa đơn không em?",
+                    advice: "Dạ không bị xóa đâu anh/chị yên tâm nhé! Các món đã thêm vào đơn trước thời điểm chuyển sang Hết món vẫn được giữ nguyên để báo bếp và tính tiền bình thường. Hệ thống chỉ khóa không cho gọi tăng thêm số lượng món đó thôi ạ!"
+                },
+                quiz: {
+                    question: "Đối với món đã có sẵn trong đơn hàng trước khi bị chuyển sang trạng thái Hết món, hệ thống vẫn bảo lưu món đó để báo bếp và thanh toán bình thường, chỉ chặn thao tác tăng số lượng hoặc thêm dòng mới.",
+                    answer: true,
+                    explanation: "Cơ chế này đảm bảo các bàn đã đặt món trước khi hết hàng vẫn được phục vụ và thanh toán chính xác theo thực tế."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Quy tắc xử lý nghiệp vụ đơn hàng, combo, buffet và các kênh bán",
+                situation: "Quán của bạn kinh doanh đa dạng các hình thức <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">combo, buffet, đặt bàn trước</b> hoặc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bán hàng đa kênh</b>, bạn cần nắm rõ cách hệ thống xử lý khi có món bị đánh dấu <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Hết món tạm thời</b>.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Combo cố định &amp; Combo tùy chọn:</b> Combo cố định khóa bán hoàn toàn khi có ít nhất một món thành phần đang Hết món. Combo tùy chọn vẫn bán được nếu nhóm món còn ít nhất 1 lựa chọn thay thế; chỉ khóa khi mọi món thuộc tất cả các nhóm lựa chọn đều Hết món (nếu combo tùy chọn chứa dịch vụ tính giờ mà dịch vụ đó Hết món thì combo cũng bị khóa). Với combo tùy chọn đã có sẵn trong đơn, nếu thành phần đã chọn bị Hết món thì không tăng thêm số lượng combo được.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Vé Buffet gọi món &amp; Món chế biến/Topping:</b> Vé Buffet vẫn bán được nếu trong vé còn món khả dụng, chỉ khóa khi toàn bộ món trong vé đều Hết món (món đã Hết món không cho gọi thêm vào bàn). Món chế biến chính vẫn bán bình thường khi nguyên liệu thành phần trong công thức Hết món, và vẫn gọi được khi toàn bộ topping đi kèm Hết món (không chọn được topping đã hết).",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Món có sẵn trong đơn:</b> Khi tạo đơn mới cho bàn, món đang Hết món sẽ tự động bị loại bỏ (hệ thống thông báo rõ món nào không được thêm). Bạn nhấn <b class=\"font-bold text-[#166def]\">Xác nhận</b> để thêm món còn lại vào đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092116/HM_291026-19.png"
+                    },
+                    {
+                        text: "Nếu tất cả món có sẵn trong đơn đang Hết món ➔ hệ thống tạo đơn trống. Bạn nhấn <b class=\"font-bold text-[#166def]\">Đóng</b> để tắt thông báo và thêm món khác vào đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092102/HM_291026-20.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Phiếu đặt bàn &amp; Bán hàng đa kênh:</b> Với Phiếu đặt bàn, món đặt trước vẫn vào đơn đúng số lượng đã đặt khi khách tới nhận bàn (kể cả khi món đang Hết món), hệ thống chỉ chặn gọi thêm quá số lượng đã đặt. Với Bán hàng đa kênh, trạng thái Hết món chỉ chặn việc thêm món trên <b class=\"font-bold text-[#166def]\">POS</b> và <b class=\"font-bold text-[#166def]\">Thực đơn điện tử QR</b>; KHÔNG kiểm tra trạng thái Hết món đối với: Đơn từ đối tác giao hàng, Đơn khách tự đặt qua Website bán hàng, Đơn khách tự đặt qua Bán hàng Zalo, Lượt gọi món qua mã QR khách đã gửi và nghiệp vụ Trả hàng.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Vận hành khi mất mạng (Offline):</b> Khi mất kết nối internet ➔ thu ngân vẫn có thể thay đổi trạng thái Hết món/Còn món trên chính thiết bị đó và tự đồng bộ trong vài giây khi có mạng trở lại. Thao tác <b class=\"font-bold text-[#166def]\">Bật tất cả</b> lúc mất kết nối chỉ áp dụng cho những món thiết bị đó đang ghi nhận là Hết món. Khi hai thiết bị cùng đổi trạng thái một món hoặc thao tác lúc mất mạng trùng với lần tự bỏ Hết món theo mốc giờ, việc nào làm sau (theo giờ thao tác) được giữ, không phụ thuộc thiết bị nào có mạng trước (Lưu ý: Việc bếp báo hết món độc lập với thao tác cập nhật trạng thái Hết món tạm thời của Thu ngân).",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Nhà hàng chị bán Combo trưa có Nước ép cam hoặc Nước ép dưa hấu. Nay hết cam rồi thì cả Combo đó có bị khóa không bán được nữa không em?",
+                    advice: "Dạ nếu mình thiết lập là 'Combo tùy chọn' thì khi hết Nước ép cam, khách vẫn chọn Nước ép dưa hấu để mua Combo bình thường ạ! Chỉ khi nào là 'Combo cố định' hoặc tất cả các món thay thế đều hết sạch thì hệ thống mới khóa Combo đó thôi ạ!"
+                },
+                quiz: {
+                    question: "Đối với Combo cố định, hệ thống sẽ khóa bán hoàn toàn ngay khi có ít nhất một món thành phần trong combo đang ở trạng thái Hết món.",
+                    answer: true,
+                    explanation: "Vì Combo cố định yêu cầu xuất đủ toàn bộ các món thành phần cố định, nên chỉ cần 1 thành phần Hết món thì combo đó sẽ tạm ngừng bán."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Tra cứu lịch sử Hết món",
+                situation: "Khách hàng phản ánh không thể gọi món dù nhà bếp vẫn còn đồ, bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kiểm tra lịch sử thao tác</b> để xác định <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">tài khoản đã chuyển trạng thái Hết món</b> và thời gian thực hiện.",
+                steps: [
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, bạn nhấn vào biểu tượng bánh răng <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Dữ liệu &amp; Lịch sử thao tác</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092038/HM_291026-22.png"
+                    },
+                    {
+                        text: "Tại bộ lọc <b class=\"font-bold text-[#166def]\">Lọc</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Chức năng: Hết món tạm thời</b> để xem chi tiết danh sách tài khoản, thời gian và hành động tương ứng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092024/HM_291026-23.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Cho phép nhân viên thu ngân tự khóa món ở quầy tiện thật, nhưng lỡ nhân viên bấm nhầm khóa mất món tủ của quán mà không biết ai làm thì kiểm soát sao em?",
+                    advice: "Dạ mọi thao tác tắt/bật Hết món hay tự động mở món đều được ghi nhận chi tiết trong 'Lịch sử thao tác' hết ạ! Anh/chị chỉ cần lọc theo chức năng 'Hết món tạm thời' là biết ngay tài khoản nào đã thao tác vào lúc mấy giờ luôn ạ!"
+                },
+                quiz: {
+                    question: "Quản lý có thể tra cứu chính xác tài khoản nhân viên và thời điểm chuyển trạng thái Hết món tại mục Thiết lập ➔ Dữ liệu & Lịch sử thao tác.",
+                    answer: true,
+                    explanation: "Chức năng Lịch sử thao tác lưu vết đầy đủ mọi thay đổi trạng thái Hết món tạm thời giúp chủ quán minh bạch hóa quy trình vận hành."
+                }
+            },
+            {
+                category: 'mobile',
+                title: "Thiết lập trên KiotViet Quản lý Nhà hàng",
+                situation: "Bạn muốn thiết lập tính năng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Cài đặt hết món tạm thời</b> nhanh chóng ngay trên điện thoại di động qua ứng dụng <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">KiotViet Quản lý Nhà hàng</b>.",
+                steps: [
+                    {
+                        text: "Đăng nhập ứng dụng <b class=\"font-bold text-[#166def]\">KiotViet Quản lý Nhà hàng</b> bằng tài khoản Admin ➔ chọn <b class=\"font-bold text-[#166def]\">Nhiều hơn</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Thiết lập cửa hàng</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Chạm <b class=\"font-bold text-[#166def]\">Cài đặt hết món tạm thời</b> ➔ Bật xanh thiết lập <b class=\"font-bold text-[#166def]\">Cài đặt hết món tạm thời</b>, đồng thời bật/tắt tùy chọn <b class=\"font-bold text-[#166def]\">Áp dụng cho thực đơn điện tử</b>, <b class=\"font-bold text-[#166def]\">Tự động bỏ Hết món hàng ngày</b> tùy theo nhu cầu vận hành (Lưu ý: Nếu bật Tự động bỏ Hết món hàng ngày ➔ để thiết lập mốc giờ cho từng chi nhánh, bạn vui lòng thực hiện trên giao diện web).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29092002/HM_291026-24.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Anh hay đi ra ngoài, muốn bật nhanh tính năng Hết món tạm thời và áp dụng cho menu QR ngay trên điện thoại có được không em?",
+                    advice: "Dạ được ngay anh nhé! Trên app KiotViet Quản lý Nhà hàng, anh vào 'Thiết lập cửa hàng' ➔ 'Cài đặt hết món tạm thời' là bật/tắt được liền. Chỉ khi nào cần chỉnh chi tiết mốc giờ riêng cho từng chi nhánh thì mình mới cần lên Web thôi ạ!"
+                },
+                quiz: {
+                    question: "Trên ứng dụng điện thoại KiotViet Quản lý Nhà hàng, chủ quán có thể trực tiếp chỉnh sửa mốc giờ tự động bỏ Hết món riêng cho từng chi nhánh.",
+                    answer: false,
+                    explanation: "Ứng dụng KiotViet Quản lý Nhà hàng hỗ trợ bật/tắt nhanh các công tắc thiết lập; riêng việc chỉnh mốc giờ chi tiết cho từng chi nhánh cần thực hiện trên giao diện Website."
+                }
+            },
+            {
+                category: 'pos',
+                title: "Thao tác trên Máy POS",
+                situation: "Bếp báo hết nguyên liệu một số món, bạn cần thao tác <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">khóa món tức thì</b> trên <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">KiotViet Máy POS Nhà hàng</b> để tránh order nhầm, đồng thời mở bán lại nhanh chóng ngay khi bếp hoàn tất chuẩn bị mà không làm chậm nhịp thanh toán.",
+                steps: [
+                    {
+                        text: "Đăng nhập vào ứng dụng <b class=\"font-bold text-[#166def]\">KiotViet Máy POS Nhà hàng</b> và mở ca làm việc thành công ➔ hệ thống hiển thị thông báo kèm <b class=\"font-bold text-[#166def]\">số lượng món đang hết tạm thời</b> (nếu có) để bạn nắm thông tin.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091948/HM_291026-25.png"
+                    },
+                    {
+                        text: "Bạn chạm biểu tượng <b class=\"font-bold text-[#166def]\">Tùy chọn (3 gạch)</b> ở góc trên bên phải ➔ chọn <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091922/HM_291026-27.png"
+                    },
+                    {
+                        text: "Hệ thống hiển thị popup <b class=\"font-bold text-[#166def]\">Hết món tạm thời</b> với danh sách toàn bộ món đang bán tại chi nhánh và các món có trạng thái <b class=\"font-bold text-[#166def]\">Hết món</b> sẽ được ưu tiên xếp ở đầu. Bạn tìm kiếm theo tên, mã món hoặc chọn nhóm tại mục <b class=\"font-bold text-[#166def]\">Tất cả nhóm món</b> để tìm món cần chuyển trạng thái.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091903/HM_291026-28.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Chuyển sang Hết món:</b> Tại dòng của món đã hết ➔ tắt xám để chuyển trạng thái thành <b class=\"font-bold text-[#166def]\">Hết món</b>. Hệ thống hiển thị thông báo <b class=\"font-bold text-[#166def]\">[Món] đã chuyển sang hết món</b> và đồng bộ ngay sang tất cả thiết bị, tài khoản khác trong cùng chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091850/HM_291026-29.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Mở bán lại từng món:</b> Tại dòng của món đã có lại ➔ bật xanh để chuyển trạng thái thành <b class=\"font-bold text-[#166def]\">Còn món</b>. Hệ thống hiển thị thông báo <b class=\"font-bold text-[#166def]\">Đã bỏ hết món cho [món]</b> và đồng bộ ngay sang tất cả thiết bị, tài khoản khác trong cùng chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091836/HM_291026-30.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Mở bán lại toàn bộ thực đơn:</b> Chạm <b class=\"font-bold text-[#166def]\">Bật tất cả</b> để đưa toàn bộ món đang Hết món của chi nhánh trở lại bán bình thường ngay lập tức.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091823/HM_291026-31.png"
+                    },
+                    {
+                        text: "Hệ thống báo <b class=\"font-bold text-[#166def]\">Đã bỏ hết món cho [X] món</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091810/HM_291026-32.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Bán hàng khi có món đang hết tạm thời:</b> Khi tìm kiếm hoặc xem danh sách món tại tab <b class=\"font-bold text-[#166def]\">Thực đơn</b> ➔ hệ thống hiển thị nhãn <b class=\"font-bold text-[#166def]\">Hết món</b>, tên món bị mờ và không thể thêm vào đơn.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091750/HM_291026-33.png"
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Món có sẵn trong đơn:</b> Món đã thêm vào đơn từ trước khi chuyển thành <b class=\"font-bold text-[#166def]\">Hết món</b> vẫn được bảo lưu, gửi lệnh in bếp và thanh toán bình thường. Hệ thống chỉ chặn thao tác tăng số lượng hoặc thêm dòng mới.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29091738/HM_291026-34.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Thu ngân đứng máy POS cảm ứng ở quầy, sáng đầu ca vào làm sao biết hôm qua còn món nào đang khóa Hết món chưa mở lại?",
+                    advice: "Dạ ngay khi thu ngân đăng nhập ứng dụng KiotViet Máy POS Nhà hàng và mở ca thành công, màn hình sẽ hiện ngay thông báo báo rõ còn bao nhiêu món đang tạm hết để thu ngân đối chiếu với bếp và chạm 'Bật tất cả' chỉ trong 1 giây ạ!"
+                },
+                quiz: {
+                    question: "Ngay sau khi mở ca làm việc thành công trên ứng dụng KiotViet Máy POS Nhà hàng, hệ thống sẽ tự động hiển thị thông báo số lượng món đang hết tạm thời (nếu có).",
+                    answer: true,
+                    explanation: "Thông báo tự động khi mở ca giúp thu ngân kịp thời kiểm tra lại tình trạng nguyên liệu với bếp ngay đầu buổi bán hàng."
+                }
+            }
+        ];
+
+        let currentPage = 'intro-infographic';
+        let currentZoom = 80;
+        let isAdvancedUnlocked = false;
+        let isSidebarCollapsed = false;
+        let viewedPages = new Set(['intro-infographic']);
+        let userAnswers = {};
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function getLinearNavigationList() {
+            let list = [
+                { id: 'intro-infographic', title: 'Infographic' },
+                { id: 'intro-overview', title: 'Lợi ích nổi bật' },
+                { id: 'intro-glossary', title: 'Thuật ngữ nền tảng' }
+            ];
+
+            BASIC_LESSONS.forEach((l, idx) => {
+                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+            });
+
+            if (isAdvancedUnlocked) {
+                ADVANCED_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `advanced-${idx}`, title: l.title, scope: 'advanced', index: idx });
+                });
+            }
+            return list;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setAppZoom(80);
+            renderSidebar();
+            navGoToPage('intro-infographic');
+        });
+
+        function setAppZoom(val) {
+            currentZoom = val;
+            const fontMap = {
+                70: '11.5px',
+                80: '13px',
+                90: '14.5px',
+                100: '16px'
+            };
+            document.documentElement.style.fontSize = fontMap[val] || '13px';
+            document.getElementById('zoom-label').innerText = val + '%';
+            
+            document.querySelectorAll('.zoom-btn').forEach(b => {
+                if (parseInt(b.getAttribute('data-zoom')) === val) {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer';
+                } else {
+                    b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
+                }
+            });
+        }
+
+        function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
+
+        function handleAdvancedToggle(checked) {
+            isAdvancedUnlocked = checked;
+            const clusterEl = document.getElementById('sidebar-advanced-cluster');
+
+            if (checked) {
+                clusterEl.classList.remove('hidden');
+            } else {
+                clusterEl.classList.add('hidden');
+                if (currentPage.startsWith('advanced-')) {
+                    navGoToPage('basic-0');
+                }
+            }
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+        }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+
+            if (isMobile()) {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                    icon.className = 'fa-solid fa-xmark text-xs';
+                }
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.style.width = '0px';
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.style.opacity = '0';
+                    icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+                } else {
+                    sidebar.style.width = '';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.opacity = '1';
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+        }
+
+        function toggleAdvChildGroup(sub) {
+            const p = document.getElementById(`panel-adv-${sub}`);
+            const icon = document.getElementById(`icon-adv-${sub}`);
+            p.classList.toggle('hidden');
+            icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
+
+        function renderSidebar() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedPages.has(`basic-${idx}`);
+                    const isActive = (currentPage === `basic-${idx}`);
+                    return `
+                        <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            if (isAdvancedUnlocked) {
+                const fPanel = document.getElementById('panel-adv-features');
+                const mPanel = document.getElementById('panel-adv-mobile');
+                const pPanel = document.getElementById('panel-adv-pos');
+
+                let fHTML = '', mHTML = '', pHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedPages.has(`advanced-${idx}`);
+                    const isActive = (currentPage === `advanced-${idx}`);
+                    const btnHTML = `
+                        <button onclick="navGoToPage('advanced-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white' : 'text-slate-700 hover:bg-emerald-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-emerald-600'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                    if (lesson.category === 'feature') fHTML += btnHTML;
+                    else if (lesson.category === 'mobile') mHTML += btnHTML;
+                    else if (lesson.category === 'pos') pHTML += btnHTML;
+                });
+
+                if (fPanel) fPanel.innerHTML = fHTML;
+                if (mPanel) mPanel.innerHTML = mHTML;
+                if (pPanel) pPanel.innerHTML = pHTML;
+            }
+
+            ['intro-infographic', 'intro-overview', 'intro-glossary'].forEach(id => {
+                const el = document.getElementById(`subbtn-${id}`);
+                if (el) {
+                    if (currentPage === id) {
+                        el.classList.add('active-sub');
+                    } else {
+                        el.classList.remove('active-sub');
+                    }
+                }
+            });
+        }
+
+        function updateSideNavButtons() {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            const prevBtn = document.getElementById('nav-btn-prev');
+            const nextBtn = document.getElementById('nav-btn-next');
+            if (!prevBtn || !nextBtn) return;
+
+            if (curIdx <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navGoToPage(pageId) {
+            currentPage = pageId;
+            viewedPages.add(pageId);
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            
+            if (isMobile()) {
+                const sidebar = document.getElementById('app-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+
+            const container = document.getElementById('dynamic-content-view');
+            if (container) container.scrollTop = 0;
+        }
+
+        function navStepLinear(direction) {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            if (curIdx === -1) return;
+
+            if (direction === 'next') {
+                if (curIdx === list.length - 1) {
+                    if (!isAdvancedUnlocked) {
+                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                    }
+                    return;
+                }
+                const nextItem = list[curIdx + 1];
+                navGoToPage(nextItem.id);
+            } else if (direction === 'prev') {
+                if (curIdx > 0) {
+                    const prevItem = list[curIdx - 1];
+                    navGoToPage(prevItem.id);
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            closeModal('modal-basic-complete');
+            closeModal('modal-advanced-complete');
+            navGoToPage('intro-infographic');
+        }
+
+        // RENDER GIAO DIỆN CHÍNH
+        function renderCurrentPageView() {
+            const container = document.getElementById('dynamic-content-view');
+            if (!container) return;
+
+            // TRANG 1: INFOGRAPHIC (16:9 RESPONSIVE)
+            if (currentPage === 'intro-infographic') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/29105343/HM_291026.png" 
+                                 alt="Infographic Hết món tạm thời" 
+                                 class="w-full h-full object-contain select-none">
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 2: LỢI ÍCH NỔI BẬT
+            if (currentPage === 'intro-overview') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Hết món tạm thời</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Tính năng <strong>Hết món tạm thời</strong> giúp nhân viên chủ động cập nhật trạng thái món ăn ngay trên màn hình <strong>Thu ngân</strong>, hạn chế tình trạng khách đặt món nhưng quán không còn hàng phục vụ. Khi được chuyển sang trạng thái Hết món, món vẫn hiển thị trên thực đơn kèm nhãn nhận biết nhưng không thể thêm vào đơn hàng trên tất cả màn hình Thu ngân thuộc chi nhánh (và ngừng cho phép khách đặt trên thực đơn điện tử nếu được thiết lập). Khi có hàng trở lại, nhân viên có thể bỏ trạng thái Hết món cho từng món hoặc toàn bộ thực đơn chỉ với một lần nhấn, hoặc thiết lập hệ thống tự động bỏ trạng thái Hết món hằng ngày.
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Chặn món đã hết ngay tại quầy</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Nhân viên đang bán hàng tự chuyển món sang Hết món, không cần quyền sửa hàng hóa và không phải chờ quản lý ngừng kinh doanh món.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-arrows-rotate"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Mọi nơi bán hàng cùng cập nhật</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Các máy POS khác trong chi nhánh đổi theo ngay lập tức mà không ai phải thao tác thêm. Khách gọi món qua mã QR cũng thấy món đã hết khi bật áp dụng cho thực đơn điện tử.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-clock-rotate-left"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Mở cửa hôm sau với thực đơn đầy đủ</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Hệ thống tự động bỏ Hết món hàng ngày theo mốc giờ của từng chi nhánh. Khi mở ca, POS báo chi nhánh còn bao nhiêu món đang Hết món để nhân viên kiểm tra lại với bếp.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Phân biệt Hết món với Ngừng kinh doanh và Hết tồn kho:
+                            </h4>
+                            <ul class="text-xs text-amber-950 space-y-1 list-disc pl-5 font-medium leading-relaxed">
+                                <li><strong class="text-amber-900">Hết món:</strong> Nhân viên đang bán hàng chuyển ngay trên POS, tính riêng cho từng chi nhánh. Món vẫn hiện trên thực đơn POS và vẫn tìm kiếm được, nhưng không thể thêm vào đơn. Trạng thái được tự động bỏ vào mốc giờ hàng ngày của chi nhánh khi công tắc tự động bỏ Hết món đang bật.</li>
+                                <li><strong class="text-amber-900">Ngừng kinh doanh tại chi nhánh:</strong> Quản lý thực hiện ở màn hình Quản lý món; món sẽ biến mất khỏi thực đơn của chi nhánh. Món đang Hết món mà bị ngừng kinh doanh tại chi nhánh thì trạng thái Hết món được xóa bỏ hoàn toàn; khi bật kinh doanh trở lại, món bán bình thường.</li>
+                                <li><strong class="text-amber-900">Hết tồn kho:</strong> Hoàn toàn độc lập với tính năng Hết món. Món hết tồn kho không tự chuyển sang Hết món, và việc bật các cài đặt cho phép bán khi hết tồn kho cũng không làm thay đổi trạng thái Hết món.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 4: THUẬT NGỮ
+            if (currentPage === 'intro-glossary') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-base"></i>
+                                <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. Hết món tạm thời</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Trạng thái đánh dấu món ăn/đồ uống tạm ngừng phục vụ ngay trên màn hình Thu ngân của từng chi nhánh; món vẫn hiển thị kèm nhãn nhận biết nhưng bị khóa thao tác thêm mới vào đơn hàng.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Ngừng kinh doanh tại chi nhánh</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Thiết lập do Quản lý thực hiện tại màn hình Quản lý món khiến món ăn ẩn hoàn toàn khỏi thực đơn chi nhánh và xóa bỏ trạng thái Hết món trước đó (nếu có).</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Áp dụng cho thực đơn điện tử</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Tùy chọn đồng bộ trạng thái Hết món sang thực đơn điện tử (QR Order), giúp hiển thị nhãn Hết món và chặn khách hàng tự đặt các món đang tạm hết.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Tự động bỏ Hết món hàng ngày</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Cơ chế tự động chuyển toàn bộ món đang Hết món về trạng thái Còn món vào mốc thời gian thiết lập sẵn mỗi ngày (mặc định 00:00) theo từng chi nhánh.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Combo cố định &amp; Combo tùy chọn</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Hai hình thức bán theo gói: Combo cố định sẽ khóa bán hoàn toàn ngay khi có ít nhất 1 món thành phần Hết món; trong khi Combo tùy chọn vẫn bán được nếu nhóm món còn ít nhất 1 lựa chọn thay thế khả dụng.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // CHI TIẾT BÀI HỌC CƠ BẢN HOẶC NÂNG CAO
+            let scope = '';
+            let index = 0;
+            if (currentPage.startsWith('basic-')) {
+                scope = 'basic';
+                index = parseInt(currentPage.split('-')[1]);
+            } else if (currentPage.startsWith('advanced-')) {
+                scope = 'advanced';
+                index = parseInt(currentPage.split('-')[1]);
+            }
+
+            if (scope) {
+                const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                const lesson = lessons[index];
+                const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
+                const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
+
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                        <!-- TIÊU ĐỀ BÀI HỌC -->
+                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                    ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                                </span>
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <span>${lesson.title}</span>
+                            </h2>
+                        </div>
+
+                        <!-- TÌNH HUỐNG THỰC TẾ -->
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                            <div class="flex items-center gap-2 text-amber-900">
+                                <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                            </div>
+                            <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                        </div>
+
+                        <!-- QUY TRÌNH THỰC HIỆN -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                            <div class="space-y-3">
+                                ${lesson.steps.map((step, sIdx) => `
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-start gap-2.5">
+                                            <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                        </div>
+                                        ${step.img ? `
+                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                                <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                                <div class="flashcard-3d-card">
+                                    <!-- MẶT TRƯỚC -->
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                        </div>
+                                    </div>
+
+                                    <!-- MẶT SAU -->
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                                <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
+                                        <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                    </span>
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                        Đúng / Sai
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                    <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                    <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                                </div>
+
+                                <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                    <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                        ✓ ĐÚNG
+                                    </button>
+                                    <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                        ✕ SAI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH -->
+                        ${isLastBasicLesson ? `
+                            <div class="pt-5 sm:pt-6">
+                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-trophy text-amber-300"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
+                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }
+        }
+
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
+        }
+
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                `;
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
