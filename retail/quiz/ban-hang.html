@@ -190,14 +190,35 @@
                     <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
                 </div>
 
-                <!-- CỤM 3: KIẾN THỨC NÂNG CAO (KHI MỞ KHÓA) -->
+                <!-- CỤM 3: KIẾN THỨC NÂNG CAO -->
                 <div id="sidebar-advanced-cluster" class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
-                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
-                        <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
-                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                    <div class="w-full flex items-center justify-between px-2 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <div class="flex items-center gap-1.5 truncate">
+                            <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
+                            <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
+                        </div>
+
+                        <!-- TOGGLE SWITCH VỚI TOOLTIP HOVER -->
+                        <div class="relative flex items-center gap-1.5 group shrink-0">
+                            <i class="fa-solid fa-circle-info text-[11px] text-emerald-600/70 hover:text-emerald-700 cursor-help" title="Xem giải thích"></i>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sidebar-advanced-toggle" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                                <div class="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+
+                            <!-- TOOLTIP MÔ TẢ KHI HOVER -->
+                            <div class="absolute right-0 bottom-full mb-2 hidden group-hover:block z-50 w-64 p-2.5 bg-amber-50 text-amber-900 border border-amber-300 rounded-xl shadow-xl text-[11px] leading-relaxed font-normal pointer-events-none transition-all duration-200">
+                                <div class="flex items-start gap-1.5">
+                                    <i class="fa-solid fa-circle-info text-amber-600 shrink-0 mt-0.5"></i>
+                                    <span>Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</span>
+                                </div>
+                                <div class="absolute right-3 -bottom-1 w-2 h-2 bg-amber-50 border-r border-b border-amber-300 transform rotate-45"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                    <!-- NỘI DUNG 3 NHÓM NÂNG CAO (MẶC ĐỊNH ẨN DẠNG #CB, HIỆN KHI TOGGLE ON HOẶC URL #NC) -->
+                    <div id="sidebar-advanced-content" class="hidden rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
                         <div id="sidebar-subgroup-features">
                             <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
                                 <span class="truncate">Tính năng nâng cao (Web)</span>
@@ -281,7 +302,7 @@
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-advanced-checkbox" checked onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
                         <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                 </div>
@@ -952,7 +973,7 @@
 
         let currentPage = 'intro-infographic';
         let currentZoom = 100;
-        let isAdvancedUnlocked = true;
+        let isAdvancedUnlocked = false;
         let isSidebarCollapsed = false;
         let viewedPages = new Set(['intro-infographic']);
         let userAnswers = {};
@@ -1024,11 +1045,10 @@
             }
             setAppZoom(targetZoom, false);
 
-            // 2. Phân tích Chế độ Nâng cao (#nc) / Cơ bản (#cb): Mặc định là #nc (mở khóa) nếu không có #cb
-            let targetAdv = true;
-            if (/\b(cb|basic|coban)\b/.test(rawHash) || /adv(?:anced)?=(?:0|false)/.test(rawHash)) {
-                targetAdv = false;
-            } else if (/\b(nc|adv|advanced|nangcao)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
+            // 2. Phân tích Chế độ Nâng cao: Mặc định là #cb (Toggle OFF, ẩn nội dung nâng cao)
+            // Chỉ bật khi trong hash có từ khóa 'nc' hoặc 'adv' hoặc 'advanced'
+            let targetAdv = false;
+            if (/\b(nc|adv|advanced|nangcao|full|all)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
                 targetAdv = true;
             }
             handleAdvancedToggle(targetAdv, false);
@@ -1068,15 +1088,17 @@
 
         function handleAdvancedToggle(checked, syncHash = true) {
             isAdvancedUnlocked = checked;
-            const clusterEl = document.getElementById('sidebar-advanced-cluster');
-            const advCheckbox = document.getElementById('toggle-advanced-checkbox');
-            if (advCheckbox) advCheckbox.checked = checked;
+            const contentEl = document.getElementById('sidebar-advanced-content');
+            const sidebarToggle = document.getElementById('sidebar-advanced-toggle');
+            const modalToggle = document.getElementById('toggle-advanced-checkbox');
+            if (sidebarToggle) sidebarToggle.checked = checked;
+            if (modalToggle) modalToggle.checked = checked;
 
             if (checked) {
-                clusterEl.classList.remove('hidden');
+                if (contentEl) contentEl.classList.remove('hidden');
             } else {
-                clusterEl.classList.add('hidden');
-                if (currentPage.startsWith('advanced-')) {
+                if (contentEl) contentEl.classList.add('hidden');
+                if (currentPage && currentPage.startsWith('advanced-')) {
                     navGoToPage('basic-0');
                 }
             }
