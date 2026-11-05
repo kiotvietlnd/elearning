@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 16px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KiotViet E-Learning - Đồng bộ đơn Shopee xử lý (FBS) về KiotViet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: {
+                    colors: {
+                        kvPrimary: '#166def',
+                        kvBlue: '#166def',
+                        kvNavy: '#1e3a8a',
+                        kvGreen: '#16a34a'
+                    }
+                } 
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* TỐI ƯU VIEWPORT ĐỘNG TƯƠNG THÍCH MỌI MÔI TRƯỜNG */
+        html, body { 
+            height: 100%; 
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            width: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        button, button:focus, button:focus-visible, button:active,
+        a, a:focus, a:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+
+        .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+
+        .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
+        .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        
+        .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
+        .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
+        .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+
+        #app-sidebar {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+        }
+
+        .flashcard-3d-scene { perspective: 1000px; }
+        .flashcard-3d-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
+        .flashcard-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1.25rem;
+            box-sizing: border-box;
+        }
+        .flashcard-face-back { transform: rotateY(-180deg); }
+
+        .side-nav-btn {
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-nav-btn:hover:not(:disabled) {
+            transform: translateY(-50%) scale(1.08);
+        }
+        .side-nav-btn:active:not(:disabled) {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* PHÂN TÁCH SAFE AREA RIÊNG BIỆT: CHỈ ÁP DỤNG ĐỆM ĐÁY CAO TRÊN MOBILE */
+        @media (max-width: 767px) {
+            .safe-bottom-padding {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .safe-bottom-padding {
+                padding-bottom: 1.5rem !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
+
+    <!-- NAVBAR CHUẨN RESPONSIVE (42px) -->
+    <header class="h-[42px] shrink-0 text-white shadow-xs z-30 flex items-center justify-between px-2.5 sm:px-4 bg-gradient-to-r from-[#166def] via-[#166def] to-[#1d4ed8]">
+        <div class="flex items-center gap-1.5 sm:gap-2 truncate">
+            <button onclick="toggleSidebarCollapse()" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0" title="Đóng/Mở thanh danh mục">
+                <i id="sidebar-toggle-icon" class="fa-solid fa-bars-staggered text-xs"></i>
+            </button>
+            
+            <div class="truncate">
+                <h1 class="text-xs sm:text-sm font-black tracking-tight text-white uppercase truncate">Đồng bộ đơn Shopee xử lý (FBS) về KiotViet</h1>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+            <!-- CẶP NÚT ZOOM OUT / ZOOM IN NHỎ GỌN TRÊN NAVBAR (70% - 150%) -->
+            <div class="flex items-center gap-1 bg-white/10 rounded-lg p-0.5">
+                <button onclick="stepZoom(-1)" id="nav-zoom-out-btn" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed" title="Thu nhỏ giao diện (70% - 150%)">
+                    <i class="fa-solid fa-magnifying-glass-minus text-xs"></i>
+                </button>
+                <button onclick="stepZoom(1)" id="nav-zoom-in-btn" class="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-all cursor-pointer shrink-0 disabled:opacity-30 disabled:cursor-not-allowed" title="Phóng to giao diện (70% - 150%)">
+                    <i class="fa-solid fa-magnifying-glass-plus text-xs"></i>
+                </button>
+            </div>
+
+            <!-- BADGE NGÀNH HÀNG -->
+            <div class="shrink-0 font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] text-white shadow-xs bg-cyan-400 border border-cyan-400/40 uppercase tracking-wider">
+                Retail
+            </div>
+        </div>
+    </header>
+
+    <!-- KHUNG BODY -->
+    <div class="flex-1 flex flex-row min-h-0 w-full overflow-hidden relative">
+
+        <!-- LỚP BACKDROP MỜ TRÊN MOBILE -->
+        <div id="sidebar-backdrop" onclick="toggleSidebarCollapse()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-2xs transition-opacity"></div>
+
+        <!-- SIDEBAR DRAWER CHO MOBILE & SIBLING CHO DESKTOP -->
+        <aside id="app-sidebar" class="fixed md:static inset-y-0 left-0 z-50 md:z-20 w-[275px] sm:w-[275px] lg:w-[280px] min-w-[270px] bg-white border-r border-slate-200 shrink-0 h-full flex flex-col shadow-xl md:shadow-xs overflow-hidden -translate-x-full md:translate-x-0">
+            <div class="md:hidden h-10 px-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Danh mục bài học</span>
+                <button onclick="toggleSidebarCollapse()" class="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div class="p-2 space-y-2 overflow-y-auto flex-1 custom-scrollbar">
+                
+                <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    </div>
+                    
+                    <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
+                        <button onclick="navGoToPage('intro-video')" id="subbtn-intro-video" class="sidebar-sub-btn hidden w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-circle-play text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Video hướng dẫn</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Infographic</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        </button>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CỤM 2: KIẾN THỨC CƠ BẢN (LUÔN MỞ SẴN) -->
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                    </div>
+                    <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
+                </div>
+
+                <!-- CỤM 3: KIẾN THỨC NÂNG CAO -->
+                <div id="sidebar-advanced-cluster" class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                    <div class="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl text-slate-800 select-none">
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-sliders text-xs text-emerald-600 shrink-0"></i>
+                            <span class="text-left uppercase tracking-wider text-[10px] sm:text-[10.5px] font-black text-emerald-700 whitespace-nowrap">Kiến thức nâng cao</span>
+                        </div>
+
+                        <!-- TOGGLE SWITCH VỚI TOOLTIP HOVER -->
+                        <div class="relative flex items-center shrink-0" onmouseenter="showAdvTooltip(this)" onmouseleave="hideAdvTooltip()">
+                            <label class="relative inline-flex items-center cursor-pointer" title="Bật/Tắt kiến thức nâng cao">
+                                <input type="checkbox" id="sidebar-advanced-toggle" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                                <div class="w-7 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- NỘI DUNG 3 NHÓM NÂNG CAO (MẶC ĐỊNH ẨN DẠNG #CB, HIỆN KHI TOGGLE ON HOẶC URL #NC) -->
+                    <div id="sidebar-advanced-content" class="hidden rounded-xl overflow-hidden border border-emerald-200/60 bg-white divide-y divide-emerald-100 shadow-2xs mt-1">
+                        <div id="sidebar-subgroup-features">
+                            <button onclick="toggleAdvChildGroup('features')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Tính năng nâng cao</span>
+                                <i id="icon-adv-features" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-features" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-mobile" class="hidden">
+                            <button onclick="toggleAdvChildGroup('mobile')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Điện thoại</span>
+                                <i id="icon-adv-mobile" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-mobile" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+
+                        <div id="sidebar-subgroup-pos" class="hidden">
+                            <button onclick="toggleAdvChildGroup('pos')" class="w-full flex items-center justify-between px-2.5 py-1.5 text-slate-700 hover:bg-emerald-50 text-[11px] font-bold cursor-pointer">
+                                <span class="truncate">Giao diện Máy POS</span>
+                                <i id="icon-adv-pos" class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                            </button>
+                            <div id="panel-adv-pos" class="hidden space-y-1 p-1 bg-emerald-50/40 border-t border-emerald-100"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW TRUNG TÂM -->
+        <main class="flex-1 min-w-0 h-full relative overflow-hidden flex flex-col bg-[#f8fafc]">
+            
+            <!-- NÚT MŨI TÊN BÊN TRÁI -->
+            <button id="nav-btn-prev" onclick="navStepLinear('prev')" class="side-nav-btn absolute left-1 sm:left-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-[#166def] border border-slate-200 flex items-center justify-center cursor-pointer disabled:opacity-0 disabled:pointer-events-none" title="Trang trước">
+                <i class="fa-solid fa-arrow-left text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- NÚT MŨI TÊN BÊN PHẢI -->
+            <button id="nav-btn-next" onclick="navStepLinear('next')" class="side-nav-btn absolute right-1 sm:right-2.5 top-1/2 -translate-y-1/2 z-30 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#166def] hover:bg-[#1259c7] text-white flex items-center justify-center cursor-pointer" title="Trang tiếp">
+                <i class="fa-solid fa-arrow-right text-[11px] sm:text-sm font-black"></i>
+            </button>
+
+            <!-- VÙNG HIỂN THỊ NỘI DUNG -->
+            <div id="dynamic-content-view" class="w-full h-full overflow-y-auto px-7 sm:px-14 pt-2 sm:pt-3 safe-bottom-padding custom-scrollbar flex flex-col">
+                <!-- Nội dung được render tự động -->
+            </div>
+        </main>
+
+    </div>
+
+    <!-- TOOLTIP NỔI BÊN PHẢI SIDEBAR -->
+    <div id="adv-cluster-tooltip" class="fixed z-[9999] hidden w-72 p-3 bg-amber-50 text-amber-900 border border-amber-300 rounded-2xl shadow-2xl text-[11px] leading-relaxed font-normal pointer-events-none transition-all duration-150">
+        <div class="flex items-start gap-2">
+            <i class="fa-solid fa-circle-info text-amber-600 shrink-0 text-xs mt-0.5"></i>
+            <span>Các nội dung nâng cao không nằm trong phạm vi ưu tiên của khóa học, Các bạn có thể tìm hiểu nếu nhiều thời gian, hoặc cần làm bài tập nâng cao, hoặc các tính năng trên Mobile / POS.</span>
+        </div>
+        <!-- Mũi tên tooltip chỉ về bên trái -->
+        <div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-50 border-l border-b border-amber-300 transform rotate-45"></div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH BÀI HỌC CƠ BẢN -->
+    <div id="modal-basic-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 text-center space-y-3 shadow-2xl border border-slate-200 relative max-h-[92dvh] overflow-y-auto">
+            <button onclick="closeModal('modal-basic-complete')" class="absolute top-3.5 right-3.5 text-slate-400 hover:text-slate-600 text-sm cursor-pointer p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-11 h-11 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl shadow-xs">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="text-sm sm:text-base font-black text-slate-900">Chúc mừng hoàn thành bài học.</h3>
+                <p class="text-xs text-slate-600">
+                    Bạn đã hoàn thành nội dung học cơ bản của tính năng:
+                </p>
+                <div class="text-xs sm:text-sm font-black text-[#166def] uppercase tracking-wide pt-0.5">
+                    Đồng bộ đơn Shopee xử lý (FBS) về KiotViet
+                </div>
+            </div>
+
+            <div class="w-full aspect-video rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 my-2">
+                <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025818/FBSR_151026.jpg" 
+                     alt="Infographic Đồng bộ đơn Shopee xử lý (FBS) về KiotViet" 
+                     class="w-full h-full object-contain select-none">
+            </div>
+
+            <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                Bạn có thể học lại bài học này hoặc tiếp tục học <strong>Bài tiếp theo</strong>.
+            </p>
+
+            <div class="pt-1.5">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer transition-all border border-slate-200 shadow-2xs">
+                    Học lại bài học này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP HOÀN THÀNH TOÀN BỘ KHÓA HỌC -->
+    <div id="modal-advanced-complete" class="fixed inset-0 bg-black/75 z-[100] hidden flex items-center justify-center p-3 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-5 text-center space-y-3.5 shadow-2xl border-2 border-emerald-600">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-900">Hoàn thành toàn bộ khóa học!</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">Tuyệt vời! Bạn đã hoàn thành tất cả các thao tác cơ bản và nâng cao của tính năng Đồng bộ đơn Shopee xử lý (FBS) về KiotViet.</p>
+            </div>
+            <div class="pt-2">
+                <button onclick="restartFromBeginning()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer">
+                    Học lại từ đầu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ENGINE -->
+    <script>
+        const BASIC_LESSONS = [
+            {
+                title: "Thiết lập chi nhánh cho đơn Shopee xử lý",
+                situation: "Khi bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">gắn kho Shopee xử lý (FBS)</b> với một <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chi nhánh riêng trên KiotViet</b> để đơn hàng do Shopee giao được đồng bộ về đúng chi nhánh và ghi nhận tồn kho tách biệt.",
+                steps: [
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, truy cập <b class=\"font-bold text-[#166def]\">Bán online</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Bán online</b>. Trong chuyên mục <b class=\"font-bold text-[#166def]\">Thương mại điện tử</b>, chọn <b class=\"font-bold text-[#166def]\">Thiết lập</b> ➔ trên gian hàng Shopee, nhấn <b class=\"font-bold text-[#166def]\">Thiết lập</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025600/FBSR_151026-1.png"
+                    },
+                    {
+                        text: "Chọn tab <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>. Tại ô <b class=\"font-bold text-[#166def]\">Chi nhánh KiotViet</b>, chọn chi nhánh dành cho hàng ký gửi (ví dụ: 'Kho Shopee xử lý'). Lưu ý: Tất cả các kho Shopee xử lý đều được đồng bộ chung vào 1 chi nhánh trên KiotViet để trừ tồn kho. Tồn kho không đồng bộ lên sàn Shopee.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025544/FBSR_151026-2.png"
+                    },
+                    {
+                        text: "Nhấn <b class=\"font-bold text-[#166def]\">Lưu</b> để hoàn tất thiết lập gắn chi nhánh.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025534/FBSR_151026-3.png"
+                    },
+                    {
+                        text: "Khi chi nhánh được chọn trùng với chi nhánh của tab <b class=\"font-bold text-[#166def]\">Tự vận hành</b> ➔ hệ thống sẽ hiển thị cảnh báo có thể gây sai lệch tồn kho. Nhấn <b class=\"font-bold text-[#166def]\">Đã hiểu</b> nếu muốn tiếp tục đồng bộ với chi nhánh này, hoặc nhấn <b class=\"font-bold text-[#166def]\">Hủy</b> / <b class=\"font-bold text-[#166def]\">x</b> để đóng cảnh báo và chọn lại chi nhánh đồng bộ.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15030049/FBSR_151026-4.png"
+                    },
+                    {
+                        text: "Lưu ý quan trọng: Với gian hàng có tham gia Shopee xử lý, trong Thiết lập hệ thống luôn hiển thị 2 tab <b class=\"font-bold text-[#166def]\">Tự vận hành</b> và <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>. Tại tab <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>, các thiết lập liên quan đến <b class=\"font-bold text-[#166def]\">Đơn hàng</b> và <b class=\"font-bold text-[#166def]\">Hàng hóa</b> bị khóa cố định, không chỉnh sửa được vì do Shopee trực tiếp quản lý.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025452/FBSR_151026-5.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Shop mình vừa bán tại quầy vừa ký gửi kho Shopee FBS, làm sao để khi Shopee giao hàng không bị trừ lộn tồn kho cửa hàng em?",
+                    advice: "Dạ anh/chị tạo riêng một chi nhánh 'Kho Shopee xử lý' trên KiotViet, rồi vào Thiết lập gian hàng ➔ Tab 'Shopee xử lý' để gắn chi nhánh này nhé. Đơn Shopee về sẽ trừ đúng kho ký gửi, kho cửa hàng giữ nguyên 100% ạ!"
+                },
+                quiz: {
+                    question: "Tại tab thiết lập Shopee xử lý, người dùng có thể tự do chỉnh sửa các tùy chọn về Đơn hàng và Hàng hóa như ở tab Tự vận hành.",
+                    answer: false,
+                    explanation: "Tại tab Shopee xử lý, các thiết lập liên quan đến Đơn hàng và Hàng hóa không chỉnh sửa được vì toàn bộ quy trình kho và vận chuyển do Shopee trực tiếp quản lý."
+                }
+            },
+            {
+                title: "Theo dõi đơn Shopee xử lý",
+                situation: "Khi bạn muốn xem, kiểm tra và <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">phân biệt các đơn hàng</b> do Shopee xử lý với các đơn hàng do <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">shop tự giao</b> trên danh sách đơn hàng KiotViet.",
+                steps: [
+                    {
+                        text: "Trên màn hình <b class=\"font-bold text-[#166def]\">Bán online</b> ➔ chuyên mục <b class=\"font-bold text-[#166def]\">Thương mại điện tử</b> ➔ chọn <b class=\"font-bold text-[#166def]\">Đơn hàng</b> ➔ <b class=\"font-bold text-[#166def]\">Đơn hàng</b>. Tại thanh trạng thái, nhấn vào bộ lọc nhanh <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>. Trên danh sách, tại cột <b class=\"font-bold text-[#166def]\">Thao tác</b>, đơn Shopee xử lý hiển thị thông tin <b class=\"font-bold text-[#166def]\">Shopee xử lý</b> thay cho các nút xử lý đơn thông thường (bạn không có thao tác nào cần làm tại đây).",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025445/FBSR_151026-6.png"
+                    },
+                    {
+                        text: "Mở đơn để xem chi tiết. Đối với đơn Shopee xử lý ➔ tab <b class=\"font-bold text-[#166def]\">Thông tin vận chuyển</b> sẽ hiển thị hành trình do Shopee cập nhật tự động với mốc mới nhất ở trên cùng.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025438/FBSR_151026-7.png"
+                    },
+                    {
+                        text: "(Tùy chọn) Xem <b class=\"font-bold text-[#166def]\">Lịch sử thao tác</b> của đơn. Các thao tác đồng bộ và tạo hóa đơn của đơn Shopee xử lý đều được ghi nhận tự động ở chi nhánh Shopee xử lý, hoàn toàn không trừ tồn ở các chi nhánh khác.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15030253/FBSR_151026-8.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Đơn Shopee xử lý đổ về KiotViet thì nhân viên nhà mình có cần bấm chuẩn bị hàng hay in phiếu giao không em?",
+                    advice: "Dạ hoàn toàn không cần ạ! Shopee tự đóng gói và giao hàng, cột Thao tác sẽ hiện nhãn 'Shopee xử lý'. Nhân viên chỉ cần lọc xem tiến độ và lịch sử đồng bộ trên KiotViet thôi ạ!"
+                },
+                quiz: {
+                    question: "Sau khi đã thiết lập chi nhánh thành công, các đơn hàng do Shopee xử lý sẽ không hiển thị ở tab Cần xử lý hàng hóa và Đồng bộ lỗi.",
+                    answer: true,
+                    explanation: "Đơn Shopee xử lý do sàn tự đóng gói và vận chuyển nên hệ thống tự động loại trừ khỏi danh sách Cần xử lý hàng hóa và không phát sinh lỗi đồng bộ chi nhánh."
+                }
+            },
+            {
+                title: "Quản lý tồn kho và chuyển hàng sang chi nhánh Shopee xử lý",
+                situation: "Khi bạn gửi hàng sang kho Shopee và cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">lập phiếu chuyển hàng</b> từ chi nhánh cửa hàng sang <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">chi nhánh Shopee xử lý</b> để số lượng tồn kho trên KiotViet khớp với lượng hàng đang ký gửi thực tế.",
+                steps: [
+                    {
+                        text: "Đăng nhập chi nhánh cửa hàng ➔ tại màn hình <b class=\"font-bold text-[#166def]\">Quản lý</b>, chọn <b class=\"font-bold text-[#166def]\">Hàng hóa</b> ➔ <b class=\"font-bold text-[#166def]\">Chuyển hàng</b> ➔ nhấn <b class=\"font-bold text-[#166def]\">+ Chuyển hàng</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025357/FBSR_151026-9.png"
+                    },
+                    {
+                        text: "Chọn <b class=\"font-bold text-[#166def]\">Chi nhánh nhận</b> là chi nhánh Shopee xử lý (kho ký gửi).",
+                        img: null
+                    },
+                    {
+                        text: "Thêm hàng hóa và số lượng gửi sang kho Shopee (nên nhập khớp chính xác với số lượng trên phiếu gửi hàng của Shopee).",
+                        img: null
+                    },
+                    {
+                        text: "Hoàn thành phiếu chuyển hàng. Khi này, tồn kho tại chi nhánh cửa hàng sẽ giảm và tồn kho tại chi nhánh Shopee xử lý sẽ tăng lên tương ứng. Lưu ý: KiotViet sẽ không đẩy số tồn kho lên kho Shopee xử lý vì tồn kho thực tế do Shopee quản lý.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025350/FBSR_151026-10.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Chị gửi thêm 100 cái áo sang kho Shopee FBS, làm thế nào để tồn kho KiotViet đúng mà không bị lệch kho thực tế?",
+                    advice: "Dạ chị vào Hàng hóa ➔ Chuyển hàng, tạo phiếu chuyển từ Kho cửa hàng sang 'Kho Shopee xử lý' đúng 100 cái áo nhé. Kho shop sẽ giảm 100 và kho Shopee tăng 100, chuẩn chỉnh từng chiếc ạ!"
+                },
+                quiz: {
+                    question: "Tồn kho ở chi nhánh Shopee xử lý phản ánh lượng hàng đang ký gửi tại kho Shopee và KiotViet sẽ tự động đẩy số tồn kho này lên sàn Shopee.",
+                    answer: false,
+                    explanation: "Do tồn kho trong kho Shopee do Shopee trực tiếp quản lý, KiotViet sẽ không đẩy số tồn kho lên kho Shopee xử lý nhằm tránh sai lệch số liệu thực tế tại sàn."
+                }
+            },
+            {
+                title: "Đối soát sàn thanh toán và theo dõi đơn trả hàng của đơn Shopee xử lý",
+                situation: "Khi bạn cần <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">kiểm tra thanh toán đối soát sàn</b> hoặc theo dõi các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đơn trả hàng hoàn tiền</b> của đơn Shopee xử lý trên KiotViet.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Đối soát sàn thanh toán:</b> Việc đối soát thanh toán cho đơn Shopee xử lý được thực hiện tương tự như đơn thường trên cùng màn hình và cùng thao tác đối soát TMĐT.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Đơn trả hàng:</b> Đơn trả hàng Shopee xử lý do Shopee trực tiếp vận hành và nhận lại tại kho Shopee, bạn không cần thao tác xử lý đổi trả mà chỉ cần theo dõi trên KiotViet.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025343/FBSR_151026-11.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Khách mua đơn Shopee FBS nhưng khiếu nại trả hàng thì shop có phải nhận hàng về và thao tác trả hàng trên KiotViet không em?",
+                    advice: "Dạ không cần chị nhé! Hàng trả sẽ quay về kho Shopee và Shopee tự xử lý. KiotViet sẽ tự động đồng bộ trạng thái đơn trả hàng về chi nhánh Shopee xử lý để chị theo dõi ạ!"
+                },
+                quiz: {
+                    question: "Khi có đơn trả hàng hoàn tiền do Shopee xử lý, chủ shop phải trực tiếp nhận lại hàng tại cửa hàng và tạo phiếu trả hàng trên KiotViet.",
+                    answer: false,
+                    explanation: "Đơn trả hàng Shopee xử lý do Shopee trực tiếp tiếp nhận tại kho Shopee và vận hành, chủ shop không cần thao tác xử lý mà chỉ cần theo dõi trên KiotViet."
+                }
+            }
+        ];
+
+        const ADVANCED_LESSONS = [
+            {
+                category: 'feature',
+                title: "Đồng bộ tồn kho khi đang dùng chung chi nhánh",
+                situation: "Khi bạn <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">bật tính năng Đồng bộ tồn kho</b> hoặc lưu thiết lập kênh trong lúc <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đang dùng chung ít nhất 1 chi nhánh</b> cho cả Tự vận hành và Shopee xử lý.",
+                steps: [
+                    {
+                        text: "Khi <b class=\"font-bold text-[#166def]\">Thiết lập</b> gian hàng Shopee, tại tab <b class=\"font-bold text-[#166def]\">Tự vận hành</b>, bạn chọn ít nhất 1 chi nhánh trên KiotViet trùng với chi nhánh thiết lập đồng bộ trên tab <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025335/FBSR_151026-12.png"
+                    },
+                    {
+                        text: "Bật công tắc <b class=\"font-bold text-[#166def]\">Đồng bộ tồn kho</b> ➔ hệ thống hiển thị popup cảnh báo sai lệch tồn kho trên gian hàng. Chọn <b class=\"font-bold text-[#166def]\">Đồng ý</b> nếu chắc chắn tiếp tục bật đồng bộ, hoặc chọn <b class=\"font-bold text-[#166def]\">Hủy</b> / nhấn <b class=\"font-bold text-[#166def]\">x</b> đóng cảnh báo nếu không muốn bật.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025328/FBSR_151026-13.png"
+                    },
+                    {
+                        text: "Khi <b class=\"font-bold text-[#166def]\">Lưu</b> thiết lập, nếu gian hàng bật Đồng bộ tồn kho và có chi nhánh đang được dùng cho cả kho shop tự vận hành và kho Shopee xử lý (FBS) ➔ hệ thống tiếp tục hiển thị <b class=\"font-bold text-[#166def]\">Cảnh báo trùng chi nhánh</b>. Chọn <b class=\"font-bold text-[#166def]\">Đã hiểu</b> để ghi nhận thiết lập, hoặc <b class=\"font-bold text-[#166def]\">Hủy</b> để chọn lại.",
+                        img: "https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025321/FBSR_151026-14.png"
+                    }
+                ],
+                flashcard: {
+                    situation: "Tại sao hệ thống cứ hiện bảng cảnh báo liên tục khi tôi bật Đồng bộ tồn kho Shopee?",
+                    advice: "Dạ do chi nhánh Tự vận hành của anh/chị đang bị chọn trùng với chi nhánh Shopee xử lý ạ. Vì kho FBS do Shopee quản lý riêng, nếu đồng bộ tồn kho chung sẽ làm sai lệch tồn hàng bán trên shop ạ!"
+                },
+                quiz: {
+                    question: "Cửa sổ cảnh báo sai lệch tồn kho sẽ xuất hiện khi người dùng bật công tắc Đồng bộ tồn kho trong lúc có chi nhánh dùng chung cho cả Tự vận hành và Shopee xử lý.",
+                    answer: true,
+                    explanation: "Hệ thống cảnh báo nhằm ngăn ngừa nguy cơ sai lệch số lượng tồn kho trên gian hàng do cơ chế quản lý kho của Shopee FBS khác với kho tự vận hành."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Xử lý đơn đồng bộ lỗi trước khi thiết lập chi nhánh",
+                situation: "Khi gian hàng có các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đơn Shopee xử lý đã đồng bộ về KiotViet trước thời điểm bạn gắn chi nhánh</b> (các đơn này đang bị báo lỗi và nằm ở mục <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">Đồng bộ lỗi</b>).",
+                steps: [
+                    {
+                        text: "Hoàn tất thiết lập gắn chi nhánh riêng cho kho Shopee xử lý trong menu <b class=\"font-bold text-[#166def]\">Bán online</b> ➔ <b class=\"font-bold text-[#166def]\">Thiết lập</b>.",
+                        img: null
+                    },
+                    {
+                        text: "Truy cập màn hình <b class=\"font-bold text-[#166def]\">Đơn hàng</b> ➔ chuyển sang tab <b class=\"font-bold text-[#166def]\">Đồng bộ lỗi</b> để rà soát các đơn Shopee xử lý phát sinh trong quá khứ bị lỗi do chưa gắn chi nhánh nhận.",
+                        img: null
+                    },
+                    {
+                        text: "Kiểm tra lại thông tin đơn hàng và lựa chọn bấm <b class=\"font-bold text-[#166def]\">Đồng bộ lại</b> đối với các đơn cần ghi nhận.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Lưu ý quan trọng:</b> Khi hệ thống đồng bộ lại, đơn hàng sẽ được kéo về theo ngày phát sinh trong quá khứ, do đó sẽ làm ảnh hưởng đến doanh thu, tồn kho và hóa đơn điện tử (HĐĐT) của các kỳ trước. Bạn cần kiểm tra lại số liệu của các kỳ liên quan sau khi hoàn tất thiết lập.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Trước khi gắn chi nhánh FBS thì mấy đơn Shopee xử lý cũ bị báo Đồng bộ lỗi, giờ đồng bộ lại có ảnh hưởng gì sổ sách không em?",
+                    advice: "Dạ có anh/chị nhé! Các đơn cũ kéo về sẽ ghi nhận đúng theo ngày phát sinh trong quá khứ, nên sẽ làm thay đổi số liệu doanh thu, tồn kho và HĐĐT của kỳ trước. Anh/chị nên rà soát lại số liệu sau khi bấm đồng bộ lại ạ!"
+                },
+                quiz: {
+                    question: "Khi thực hiện Đồng bộ lại các đơn Shopee xử lý bị lỗi trong quá khứ, đơn hàng sẽ được ghi nhận vào ngày hiện tại nên không làm thay đổi số liệu kỳ cũ.",
+                    answer: false,
+                    explanation: "Đơn hàng sẽ được kéo về theo đúng ngày phát sinh trong quá khứ, do đó sẽ làm ảnh hưởng đến doanh thu, tồn kho và hóa đơn điện tử của các kỳ trước."
+                }
+            },
+            {
+                category: 'feature',
+                title: "Giải đáp các tình huống và lỗi thường gặp",
+                situation: "Khi bạn gặp các <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">vướng mắc hoặc hiện tượng lạ</b> trong quá trình thiết lập và theo dõi <b class=\"font-bold text-amber-900 bg-amber-200/80 px-1.5 py-0.5 rounded\">đơn Shopee xử lý</b> trên KiotViet.",
+                steps: [
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Không thấy tab hoặc bộ lọc nhanh Shopee xử lý:</b> Nguyên nhân do gian hàng chưa tham gia Shopee xử lý trên Seller Center hoặc phía Shopee chưa trả thông tin kho về. Hãy kiểm tra lại trên Seller Center hoặc liên hệ bộ phận hỗ trợ KiotViet nếu đã tham gia mà vẫn không hiển thị.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Số lượng đơn trên bộ lọc nhanh Đơn hàng ít hơn tổng số trên tab Chờ xử lý:</b> Đây là thiết kế đúng của hệ thống, không phải lỗi, vì các đơn Shopee xử lý đã được tách ra đếm riêng ở bộ lọc <b class=\"font-bold text-[#166def]\">Shopee xử lý</b>.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Tồn kho trên gian hàng bị sai sau khi bật Đồng bộ tồn kho:</b> Nguyên nhân do bạn đang thiết lập dùng chung chi nhánh cho cả Tự vận hành và Shopee xử lý. Để khắc phục, hãy tách kho Shopee xử lý sang một chi nhánh riêng biệt.",
+                        img: null
+                    },
+                    {
+                        text: "<b class=\"font-bold text-[#166def]\">Tồn kho cửa hàng không bị trừ khi có đơn Shopee xử lý:</b> Trường hợp gian hàng thiết lập riêng biệt chi nhánh Shopee xử lý ➔ hàng hóa được xuất từ chi nhánh Shopee xử lý, tồn kho cửa hàng được bảo toàn nguyên vẹn.",
+                        img: null
+                    }
+                ],
+                flashcard: {
+                    situation: "Chị vào Bán online mà tìm hoài không thấy tab Shopee xử lý ở đâu hết, có phải phần mềm bị lỗi không em?",
+                    advice: "Dạ không phải lỗi đâu chị! Nguyên nhân là gian hàng trên Shopee Seller Center chưa kích hoạt dịch vụ FBS hoặc Shopee chưa đồng bộ dữ liệu kho về KiotViet. Chị kiểm tra lại trạng thái trên Seller Center trước nhé!"
+                },
+                quiz: {
+                    question: "Hiện tượng số lượng đơn trên bộ lọc Đơn hàng ít hơn tổng số trên tab Chờ xử lý là dấu hiệu lỗi mất dữ liệu đơn hàng Shopee xử lý.",
+                    answer: false,
+                    explanation: "Đây là thiết kế phân tách đúng của KiotViet: các đơn Shopee xử lý đã được tách ra đếm riêng ở bộ lọc Shopee xử lý, hoàn toàn không phải lỗi."
+                }
+            }
+        ];
+
+        // =========================================================================
+        // CẤU HÌNH BÀI HỌC (LESSON CONFIGURATION)
+        // Nhập YouTube Video ID (ví dụ: 'GtohqbprAqU'). Nếu chưa có video, để trống ''
+        // Khi để trống, mục "Video hướng dẫn" sẽ tự động ẩn khỏi Sidebar và thanh chuyển trang.
+        // =========================================================================
+        const LESSON_VIDEO_ID = '';
+
+        let currentPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
+        let currentZoom = 100;
+        let isAdvancedUnlocked = false;
+        let isSidebarCollapsed = false;
+        let viewedPages = new Set([currentPage]);
+        let userAnswers = {};
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function getLinearNavigationList() {
+            let list = [];
+
+            if (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') {
+                list.push({ id: 'intro-video', title: 'Video hướng dẫn' });
+            }
+
+            list.push({ id: 'intro-infographic', title: 'Infographic' });
+            list.push({ id: 'intro-overview', title: 'Lợi ích nổi bật' });
+            list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
+
+            BASIC_LESSONS.forEach((l, idx) => {
+                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+            });
+
+            if (isAdvancedUnlocked) {
+                ADVANCED_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `advanced-${idx}`, title: l.title, scope: 'advanced', index: idx });
+                });
+            }
+            return list;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            applyStateFromHash(true);
+            window.addEventListener('hashchange', function() {
+                applyStateFromHash(false);
+            });
+        });
+
+        function syncStateToHash() {
+            const parts = [];
+            parts.push(currentZoom);
+            parts.push(isAdvancedUnlocked ? 'nc' : 'cb');
+            const newHash = '#' + parts.join('&');
+            if (window.location.hash !== newHash) {
+                try {
+                    if (window.location.protocol === 'file:') {
+                        window.location.hash = newHash;
+                    } else {
+                        history.replaceState(null, '', newHash);
+                    }
+                } catch(e) {
+                    try { window.location.hash = newHash; } catch(err) {}
+                }
+            }
+        }
+
+        function applyStateFromHash(isInitial = false) {
+            const rawHash = (window.location.hash || '').replace(/^#/, '').toLowerCase().trim();
+
+            // 1. Phân tích Zoom (#100, #90, #80, #70, #120, #150): Mặc định là 100 nếu không có trong URL
+            let targetZoom = 100;
+            const zoomMatch = rawHash.match(/\b(70|80|90|100|120|150)\b/) || rawHash.match(/(?:zoom[=:]?|z)(\d{2,3})/);
+            if (zoomMatch) {
+                const zVal = parseInt(zoomMatch[1], 10);
+                if ([70, 80, 90, 100, 120, 150].includes(zVal)) {
+                    targetZoom = zVal;
+                }
+            }
+            setAppZoom(targetZoom, false);
+
+            // 2. Phân tích Chế độ Nâng cao: Mặc định là #cb (Toggle OFF, ẩn nội dung nâng cao)
+            let targetAdv = false;
+            if (/\b(nc|adv|advanced|nangcao|full|all)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
+                targetAdv = true;
+            }
+            handleAdvancedToggle(targetAdv, false);
+
+            // 3. Nhảy thẳng đến trang cụ thể nếu hash có ID trang
+            const pageMatch = rawHash.match(/(intro-(?:video|infographic|overview|glossary)|basic-\d+|advanced-\d+)/);
+            if (pageMatch) {
+                navGoToPage(pageMatch[1]);
+            } else if (isInitial) {
+                const defaultPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
+                navGoToPage(defaultPage);
+            }
+        }
+
+        function stepZoom(delta) {
+            const levels = [70, 80, 90, 100, 120, 150];
+            let idx = levels.indexOf(currentZoom);
+            if (idx === -1) idx = levels.indexOf(100);
+            const nextIdx = Math.max(0, Math.min(levels.length - 1, idx + delta));
+            setAppZoom(levels[nextIdx]);
+        }
+
+        function showAdvTooltip(targetEl) {
+            const tip = document.getElementById('adv-cluster-tooltip');
+            if (!tip) return;
+            const sidebar = document.getElementById('app-sidebar');
+            const targetRect = targetEl.getBoundingClientRect();
+            const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : targetRect;
+            
+            tip.classList.remove('hidden');
+
+            if (window.innerWidth < 640) {
+                tip.style.left = '16px';
+                tip.style.right = '16px';
+                tip.style.width = 'auto';
+                tip.style.top = (targetRect.bottom + 8) + 'px';
+            } else {
+                tip.style.width = '18rem';
+                tip.style.right = 'auto';
+                const leftPos = Math.max(sidebarRect.right, targetRect.right) + 12;
+                tip.style.left = leftPos + 'px';
+                const tipHeight = tip.offsetHeight || 80;
+                let topPos = targetRect.top + (targetRect.height / 2) - (tipHeight / 2);
+                if (topPos + tipHeight > window.innerHeight - 20) {
+                    topPos = window.innerHeight - tipHeight - 20;
+                }
+                tip.style.top = Math.max(10, topPos) + 'px';
+            }
+        }
+
+        function hideAdvTooltip() {
+            const tip = document.getElementById('adv-cluster-tooltip');
+            if (tip) tip.classList.add('hidden');
+        }
+
+        function setAppZoom(val, syncHash = true) {
+            currentZoom = val;
+            const fontMap = {
+                70: '11.5px',
+                80: '13px',
+                90: '14.5px',
+                100: '16px',
+                120: '19.2px',
+                150: '24px'
+            };
+            document.documentElement.style.fontSize = fontMap[val] || '16px';
+
+            const zoomOutBtn = document.getElementById('nav-zoom-out-btn');
+            const zoomInBtn = document.getElementById('nav-zoom-in-btn');
+            if (zoomOutBtn) {
+                zoomOutBtn.disabled = (val <= 70);
+            }
+            if (zoomInBtn) {
+                zoomInBtn.disabled = (val >= 150);
+            }
+
+            if (syncHash) syncStateToHash();
+        }
+
+        function handleAdvancedToggle(checked, syncHash = true) {
+            isAdvancedUnlocked = checked;
+            const contentEl = document.getElementById('sidebar-advanced-content');
+            const sidebarToggle = document.getElementById('sidebar-advanced-toggle');
+            if (sidebarToggle) sidebarToggle.checked = checked;
+
+            if (checked) {
+                if (contentEl) contentEl.classList.remove('hidden');
+            } else {
+                if (contentEl) contentEl.classList.add('hidden');
+                if (currentPage && currentPage.startsWith('advanced-')) {
+                    navGoToPage('basic-0');
+                }
+            }
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            if (syncHash) syncStateToHash();
+        }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('app-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('sidebar-toggle-icon');
+
+            if (isMobile()) {
+                const isOpen = !sidebar.classList.contains('-translate-x-full');
+                if (isOpen) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                } else {
+                    sidebar.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                    icon.className = 'fa-solid fa-xmark text-xs';
+                }
+            } else {
+                isSidebarCollapsed = !isSidebarCollapsed;
+                if (isSidebarCollapsed) {
+                    sidebar.style.width = '0px';
+                    sidebar.style.minWidth = '0px';
+                    sidebar.style.transform = 'translateX(-100%)';
+                    sidebar.style.opacity = '0';
+                    icon.className = 'fa-solid fa-arrow-right-to-bracket text-xs';
+                } else {
+                    sidebar.style.width = '';
+                    sidebar.style.minWidth = '';
+                    sidebar.style.transform = 'translateX(0)';
+                    sidebar.style.opacity = '1';
+                    icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+        }
+
+        function toggleAdvChildGroup(sub) {
+            const p = document.getElementById(`panel-adv-${sub}`);
+            const icon = document.getElementById(`icon-adv-${sub}`);
+            if (p && icon) {
+                p.classList.toggle('hidden');
+                icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            }
+        }
+
+        function renderSidebar() {
+            const basicContainer = document.getElementById('accordion-panel-basic');
+            if (basicContainer) {
+                basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
+                    const isViewed = viewedPages.has(`basic-${idx}`);
+                    const isActive = (currentPage === `basic-${idx}`);
+                    return `
+                        <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            if (isAdvancedUnlocked) {
+                const fPanel = document.getElementById('panel-adv-features');
+                const mPanel = document.getElementById('panel-adv-mobile');
+                const pPanel = document.getElementById('panel-adv-pos');
+                const mGroup = document.getElementById('sidebar-subgroup-mobile');
+                const pGroup = document.getElementById('sidebar-subgroup-pos');
+
+                let fHTML = '', mHTML = '', pHTML = '';
+
+                ADVANCED_LESSONS.forEach((lesson, idx) => {
+                    const isViewed = viewedPages.has(`advanced-${idx}`);
+                    const isActive = (currentPage === `advanced-${idx}`);
+                    const btnHTML = `
+                        <button onclick="navGoToPage('advanced-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white' : 'text-slate-700 hover:bg-emerald-100/60 font-medium'}">
+                            <div class="flex items-start gap-1.5 flex-1 min-w-0">
+                                <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-emerald-600'}"></i>
+                                <span class="break-words flex-1">${lesson.title}</span>
+                            </div>
+                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                        </button>
+                    `;
+                    if (lesson.category === 'feature') fHTML += btnHTML;
+                    else if (lesson.category === 'mobile') mHTML += btnHTML;
+                    else if (lesson.category === 'pos') pHTML += btnHTML;
+                });
+
+                if (fPanel) {
+                    fPanel.innerHTML = fHTML;
+                    // Tự động mở nhóm tính năng nâng cao khi mở khóa
+                    fPanel.classList.remove('hidden');
+                    const iconF = document.getElementById('icon-adv-features');
+                    if (iconF) iconF.style.transform = 'rotate(0deg)';
+                }
+                if (mPanel) mPanel.innerHTML = mHTML;
+                if (pPanel) pPanel.innerHTML = pHTML;
+
+                if (mGroup) mGroup.classList.toggle('hidden', !mHTML);
+                if (pGroup) pGroup.classList.toggle('hidden', !pHTML);
+            }
+
+            ['intro-infographic', 'intro-overview', 'intro-video', 'intro-glossary'].forEach(id => {
+                const el = document.getElementById(`subbtn-${id}`);
+                if (el) {
+                    if (currentPage === id) {
+                        el.classList.add('active-sub');
+                    } else {
+                        el.classList.remove('active-sub');
+                    }
+                }
+            });
+        }
+
+        function updateSideNavButtons() {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            const prevBtn = document.getElementById('nav-btn-prev');
+            const nextBtn = document.getElementById('nav-btn-next');
+            if (!prevBtn || !nextBtn) return;
+
+            if (curIdx <= 0) {
+                prevBtn.disabled = true;
+                prevBtn.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                prevBtn.disabled = false;
+                prevBtn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function navGoToPage(pageId) {
+            currentPage = pageId;
+            viewedPages.add(pageId);
+            renderSidebar();
+            renderCurrentPageView();
+            updateSideNavButtons();
+            
+            if (isMobile()) {
+                const sidebar = document.getElementById('app-sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                const icon = document.getElementById('sidebar-toggle-icon');
+                if (sidebar && backdrop && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                    if (icon) icon.className = 'fa-solid fa-bars-staggered text-xs';
+                }
+            }
+
+            const container = document.getElementById('dynamic-content-view');
+            if (container) container.scrollTop = 0;
+        }
+
+        function navStepLinear(direction) {
+            const list = getLinearNavigationList();
+            const curIdx = list.findIndex(item => item.id === currentPage);
+            if (curIdx === -1) return;
+
+            if (direction === 'next') {
+                if (curIdx === list.length - 1) {
+                    if (!isAdvancedUnlocked) {
+                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                    } else {
+                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                    }
+                    return;
+                }
+                const nextItem = list[curIdx + 1];
+                navGoToPage(nextItem.id);
+            } else if (direction === 'prev') {
+                if (curIdx > 0) {
+                    const prevItem = list[curIdx - 1];
+                    navGoToPage(prevItem.id);
+                }
+            }
+        }
+
+        function restartFromBeginning() {
+            closeModal('modal-basic-complete');
+            closeModal('modal-advanced-complete');
+            navGoToPage('intro-infographic');
+        }
+
+        // RENDER GIAO DIỆN CHÍNH
+        function renderCurrentPageView() {
+            const container = document.getElementById('dynamic-content-view');
+            if (!container) return;
+
+            // TRANG 1: INFOGRAPHIC (16:9 RESPONSIVE)
+            if (currentPage === 'intro-infographic') {
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            <img src="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2026/10/15025818/FBSR_151026.jpg" 
+                                 alt="Infographic Đồng bộ đơn Shopee xử lý (FBS) về KiotViet" 
+                                 class="w-full h-full object-contain select-none">
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 2: LỢI ÍCH NỔI BẬT
+            if (currentPage === 'intro-overview') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900">Tính năng Đồng bộ đơn Shopee xử lý (FBS) về KiotViet</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                                Với dịch vụ Shopee xử lý (FBS - Fulfilled by Shopee), nhà bán ký gửi hàng tại kho của Shopee. Khi có đơn hàng phát sinh, Shopee sẽ tự động đóng gói, giao hàng và xử lý toàn bộ quy trình hoàn tất cũng như đổi trả hoàn tiền. Tính năng đồng bộ đơn Shopee xử lý cho phép bạn gắn kho Shopee xử lý với một chi nhánh riêng trên KiotViet để ghi nhận doanh thu và trừ tồn kho độc lập, tuyệt đối không làm ảnh hưởng đến tồn kho tại cửa hàng.
+                            </p>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs space-y-3">
+                            <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-amber-500"></i> Lợi ích nổi bật dành cho Cửa hàng
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-boxes-stacked"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Tách biệt tồn kho tuyệt đối</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Tồn kho tại cửa hàng không bao giờ bị trừ nhầm bởi các đơn hàng do Shopee giao trực tiếp từ kho Shopee.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Quản lý doanh thu minh bạch</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Xem và theo dõi báo cáo doanh thu của hàng ký gửi Shopee tách riêng theo từng chi nhánh KiotViet cụ thể.</p>
+                                </div>
+                                <div class="p-3 rounded-xl bg-blue-50/50 border border-blue-100 space-y-1.5">
+                                    <div class="w-7 h-7 rounded-lg bg-[#166def] text-white flex items-center justify-center font-black text-xs">
+                                        <i class="fa-solid fa-robot"></i>
+                                    </div>
+                                    <h4 class="font-bold text-xs text-slate-800">Vận hành rảnh tay 100%</h4>
+                                    <p class="text-[11px] text-slate-600 leading-relaxed">Không cần chuẩn bị hàng, in vận đơn hay xử lý trả hàng; Shopee lo trọn gói, hệ thống tự động ghi nhận trên KiotViet.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 shadow-2xs space-y-1.5">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600"></i> Điều kiện & Khuyến nghị quan trọng khi vận hành:
+                            </h4>
+                            <ul class="text-xs text-amber-950 space-y-1 list-disc pl-5 font-medium leading-relaxed">
+                                <li><strong>Điều kiện kết nối:</strong> Gian hàng Shopee của bạn phải được kết nối trên Bán Online và đã tham gia Shopee xử lý trên Seller Center (KiotViet sẽ tự động nhận diện kho Shopee xử lý mà không cần khai báo).</li>
+                                <li><strong>Khuyến nghị vàng:</strong> Nên tạo trước một chi nhánh riêng trên KiotViet dành riêng cho hàng ký gửi Shopee (ví dụ: "Kho Shopee xử lý"), tuyệt đối không dùng chung với chi nhánh đang bán hoặc đồng bộ tồn kho cho đơn tự giao để tránh sai lệch tồn kho.</li>
+                                <li><strong>Nền tảng hỗ trợ:</strong> Tính năng hiện chỉ hỗ trợ trên giao diện <strong>Web - Bán Online</strong>, chưa hỗ trợ trên ứng dụng KiotViet và KiotViet Máy bán hàng.</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG VIDEO HƯỚNG DẪN (NẾU CÓ)
+            if (currentPage === 'intro-video') {
+                const vidId = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? LESSON_VIDEO_ID : '';
+                container.innerHTML = `
+                    <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
+                        <div class="w-full rounded-2xl overflow-hidden shadow-md bg-black border border-slate-200 my-auto" 
+                             style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
+                            ${vidId ? `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${vidId}?rel=0&cc_load_policy=0&iv_load_policy=3&playsinline=1&modestbranding=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>` : '<div class="w-full h-full flex items-center justify-center text-white text-xs">Video đang được cập nhật</div>'}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // TRANG 4: THUẬT NGỮ NỀN TẢNG
+            if (currentPage === 'intro-glossary') {
+                container.innerHTML = `
+                    <div class="w-full space-y-3 pb-6">
+                        <div class="bg-white rounded-2xl p-4 sm:p-5 border-2 border-blue-800 shadow-xs space-y-1">
+                            <div class="flex items-center gap-2 text-blue-800">
+                                <i class="fa-solid fa-book-bookmark text-base"></i>
+                                <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
+                            </div>
+                            <p class="text-xs text-slate-600">Tra cứu các khái niệm và từ khóa nghiệp vụ quan trọng khi vận hành dịch vụ Shopee xử lý (FBS) trên KiotViet.</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">1. FBS (Fulfilled by Shopee - Shopee xử lý)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Dịch vụ hoàn tất đơn hàng trọn gói của Shopee. Nhà bán ký gửi hàng hóa tại kho Shopee và Shopee chịu trách nhiệm toàn bộ các khâu lưu kho, đóng gói, in vận đơn, giao hàng và xử lý đổi trả hoàn tiền.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">2. Chi nhánh ký gửi riêng biệt</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Chi nhánh được tạo riêng trên KiotViet (ví dụ: "Kho Shopee xử lý") để liên kết với kho Shopee, nhằm hạch toán doanh thu và trừ tồn kho độc lập với kho cửa hàng tự vận hành.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">3. Tab Tự vận hành vs. Tab Shopee xử lý</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Hai phân hệ thiết lập song song trên KiotViet Bán Online cho gian hàng Shopee: một bên dành cho kho cửa hàng tự đóng gói giao hàng, một bên dành riêng cho kho FBS của Shopee.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">4. Phiếu chuyển hàng nội bộ</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Thao tác tạo phiếu chuyển hàng từ chi nhánh cửa hàng sang chi nhánh Shopee xử lý trên KiotViet khi nhà bán gửi thêm hàng hóa ký gửi sang kho Shopee thực tế, giúp số liệu tồn khớp 100%.</p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white border border-slate-200 space-y-1 shadow-2xs">
+                                <h3 class="text-xs sm:text-sm font-black text-blue-800">5. Cảnh báo trùng chi nhánh</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">Thông báo cảnh báo của KiotViet khi người dùng vô tình chọn cùng một chi nhánh cho cả kho Tự vận hành và kho Shopee xử lý, giúp ngăn ngừa rủi ro sai lệch tồn kho hàng loạt trên gian hàng.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // CHI TIẾT BÀI HỌC CƠ BẢN HOẶC NÂNG CAO
+            let scope = '';
+            let index = 0;
+            if (currentPage.startsWith('basic-')) {
+                scope = 'basic';
+                index = parseInt(currentPage.split('-')[1]);
+            } else if (currentPage.startsWith('advanced-')) {
+                scope = 'advanced';
+                index = parseInt(currentPage.split('-')[1]);
+            }
+
+            if (scope) {
+                const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                const lesson = lessons[index];
+                const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
+                const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
+
+                container.innerHTML = `
+                    <div class="w-full space-y-3.5 pb-20 md:pb-6">
+                        <!-- TIÊU ĐỀ BÀI HỌC -->
+                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
+                                    ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
+                                </span>
+                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+                                <span>${lesson.title}</span>
+                            </h2>
+                        </div>
+
+                        <!-- TÌNH HUỐNG THỰC TẾ -->
+                        <div class="p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50/80 to-amber-50/50 border-2 border-amber-300 shadow-2xs space-y-1.5">
+                            <div class="flex items-center gap-2 text-amber-900">
+                                <div class="w-5 h-5 rounded-md bg-amber-500 text-white flex items-center justify-center text-[11px] shadow-xs shrink-0">
+                                    <i class="fa-solid fa-lightbulb"></i>
+                                </div>
+                                <h3 class="text-xs font-black uppercase tracking-wider text-amber-900">Tình huống thực tế:</h3>
+                            </div>
+                            <p class="text-xs sm:text-sm text-amber-950 leading-relaxed font-medium pl-7">${lesson.situation}</p>
+                        </div>
+
+                        <!-- QUY TRÌNH THỰC HIỆN -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
+                            <div class="space-y-3">
+                                ${lesson.steps.map((step, sIdx) => `
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-start gap-2.5">
+                                           <span class="w-5 h-5 rounded-full text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5 shadow-2xs" style="background-color: ${scopeColor}">${sIdx + 1}</span>
+                                            <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
+                                        </div>
+                                        ${step.img ? `
+                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                                <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                                <div class="flashcard-3d-card">
+                                    <!-- MẶT TRƯỚC -->
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Xem gợi ý <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-amber-700/80 text-center font-medium italic pt-1 border-t border-amber-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để lật xem gợi ý tư vấn
+                                        </div>
+                                    </div>
+
+                                    <!-- MẶT SAU -->
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                        <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
+                                            <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                                                <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
+                                            </span>
+                                            <span class="text-[10px] font-bold bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase shadow-2xs whitespace-nowrap shrink-0">
+                                                Lật lại <i class="fa-solid fa-rotate text-[9px]"></i>
+                                            </span>
+                                        </div>
+
+                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                            <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
+                                        </div>
+
+                                        <div class="text-[10px] text-teal-700/80 text-center font-medium italic pt-1 border-t border-teal-200/50 whitespace-nowrap truncate">
+                                            <i class="fa-solid fa-hand-pointer text-[9px] mr-1"></i> Bấm vào thẻ để quay lại tình huống
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC -->
+                        <div class="pt-3 border-t border-slate-200 space-y-2">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+
+                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                                <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
+                                        <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
+                                    </span>
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full uppercase whitespace-nowrap shrink-0">
+                                        Đúng / Sai
+                                    </span>
+                                </div>
+
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                    <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
+                                    <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                                </div>
+
+                                <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
+                                    <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                        ✓ ĐÚNG
+                                    </button>
+                                    <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                        ✕ SAI
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH -->
+                        ${isLastBasicLesson ? `
+                            <div class="pt-5 sm:pt-6">
+                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
+                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-trophy text-amber-300"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
+                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                    </div>
+                `;
+            }
+        }
+
+        function toggleFlashcard3D(sceneEl) {
+            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            if (cardEl) cardEl.classList.toggle('is-flipped');
+        }
+
+        function checkQuiz(scope, index, choice) {
+            const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            const lesson = lessons[index];
+            const isCorrect = (choice === lesson.quiz.answer);
+            userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+
+            const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
+            if (feedbackEl) {
+                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.innerHTML = `
+                    <p class="font-black text-xs flex items-center gap-1.5">
+                        <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                        ${isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                    </p>
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                `;
+            }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
