@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 13px;">
+<html lang="vi" class="h-full w-full overflow-hidden" style="font-size: 16px;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -191,7 +191,7 @@
                 </div>
 
                 <!-- CỤM 3: KIẾN THỨC NÂNG CAO (KHI MỞ KHÓA) -->
-                <div id="sidebar-advanced-cluster" class="hidden p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
+                <div id="sidebar-advanced-cluster" class="p-2 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1 shadow-2xs">
                     <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
                         <i class="fa-solid fa-sliders text-sm text-emerald-600 shrink-0"></i>
                         <span class="truncate text-left uppercase tracking-wider text-[11px] text-emerald-700">Kiến thức nâng cao</span>
@@ -265,15 +265,15 @@
             <div class="space-y-2">
                 <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
                     <span>Tỷ lệ thu phóng (Zoom):</span>
-                    <span id="zoom-label" class="text-[#166def] font-black">80%</span>
+                    <span id="zoom-label" class="text-[#166def] font-black">100%</span>
                 </label>
                 <div class="grid grid-cols-4 gap-1.5">
                     <button onclick="setAppZoom(70)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="70">70%</button>
-                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="80">80%</button>
+                    <button onclick="setAppZoom(80)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="80">80%</button>
                     <button onclick="setAppZoom(90)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="90">90%</button>
-                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700" data-zoom="100">100%</button>
+                    <button onclick="setAppZoom(100)" class="zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border-2 border-[#166def] bg-blue-50 text-[#166def] cursor-pointer" data-zoom="100">100%</button>
                 </div>
-                <p class="text-[10px] text-slate-500 italic">Mặc định 80% tối ưu cỡ chữ vừa khít mọi khung iFrame &amp; điện thoại.</p>
+                <p class="text-[10px] text-slate-500 italic">Mặc định 100% hiển thị tiêu chuẩn, hỗ trợ hashtag URL #100 #90 #80 #70 và #nc #cb.</p>
             </div>
 
             <!-- MỞ KHÓA NÂNG CAO -->
@@ -281,7 +281,7 @@
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-slate-800">Mở khóa Kiến thức nâng cao</span>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-advanced-checkbox" onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
+                        <input type="checkbox" id="toggle-advanced-checkbox" checked onchange="handleAdvancedToggle(this.checked)" class="sr-only peer">
                         <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                 </div>
@@ -951,8 +951,8 @@
         ];
 
         let currentPage = 'intro-infographic';
-        let currentZoom = 80;
-        let isAdvancedUnlocked = false;
+        let currentZoom = 100;
+        let isAdvancedUnlocked = true;
         let isSidebarCollapsed = false;
         let viewedPages = new Set(['intro-infographic']);
         let userAnswers = {};
@@ -986,12 +986,63 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            setAppZoom(80);
-            renderSidebar();
-            navGoToPage('intro-infographic');
+            applyStateFromHash(true);
+            window.addEventListener('hashchange', function() {
+                applyStateFromHash(false);
+            });
         });
 
-        function setAppZoom(val) {
+        function syncStateToHash() {
+            const parts = [];
+            parts.push(currentZoom);
+            parts.push(isAdvancedUnlocked ? 'nc' : 'cb');
+            const newHash = '#' + parts.join('&');
+            if (window.location.hash !== newHash) {
+                try {
+                    if (window.location.protocol === 'file:') {
+                        window.location.hash = newHash;
+                    } else {
+                        history.replaceState(null, '', newHash);
+                    }
+                } catch(e) {
+                    try { window.location.hash = newHash; } catch(err) {}
+                }
+            }
+        }
+
+        function applyStateFromHash(isInitial = false) {
+            const rawHash = (window.location.hash || '').replace(/^#/, '').toLowerCase().trim();
+
+            // 1. Phân tích Zoom (#100, #90, #80, #70): Mặc định là 100 nếu không có trong URL
+            let targetZoom = 100;
+            const zoomMatch = rawHash.match(/\b(70|80|90|100)\b/) || rawHash.match(/(?:zoom[=:]?|z)(\d{2,3})/);
+            if (zoomMatch) {
+                const zVal = parseInt(zoomMatch[1], 10);
+                if ([70, 80, 90, 100].includes(zVal)) {
+                    targetZoom = zVal;
+                }
+            }
+            setAppZoom(targetZoom, false);
+
+            // 2. Phân tích Chế độ Nâng cao (#nc) / Cơ bản (#cb): Mặc định là #nc (mở khóa) nếu không có #cb
+            let targetAdv = true;
+            if (/\b(cb|basic|coban)\b/.test(rawHash) || /adv(?:anced)?=(?:0|false)/.test(rawHash)) {
+                targetAdv = false;
+            } else if (/\b(nc|adv|advanced|nangcao)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
+                targetAdv = true;
+            }
+            handleAdvancedToggle(targetAdv, false);
+
+            // 3. Tùy chọn: Nhảy thẳng đến trang cụ thể nếu hash có ID trang (#basic-1, #intro-video...)
+            const pageMatch = rawHash.match(/(intro-(?:infographic|overview|video|glossary)|basic-\d+|advanced-\d+)/);
+            if (pageMatch) {
+                navGoToPage(pageMatch[1]);
+            } else if (isInitial) {
+                navGoToPage('intro-infographic');
+            }
+        }
+
+        function setAppZoom(val, syncHash = true) {
             currentZoom = val;
             const fontMap = {
                 70: '11.5px',
@@ -999,7 +1050,7 @@
                 90: '14.5px',
                 100: '16px'
             };
-            document.documentElement.style.fontSize = fontMap[val] || '13px';
+            document.documentElement.style.fontSize = fontMap[val] || '16px';
             document.getElementById('zoom-label').innerText = val + '%';
             
             document.querySelectorAll('.zoom-btn').forEach(b => {
@@ -1009,14 +1060,17 @@
                     b.className = 'zoom-btn py-1.5 px-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 cursor-pointer text-slate-700';
                 }
             });
+            if (syncHash) syncStateToHash();
         }
 
         function openSettingsModal() { document.getElementById('modal-settings').classList.remove('hidden'); }
         function closeSettingsModal() { document.getElementById('modal-settings').classList.add('hidden'); }
 
-        function handleAdvancedToggle(checked) {
+        function handleAdvancedToggle(checked, syncHash = true) {
             isAdvancedUnlocked = checked;
             const clusterEl = document.getElementById('sidebar-advanced-cluster');
+            const advCheckbox = document.getElementById('toggle-advanced-checkbox');
+            if (advCheckbox) advCheckbox.checked = checked;
 
             if (checked) {
                 clusterEl.classList.remove('hidden');
@@ -1029,6 +1083,7 @@
             renderSidebar();
             renderCurrentPageView();
             updateSideNavButtons();
+            if (syncHash) syncStateToHash();
         }
 
         function toggleSidebarCollapse() {
