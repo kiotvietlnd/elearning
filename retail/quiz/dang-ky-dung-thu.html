@@ -54,15 +54,18 @@
         .sidebar-sub-btn { transition: all 0.15s ease; outline: none !important; }
         .sidebar-sub-btn.active-sub { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
         .sidebar-sub-btn.active-sub i { color: #ffffff !important; }
+        .sidebar-sub-btn.active-sub i.check-icon { color: #86efac !important; }
 
         .sidebar-item-btn { transition: all 0.15s ease; outline: none !important; }
         .sidebar-item-btn.active-lesson-basic { background-color: #166def !important; color: #ffffff !important; font-weight: 700; }
         .sidebar-item-btn.active-lesson-basic i.lesson-icon { color: #ffffff !important; }
         .sidebar-item-btn.active-lesson-basic i.check-icon { color: #86efac !important; }
+        .sidebar-item-btn.active-lesson-basic i.progress-icon { color: #fde68a !important; }
         
         .sidebar-item-btn.active-lesson-advanced { background-color: #16a34a !important; color: #ffffff !important; font-weight: 700; }
         .sidebar-item-btn.active-lesson-advanced i.lesson-icon { color: #ffffff !important; }
         .sidebar-item-btn.active-lesson-advanced i.check-icon { color: #bbf7d0 !important; }
+        .sidebar-item-btn.active-lesson-advanced i.progress-icon { color: #fde68a !important; }
 
         #app-sidebar {
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
@@ -70,18 +73,19 @@
 
         .flashcard-3d-scene { perspective: 1000px; }
         .flashcard-3d-card {
+            display: grid;
+            grid-template-areas: "face";
             position: relative;
             width: 100%;
-            height: 100%;
+            min-height: 220px;
             transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
         .flashcard-3d-card.is-flipped { transform: rotateY(-180deg); }
         .flashcard-face {
-            position: absolute;
-            inset: 0;
+            grid-area: face;
             width: 100%;
-            height: 100%;
+            min-height: 220px;
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             border-radius: 1.25rem;
@@ -110,7 +114,20 @@
                 padding-bottom: 1.5rem !important;
             }
         }
-    </style>
+    
+        .zoomable-img-wrap {
+            position: relative;
+            cursor: zoom-in;
+        }
+        .zoomable-img-wrap .zoom-hint-badge {
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translateY(2px);
+        }
+        .zoomable-img-wrap:hover .zoom-hint-badge {
+            opacity: 1;
+            transform: translateY(0);
+        }</style>
 </head>
 <body class="text-slate-800 antialiased flex flex-col h-[100dvh] w-screen bg-[#f1f5f9] overflow-hidden select-none">
 
@@ -164,36 +181,59 @@
                 
                 <!-- CỤM 1: GIỚI THIỆU CHUNG (LUÔN MỞ SẴN) -->
                 <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
-                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
-                        <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
-                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                    <div class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <div class="flex items-center gap-2 truncate">
+                            <i class="fa-solid fa-compass text-sm text-[#166def] shrink-0"></i>
+                            <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Giới thiệu chung</span>
+                        </div>
+                        <span id="intro-progress-badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100/90 text-[#166def] shrink-0">0/3</span>
                     </div>
                     
                     <div id="intro-subgroup-panel" class="space-y-1 pl-1 pt-1 border-t border-blue-100/60">
-                        <button onclick="navGoToPage('intro-video')" id="subbtn-intro-video" class="sidebar-sub-btn active-sub w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
-                            <i class="fa-solid fa-circle-play text-xs shrink-0 text-[#166def]"></i>
-                            <span class="truncate flex-1 text-left">Video hướng dẫn</span>
+                        <button onclick="navGoToPage('intro-video')" id="subbtn-intro-video" class="sidebar-sub-btn active-sub w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <i class="fa-solid fa-circle-play text-xs shrink-0 text-[#166def]"></i>
+                                <span class="truncate flex-1 text-left">Video hướng dẫn</span>
+                            </div>
+                            <i id="check-intro-video" class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 hidden" title="Đã xem"></i>
                         </button>
-                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
-                            <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
-                            <span class="truncate flex-1 text-left">Infographic</span>
+                        <button onclick="navGoToPage('intro-infographic')" id="subbtn-intro-infographic" class="sidebar-sub-btn w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <i class="fa-solid fa-image text-xs shrink-0 text-[#166def]"></i>
+                                <span class="truncate flex-1 text-left">Infographic</span>
+                            </div>
+                            <i id="check-intro-infographic" class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 hidden" title="Đã xem"></i>
                         </button>
-                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
-                            <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
-                            <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                        <button onclick="navGoToPage('intro-overview')" id="subbtn-intro-overview" class="sidebar-sub-btn w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <i class="fa-solid fa-star text-xs shrink-0 text-[#166def]"></i>
+                                <span class="truncate flex-1 text-left">Lợi ích nổi bật</span>
+                            </div>
+                            <i id="check-intro-overview" class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 hidden" title="Đã xem"></i>
                         </button>
-                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
-                            <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
-                            <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                        <button onclick="navGoToPage('intro-glossary')" id="subbtn-intro-glossary" class="sidebar-sub-btn w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-blue-100/70 text-xs font-semibold cursor-pointer">
+                            <div class="flex items-center gap-2 min-w-0 flex-1">
+                                <i class="fa-solid fa-book-bookmark text-xs shrink-0 text-[#166def]"></i>
+                                <span class="truncate flex-1 text-left">Thuật ngữ</span>
+                            </div>
+                            <i id="check-intro-glossary" class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 hidden" title="Đã xem"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- CỤM 2: KIẾN THỨC CƠ BẢN (LUÔN MỞ SẴN) -->
-                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1 shadow-2xs">
-                    <div class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-slate-800 text-xs font-black select-none">
-                        <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
-                        <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                <div class="p-2 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-1.5 shadow-2xs">
+                    <div class="w-full flex items-center justify-between gap-2 px-2.5 pt-1.5 pb-0.5 rounded-xl text-slate-800 text-xs font-black select-none">
+                        <div class="flex items-center gap-2 truncate">
+                            <i class="fa-solid fa-list-check text-sm text-[#166def] shrink-0"></i>
+                            <span class="truncate text-left uppercase tracking-wider text-[11px] text-[#166def]">Kiến thức cơ bản</span>
+                        </div>
+                        <span id="basic-progress-badge" class="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100/90 text-[#166def] shrink-0 transition-colors">0/6</span>
+                    </div>
+                    <div class="px-2.5 pb-1">
+                        <div class="w-full h-1.5 bg-blue-100/80 rounded-full overflow-hidden">
+                            <div id="basic-progress-bar" class="h-full bg-[#166def] transition-all duration-300 rounded-full" style="width: 0%"></div>
+                        </div>
                     </div>
                     <div id="accordion-panel-basic" class="space-y-1 pt-1 border-t border-blue-100/60"></div>
                 </div>
@@ -330,6 +370,19 @@
                 </button>
             </div>
         </div>
+
+    <!-- LIGHTBOX PHONG TO HINH ANH SAC NET -->
+    <div id="image-lightbox-modal" onclick="closeImageLightbox()" class="fixed inset-0 bg-slate-950/85 z-[110] hidden flex flex-col items-center justify-center p-3 sm:p-6 backdrop-blur-xs cursor-zoom-out select-none">
+        <div class="relative max-w-6xl w-full max-h-[90dvh] flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageLightbox()" class="absolute -top-3 -right-2 sm:-top-4 sm:-right-4 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-slate-800 hover:bg-rose-500 hover:text-white shadow-lg flex items-center justify-center transition-all cursor-pointer z-10" title="Đóng (ESC)">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+            <div class="bg-white p-1.5 sm:p-2 rounded-2xl shadow-2xl border border-white/20 overflow-hidden max-h-[85dvh] flex items-center justify-center">
+                <img id="lightbox-img-target" src="" alt="Phóng to hình ảnh" class="max-w-full max-h-[81dvh] w-auto h-auto object-contain rounded-xl">
+            </div>
+            <div id="lightbox-img-caption" class="mt-2.5 px-3.5 py-1 rounded-full bg-slate-900/80 text-white/90 text-xs font-medium text-center max-w-xl truncate border border-white/10"></div>
+        </div>
+    </div>
     </div>
 
     <!-- JAVASCRIPT ENGINE -->
@@ -422,12 +475,71 @@
             }
         ];
 
-        let currentPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
+                let currentPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
         let currentZoom = 100;
         let isAdvancedUnlocked = false;
         let isSidebarCollapsed = false;
-        let viewedPages = new Set([currentPage]);
+        let viewedPages = new Set();
+        let flippedCards = new Set();
         let userAnswers = {};
+
+        const STORAGE_KEY = 'kv_elearning_v21_' + (window.location.pathname || 'dang_ky_dung_thu').replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        function loadProgressState() {
+            try {
+                const raw = sessionStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (Array.isArray(data.viewed)) data.viewed.forEach(p => viewedPages.add(p));
+                if (Array.isArray(data.flipped)) data.flipped.forEach(k => flippedCards.add(k));
+                if (data.answers && typeof data.answers === 'object') userAnswers = data.answers;
+            } catch (e) {}
+        }
+
+        function saveProgressState() {
+            try {
+                const data = {
+                    viewed: Array.from(viewedPages),
+                    flipped: Array.from(flippedCards),
+                    answers: userAnswers
+                };
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {}
+        }
+
+        function isPageCompleted(pageId) {
+            if (!pageId) return false;
+            if (pageId.startsWith('intro-')) {
+                return viewedPages.has(pageId);
+            }
+            if (pageId.startsWith('basic-') || pageId.startsWith('advanced-')) {
+                const parts = pageId.split('-');
+                const scope = parts[0];
+                const idx = parts[1];
+                const ans = userAnswers[`${scope}_${idx}`];
+                const isQuizCorrect = Boolean(ans && ans.isCorrect === true);
+                const isCardFlipped = flippedCards.has(pageId);
+                return isCardFlipped && isQuizCorrect;
+            }
+            return false;
+        }
+
+        function getBasicCompletionStats() {
+            const total = (typeof BASIC_LESSONS !== 'undefined') ? BASIC_LESSONS.length : 0;
+            let completed = 0;
+            let firstIncompleteId = null;
+            let firstIncompleteTitle = '';
+            for (let i = 0; i < total; i++) {
+                const pid = `basic-${i}`;
+                if (isPageCompleted(pid)) {
+                    completed++;
+                } else if (!firstIncompleteId) {
+                    firstIncompleteId = pid;
+                    firstIncompleteTitle = BASIC_LESSONS[i].title;
+                }
+            }
+            return { completed, total, isAllCompleted: (total > 0 && completed === total), firstIncompleteId, firstIncompleteTitle };
+        }
 
         function isMobile() {
             return window.innerWidth < 768;
@@ -444,9 +556,11 @@
             list.push({ id: 'intro-overview', title: 'Lợi ích nổi bật' });
             list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
 
-            BASIC_LESSONS.forEach((l, idx) => {
-                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
-            });
+            if (typeof BASIC_LESSONS !== 'undefined') {
+                BASIC_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+                });
+            }
 
             if (typeof isAdvancedUnlocked !== 'undefined' && isAdvancedUnlocked && typeof ADVANCED_LESSONS !== 'undefined') {
                 ADVANCED_LESSONS.forEach((l, idx) => {
@@ -457,11 +571,51 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            loadProgressState();
             applyStateFromHash(true);
             window.addEventListener('hashchange', function() {
                 applyStateFromHash(false);
             });
+            window.addEventListener('keydown', function(e) {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+                const lb = document.getElementById('image-lightbox-modal');
+                if (e.key === 'Escape') {
+                    if (lb && !lb.classList.contains('hidden')) {
+                        closeImageLightbox();
+                        return;
+                    }
+                    closeModal('modal-basic-complete');
+                    closeModal('modal-advanced-complete');
+                    return;
+                }
+                if (lb && !lb.classList.contains('hidden')) return;
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navStepLinear('next');
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navStepLinear('prev');
+                }
+            });
         });
+
+        function openImageLightbox(src, caption) {
+            const modal = document.getElementById('image-lightbox-modal');
+            const img = document.getElementById('lightbox-img-target');
+            const cap = document.getElementById('lightbox-img-caption');
+            if (!modal || !img) return;
+            img.src = src;
+            if (cap) {
+                cap.textContent = caption || 'Hình ảnh minh họa giao diện KiotViet';
+                cap.classList.toggle('hidden', !caption);
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeImageLightbox() {
+            const modal = document.getElementById('image-lightbox-modal');
+            if (modal) modal.classList.add('hidden');
+        }
 
         function syncStateToHash() {
             const parts = [];
@@ -484,7 +638,6 @@
         function applyStateFromHash(isInitial = false) {
             const rawHash = (window.location.hash || '').replace(/^#/, '').toLowerCase().trim();
 
-            // 1. Phân tích Zoom (#100, #90, #80, #70, #120, #150): Mặc định là 100 nếu không có trong URL
             let targetZoom = 100;
             const zoomMatch = rawHash.match(/\b(70|80|90|100|120|150)\b/) || rawHash.match(/(?:zoom[=:]?|z)(\d{2,3})/);
             if (zoomMatch) {
@@ -495,15 +648,12 @@
             }
             setAppZoom(targetZoom, false);
 
-            // 2. Phân tích Chế độ Nâng cao: Mặc định là #cb (Toggle OFF, ẩn nội dung nâng cao)
-            // Chỉ bật khi trong hash có từ khóa 'nc' hoặc 'adv' hoặc 'advanced'
             let targetAdv = false;
             if (/\b(nc|adv|advanced|nangcao|full|all)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
                 targetAdv = true;
             }
             handleAdvancedToggle(targetAdv, false);
 
-            // 3. Tùy chọn: Nhảy thẳng đến trang cụ thể nếu hash có ID trang (#basic-1, #intro-video...)
             const pageMatch = rawHash.match(/(intro-(?:video|infographic|overview|glossary)|basic-\d+|advanced-\d+)/);
             if (pageMatch) {
                 navGoToPage(pageMatch[1]);
@@ -635,48 +785,80 @@
         function toggleAdvChildGroup(sub) {
             const p = document.getElementById(`panel-adv-${sub}`);
             const icon = document.getElementById(`icon-adv-${sub}`);
-            p.classList.toggle('hidden');
-            icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            if (p && icon) {
+                p.classList.toggle('hidden');
+                icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            }
         }
 
         function renderSidebar() {
+            const basicStats = getBasicCompletionStats();
+            const basicBadge = document.getElementById('basic-progress-badge');
+            const basicBar = document.getElementById('basic-progress-bar');
+            if (basicBadge) {
+                basicBadge.textContent = `${basicStats.completed}/${basicStats.total}`;
+                basicBadge.className = basicStats.isAllCompleted
+                    ? 'text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 shrink-0 transition-colors'
+                    : 'text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100/90 text-[#166def] shrink-0 transition-colors';
+            }
+            if (basicBar) {
+                const pct = basicStats.total > 0 ? Math.round((basicStats.completed / basicStats.total) * 100) : 0;
+                basicBar.style.width = `${pct}%`;
+                basicBar.className = basicStats.isAllCompleted
+                    ? 'h-full bg-emerald-500 transition-all duration-300 rounded-full'
+                    : 'h-full bg-[#166def] transition-all duration-300 rounded-full';
+            }
+
             const basicContainer = document.getElementById('accordion-panel-basic');
-            if (basicContainer) {
+            if (basicContainer && typeof BASIC_LESSONS !== 'undefined') {
                 basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
-                    const isViewed = viewedPages.has(`basic-${idx}`);
-                    const isActive = (currentPage === `basic-${idx}`);
+                    const pid = `basic-${idx}`;
+                    const isCompleted = isPageCompleted(pid);
+                    const isViewed = viewedPages.has(pid);
+                    const isActive = (currentPage === pid);
+                    let statusIcon = '';
+                    if (isCompleted) {
+                        statusIcon = `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã hoàn thành (Đã lật thẻ & trả lời đúng Quiz)"></i>`;
+                    } else if (isViewed) {
+                        statusIcon = `<i class="fa-solid fa-circle-half-stroke progress-icon text-amber-500 text-[11px] shrink-0 mt-0.5" title="Đang học (Cần lật thẻ Flashcard & trả lời đúng Quiz)"></i>`;
+                    }
                     return `
                         <button onclick="navGoToPage('basic-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-basic text-white' : 'text-slate-700 hover:bg-blue-100/60 font-medium'}">
                             <div class="flex items-start gap-1.5 flex-1 min-w-0">
                                 <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-[#166def]'}"></i>
                                 <span class="break-words flex-1">${lesson.title}</span>
                             </div>
-                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                            ${statusIcon}
                         </button>
                     `;
                 }).join('');
             }
 
-            if (isAdvancedUnlocked) {
+            if (isAdvancedUnlocked && typeof ADVANCED_LESSONS !== 'undefined') {
                 const fPanel = document.getElementById('panel-adv-features');
                 const mPanel = document.getElementById('panel-adv-mobile');
                 const pPanel = document.getElementById('panel-adv-pos');
-                const fGroup = document.getElementById('sidebar-subgroup-features');
-                const mGroup = document.getElementById('sidebar-subgroup-mobile');
-                const pGroup = document.getElementById('sidebar-subgroup-pos');
 
                 let fHTML = '', mHTML = '', pHTML = '';
 
                 ADVANCED_LESSONS.forEach((lesson, idx) => {
-                    const isViewed = viewedPages.has(`advanced-${idx}`);
-                    const isActive = (currentPage === `advanced-${idx}`);
+                    const pid = `advanced-${idx}`;
+                    const isCompleted = isPageCompleted(pid);
+                    const isViewed = viewedPages.has(pid);
+                    const isActive = (currentPage === pid);
+                    let statusIcon = '';
+                    if (isCompleted) {
+                        statusIcon = `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã hoàn thành (Đã lật thẻ & trả lời đúng Quiz)"></i>`;
+                    } else if (isViewed) {
+                        statusIcon = `<i class="fa-solid fa-circle-half-stroke progress-icon text-amber-500 text-[11px] shrink-0 mt-0.5" title="Đang học (Cần lật thẻ Flashcard & trả lời đúng Quiz)"></i>`;
+                    }
                     const btnHTML = `
                         <button onclick="navGoToPage('advanced-${idx}')" class="sidebar-item-btn w-full text-left p-1.5 rounded-lg text-xs flex items-start justify-between gap-1.5 cursor-pointer leading-tight ${isActive ? 'active-lesson-advanced text-white' : 'text-slate-700 hover:bg-emerald-100/60 font-medium'}">
                             <div class="flex items-start gap-1.5 flex-1 min-w-0">
                                 <i class="fa-regular fa-lightbulb lesson-icon text-xs shrink-0 mt-0.5 ${isActive ? 'text-white' : 'text-emerald-600'}"></i>
                                 <span class="break-words flex-1">${lesson.title}</span>
                             </div>
-                            ${isViewed ? `<i class="fa-solid fa-circle-check check-icon text-emerald-500 text-xs shrink-0 mt-0.5" title="Đã học"></i>` : ''}
+                            ${statusIcon}
                         </button>
                     `;
                     if (lesson.category === 'feature') fHTML += btnHTML;
@@ -687,46 +869,39 @@
                 if (fPanel) fPanel.innerHTML = fHTML;
                 if (mPanel) mPanel.innerHTML = mHTML;
                 if (pPanel) pPanel.innerHTML = pHTML;
-
-                if (fGroup) fGroup.style.display = fHTML ? 'block' : 'none';
-                if (mGroup) mGroup.style.display = mHTML ? 'block' : 'none';
-                if (pGroup) pGroup.style.display = pHTML ? 'block' : 'none';
-
-                if (fHTML && fPanel && fPanel.classList.contains('hidden')) {
-                    fPanel.classList.remove('hidden');
-                }
             }
 
-            const navIds = ['intro-infographic', 'intro-overview'];
-            if (LESSON_VIDEO_ID) navIds.push('intro-video');
-            navIds.push('intro-glossary');
-
+            const hasVid = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '');
             const videoBtn = document.getElementById('subbtn-intro-video');
             if (videoBtn) {
-                videoBtn.style.display = LESSON_VIDEO_ID ? 'flex' : 'none';
+                videoBtn.classList.toggle('hidden', !hasVid);
             }
 
-            (function() {
-                const videoBtn = document.getElementById('subbtn-intro-video');
-                if (videoBtn) {
-                    if (!LESSON_VIDEO_ID || LESSON_VIDEO_ID.trim() === '') {
-                        videoBtn.classList.add('hidden');
-                    } else {
-                        videoBtn.classList.remove('hidden');
-                    }
-                }
-            })();
+            const introIds = hasVid
+                ? ['intro-video', 'intro-infographic', 'intro-overview', 'intro-glossary']
+                : ['intro-infographic', 'intro-overview', 'intro-glossary'];
+            let introDone = 0;
 
             ['intro-video', 'intro-infographic', 'intro-overview', 'intro-glossary'].forEach(id => {
                 const el = document.getElementById(`subbtn-${id}`);
+                const checkEl = document.getElementById(`check-${id}`);
+                const seen = viewedPages.has(id);
+                if (seen && introIds.includes(id)) introDone++;
                 if (el) {
-                    if (currentPage === id) {
-                        el.classList.add('active-sub');
-                    } else {
-                        el.classList.remove('active-sub');
-                    }
+                    el.classList.toggle('active-sub', currentPage === id);
+                }
+                if (checkEl) {
+                    checkEl.classList.toggle('hidden', !seen);
                 }
             });
+
+            const introBadge = document.getElementById('intro-progress-badge');
+            if (introBadge) {
+                introBadge.textContent = `${introDone}/${introIds.length}`;
+                introBadge.className = (introDone === introIds.length)
+                    ? 'text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 shrink-0 transition-colors'
+                    : 'text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100/90 text-[#166def] shrink-0 transition-colors';
+            }
         }
 
         function updateSideNavButtons() {
@@ -751,6 +926,7 @@
             }
             currentPage = pageId;
             viewedPages.add(pageId);
+            saveProgressState();
             renderSidebar();
             renderCurrentPageView();
             updateSideNavButtons();
@@ -778,9 +954,11 @@
             if (direction === 'next') {
                 if (curIdx === list.length - 1) {
                     if (!isAdvancedUnlocked) {
-                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                        const m = document.getElementById('modal-basic-complete');
+                        if (m) m.classList.remove('hidden');
                     } else {
-                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                        const m = document.getElementById('modal-advanced-complete');
+                        if (m) m.classList.remove('hidden');
                     }
                     return;
                 }
@@ -801,114 +979,94 @@
             navGoToPage(defaultPage);
         }
 
-        // SVG INFOGRAPHIC CHUẨN VECTOR 16:9 NGUYÊN BẢN CHỐNG VỠ ẢNH
-        function generateInfographicSVG() {
+        function getLessonHeaderStatusHTML(pageId) {
+            if (isPageCompleted(pageId)) {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-2xs"><i class="fa-solid fa-circle-check text-emerald-600"></i> Đã hoàn thành</span>`;
+            }
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200"><i class="fa-solid fa-circle-half-stroke text-amber-500"></i> Cần lật thẻ & làm đúng Quiz</span>`;
+        }
+
+        function getFlashcardStatusPillHTML(pageId) {
+            if (flippedCards.has(pageId)) {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-circle-check text-emerald-600"></i> Bước 1: Đã xem gợi ý tư vấn</span>`;
+            }
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-regular fa-hand-pointer"></i> Bước 1: Bấm vào thẻ để lật xem gợi ý</span>`;
+        }
+
+        function getQuizStatusPillHTML(scope, index) {
+            const ans = userAnswers[`${scope}_${index}`];
+            if (ans && ans.isCorrect) {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-circle-check text-emerald-600"></i> Bước 2: Đã trả lời chính xác</span>`;
+            }
+            if (ans && !ans.isCorrect) {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200"><i class="fa-solid fa-circle-exclamation text-rose-600"></i> Bước 2: Hãy chọn lại đáp án đúng</span>`;
+            }
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-[#166def] border border-blue-200"><i class="fa-regular fa-circle-question"></i> Bước 2: Trả lời câu hỏi Đúng / Sai</span>`;
+        }
+
+        function getBasicCompletionBannerHTML() {
+            const stats = getBasicCompletionStats();
+            if (stats.isAllCompleted) {
+                return `
+                    <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
+                         class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
+                        <div class="flex items-center gap-2.5 sm:gap-3.5">
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
+                                <i class="fa-solid fa-trophy text-amber-300"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành ${stats.completed}/${stats.total} bài cơ bản!</h4>
+                                <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã lật thẻ và trả lời đúng toàn bộ câu hỏi kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
+                            </div>
+                        </div>
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </div>
+                    </div>
+                `;
+            }
             return `
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" class="w-full h-full select-none" style="background: linear-gradient(135deg, #f0f7ff 0%, #e2e8f0 100%);">
-                    <defs>
-                        <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#166def" />
-                            <stop offset="100%" stop-color="#1d4ed8" />
-                        </linearGradient>
-                        <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ffffff" />
-                            <stop offset="100%" stop-color="#f8fafc" />
-                        </linearGradient>
-                        <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
-                            <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.08" />
-                        </filter>
-                    </defs>
-
-                    <!-- HEADER BANNER -->
-                    <rect x="60" y="40" width="1480" height="110" rx="24" fill="url(#headerGrad)" filter="url(#shadow)" />
-                    <text x="100" y="92" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#93c5fd" letter-spacing="3">KIOTVIET E-LEARNING MASTER ARCHITECT</text>
-                    <text x="100" y="126" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#ffffff">QUY TRÌNH ĐĂNG KÝ GIAN HÀNG DÙNG THỬ (TRIAL STORE)</text>
-                    <rect x="1360" y="65" width="140" height="40" rx="20" fill="#22d3ee" />
-                    <text x="1430" y="91" font-family="'Inter', sans-serif" font-size="16" font-weight="900" fill="#ffffff" text-anchor="middle">RETAIL</text>
-
-                    <!-- 4 CỘT QUY TRÌNH -->
-                    <!-- BƯỚC 1 -->
-                    <g transform="translate(60, 180)">
-                        <rect width="345" height="580" rx="24" fill="url(#cardGrad1)" stroke="#cbd5e1" stroke-width="2" filter="url(#shadow)" />
-                        <circle cx="60" cy="65" r="32" fill="#166def" />
-                        <text x="60" y="75" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">1</text>
-                        <text x="110" y="70" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#0f172a">Truy cập Website</text>
-                        <text x="35" y="140" font-family="'Inter', sans-serif" font-size="15" font-weight="600" fill="#475569" width="280">
-                            <tspan x="35" dy="0">• Vào trang </tspan><tspan fill="#166def" font-weight="800">kiotviet.vn</tspan>
-                            <tspan x="35" dy="32">• Nhấn nút </tspan><tspan fill="#166def" font-weight="800">"Đăng ký"</tspan> ở góc phải.
-                            <tspan x="35" dy="32">• Mở giao diện khởi tạo tài khoản</tspan>
-                            <tspan x="35" dy="28">  dùng thử miễn phí.</tspan>
-                        </text>
-                        <rect x="35" y="270" width="275" height="260" rx="16" fill="#eff6ff" stroke="#bfdbfe" />
-                        <text x="172" y="380" font-family="'Inter', sans-serif" font-size="48" fill="#166def" text-anchor="middle">🌐</text>
-                        <text x="172" y="440" font-family="'Inter', sans-serif" font-size="16" font-weight="800" fill="#1e40af" text-anchor="middle">kiotviet.vn</text>
-                    </g>
-
-                    <!-- BƯỚC 2 -->
-                    <g transform="translate(438, 180)">
-                        <rect width="345" height="580" rx="24" fill="url(#cardGrad1)" stroke="#cbd5e1" stroke-width="2" filter="url(#shadow)" />
-                        <circle cx="60" cy="65" r="32" fill="#166def" />
-                        <text x="60" y="75" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">2</text>
-                        <text x="110" y="70" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#0f172a">Thông tin &amp; Mã giới thiệu</text>
-                        <text x="35" y="140" font-family="'Inter', sans-serif" font-size="15" font-weight="600" fill="#475569">
-                            <tspan x="35" dy="0">• Điền Họ tên, Số ĐT cá nhân.</tspan>
-                            <tspan x="35" dy="32">• Bấm </tspan><tspan fill="#d97706" font-weight="800">Ctrl + 1</tspan> mở ô nhập mã.
-                            <tspan x="35" dy="32">• Nhập mã đào tạo: </tspan><tspan fill="#166def" font-weight="900">3670</tspan>
-                            <tspan x="35" dy="32">• Tích chọn đồng ý điều khoản.</tspan>
-                        </text>
-                        <rect x="35" y="270" width="275" height="260" rx="16" fill="#fef3c7" stroke="#fde68a" />
-                        <text x="172" y="380" font-family="'Inter', sans-serif" font-size="44" fill="#d97706" text-anchor="middle">⌨️</text>
-                        <rect x="65" y="415" width="215" height="50" rx="12" fill="#d97706" />
-                        <text x="172" y="446" font-family="'Inter', sans-serif" font-size="18" font-weight="900" fill="#ffffff" text-anchor="middle">Ctrl + 1 ➔ Mã 3670</text>
-                    </g>
-
-                    <!-- BƯỚC 3 -->
-                    <g transform="translate(816, 180)">
-                        <rect width="345" height="580" rx="24" fill="url(#cardGrad1)" stroke="#cbd5e1" stroke-width="2" filter="url(#shadow)" />
-                        <circle cx="60" cy="65" r="32" fill="#166def" />
-                        <text x="60" y="75" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">3</text>
-                        <text x="110" y="70" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#0f172a">Chọn ngành &amp; Gian hàng</text>
-                        <text x="35" y="140" font-family="'Inter', sans-serif" font-size="15" font-weight="600" fill="#475569">
-                            <tspan x="35" dy="0">• Chọn ngành: </tspan><tspan fill="#166def" font-weight="800">Bán buôn, Bán lẻ</tspan>
-                            <tspan x="35" dy="32">• Đặt </tspan><tspan fill="#166def" font-weight="800">Tên cửa hàng</tspan> tùy ý.
-                            <tspan x="35" dy="32">• Thiết lập mật khẩu quản trị.</tspan>
-                            <tspan x="35" dy="32">• Bấm </tspan><tspan fill="#166def" font-weight="800">"Tạo cửa hàng"</tspan>.
-                        </text>
-                        <rect x="35" y="270" width="275" height="260" rx="16" fill="#ecfeff" stroke="#a5f3fc" />
-                        <text x="172" y="380" font-family="'Inter', sans-serif" font-size="44" fill="#0891b2" text-anchor="middle">🏪</text>
-                        <text x="172" y="440" font-family="'Inter', sans-serif" font-size="16" font-weight="900" fill="#0e7490" text-anchor="middle">Ngành Bán lẻ (Retail)</text>
-                    </g>
-
-                    <!-- BƯỚC 4 -->
-                    <g transform="translate(1194, 180)">
-                        <rect width="345" height="580" rx="24" fill="url(#cardGrad1)" stroke="#cbd5e1" stroke-width="2" filter="url(#shadow)" />
-                        <circle cx="60" cy="65" r="32" fill="#16a34a" />
-                        <text x="60" y="75" font-family="'Inter', sans-serif" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">4</text>
-                        <text x="110" y="70" font-family="'Inter', sans-serif" font-size="20" font-weight="800" fill="#0f172a">Dữ liệu mẫu &amp; Quản lý</text>
-                        <text x="35" y="140" font-family="'Inter', sans-serif" font-size="15" font-weight="600" fill="#475569">
-                            <tspan x="35" dy="0">• Lưu lại tên gian hàng &amp; mật khẩu.</tspan>
-                            <tspan x="35" dy="32">• Tích chọn: </tspan><tspan fill="#16a34a" font-weight="900">"Dữ liệu mẫu"</tspan>
-                            <tspan x="35" dy="32">• Khởi tạo danh mục &amp; đơn mẫu.</tspan>
-                            <tspan x="35" dy="32">• Sẵn sàng thực hành thực tế!</tspan>
-                        </text>
-                        <rect x="35" y="270" width="275" height="260" rx="16" fill="#f0fdf4" stroke="#bbf7d0" />
-                        <text x="172" y="380" font-family="'Inter', sans-serif" font-size="44" fill="#16a34a" text-anchor="middle">🚀</text>
-                        <text x="172" y="440" font-family="'Inter', sans-serif" font-size="16" font-weight="900" fill="#15803d" text-anchor="middle">Sẵn sàng bán hàng &amp; Quản lý</text>
-                    </g>
-
-                    <!-- FOOTER -->
-                    <rect x="60" y="790" width="1480" height="70" rx="18" fill="#1e293b" />
-                    <text x="800" y="834" font-family="'Inter', sans-serif" font-size="17" font-weight="700" fill="#ffffff" text-anchor="middle">✨ Trải nghiệm 100% tính năng KiotViet • Đầy đủ dữ liệu thực hành bán buôn bán lẻ • Vận hành đa thiết bị</text>
-                </svg>
+                <div class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-slate-800 via-blue-950 to-slate-900 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-blue-400/30">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-lg sm:text-xl shrink-0">
+                            <i class="fa-solid fa-list-check text-amber-300"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-black uppercase tracking-tight text-white">Tiến độ Kiến thức cơ bản: ${stats.completed}/${stats.total} bài hoàn thành</h4>
+                            <p class="text-[11px] sm:text-xs text-slate-300 font-medium mt-0.5">Còn bài chưa lật thẻ Flashcard hoặc chưa trả lời đúng Quiz. Hãy hoàn thành đủ để đạt 100% tick xanh!</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${stats.firstIncompleteId ? `
+                            <button onclick="navGoToPage('${stats.firstIncompleteId}')" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer transition-all shadow-xs whitespace-nowrap">
+                                <i class="fa-solid fa-arrow-turn-up mr-1"></i> Đến bài còn thiếu
+                            </button>
+                        ` : ''}
+                        <button onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" class="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs cursor-pointer transition-all whitespace-nowrap">
+                            Tổng kết
+                        </button>
+                    </div>
+                </div>
             `;
         }
 
-        function renderInfographicPreviewInModal() {
-            const el = document.getElementById('modal-infographic-preview');
-            if (el) el.innerHTML = generateInfographicSVG();
+        function updateLiveLessonCompletionUI(scope, index) {
+            const pageId = `${scope}-${index}`;
+            const headerStatusEl = document.getElementById(`lesson-header-status-${scope}-${index}`);
+            if (headerStatusEl) headerStatusEl.innerHTML = getLessonHeaderStatusHTML(pageId);
+
+            const fcStatusEl = document.getElementById(`flashcard-status-${scope}-${index}`);
+            if (fcStatusEl) fcStatusEl.innerHTML = getFlashcardStatusPillHTML(pageId);
+
+            const quizStatusEl = document.getElementById(`quiz-status-${scope}-${index}`);
+            if (quizStatusEl) quizStatusEl.innerHTML = getQuizStatusPillHTML(scope, index);
+
+            const bannerWrapEl = document.getElementById('basic-completion-banner-wrap');
+            if (bannerWrapEl) bannerWrapEl.innerHTML = getBasicCompletionBannerHTML();
+
+            renderSidebar();
         }
 
-        // RENDER GIAO DIỆN CHÍNH
         function renderCurrentPageView() {
             const container = document.getElementById('dynamic-content-view');
             if (!container) return;
@@ -935,7 +1093,7 @@
             if (currentPage === 'intro-infographic') {
                 container.innerHTML = `
                     <div class="w-full flex-1 flex flex-col items-center justify-center py-2">
-                        <div class="w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
+                        <div onclick="openImageLightbox(this.querySelector('img').src, this.querySelector('img').alt || 'Infographic')" class="zoomable-img-wrap w-full rounded-2xl overflow-hidden shadow-xs border border-slate-200 bg-white flex items-center justify-center my-auto" 
                              style="aspect-ratio: 16/9; max-height: calc(100dvh - 84px); max-width: calc((100dvh - 84px) * 16 / 9);">
                             ${generateInfographicSVG()}
                         </div>
@@ -951,6 +1109,7 @@
                         <div class="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 shadow-xs space-y-2">
                             <div class="flex items-center gap-2">
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white bg-[#166def]">Giới thiệu chung</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-circle-check"></i> Đã xem</span>
                             </div>
                             <h2 class="text-base sm:text-lg font-black text-slate-900">Hướng dẫn Đăng ký gian hàng dùng thử</h2>
                             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -1022,7 +1181,8 @@
                             <div class="flex items-center gap-2 text-blue-800">
                                 <i class="fa-solid fa-book-bookmark text-base"></i>
                                 <h2 class="text-sm sm:text-base font-black uppercase">Thuật ngữ nền tảng</h2>
-                            </div>
+                                </div>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-circle-check"></i> Đã xem</span>
                             <p class="text-xs text-slate-600">Tra cứu các khái niệm, từ khóa nghiệp vụ và thuật ngữ để hiểu bối cảnh vận dụng tính năng.</p>
                         </div>
 
@@ -1066,19 +1226,42 @@
 
             if (scope) {
                 const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                if (!lessons || !lessons[index]) return;
                 const lesson = lessons[index];
                 const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
                 const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
+                const pageId = `${scope}-${index}`;
+                const savedAns = userAnswers[`${scope}_${index}`];
+
+                const btnTrueClass = (savedAns && savedAns.userChoice === true)
+                    ? (savedAns.isCorrect ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm')
+                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs';
+
+                const btnFalseClass = (savedAns && savedAns.userChoice === false)
+                    ? (savedAns.isCorrect ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm')
+                    : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs';
+
+                const feedbackHTML = savedAns ? `
+                    <div id="quiz-feedback-${scope}-${index}" class="w-full mt-3 p-3 rounded-xl ${savedAns.isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 text-left">
+                        <p class="font-black text-xs flex items-center gap-1.5">
+                            <i class="fa-solid ${savedAns.isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
+                            ${savedAns.isCorrect ? 'CHÍNH XÁC!' : 'CHƯA CHÍNH XÁC!'}
+                        </p>
+                        <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
+                    </div>
+                ` : `<div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-3 text-left"></div>`;
 
                 container.innerHTML = `
                     <div class="w-full space-y-3.5 pb-20 md:pb-6">
                         <!-- TIÊU ĐỀ BÀI HỌC -->
-                        <div class="space-y-1 border-b border-slate-200 pb-2.5">
-                            <div class="flex items-center gap-2">
+                        <div class="space-y-1.5 border-b border-slate-200 pb-2.5">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
                                 <span class="px-2.5 py-0.5 text-[10px] font-black text-white rounded-full uppercase tracking-wider" style="background-color: ${scopeColor}">
                                     ${scope === 'basic' ? 'Kiến thức cơ bản' : 'Kiến thức nâng cao'} - Thao tác ${index + 1}/${lessons.length}
                                 </span>
-                                <i class="fa-solid fa-circle-check text-emerald-500 text-sm" title="Đang học"></i>
+                                <div id="lesson-header-status-${scope}-${index}">
+                                    ${getLessonHeaderStatusHTML(pageId)}
+                                </div>
                             </div>
                             <h2 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
                                 <span>${lesson.title}</span>
@@ -1107,8 +1290,12 @@
                                             <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
                                         </div>
                                         ${step.img ? `
-                                            <div class="ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
+                                            <div onclick="openImageLightbox('${step.img}', '${lesson.title.replace(/'/g, "\\\'")} - Bước ${sIdx + 1}')"
+                                                 class="zoomable-img-wrap ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
                                                 <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
+                                                <span class="zoom-hint-badge absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/75 text-white text-[10px] font-bold flex items-center gap-1 shadow-md pointer-events-none">
+                                                    <i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to ảnh
+                                                </span>
                                             </div>
                                         ` : ''}
                                     </div>
@@ -1116,14 +1303,19 @@
                             </div>
                         </div>
 
-                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG: FLASHCARD 3D TỶ LỆ 4:3 -->
+                        <!-- 1️⃣ GÓC TƯ VẤN BÁN HÀNG -->
                         <div class="pt-3 border-t border-slate-200 space-y-2">
-                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Góc tư vấn bán hàng:</h3>
+                            <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+                                <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Góc tư vấn bán hàng:</h3>
+                                <div id="flashcard-status-${scope}-${index}">
+                                    ${getFlashcardStatusPillHTML(pageId)}
+                                </div>
+                            </div>
                             
-                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
+                            <div class="flashcard-3d-scene mx-auto max-w-lg w-full my-3 cursor-pointer select-none" onclick="toggleFlashcard3D(this)">
                                 <div class="flashcard-3d-card">
                                     <!-- MẶT TRƯỚC -->
-                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                    <div class="flashcard-face bg-amber-50/95 border-2 border-amber-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between gap-3">
                                         <div class="flex items-center justify-between text-amber-950 border-b border-amber-200/80 pb-2">
                                             <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                                 <i class="fa-solid fa-comments text-amber-600 text-sm"></i> Tình huống
@@ -1133,7 +1325,7 @@
                                             </span>
                                         </div>
                                         
-                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <div class="flex-1 flex items-center justify-center p-2">
                                             <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed text-center italic">"${lesson.flashcard.situation}"</p>
                                         </div>
 
@@ -1143,7 +1335,7 @@
                                     </div>
 
                                     <!-- MẶT SAU -->
-                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
+                                    <div class="flashcard-face flashcard-face-back bg-teal-50/95 border-2 border-teal-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between gap-3">
                                         <div class="flex items-center justify-between text-teal-950 border-b border-teal-200/80 pb-2">
                                             <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                                                 <i class="fa-solid fa-lightbulb text-teal-600 text-sm"></i> Gợi ý tư vấn
@@ -1153,7 +1345,7 @@
                                             </span>
                                         </div>
 
-                                        <div class="flex-1 flex items-center justify-center p-2 overflow-y-auto custom-scrollbar">
+                                        <div class="flex-1 flex items-center justify-center p-2">
                                             <p class="text-[11px] sm:text-sm text-slate-800 font-semibold leading-relaxed text-left">${lesson.flashcard.advice}</p>
                                         </div>
 
@@ -1165,11 +1357,16 @@
                             </div>
                         </div>
 
-                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC: QUIZ TỶ LỆ 4:3 -->
+                        <!-- 2️⃣ KIỂM TRA NHANH KIẾN THỨC -->
                         <div class="pt-3 border-t border-slate-200 space-y-2">
-                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 text-center">Kiểm tra nhanh kiến thức:</h3>
+                            <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-center">
+                                <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Kiểm tra nhanh kiến thức:</h3>
+                                <div id="quiz-status-${scope}-${index}">
+                                    ${getQuizStatusPillHTML(scope, index)}
+                                </div>
+                            </div>
 
-                            <div class="mx-auto max-w-lg w-full aspect-[4/3] min-h-[220px] my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between select-none">
+                            <div class="mx-auto max-w-lg w-full min-h-[210px] h-auto my-3 p-4 sm:p-6 rounded-2xl bg-white border-2 border-slate-200 shadow-xs flex flex-col justify-between gap-3 select-none">
                                 <div class="flex items-center justify-between text-slate-800 border-b border-slate-100 pb-2">
                                     <span class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap" style="color: ${scopeColor}">
                                         <i class="fa-solid fa-circle-question text-sm"></i> Câu hỏi
@@ -1179,40 +1376,26 @@
                                     </span>
                                 </div>
 
-                                <div class="flex-1 flex flex-col justify-center items-center py-2 overflow-y-auto custom-scrollbar text-center">
+                                <div class="flex-1 flex flex-col justify-center items-center py-2 text-center">
                                     <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${lesson.quiz.question}</p>
-                                    <div id="quiz-feedback-${scope}-${index}" class="hidden w-full mt-2 text-left"></div>
+                                    ${feedbackHTML}
                                 </div>
 
                                 <div class="flex items-center gap-2.5 sm:gap-3 pt-2 border-t border-slate-100">
-                                    <button onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs">
+                                    <button id="btn-quiz-${scope}-${index}-true" onclick="checkQuiz('${scope}', ${index}, true)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer ${btnTrueClass}">
                                         ✓ ĐÚNG
                                     </button>
-                                    <button onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs">
+                                    <button id="btn-quiz-${scope}-${index}-false" onclick="checkQuiz('${scope}', ${index}, false)" class="flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer ${btnFalseClass}">
                                         ✕ SAI
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3️⃣ BANNER FULL-WIDTH GRADIENT XANH DƯƠNG - XANH LÁ -->
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH -->
                         ${isLastBasicLesson ? `
-                            <div class="pt-5 sm:pt-6">
-                                <div onclick="document.getElementById('modal-basic-complete').classList.remove('hidden')" 
-                                     class="w-full p-3.5 sm:p-5 rounded-2xl bg-gradient-to-r from-[#166def] via-teal-600 to-[#16a34a] text-white cursor-pointer shadow-md transition-all hover:scale-[1.008] active:scale-[0.99] flex items-center justify-between gap-2.5 sm:gap-3.5">
-                                    <div class="flex items-center gap-2.5 sm:gap-3.5">
-                                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-lg sm:text-xl shrink-0 shadow-xs">
-                                            <i class="fa-solid fa-trophy text-amber-300"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-xs sm:text-base font-black uppercase tracking-tight text-white">Chúc mừng hoàn thành bài học!</h4>
-                                            <p class="text-[11px] sm:text-xs text-white/90 font-medium mt-0.5">Bạn đã hoàn thành xong toàn bộ kiến thức cơ bản. Chạm vào đây để xem tổng kết.</p>
-                                        </div>
-                                    </div>
-                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                                    </div>
-                                </div>
+                            <div id="basic-completion-banner-wrap" class="pt-5 sm:pt-6">
+                                ${getBasicCompletionBannerHTML()}
                             </div>
                         ` : ''}
 
@@ -1222,19 +1405,41 @@
         }
 
         function toggleFlashcard3D(sceneEl) {
-            const cardEl = sceneEl.querySelector('.flashcard-3d-card');
+            const cardEl = sceneEl ? sceneEl.querySelector('.flashcard-3d-card') : null;
             if (cardEl) cardEl.classList.toggle('is-flipped');
+
+            if (currentPage && (currentPage.startsWith('basic-') || currentPage.startsWith('advanced-'))) {
+                flippedCards.add(currentPage);
+                saveProgressState();
+                const parts = currentPage.split('-');
+                updateLiveLessonCompletionUI(parts[0], parseInt(parts[1], 10));
+            }
         }
 
         function checkQuiz(scope, index, choice) {
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            if (!lessons || !lessons[index]) return;
             const lesson = lessons[index];
             const isCorrect = (choice === lesson.quiz.answer);
             userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
+            saveProgressState();
+
+            const btnTrue = document.getElementById(`btn-quiz-${scope}-${index}-true`);
+            const btnFalse = document.getElementById(`btn-quiz-${scope}-${index}-false`);
+            if (btnTrue && btnFalse) {
+                const baseBtn = 'flex-1 py-2 sm:py-2.5 px-2 rounded-xl font-black text-xs border-2 transition-all cursor-pointer ';
+                if (choice === true) {
+                    btnTrue.className = baseBtn + (isCorrect ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm');
+                    btnFalse.className = baseBtn + 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-300 shadow-2xs';
+                } else {
+                    btnFalse.className = baseBtn + (isCorrect ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-rose-600 text-white border-rose-600 shadow-sm');
+                    btnTrue.className = baseBtn + 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs';
+                }
+            }
 
             const feedbackEl = document.getElementById(`quiz-feedback-${scope}-${index}`);
             if (feedbackEl) {
-                feedbackEl.className = `mt-2 p-2.5 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block`;
+                feedbackEl.className = `w-full mt-3 p-3 rounded-xl ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-rose-50 border border-rose-200 text-rose-900'} space-y-1 block text-left`;
                 feedbackEl.innerHTML = `
                     <p class="font-black text-xs flex items-center gap-1.5">
                         <i class="fa-solid ${isCorrect ? 'fa-circle-check text-emerald-600' : 'fa-circle-xmark text-rose-600'}"></i>
@@ -1243,9 +1448,15 @@
                     <p class="text-[11px] sm:text-xs leading-relaxed text-slate-700">${lesson.quiz.explanation}</p>
                 `;
             }
+
+            updateLiveLessonCompletionUI(scope, index);
         }
 
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function closeModal(id) { 
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden'); 
+        }
+
     </script>
 </body>
 </html>

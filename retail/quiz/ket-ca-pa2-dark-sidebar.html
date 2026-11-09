@@ -1000,7 +1000,7 @@
             }
         ];
 
-        let currentPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
+                let currentPage = (typeof LESSON_VIDEO_ID !== 'undefined' && LESSON_VIDEO_ID && LESSON_VIDEO_ID.trim() !== '') ? 'intro-video' : 'intro-infographic';
         let currentZoom = 100;
         let isAdvancedUnlocked = false;
         let isSidebarCollapsed = false;
@@ -1008,7 +1008,7 @@
         let flippedCards = new Set();
         let userAnswers = {};
 
-        const STORAGE_KEY = 'kv_elearning_v21_' + (window.location.pathname || 'ket-ca').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const STORAGE_KEY = 'kv_elearning_v21_' + (window.location.pathname || 'ket_ca_pa2_dark_sidebar').replace(/[^a-zA-Z0-9_-]/g, '_');
 
         function loadProgressState() {
             try {
@@ -1050,7 +1050,7 @@
         }
 
         function getBasicCompletionStats() {
-            const total = BASIC_LESSONS.length;
+            const total = (typeof BASIC_LESSONS !== 'undefined') ? BASIC_LESSONS.length : 0;
             let completed = 0;
             let firstIncompleteId = null;
             let firstIncompleteTitle = '';
@@ -1063,7 +1063,7 @@
                     firstIncompleteTitle = BASIC_LESSONS[i].title;
                 }
             }
-            return { completed, total, isAllCompleted: completed === total, firstIncompleteId, firstIncompleteTitle };
+            return { completed, total, isAllCompleted: (total > 0 && completed === total), firstIncompleteId, firstIncompleteTitle };
         }
 
         function isMobile() {
@@ -1081,9 +1081,11 @@
             list.push({ id: 'intro-overview', title: 'Lợi ích nổi bật' });
             list.push({ id: 'intro-glossary', title: 'Thuật ngữ nền tảng' });
 
-            BASIC_LESSONS.forEach((l, idx) => {
-                list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
-            });
+            if (typeof BASIC_LESSONS !== 'undefined') {
+                BASIC_LESSONS.forEach((l, idx) => {
+                    list.push({ id: `basic-${idx}`, title: l.title, scope: 'basic', index: idx });
+                });
+            }
 
             if (typeof isAdvancedUnlocked !== 'undefined' && isAdvancedUnlocked && typeof ADVANCED_LESSONS !== 'undefined') {
                 ADVANCED_LESSONS.forEach((l, idx) => {
@@ -1161,7 +1163,6 @@
         function applyStateFromHash(isInitial = false) {
             const rawHash = (window.location.hash || '').replace(/^#/, '').toLowerCase().trim();
 
-            // 1. Phân tích Zoom (#100, #90, #80, #70, #120, #150): Mặc định là 100 nếu không có trong URL
             let targetZoom = 100;
             const zoomMatch = rawHash.match(/\b(70|80|90|100|120|150)\b/) || rawHash.match(/(?:zoom[=:]?|z)(\d{2,3})/);
             if (zoomMatch) {
@@ -1172,14 +1173,12 @@
             }
             setAppZoom(targetZoom, false);
 
-            // 2. Phân tích Chế độ Nâng cao: Mặc định là #cb (Toggle OFF, ẩn nội dung nâng cao)
             let targetAdv = false;
             if (/\b(nc|adv|advanced|nangcao|full|all)\b/.test(rawHash) || /adv(?:anced)?=(?:1|true)/.test(rawHash)) {
                 targetAdv = true;
             }
             handleAdvancedToggle(targetAdv, false);
 
-            // 3. Tùy chọn: Nhảy thẳng đến trang cụ thể nếu hash có ID trang (#basic-1, #intro-video...)
             const pageMatch = rawHash.match(/(intro-(?:video|infographic|overview|glossary)|basic-\d+|advanced-\d+)/);
             if (pageMatch) {
                 navGoToPage(pageMatch[1]);
@@ -1311,8 +1310,10 @@
         function toggleAdvChildGroup(sub) {
             const p = document.getElementById(`panel-adv-${sub}`);
             const icon = document.getElementById(`icon-adv-${sub}`);
-            p.classList.toggle('hidden');
-            icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            if (p && icon) {
+                p.classList.toggle('hidden');
+                icon.style.transform = p.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            }
         }
 
         function renderSidebar() {
@@ -1334,7 +1335,7 @@
             }
 
             const basicContainer = document.getElementById('accordion-panel-basic');
-            if (basicContainer) {
+            if (basicContainer && typeof BASIC_LESSONS !== 'undefined') {
                 basicContainer.innerHTML = BASIC_LESSONS.map((lesson, idx) => {
                     const pid = `basic-${idx}`;
                     const isCompleted = isPageCompleted(pid);
@@ -1358,7 +1359,7 @@
                 }).join('');
             }
 
-            if (isAdvancedUnlocked) {
+            if (isAdvancedUnlocked && typeof ADVANCED_LESSONS !== 'undefined') {
                 const fPanel = document.getElementById('panel-adv-features');
                 const mPanel = document.getElementById('panel-adv-mobile');
                 const pPanel = document.getElementById('panel-adv-pos');
@@ -1478,9 +1479,11 @@
             if (direction === 'next') {
                 if (curIdx === list.length - 1) {
                     if (!isAdvancedUnlocked) {
-                        document.getElementById('modal-basic-complete').classList.remove('hidden');
+                        const m = document.getElementById('modal-basic-complete');
+                        if (m) m.classList.remove('hidden');
                     } else {
-                        document.getElementById('modal-advanced-complete').classList.remove('hidden');
+                        const m = document.getElementById('modal-advanced-complete');
+                        if (m) m.classList.remove('hidden');
                     }
                     return;
                 }
@@ -1742,8 +1745,9 @@
 
             if (scope) {
                 const lessons = (scope === 'basic') ? BASIC_LESSONS : ADVANCED_LESSONS;
+                if (!lessons || !lessons[index]) return;
                 const lesson = lessons[index];
-                const scopeColor = (scope === 'basic') ? '#083c78' : '#0d9488';
+                const scopeColor = (scope === 'basic') ? '#166def' : '#16a34a';
                 const isLastBasicLesson = (scope === 'basic' && index === BASIC_LESSONS.length - 1);
                 const pageId = `${scope}-${index}`;
                 const savedAns = userAnswers[`${scope}_${index}`];
@@ -1795,10 +1799,8 @@
                         </div>
 
                         <!-- QUY TRÌNH THỰC HIỆN -->
-                        <div class="steps-card-container p-4 sm:p-5 rounded-2xl border space-y-3.5 shadow-2xs">
-                            <h3 class="text-xs font-black uppercase tracking-wider flex items-center gap-1.5 steps-card-heading">
-                                <i class="fa-solid fa-list-ol"></i> Quy trình thực hiện:
-                            </h3>
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500">Quy trình thực hiện:</h3>
                             <div class="space-y-3">
                                 ${lesson.steps.map((step, sIdx) => `
                                     <div class="space-y-1.5">
@@ -1807,7 +1809,7 @@
                                             <div class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">${step.text}</div>
                                         </div>
                                         ${step.img ? `
-                                            <div onclick="openImageLightbox('${step.img}', '${lesson.title.replace(/'/g, "\'")} - Bước ${sIdx + 1}')"
+                                            <div onclick="openImageLightbox('${step.img}', '${lesson.title.replace(/'/g, "\\\'")} - Bước ${sIdx + 1}')"
                                                  class="zoomable-img-wrap ml-7 rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100">
                                                 <img src="${step.img}" alt="UI Step ${sIdx + 1}" class="w-full h-auto object-cover">
                                                 <span class="zoom-hint-badge absolute bottom-2.5 right-2.5 px-2.5 py-1 rounded-full bg-slate-900/75 text-white text-[10px] font-bold flex items-center gap-1 shadow-md pointer-events-none">
@@ -1909,7 +1911,7 @@
                             </div>
                         </div>
 
-                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH (CHỈ Ở CUỐI BÀI CƠ BẢN CUỐI CÙNG) -->
+                        <!-- 3️⃣ BANNER FULL-WIDTH CHÚC MỪNG HOÀN THÀNH -->
                         ${isLastBasicLesson ? `
                             <div id="basic-completion-banner-wrap" class="pt-5 sm:pt-6">
                                 ${getBasicCompletionBannerHTML()}
@@ -1935,6 +1937,7 @@
 
         function checkQuiz(scope, index, choice) {
             const lessons = scope === 'basic' ? BASIC_LESSONS : ADVANCED_LESSONS;
+            if (!lessons || !lessons[index]) return;
             const lesson = lessons[index];
             const isCorrect = (choice === lesson.quiz.answer);
             userAnswers[`${scope}_${index}`] = { userChoice: choice, isCorrect: isCorrect };
@@ -1968,7 +1971,11 @@
             updateLiveLessonCompletionUI(scope, index);
         }
 
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function closeModal(id) { 
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden'); 
+        }
+
     </script>
 </body>
 </html>
