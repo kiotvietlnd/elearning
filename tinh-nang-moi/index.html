@@ -646,14 +646,21 @@
             renderFeatures();
         }
 
-        // Nạp dữ liệu CSV từ Google Sheets với cơ chế 3 lớp (Primary gviz -> Backup export -> Embedded Fallback)
+        // Nạp dữ liệu CSV từ Google Sheets với cơ chế 3 lớp (Instant Fallback 0ms -> Online Background Sync)
         function loadFeaturesData() {
-            if (typeof Papa === 'undefined') {
-                useFallbackData();
+            // 1. Luôn hiển thị tức thì 100% dữ liệu có sẵn (0ms, không chờ đợi mạng, không bao giờ lỗi kể cả offline)
+            if (typeof FALLBACK_FEATURES_DATA !== 'undefined' && FALLBACK_FEATURES_DATA.length > 0) {
+                processRawRows(FALLBACK_FEATURES_DATA);
+            }
+
+            // 2. Nếu đang mở file cục bộ (file:///) hoặc không có thư viện Papa:
+            // Dừng lại ngay tại đây, tuyệt đối không gọi network để tránh trình duyệt báo lỗi CORS origin 'null'
+            if (typeof Papa === 'undefined' || window.location.protocol === 'file:') {
+                console.log('[KiotViet E-Learning] Chế độ cục bộ (file:///): Đã nạp thành công bộ dữ liệu hoàn chỉnh (' + FALLBACK_FEATURES_DATA.length + ' bài).');
                 return;
             }
 
-            // 1. Thử URL chính (gviz/tq hỗ trợ CORS trực tiếp, không 307 redirect)
+            // 3. Nếu đang chạy online (http/https), cập nhật ngầm phiên bản mới nhất từ Google Sheets (background sync)
             Papa.parse(csvUrlPrimary, {
                 download: true,
                 header: true,
@@ -661,47 +668,14 @@
                 transformHeader: h => h.trim().replace(/^\ufeff/, ''),
                 complete: function(results) {
                     if (results?.data?.length > 0) {
-                        console.log('[KiotViet E-Learning] Đã nạp thành công ' + results.data.length + ' hàng từ Google Sheets gviz');
+                        console.log('[KiotViet E-Learning] Đã đồng bộ thành công ' + results.data.length + ' bài từ Google Sheets online');
                         processRawRows(results.data);
-                    } else {
-                        tryBackupUrl();
                     }
                 },
                 error: function(err) {
-                    console.warn('[KiotViet E-Learning] gviz URL failed, trying backup export URL...', err);
-                    tryBackupUrl();
+                    console.warn('[KiotViet E-Learning] Không kết nối được Google Sheets online, giữ nguyên bộ dữ liệu dự phòng.');
                 }
             });
-
-            function tryBackupUrl() {
-                Papa.parse(csvUrlBackup, {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: 'greedy',
-                    transformHeader: h => h.trim().replace(/^\ufeff/, ''),
-                    complete: function(results) {
-                        if (results?.data?.length > 0) {
-                            console.log('[KiotViet E-Learning] Đã nạp thành công từ Google Sheets export URL');
-                            processRawRows(results.data);
-                        } else {
-                            useFallbackData();
-                        }
-                    },
-                    error: function(err) {
-                        console.warn('[KiotViet E-Learning] Backup URL failed, using embedded fallback data...', err);
-                        useFallbackData();
-                    }
-                });
-            }
-
-            function useFallbackData() {
-                if (typeof FALLBACK_FEATURES_DATA !== 'undefined' && FALLBACK_FEATURES_DATA.length > 0) {
-                    console.log('[KiotViet E-Learning] Đang kích hoạt bộ dữ liệu dự phòng cục bộ (' + FALLBACK_FEATURES_DATA.length + ' bài)');
-                    processRawRows(FALLBACK_FEATURES_DATA);
-                } else {
-                    showEmptyState('Đã xảy ra lỗi khi tải dữ liệu từ Google Sheets.');
-                }
-            }
         }
 
         // Khởi tạo danh sách các tháng: "Trước Tháng 06/2026" ĐƯA XUỐNG DƯỚI CÙNG (KHÔNG DÙNG TỪ "GỐC")

@@ -840,10 +840,18 @@
         }
 
         function loadData() {
-            if (typeof Papa === 'undefined') {
+            // 1. Luôn hiển thị tức thì bộ dữ liệu bài học có sẵn (0ms, không giật lag, không phụ thuộc mạng)
+            if (typeof FALLBACK_LESSONS_DATA !== 'undefined' && FALLBACK_LESSONS_DATA.length > 0) {
                 populateLessonsData(FALLBACK_LESSONS_DATA);
+            }
+
+            // 2. Nếu đang mở file cục bộ (file:///) hoặc không có thư viện Papa: dừng lại an toàn
+            if (typeof Papa === 'undefined' || window.location.protocol === 'file:') {
+                console.log('[KiotViet E-Learning] Chế độ cục bộ (file:///): Đã nạp thành công bộ dữ liệu tìm kiếm (' + FALLBACK_LESSONS_DATA.length + ' bài).');
                 return;
             }
+
+            // 3. Nếu đang chạy online (http/https), cập nhật ngầm phiên bản mới nhất từ Google Sheets
             Papa.parse(csvUrlPrimary, {
                 download: true,
                 header: true,
@@ -854,35 +862,12 @@
                 complete: function(results) {
                     if (results?.data?.length > 0) {
                         populateLessonsData(results.data);
-                    } else {
-                        tryBackup();
                     }
                 },
                 error: function(err) {
-                    tryBackup();
+                    console.warn('[KiotViet E-Learning] Không kết nối được Google Sheets online, giữ nguyên bộ dữ liệu dự phòng.');
                 }
             });
-
-            function tryBackup() {
-                Papa.parse(csvUrlBackup, {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: 'greedy',
-                    transformHeader: function(header) {
-                        return header.trim().replace(/^\ufeff/, '');
-                    },
-                    complete: function(results) {
-                        if (results?.data?.length > 0) {
-                            populateLessonsData(results.data);
-                        } else {
-                            populateLessonsData(FALLBACK_LESSONS_DATA);
-                        }
-                    },
-                    error: function(err) {
-                        populateLessonsData(FALLBACK_LESSONS_DATA);
-                    }
-                });
-            }
         }
 
         // Omnibox Hero Search Tức Thời
