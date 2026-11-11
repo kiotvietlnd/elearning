@@ -1576,7 +1576,6 @@
         // =========================================================================
         const PLAYLIST_ID = "PL3x3GXJzpHzSig3jxKN_M3M7yaxkIoWlY";
         const PLAYLIST_BRAND_LABEL = "Thuế - HĐĐT";
-        const PLAYLIST_ACCENT_COLOR = "text-teal-600";
         const INVIDIOUS_SERVERS = [
             "https://inv.nadeko.net",
             "https://invidious.nerdvpn.de",
@@ -1585,7 +1584,7 @@
         ];
 
         // Dữ liệu video đồng bộ từ Playlist YouTube (0ms tải trang, đảm bảo thứ tự mới nhất)
-        const PRELOADED_PLAYLIST_VIDEOS = [{"id":"nRt0JO6WY0k","title":"6 Steps to Get Started with KiotViet | Featuring eInvoice, Accounting, Tax, Analysis & AI Assistant","dateStr":"30/10/2026"},{"id":"VcqRNldJ4JU","title":"Lấy thông tin Xuất Hóa đơn điện tử qua mã QR | KiotViet Retail | 261029","dateStr":"29/10/2026"},{"id":"xytfX6x-3z8","title":"Hóa đơn điện tử KiotViet | Hướng dẫn Thiết lập & Phát hành | Giao diện mới 2026","dateStr":"09/10/2026"},{"id":"bqf6M7-K2nU","title":"KiotViet 2026 | Hướng dẫn gia hạn chứng thư số (Chữ ký số)","dateStr":"04/06/2026"},{"id":"e8s07t1KX84","title":"KiotViet 2026 | Sổ kế toán - Tờ khai thuế - HĐĐT | Cập nhật Nghị định 141/2026/NĐ-CP","dateStr":"22/05/2026"},{"id":"Wf_yJceasX4","title":"Hóa đơn Điện tử KiotViet - Lập và Quản lý Hóa đơn thay thế","dateStr":"15/04/2026"},{"id":"8RKcJUgXMCM","title":"Hóa đơn Điện tử KiotViet - Lập và Quản lý Hóa đơn điều chỉnh","dateStr":"15/04/2026"},{"id":"XZoaBAF8iAg","title":"Hóa đơn Điện tử KiotViet - Lập và Gửi Thông báo sai sót","dateStr":"15/04/2026"},{"id":"4j7V_LRPIgE","title":"Sổ kế toán cho Hộ Kinh doanh | Theo Thông tư 152 | KiotViet 2026","dateStr":"10/02/2026"},{"id":"XYU9FfapH_A","title":"Hóa đơn đầu vào | Tự động đồng bộ từ CQT | Tạo nhanh Phiếu Nhập hàng, Phiếu chi | KiotViet Retail","dateStr":"10/12/2025"},{"id":"IqVICR7gXwU","title":"Chữ ký số Miễn phí KiotViet IntrustCA | Hướng dẫn Đăng ký ngay trên Điện thoại | KiotViet 2025","dateStr":"19/11/2025"}];
+        const PRELOADED_PLAYLIST_VIDEOS = [{"id":"nRt0JO6WY0k","title":"6 Steps to Get Started with KiotViet | Featuring eInvoice, Accounting, Tax, Analysis & AI Assistant"},{"id":"VcqRNldJ4JU","title":"Lấy thông tin Xuất Hóa đơn điện tử qua mã QR | KiotViet Retail | 261029"},{"id":"xytfX6x-3z8","title":"Hóa đơn điện tử KiotViet | Hướng dẫn Thiết lập & Phát hành | Giao diện mới 2026"},{"id":"bqf6M7-K2nU","title":"KiotViet 2026 | Hướng dẫn gia hạn chứng thư số (Chữ ký số)"},{"id":"e8s07t1KX84","title":"KiotViet 2026 | Sổ kế toán - Tờ khai thuế - HĐĐT | Cập nhật Nghị định 141/2026/NĐ-CP"},{"id":"Wf_yJceasX4","title":"Hóa đơn Điện tử KiotViet - Lập và Quản lý Hóa đơn thay thế"},{"id":"8RKcJUgXMCM","title":"Hóa đơn Điện tử KiotViet - Lập và Quản lý Hóa đơn điều chỉnh"},{"id":"XZoaBAF8iAg","title":"Hóa đơn Điện tử KiotViet - Lập và Gửi Thông báo sai sót"},{"id":"4j7V_LRPIgE","title":"Sổ kế toán cho Hộ Kinh doanh | Theo Thông tư 152 | KiotViet 2026"},{"id":"XYU9FfapH_A","title":"Hóa đơn đầu vào | Tự động đồng bộ từ CQT | Tạo nhanh Phiếu Nhập hàng, Phiếu chi | KiotViet Retail"},{"id":"IqVICR7gXwU","title":"Chữ ký số Miễn phí KiotViet IntrustCA | Hướng dẫn Đăng ký ngay trên Điện thoại | KiotViet 2025"}];
         let activePlaylistVideos = PRELOADED_PLAYLIST_VIDEOS;
 
         function cleanYoutubeTitle(title) {
@@ -1622,6 +1621,8 @@
             list.forEach((pv, rank) => {
                 const vId = pv.id;
                 if (!vId || usedVideoIdSet.has(vId)) return;
+                // Bỏ qua các video rác / riêng tư / đã xóa
+                if (!pv.title || pv.title.trim() === '' || pv.title.includes('Private') || pv.title.includes('Deleted')) return;
                 usedVideoIdSet.add(vId);
 
                 // Tìm bài học tương ứng trong LMS
@@ -1630,21 +1631,19 @@
                     usedLessonSet.add(matched);
                     matchedList.push({
                         ...matched,
-                        dateStr: pv.dateStr || matched.dateStr,
                         _fromPlaylist: true,
                         _rank: rank
                     });
                 } else {
                     // Video mới phát hành trên YouTube chưa có trong bảng dữ liệu LMS
                     matchedList.push({
-                        khoaHoc: PLAYLIST_BRAND_LABEL + ' Chuyên đề mới',
+                        khoaHoc: PLAYLIST_BRAND_LABEL,
                         noiDung: cleanYoutubeTitle(pv.title),
                         hdsd: 'https://www.youtube.com/watch?v=' + vId,
                         youtube: 'https://www.youtube.com/watch?v=' + vId,
                         infographic: '',
                         github: '',
                         moTa: pv.title,
-                        dateStr: pv.dateStr || 'Mới cập nhật',
                         _fromPlaylist: true,
                         _rank: rank
                     });
@@ -1675,15 +1674,12 @@
             if (currentExploreIdx >= exploreVideoList.length) currentExploreIdx = 0;
             const defaultIdx = currentExploreIdx;
 
+            // Render thẻ video: Chỉ hiển thị duy nhất tên video và nút phát (gọn gàng, không hiển thị dòng tag / ngày / lịch bên trên)
             if (track) {
                 track.innerHTML = exploreVideoList.map((item, idx) => `
-                    <div onclick="selectExploreVideo(${idx}, false, true)" id="explore-card-${idx}" class="step-tab-card ${idx === defaultIdx ? 'active' : ''} w-full flex items-center justify-between p-2.5 rounded-xl border-2 transition-all cursor-pointer">
-                        <div class="truncate flex-1 min-w-0 pr-1.5">
-                            <div class="flex items-center gap-1.5 mb-0.5">
-                                <span class="text-[9px] font-bold ${PLAYLIST_ACCENT_COLOR} truncate">${cleanCourseName(item.khoaHoc)}</span>
-                                ${item.dateStr ? `<span class="text-[8.5px] font-medium text-slate-400 shrink-0">📅 ${item.dateStr}</span>` : ''}
-                            </div>
-                            <span class="text-xs font-bold text-slate-800 block truncate" title="${item.noiDung}">${item.noiDung}</span>
+                    <div onclick="selectExploreVideo(${idx}, false, true)" id="explore-card-${idx}" class="step-tab-card ${idx === defaultIdx ? 'active' : ''} w-full flex items-center justify-between p-2.5 sm:py-3 rounded-xl border-2 transition-all cursor-pointer">
+                        <div class="truncate flex-1 min-w-0 pr-2">
+                            <span class="text-xs sm:text-[12.5px] font-bold text-slate-800 block truncate" title="${item.noiDung}">${item.noiDung}</span>
                         </div>
                         <i class="fa-regular fa-circle-play text-slate-400 text-xs shrink-0"></i>
                     </div>
@@ -1693,7 +1689,7 @@
             const item = exploreVideoList[defaultIdx];
             if (item) {
                 const badgeEl = document.getElementById('exploreCourseBadge');
-                if (badgeEl) badgeEl.innerText = cleanCourseName(item.khoaHoc);
+                if (badgeEl) badgeEl.style.display = 'none'; // Ẩn dòng badge bên trên tiêu đề video
                 const titleEl = document.getElementById('exploreVideoTitle');
                 if (titleEl) titleEl.innerText = item.noiDung;
                 const descEl = document.getElementById('exploreVideoDesc');
@@ -1751,52 +1747,36 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data.videos && data.videos.length > 0) {
-                            plVideos = data.videos.map(v => ({
-                                id: v.videoId,
-                                title: v.title,
-                                dateStr: ''
-                            }));
-                            break;
+                          plVideos = data.videos
+                            .filter(v => v.title && v.title.trim() !== '' && !v.title.includes('Private') && !v.title.includes('Deleted'))
+                            .map(v => ({ id: v.videoId, title: v.title }));
+                          break;
                         }
                     }
                 } catch(e) {}
             }
 
-            // 2. Thử YouTube RSS qua CORS Proxy để cập nhật ngày tháng chính xác
-            try {
-                const rssUrl = `https://www.youtube.com/feeds/videos.xml?playlist_id=${PLAYLIST_ID}`;
-                const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`, {
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (proxyRes.ok) {
-                    const xmlText = await proxyRes.text();
-                    const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
-                    const entries = xml.querySelectorAll('entry');
-                    const rssItems = [];
-                    entries.forEach(entry => {
-                        const id = entry.getElementsByTagName('yt:videoId')[0]?.textContent;
-                        const title = entry.getElementsByTagName('title')[0]?.textContent;
-                        const pub = entry.getElementsByTagName('published')[0]?.textContent;
-                        if (id) {
-                            const d = pub ? new Date(pub) : null;
-                            const dateStr = d ? `${d.getDate() < 10 ? '0' : ''}${d.getDate()}/${d.getMonth() + 1 < 10 ? '0' : ''}${d.getMonth() + 1}/${d.getFullYear()}` : '';
-                            rssItems.push({ id, title, dateStr, timestamp: d ? d.getTime() : 0 });
-                        }
-                    });
-
-                    if (rssItems.length > 0) {
-                        if (plVideos.length === 0) {
-                            rssItems.sort((a, b) => b.timestamp - a.timestamp);
-                            plVideos = rssItems;
-                        } else {
-                            rssItems.forEach(r => {
-                                const target = plVideos.find(p => p.id === r.id);
-                                if (target && r.dateStr) target.dateStr = r.dateStr;
-                            });
-                        }
-                    }
-                }
-            } catch(err) {}
+            // 2. Thử YouTube RSS qua CORS Proxy nếu Invidious lỗi
+            if (plVideos.length === 0) {
+              try {
+                  const rssUrl = `https://www.youtube.com/feeds/videos.xml?playlist_id=${PLAYLIST_ID}`;
+                  const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`, {
+                      signal: AbortSignal.timeout(5000)
+                  });
+                  if (proxyRes.ok) {
+                      const xmlText = await proxyRes.text();
+                      const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+                      const entries = xml.querySelectorAll('entry');
+                      entries.forEach(entry => {
+                          const id = entry.getElementsByTagName('yt:videoId')[0]?.textContent;
+                          const title = entry.getElementsByTagName('title')[0]?.textContent;
+                          if (id && title && !title.includes('Private') && !title.includes('Deleted')) {
+                              plVideos.push({ id, title: title.replace(/&amp;/g, '&') });
+                          }
+                      });
+                  }
+              } catch(err) {}
+            }
 
             if (plVideos.length > 0) {
                 try {
@@ -1815,7 +1795,7 @@
             const item = exploreVideoList[idx];
 
             const badgeEl = document.getElementById('exploreCourseBadge');
-            if (badgeEl) badgeEl.innerText = cleanCourseName(item.khoaHoc);
+            if (badgeEl) badgeEl.style.display = 'none'; // Ẩn dòng badge bên trên tiêu đề video
             const titleEl = document.getElementById('exploreVideoTitle');
             if (titleEl) titleEl.innerText = item.noiDung;
             const descEl = document.getElementById('exploreVideoDesc');
@@ -1859,7 +1839,7 @@
                         class="w-full text-left p-2.5 hover:bg-red-50 border border-slate-100 rounded-xl flex items-center justify-between gap-3 transition-colors">
                         <div class="truncate">
                             <b class="text-slate-800 text-xs block">${item.noiDung}</b>
-                            <span class="text-[10px] text-slate-400 block truncate">${item.dateStr ? '📅 ' + item.dateStr + ' • ' : ''}${item.moTa || 'Video hướng dẫn'}</span>
+                            <span class="text-[10px] text-slate-400 block truncate">${item.moTa || 'Video hướng dẫn'}</span>
                         </div>
                         <span class="text-[9px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700 shrink-0">Phát</span>
                     </button>
@@ -1870,6 +1850,8 @@
             const val = removeVietnameseTones(document.getElementById('modalVideoSearchInput').value.trim());
             renderModalVideos(exploreVideoList.filter(i => removeVietnameseTones(`${i.noiDung} ${i.moTa}`).includes(val)));
         }
+
+        
 
         
 
