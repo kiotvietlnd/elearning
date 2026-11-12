@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BÀI 1.1: BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI - KiotViet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            kvPrimary: '#002957',
+            kvOcean: '#00418C',
+            kvBlue: '#0070F4',
+            kvBlueLight: '#F0F6FE',
+            kvBlueSoft: '#E4EFFD',
+            kvBlueBorder: '#B9D5F7',
+            kvHotel: '#00B63E',
+            kvHotelLight: '#E8F8EE'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .perspective { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    .card-inner { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    /* Interactive Options Highlight (Section 4) */
+    .quiz-opt-label {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .quiz-opt-label.is-selected,
+    .quiz-opt-label:has(input[type="radio"]:checked) {
+      background-color: #0070F4 !important;
+      border-color: #0058C6 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 4px 10px rgba(0, 112, 244, 0.35) !important;
+    }
+    .quiz-opt-label.is-selected span,
+    .quiz-opt-label:has(input[type="radio"]:checked) span {
+      color: #FFFFFF !important;
+      font-weight: 600 !important;
+    }
+    .quiz-opt-label.is-selected input[type="radio"],
+    .quiz-opt-label:has(input[type="radio"]:checked) input[type="radio"] {
+      accent-color: #FFFFFF !important;
+      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+    }
+  </style>
+</head>
+<body class="bg-[#F0F6FE] text-slate-800 flex flex-col h-screen overflow-hidden select-none">
+
+  <!-- ==================== TOP COMPACT NAVBAR (42px) ==================== -->
+  <header class="h-[42px] bg-gradient-to-r from-[#002957] via-[#00418C] to-[#0070F4] px-3 sm:px-4 flex items-center justify-between shadow-xs shrink-0 z-30 text-white">
+    <div class="flex items-center space-x-2.5 overflow-hidden">
+      <!-- Mobile Menu Toggle Button -->
+      <button onclick="toggleMobileSidebar()" class="md:hidden w-7 h-7 rounded flex items-center justify-center hover:bg-white/10 text-white text-sm" title="Mở menu">
+        <i class="fa-solid fa-bars-staggered"></i>
+      </button>
+      <img src="https://cdn-kvweb-website.kiotviet.vn/images/v2/giai-phap/logos/kiotviet-logo-horizontal.svg?v=4dc78976" 
+           alt="KiotViet" class="h-5 sm:h-5.5 object-contain brightness-0 invert">
+      <div class="h-4 w-px bg-white/20 shrink-0"></div>
+      <span class="text-[10px] font-black bg-white/15 px-2 py-0.5 rounded border border-white/20 shrink-0 tracking-wider">
+        HOTEL-CM-1.1
+      </span>
+      <h1 class="text-xs sm:text-sm font-black uppercase truncate tracking-tight text-white/95">
+        BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI
+      </h1>
+    </div>
+
+    <div class="flex items-center space-x-2 shrink-0">
+      <!-- Zoom In / Zoom Out Controls -->
+      <div class="hidden sm:flex items-center bg-black/20 rounded-md border border-white/20 p-0.5">
+        <button onclick="stepZoom(-1)" class="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 text-white/90 text-xs transition-all" title="Thu nhỏ (Zoom Out)">
+          <i class="fa-solid fa-magnifying-glass-minus text-[10px]"></i>
+        </button>
+        <span id="zoom-level-text" class="text-[10px] font-bold px-1 text-white/80 select-none">100%</span>
+        <button onclick="stepZoom(1)" class="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 text-white/90 text-xs transition-all" title="Phóng to (Zoom In)">
+          <i class="fa-solid fa-magnifying-glass-plus text-[10px]"></i>
+        </button>
+      </div>
+
+      <!-- Sound Toggle Button -->
+      <button id="audio-toggle-btn" onclick="toggleSoundEngine()" class="w-7 h-7 rounded-md bg-white/15 hover:bg-white/25 text-white border border-white/20 flex items-center justify-center transition-colors" title="Bật/Tắt âm thanh">
+        <i id="audio-icon" class="fa-solid fa-volume-high text-xs"></i>
+      </button>
+
+      <!-- Industry Tag -->
+      <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded bg-emerald-600 border border-emerald-400/40 text-white shadow-2xs">
+        Hotel
+      </span>
+    </div>
+  </header>
+
+  <!-- ==================== BODY CONTENT WRAPPER (SIDEBAR + MAIN) ==================== -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- BACKDROP CHO MOBILE DRAWER -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden transition-opacity"></div>
+
+    <!-- CỘT ĐIỀU HƯỚNG DỌC BÊN TRÁI (LEFT SIDEBAR) -->
+    <aside id="app-sidebar" class="fixed md:static top-0 bottom-0 left-0 w-64 sm:w-72 bg-white border-r-2 border-kvBlueBorder flex flex-col shrink-0 h-full z-30 shadow-md md:shadow-none -translate-x-full md:translate-x-0 transition-transform duration-300">
+      
+      <!-- Top Branding in Sidebar on Mobile -->
+      <div class="p-3 border-b-2 border-kvBlueBorder space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-kvPrimary uppercase flex items-center gap-2">
+            <i class="fa-solid fa-compass text-kvBlue"></i> Mục Lục Bài Học
+          </span>
+          <button onclick="toggleMobileSidebar(false)" class="md:hidden text-slate-400 hover:text-slate-600 text-sm">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Master Progress Bar -->
+        <div class="pt-1 border-t border-slate-100">
+          <div class="flex items-center justify-between text-[11px] mb-1">
+            <span class="font-bold text-slate-500">Tiến độ khám phá:</span>
+            <span id="master-progress-text" class="font-black text-kvBlue">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div id="master-progress-bar" class="bg-kvBlue h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu Điều Hướng 5 Phần -->
+      <nav class="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+        <!-- Item 1 -->
+        <button id="nav-sec-1" onclick="switchSection(1)" class="w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-kvBlue text-white shadow-xs">
+          <span class="nav-num-badge w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs font-black shrink-0 text-white">1</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-black truncate">Phần 1: Bản Chất Nghiệp Vụ</div>
+            <div class="text-[10px] opacity-80 truncate">3 Nguyên lý cốt lõi</div>
+          </div>
+          <i id="nav-check-1" class="fa-solid fa-circle-check text-xs hidden"></i>
+        </button>
+
+        <!-- Item 2 -->
+        <button id="nav-sec-2" onclick="switchSection(2)" class="w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-slate-50 text-slate-700 hover:bg-kvBlueLight border border-kvBlueBorder">
+          <span class="nav-num-badge w-6 h-6 rounded-lg bg-kvBlueLight text-kvBlue flex items-center justify-center text-xs font-black shrink-0 border border-kvBlueBorder">2</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-bold truncate">Phần 2: 6 Flashcard 3D</div>
+            <div class="text-[10px] text-slate-500 truncate">Bộ thuật ngữ cốt lõi</div>
+          </div>
+          <i id="nav-check-2" class="fa-solid fa-circle-check text-xs hidden text-emerald-600"></i>
+        </button>
+
+        <!-- Item 3 -->
+        <button id="nav-sec-3" onclick="switchSection(3)" class="w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-slate-50 text-slate-700 hover:bg-kvBlueLight border border-kvBlueBorder">
+          <span class="nav-num-badge w-6 h-6 rounded-lg bg-kvBlueLight text-kvBlue flex items-center justify-center text-xs font-black shrink-0 border border-kvBlueBorder">3</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-bold truncate">Phần 3: Mô Phỏng Đồng Bộ</div>
+            <div class="text-[10px] text-slate-500 truncate">Quy trình 4 bước OTAs</div>
+          </div>
+          <i id="nav-check-3" class="fa-solid fa-circle-check text-xs hidden text-emerald-600"></i>
+        </button>
+
+        <!-- Item 4 -->
+        <button id="nav-sec-4" onclick="switchSection(4)" class="w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-slate-50 text-slate-700 hover:bg-kvBlueLight border border-kvBlueBorder">
+          <span class="nav-num-badge w-6 h-6 rounded-lg bg-kvBlueLight text-kvBlue flex items-center justify-center text-xs font-black shrink-0 border border-kvBlueBorder">4</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-bold truncate">Phần 4: Roleplay Tư Vấn</div>
+            <div class="text-[10px] text-slate-500 truncate">Tình huống &amp; Allotment</div>
+          </div>
+          <i id="nav-check-4" class="fa-solid fa-circle-check text-xs hidden text-emerald-600"></i>
+        </button>
+
+        <!-- Item 5 -->
+        <button id="nav-sec-5" onclick="switchSection(5)" class="w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-slate-50 text-slate-700 hover:bg-kvBlueLight border border-kvBlueBorder">
+          <span class="nav-num-badge w-6 h-6 rounded-lg bg-kvBlueLight text-kvBlue flex items-center justify-center text-xs font-black shrink-0 border border-kvBlueBorder">5</span>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-bold truncate">Phần 5: Cẩm Nang Tra Cứu</div>
+            <div class="text-[10px] text-slate-500 truncate">Giao diện &amp; Sự cố 30s</div>
+          </div>
+          <i id="nav-check-5" class="fa-solid fa-circle-check text-xs hidden text-emerald-600"></i>
+        </button>
+      </nav>
+
+      <!-- Chân Sidebar: Ghi chú & Trạng thái -->
+      <div class="p-3 border-t-2 border-kvBlueBorder bg-slate-50 space-y-2 shrink-0">
+        <div class="flex items-center justify-between text-[11px] text-slate-600">
+          <span><i class="fa-regular fa-clock mr-1 text-slate-400"></i>Thời gian đọc:</span>
+          <span id="session-time-display" class="font-bold text-kvPrimary">00:00</span>
+        </div>
+        <div class="flex items-center gap-2 text-[11px] p-2 rounded-lg bg-white border border-kvBlueBorder text-slate-600">
+          <i class="fa-solid fa-graduation-cap text-kvBlue text-sm"></i>
+          <span class="leading-tight">Học liệu tương tác nhúng iFrame LMS</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==================== KHU VỰC NỘI DUNG CHÍNH (RIGHT MAIN VIEW) ==================== -->
+    <main id="main-content-scroll" class="flex-1 h-full overflow-y-auto p-3 sm:p-5 lg:p-6 flex flex-col">
+      <div class="max-w-4xl w-full mx-auto space-y-4">
+
+        <!-- ========== PHẦN 1: BẢN CHẤT & 3 NGUYÊN LÝ CỐT LÕI ========== -->
+        <section id="section-1" class="section-pane space-y-4">
+          <!-- Card Giới thiệu Nỗi đau & Bản chất -->
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-kvBlueBorder pb-2.5">
+              <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
+                <i class="fa-solid fa-book-open-reader text-kvBlue"></i> PHẦN 1: BẢN CHẤT &amp; 3 NGUYÊN LÝ CỐT LÕI CỦA CHANNEL MANAGER
+              </span>
+              <span class="text-[11px] font-bold text-kvBlue bg-kvBlueLight px-2.5 py-0.5 rounded border border-kvBlueBorder">
+                Nền tảng nghiệp vụ
+              </span>
+            </div>
+
+            <div class="flex items-start gap-3.5 pt-1">
+              <div class="w-10 h-10 rounded-xl bg-kvBlue text-white flex items-center justify-center shrink-0 shadow-xs text-lg">
+                <i class="fa-solid fa-lightbulb"></i>
+              </div>
+              <div class="space-y-1.5">
+                <h3 class="text-sm sm:text-base font-extrabold text-kvPrimary">Vì sao Khách sạn cần Channel Manager?</h3>
+                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Khi khách sạn bán phòng cùng lúc trên quầy Lễ tân và các sàn OTA (Agoda, Booking.com, Airbnb...), nếu đón khách tại quầy lúc 22h nhưng quên đăng nhập vào từng sàn để đóng phòng, khách đặt online lúc 23h30 đến nhận phòng sẽ gây ra thảm họa <strong>Bán trùng phòng (Overbooking)</strong>. Khách sạn vừa phải đền tiền phòng gấp đôi, vừa bị sàn phạt hạ điểm uy tín.
+                </p>
+                <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-kvPrimary leading-relaxed">
+                  💡 <strong>Định nghĩa cốt lõi:</strong> Channel Manager là <em>phần mềm trung gian tự động</em> kết nối và đồng bộ số lượng phòng trống, giá bán và đơn đặt phòng 2 chiều giữa <strong>KiotViet Hotel PMS</strong> và các sàn OTA đối tác theo thời gian thực.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 Nguyên tắc Cốt lõi Bất biến -->
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 class="text-xs sm:text-sm font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-shield-halved text-emerald-600"></i> 3 Nguyên Lý Bất Biến Chuyên Viên Cần Nhớ
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <div class="bg-[#F8FAFD] border-2 border-kvBlueBorder rounded-xl p-4 shadow-2xs hover:border-kvBlue hover:bg-blue-50/50 transition-all flex flex-col justify-between">
+                <div>
+                  <div class="w-8 h-8 rounded-lg bg-blue-100 text-kvBlue font-black flex items-center justify-center text-xs mb-2.5">01</div>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-kvPrimary">Không phải sàn OTA</h4>
+                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Channel Manager <strong>không trực tiếp bán phòng</strong> cho khách du lịch, mà là <strong>cầu nối truyền dẫn dữ liệu 2 chiều</strong> giữa KiotViet Hotel và các sàn OTA.
+                  </p>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 italic">
+                  💡 KiotViet không thu % hoa hồng phòng bán được.
+                </div>
+              </div>
+
+              <div class="bg-[#F8FAFD] border-2 border-kvBlueBorder rounded-xl p-4 shadow-2xs hover:border-kvHotel hover:bg-emerald-50/50 transition-all flex flex-col justify-between">
+                <div>
+                  <div class="w-8 h-8 rounded-lg bg-emerald-100 text-kvHotel font-black flex items-center justify-center text-xs mb-2.5">02</div>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-kvPrimary">KiotViet PMS là gốc</h4>
+                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Toàn bộ số lượng phòng thực tế và chính sách giá được <strong>quản trị tập trung từ KiotViet Hotel</strong> rồi tự động đẩy đồng loạt lên tất cả các sàn.
+                  </p>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 italic">
+                  💡 Khách chỉ cần thao tác 1 nơi duy nhất trên KiotViet.
+                </div>
+              </div>
+
+              <div class="bg-[#F8FAFD] border-2 border-kvBlueBorder rounded-xl p-4 shadow-2xs hover:border-amber-400 hover:bg-amber-50/50 transition-all flex flex-col justify-between">
+                <div>
+                  <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 font-black flex items-center justify-center text-xs mb-2.5">03</div>
+                  <h4 class="text-xs sm:text-sm font-extrabold text-kvPrimary">Đồng bộ 2 chiều tức thì</h4>
+                  <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                    Có đơn mới từ bất kỳ sàn nào ➔ KiotViet <strong>tự động trừ phòng ngay</strong> và gửi lệnh khóa phòng (Stop Sell) sang toàn bộ sàn còn lại trong vài giây.
+                  </p>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-slate-200 text-[11px] text-slate-500 italic">
+                  💡 Hoạt động liên tục 24/7 không cần can thiệp thủ công.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button onclick="nextSection(2)" class="px-5 py-2.5 rounded-xl bg-kvBlue hover:bg-blue-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all">
+              <span>Chuyển sang Phần 2: 6 Flashcard 3D Thuật ngữ</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== PHẦN 2: 6 FLASHCARD 3D THUẬT NGỮ ========== -->
+        <section id="section-2" class="section-pane hidden space-y-4">
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-kvBlueBorder pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-kvPrimary uppercase">Bộ 6 Thuật ngữ Cốt lõi Khách sạn</h3>
+                <p class="text-xs text-slate-500">Bấm vào từng thẻ để lật xem phiên âm quốc tế, ý nghĩa nghiệp vụ và ví dụ thực tế đời sống.</p>
+              </div>
+              <span id="flashcard-counter" class="text-xs font-black text-kvBlue bg-kvBlueLight px-3 py-1 rounded-full border border-kvBlueBorder shadow-2xs">
+                0 / 6 thẻ đã lật
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Card 1: Allotment -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 1)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 01</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Allotment</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/əˈlɒt.mənt/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Quỹ phòng mở bán</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Số lượng phòng mở bán trên OTA</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Là số lượng phòng trống thực tế mà khách sạn gửi lên sàn OTA để mở bán trực tuyến cho khách đặt phòng.</p>
+                    </div>
+                    <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 text-[11px] text-kvPrimary">
+                      <strong>Ví dụ:</strong> Khách sạn có 10 phòng Standard, giữ 2 phòng bán tại quầy, đưa 8 phòng lên sàn ➔ <strong>Allotment = 8</strong>.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2: Rate Plan -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 2)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 02</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Rate Plan</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/reɪt plæn/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Gói chính sách giá</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Gói giá kèm điều kiện dịch vụ</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Tập hợp các mức giá đi kèm điều kiện (có ăn sáng, không hoàn hủy, phụ thu trẻ em) của cùng một hạng phòng.</p>
+                    </div>
+                    <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 text-[11px] text-kvPrimary">
+                      <strong>Ví dụ:</strong> Gói <em>Room Only</em> giá 500k; Gói <em>With Breakfast</em> (kèm ăn sáng) giá 650k.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 3: Stop Sell -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 3)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 03</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Stop Sell</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/stɒp sel/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Khóa phòng dừng bán</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Lệnh đóng phòng tạm thời</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Lệnh dừng bán một hạng phòng trên sàn OTA mà không làm thay đổi số lượng tồn kho tổng.</p>
+                    </div>
+                    <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 text-[11px] text-kvPrimary">
+                      <strong>Ví dụ:</strong> Khách sạn muốn giữ phòng đón khách đoàn ngày Lễ Tết ➔ Bật <em>Stop Sell</em> trên Channel Manager.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 4: Occupancy -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 4)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 04</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Occupancy</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/ˈɒk.jə.pən.si/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Công suất phòng</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Tỷ lệ lấp đầy phòng</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Tỷ lệ phần trăm giữa số phòng có khách lưu trú thực tế trên tổng số phòng của khách sạn.</p>
+                    </div>
+                    <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 text-[11px] text-kvPrimary">
+                      <strong>Ví dụ:</strong> Có 20 phòng, hôm nay khách ở 16 phòng ➔ <strong>Công suất = 16/20 = 80%</strong>.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 5: Overbooking -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 5)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 05</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Overbooking</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/ˌəʊ.vəˈbʊk.ɪŋ/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Bán trùng phòng</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Tình trạng đơn vượt quá tồn phòng</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Tình trạng số phòng khách đặt vượt quá số lượng phòng thực tế khách sạn có sẵn.</p>
+                    </div>
+                    <div class="bg-red-50 p-2.5 rounded-xl border border-red-200 text-[11px] text-red-800">
+                      <strong>Thảm họa:</strong> Chỉ còn 1 phòng trống nhưng Agoda và Booking cùng nổ đơn lúc 23h ➔ Khách đến không có phòng.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 6: Extranet -->
+              <div class="perspective h-56 cursor-pointer" onclick="flipCard(this, 6)">
+                <div class="card-inner relative w-full h-full transform-style-3d">
+                  <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded uppercase tracking-wider">Thuật ngữ 06</span>
+                      <i class="fa-solid fa-rotate text-xs opacity-70"></i>
+                    </div>
+                    <div class="text-center my-auto">
+                      <h4 class="text-lg font-black tracking-wide">Extranet</h4>
+                      <p class="text-[11px] text-cyan-200 mt-1 italic">/ˈek.strə.net/</p>
+                      <p class="text-xs text-white/90 font-medium mt-1">Kênh quản trị sàn OTA</p>
+                    </div>
+                    <p class="text-[10px] text-center text-white/60">Bấm để lật xem ví dụ</p>
+                  </div>
+                  <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white text-slate-800 rounded-2xl p-4 flex flex-col justify-between border-2 border-kvBlueBorder shadow-sm">
+                    <div>
+                      <span class="text-[10px] font-black text-kvBlue bg-kvBlueLight px-2 py-0.5 rounded uppercase">Ý nghĩa và Ví dụ</span>
+                      <h5 class="text-xs font-extrabold text-kvPrimary mt-1.5">Trang web quản lý của từng sàn</h5>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">Trang web quản trị riêng của khách sạn do từng sàn OTA cung cấp để quản lý thông tin và tài khoản.</p>
+                    </div>
+                    <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-100 text-[11px] text-kvPrimary">
+                      <strong>Ví dụ:</strong> Agoda YCS, Booking.com Partner Hub, Airbnb Host Dashboard, Expedia Partner Central.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between pt-1">
+            <button onclick="nextSection(1)" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-arrow-left text-xs"></i> Quay lại Phần 1
+            </button>
+            <button onclick="nextSection(3)" class="px-5 py-2.5 rounded-xl bg-kvBlue hover:bg-blue-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all">
+              <span>Chuyển sang Phần 3: Trình Mô Phỏng Luồng Đồng Bộ</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== PHẦN 3: MÔ PHỎNG ĐỒNG BỘ 4 BƯỚC ========== -->
+        <section id="section-3" class="section-pane hidden space-y-4">
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-kvBlueBorder pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-kvPrimary uppercase">Mô phỏng Luồng Đồng bộ 4 Bước Tự động</h3>
+                <p class="text-xs text-slate-500">Bấm nút "Chạy Thử Nghiệm" để quan sát hành trình dữ liệu chạy qua Channel Manager theo thời gian thực.</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-run-sim" onclick="runSimulation()" class="px-4 py-2 rounded-xl bg-kvHotel hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all">
+                  <i class="fa-solid fa-play"></i> Chạy Thử Nghiệm
+                </button>
+                <button onclick="resetSimulation()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition-all">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 relative pt-2">
+              <div id="sim-step-1" class="border-2 border-kvBlueBorder rounded-2xl p-4 bg-[#F8FAFD] transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-black uppercase text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Bước 1</span>
+                  <span id="badge-step-1" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </div>
+                <h4 class="text-xs font-bold text-kvPrimary">Khách đặt trên Agoda</h4>
+                <p id="text-step-1" class="text-[11px] text-slate-500 mt-1">Chờ đặt phòng</p>
+              </div>
+
+              <div id="sim-step-2" class="border-2 border-kvBlueBorder rounded-2xl p-4 bg-[#F8FAFD] transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded">Bước 2</span>
+                  <span id="badge-step-2" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </div>
+                <h4 class="text-xs font-bold text-kvPrimary">Channel Manager</h4>
+                <p id="text-step-2" class="text-[11px] text-slate-500 mt-1">Chờ truyền tin</p>
+              </div>
+
+              <div id="sim-step-3" class="border-2 border-kvBlueBorder rounded-2xl p-4 bg-[#F8FAFD] transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-black uppercase text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">Bước 3</span>
+                  <span id="badge-step-3" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </div>
+                <h4 class="text-xs font-bold text-kvPrimary">KiotViet Hotel PMS</h4>
+                <p id="text-step-3" class="text-[11px] text-slate-500 mt-1">Phòng trống: 5</p>
+              </div>
+
+              <div id="sim-step-4" class="border-2 border-kvBlueBorder rounded-2xl p-4 bg-[#F8FAFD] transition-all duration-300">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-black uppercase text-kvHotel bg-emerald-100 px-2 py-0.5 rounded">Bước 4</span>
+                  <span id="badge-step-4" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </div>
+                <h4 class="text-xs font-bold text-kvPrimary">Booking.com / Airbnb</h4>
+                <p id="text-step-4" class="text-[11px] text-slate-500 mt-1">Tồn sàn: 5</p>
+              </div>
+            </div>
+
+            <div id="sim-status-pill" class="p-3 rounded-xl bg-blue-50 text-kvPrimary border border-blue-200 text-xs font-semibold text-center transition-all">
+              Trạng thái: Sẵn sàng thử nghiệm luồng tự động
+            </div>
+          </div>
+
+          <div class="flex justify-between pt-1">
+            <button onclick="nextSection(2)" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-arrow-left text-xs"></i> Quay lại Phần 2
+            </button>
+            <button onclick="nextSection(4)" class="px-5 py-2.5 rounded-xl bg-kvBlue hover:bg-blue-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all">
+              <span>Chuyển sang Phần 4: Roleplay Tư Vấn Thực Chiến</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== PHẦN 4: ROLEPLAY TƯ VẤN & BÀI TẬP THỰC CHIẾN ========== -->
+        <section id="section-4" class="section-pane hidden space-y-4">
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-5">
+            <div class="border-b border-kvBlueBorder pb-3">
+              <h3 class="text-sm sm:text-base font-extrabold text-kvPrimary uppercase">Tình Huống 1: Xử lý Thắc mắc Chủ Khách sạn</h3>
+              <p class="text-xs text-slate-500">Chọn câu thoại tư vấn chuẩn mực để đạt chỉ số hài lòng khách hàng CSAT 100%.</p>
+            </div>
+
+            <!-- Khung Lời thoại Nhân vật (Nền xanh lá, chữ trắng) -->
+            <div class="flex items-start gap-3">
+              <div class="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <div class="flex-1 bg-[#00B63E] text-white p-4 rounded-2xl rounded-tl-none shadow-xs space-y-1">
+                <div class="text-[11px] font-black uppercase text-emerald-100 flex items-center gap-1.5">
+                  <i class="fa-solid fa-comment-dots"></i> Chủ Khách Sạn (Anh Tuấn - Đà Nẵng):
+                </div>
+                <p class="text-xs sm:text-sm font-medium leading-relaxed">
+                  "Khách sạn anh xưa nay vẫn tự cho lễ tân vào từng sàn đổi giá với đóng phòng được, mất chút công thôi chứ có sao đâu. Sao anh phải tốn tiền mua thêm Channel Manager làm gì em?"
+                </p>
+              </div>
+            </div>
+
+            <!-- Các phương án lựa chọn tư vấn -->
+            <div class="space-y-2.5 ml-12">
+              <button id="rp-btn-1" onclick="handleRoleplayChoice(1)" class="roleplay-opt-btn w-full text-left p-3.5 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs text-slate-800 transition-all font-medium">
+                <span class="font-bold text-kvPrimary mr-1.5">A.</span> "Dạ tùy anh ạ, nếu anh thấy nhân viên anh làm được thì anh cứ để tự làm thôi, bên em tính năng này ai cần tự động mới mua thôi ạ."
+              </button>
+              <button id="rp-btn-2" onclick="handleRoleplayChoice(2)" class="roleplay-opt-btn w-full text-left p-3.5 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs text-slate-800 transition-all font-medium">
+                <span class="font-bold text-kvPrimary mr-1.5">B.</span> "Dạ em rất hiểu là hiện tại cơ sở mình vẫn đang kiểm soát thủ công được ạ. Tuy nhiên, khi khách đặt tăng cao vào ban đêm hoặc giờ cao điểm, chỉ cần lễ tân quên đóng phòng 1 lần là khách đến không có phòng sẽ gây thảm họa Overbooking, vừa đền tiền vừa mất uy tín. Channel Manager tự động trực 24/7 giúp anh kê cao gối ngủ và tiết kiệm hàng giờ mỗi ngày ạ."
+              </button>
+              <button id="rp-btn-3" onclick="handleRoleplayChoice(3)" class="roleplay-opt-btn w-full text-left p-3.5 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs text-slate-800 transition-all font-medium">
+                <span class="font-bold text-kvPrimary mr-1.5">C.</span> "Dạ anh không mua là sau này sàn phạt anh chịu trách nhiệm nhé, phần mềm KiotViet bắt buộc phải dùng mới đồng bộ được ạ."
+              </button>
+            </div>
+
+            <!-- Phản hồi Roleplay & Điểm CSAT -->
+            <div id="roleplay-feedback" class="hidden ml-12 transition-all"></div>
+          </div>
+
+          <!-- Tình huống 2: Tính toán Allotment -->
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-kvBlueBorder pb-3">
+              <div>
+                <h3 class="text-sm sm:text-base font-extrabold text-kvPrimary uppercase">Tình Huống 2: Bài Tập Tính Toán Allotment</h3>
+                <p class="text-xs text-slate-500">Khách sạn 15 phòng Standard: 3 phòng đang có khách ở, 2 phòng giữ tại quầy lễ tân.</p>
+              </div>
+              <span id="allotment-badge" class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                Chưa làm
+              </span>
+            </div>
+
+            <p class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
+              👉 Hỏi: Số lượng phòng mở bán trên sàn OTA (Allotment) được Channel Manager đẩy lên là bao nhiêu phòng?
+            </p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button onclick="checkAllotment(10, this)" class="allotment-opt-btn p-3 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs font-bold text-kvPrimary transition-all text-center">
+                10 Phòng
+              </button>
+              <button onclick="checkAllotment(12, this)" class="allotment-opt-btn p-3 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs font-bold text-kvPrimary transition-all text-center">
+                12 Phòng
+              </button>
+              <button onclick="checkAllotment(13, this)" class="allotment-opt-btn p-3 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs font-bold text-kvPrimary transition-all text-center">
+                13 Phòng
+              </button>
+              <button onclick="checkAllotment(15, this)" class="allotment-opt-btn p-3 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs font-bold text-kvPrimary transition-all text-center">
+                15 Phòng
+              </button>
+            </div>
+
+            <div id="allotment-feedback" class="hidden transition-all"></div>
+          </div>
+
+          <div class="flex justify-between pt-1">
+            <button onclick="nextSection(3)" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-arrow-left text-xs"></i> Quay lại Phần 3
+            </button>
+            <button onclick="nextSection(5)" class="px-5 py-2.5 rounded-xl bg-kvBlue hover:bg-blue-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-all">
+              <span>Chuyển sang Phần 5: Cẩm Nang Tra Cứu Nhanh</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- ========== PHẦN 5: CẨM NANG TRA CỨU & GIAO DIỆN ========== -->
+        <section id="section-5" class="section-pane hidden space-y-4">
+          <!-- Hướng dẫn nhận diện giao diện -->
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-3">
+            <h3 class="text-xs sm:text-sm font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-kvBlue"></i> Đường Dẫn Menu &amp; Nhận Diện Giao Diện KiotViet Hotel
+            </h3>
+
+            <div class="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2 text-xs">
+              <div class="font-bold text-kvPrimary flex items-center gap-1.5">
+                <i class="fa-solid fa-route text-kvBlue"></i> Đường dẫn truy cập chuẩn:
+              </div>
+              <div class="font-mono text-kvOcean bg-white p-2 rounded-lg border border-blue-100 font-semibold text-[11.5px]">
+                Đăng nhập Quản lý ➔ Nhấp nút [Kênh bán và OTA] trên thanh menu ➔ Rê chuột đến nhóm [Channel Manager] ➔ Chọn [OTAs (Agoda, Booking...)]
+              </div>
+              <p class="text-[11px] text-red-600 italic">
+                * Lưu ý quan trọng: Tuyệt đối không nhầm lẫn với menu 'Bán Online' cũ.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                <span class="text-[10px] font-black text-slate-500 uppercase">Trạng thái 1</span>
+                <h4 class="text-xs font-bold text-kvPrimary">Chưa kết nối sàn</h4>
+                <p class="text-[11px] text-slate-600 leading-relaxed">Hiển thị Banner giới thiệu tính năng và nút nổi bật [Bắt đầu cài đặt] ➔ Dẫn qua Stepper 4 bước kích hoạt.</p>
+              </div>
+              <div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-1">
+                <span class="text-[10px] font-black text-emerald-700 uppercase">Trạng thái 2</span>
+                <h4 class="text-xs font-bold text-kvPrimary">Đã kết nối thành công</h4>
+                <p class="text-[11px] text-slate-600 leading-relaxed">Vào thẳng phân hệ 'Bán phòng trên OTAs' gồm 6 mục: Đặt phòng, Hạng phòng &amp; phòng trống, Giá trên OTAs, Kênh bán, Thiết lập tài khoản, Sổ tay hỗ trợ.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ma trận xử lý sự cố 30 giây -->
+          <div class="bg-white border-2 border-kvBlueBorder rounded-2xl p-5 shadow-sm space-y-3">
+            <h3 class="text-xs sm:text-sm font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-amber-500"></i> Ma Trận Tra Cứu Nhanh Xử Lý Sự Cố Tại Quầy (30 Giây)
+            </h3>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="bg-kvPrimary text-white font-black text-[11px] uppercase">
+                    <th class="p-3 border-r border-white/10">Hiện tượng / Thắc mắc</th>
+                    <th class="p-3 border-r border-white/10">Nguyên nhân cốt lõi</th>
+                    <th class="p-3">Thao tác xử lý dứt điểm trong 30 giây</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-[11.5px]">
+                  <tr class="hover:bg-blue-50/50">
+                    <td class="p-3 font-bold text-amber-800 bg-amber-50/50 border-r border-slate-200">
+                      Thông báo màu vàng: 'Lỗi đặt phòng từ OTAs'
+                    </td>
+                    <td class="p-3 text-slate-600 border-r border-slate-200">
+                      Đơn từ sàn đổ về nhưng hạng phòng trên sàn chưa được ghép nối (map) với hạng phòng KiotViet.
+                    </td>
+                    <td class="p-3 text-slate-800">
+                      Bấm trực tiếp nút <strong>[Xử lý ngay]</strong> trên thông báo ➔ Chọn Hạng phòng KiotViet tương ứng trong popup ➔ Bấm <strong>[Xong]</strong>. Đơn sẽ lập tức chuyển sang tab Đã đồng bộ.
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-blue-50/50">
+                    <td class="p-3 font-bold text-kvPrimary border-r border-slate-200">
+                      Khách hỏi: 'Sàn nào kéo được đơn cũ trước khi kết nối?'
+                    </td>
+                    <td class="p-3 text-slate-600 border-r border-slate-200">
+                      Quy định và giao thức API của từng sàn OTA quốc tế khác nhau.
+                    </td>
+                    <td class="p-3 text-slate-800">
+                      <strong>Chỉ DUY NHẤT Agoda và Booking.com</strong> hỗ trợ kéo đơn cũ về; các sàn khác (Airbnb, Traveloka...) chỉ bắt đầu kéo các đơn mới phát sinh sau khi map.
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-blue-50/50">
+                    <td class="p-3 font-bold text-kvPrimary border-r border-slate-200">
+                      Đổi giá trên KiotViet nhưng trên sàn chưa cập nhật
+                    </td>
+                    <td class="p-3 text-slate-600 border-r border-slate-200">
+                      Khách đổi nhầm giá tại menu 'Phòng' (màn hình danh mục) thay vì màn hình đồng bộ OTAs.
+                    </td>
+                    <td class="p-3 text-slate-800">
+                      Hướng dẫn khách vào <strong>[Kênh bán và OTA] ➔ [OTAs] ➔ [Giá trên OTAs]</strong>. Tại đây chọn hạng phòng, điền giá mới và lưu lại để hệ thống tự động đẩy đi các sàn.
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-blue-50/50">
+                    <td class="p-3 font-bold text-kvPrimary border-r border-slate-200">
+                      Sàn vẫn nổ đơn dù KiotViet đã hết phòng trống
+                    </td>
+                    <td class="p-3 text-slate-600 border-r border-slate-200">
+                      Gian hàng chưa bật công tắc liên kết kênh hoặc chưa cấu hình ghép nối hạng phòng.
+                    </td>
+                    <td class="p-3 text-slate-800">
+                      Vào <strong>[Kênh bán và OTA] ➔ [OTAs] ➔ [Kênh bán]</strong>: Kiểm tra sàn đã ở trạng thái 'Đang hoạt động' chưa. Vào [Hạng và phòng trống] để kiểm tra tỷ lệ kết nối.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Banner Tổng kết & Hoàn tất -->
+          <div class="bg-gradient-to-br from-[#002957] to-[#00418C] text-white rounded-2xl p-6 text-center space-y-4 shadow-sm">
+            <div class="w-14 h-14 rounded-full bg-amber-400 text-kvPrimary flex items-center justify-center mx-auto text-2xl shadow-md">
+              <i class="fa-solid fa-award"></i>
+            </div>
+            <div class="space-y-1">
+              <h4 class="text-base sm:text-lg font-black uppercase tracking-wide">Chúc Mừng Bạn Đã Hoàn Thành Học Liệu!</h4>
+              <p class="text-xs sm:text-sm text-cyan-200 max-w-lg mx-auto">
+                Bạn đã nắm vững toàn bộ bản chất, 6 thuật ngữ cốt lõi, luồng đồng bộ 4 bước và cẩm nang xử lý sự cố Channel Manager KiotViet Hotel.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button onclick="nextSection(1)" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/30 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-rotate-left"></i> Ôn lại bài từ đầu
+              </button>
+              <button onclick="triggerConfettiReward()" class="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs shadow-md transition-all flex items-center gap-2">
+                <i class="fa-solid fa-sparkles"></i> Ăn Mừng Thành Tích 🎉
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-start pt-1">
+            <button onclick="nextSection(4)" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-arrow-left text-xs"></i> Quay lại Phần 4
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== JAVASCRIPT: LOGIC & AUDIO ENGINE ==================== -->
+  <script>
+    /* 1. SOUND ENGINE (WEB AUDIO API) */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === 'click') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(750, now);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'whoosh') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.exponentialRampToValueAtTime(840, now + 0.18);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (type === 'success') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.18, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.35);
+          });
+        } else if (type === 'error') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        }
+      } catch(e) {
+        console.warn("Audio warning:", e);
+      }
+    }
+
+    function toggleSoundEngine() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('audio-icon');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-xs';
+        playSound('click');
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-xs';
+      }
+    }
+
+    /* 2. ZOOM CONTROLS (70% - 150%) */
+    const zoomLevels = [70, 80, 90, 100, 120, 150];
+    let currentZoomIndex = 3; // 100%
+
+    function stepZoom(delta) {
+      currentZoomIndex = Math.max(0, Math.min(zoomLevels.length - 1, currentZoomIndex + delta));
+      const targetZoom = zoomLevels[currentZoomIndex];
+      document.documentElement.style.fontSize = (13 * (targetZoom / 100)) + 'px';
+      const label = document.getElementById('zoom-level-text');
+      if (label) label.innerText = targetZoom + '%';
+      playSound('click');
+    }
+
+    /* 3. MOBILE SIDEBAR DRAWER TOGGLE */
+    function toggleMobileSidebar(force) {
+      const sidebar = document.getElementById('app-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      const open = force !== undefined ? force : isClosed;
+
+      if (open) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    /* 4. PROGRESS TRACKER */
+    const viewedSections = new Set([1]);
+    const progressTracker = {
+      cards: new Set(),
+      sim: false,
+      roleplay: false,
+      allotment: false
+    };
+
+    let sessionStartTime = Date.now();
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const m = Math.floor(elapsed / 60);
+      const s = elapsed % 60;
+      const el = document.getElementById('session-time-display');
+      if (el) el.innerText = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }, 1000);
+
+    function updateProgress() {
+      let total = 0;
+      // Section 1: 20%
+      if (viewedSections.has(1)) {
+        total += 20;
+        const c1 = document.getElementById('nav-check-1');
+        if (c1) c1.classList.remove('hidden');
+      }
+      // Section 2: 25% (cards)
+      total += Math.round((progressTracker.cards.size / 6) * 25);
+      if (progressTracker.cards.size >= 6) {
+        const c2 = document.getElementById('nav-check-2');
+        if (c2) c2.classList.remove('hidden');
+      }
+      // Section 3: 20% (sim)
+      if (progressTracker.sim) {
+        total += 20;
+        const c3 = document.getElementById('nav-check-3');
+        if (c3) c3.classList.remove('hidden');
+      }
+      // Section 4: 20% (roleplay + allotment)
+      if (progressTracker.roleplay) total += 10;
+      if (progressTracker.allotment) total += 10;
+      if (progressTracker.roleplay && progressTracker.allotment) {
+        const c4 = document.getElementById('nav-check-4');
+        if (c4) c4.classList.remove('hidden');
+      }
+      // Section 5: 15% (read guide)
+      if (viewedSections.has(5)) {
+        total += 15;
+        const c5 = document.getElementById('nav-check-5');
+        if (c5) c5.classList.remove('hidden');
+      }
+
+      if (total > 100) total = 100;
+      document.getElementById('master-progress-text').innerText = total + '%';
+      document.getElementById('master-progress-bar').style.width = total + '%';
+    }
+
+    /* 5. NAVIGATION */
+    function switchSection(secNum) {
+      playSound('click');
+      viewedSections.add(secNum);
+      updateProgress();
+
+      document.querySelectorAll('.section-pane').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById('section-' + secNum);
+      if (target) target.classList.remove('hidden');
+
+      // Update Sidebar Nav Styles
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById('nav-sec-' + i);
+        if (!btn) continue;
+        const badge = btn.querySelector('.nav-num-badge');
+        if (i === secNum) {
+          btn.className = "w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-kvBlue text-white shadow-xs";
+          if (badge) badge.className = "nav-num-badge w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs font-black shrink-0 text-white";
+        } else {
+          btn.className = "w-full text-left p-2.5 rounded-xl transition-all flex items-center gap-2.5 bg-slate-50 text-slate-700 hover:bg-kvBlueLight border border-kvBlueBorder";
+          if (badge) badge.className = "nav-num-badge w-6 h-6 rounded-lg bg-kvBlueLight text-kvBlue flex items-center justify-center text-xs font-black shrink-0 border border-kvBlueBorder";
+        }
+      }
+
+      // Close mobile drawer if opened
+      if (window.innerWidth < 768) {
+        toggleMobileSidebar(false);
+      }
+
+      // Scroll top
+      const scrollArea = document.getElementById('main-content-scroll');
+      if (scrollArea) scrollArea.scrollTop = 0;
+    }
+
+    function nextSection(secNum) {
+      switchSection(secNum);
+    }
+
+    /* 6. FLASHCARDS */
+    function flipCard(el, idx) {
+      playSound('whoosh');
+      const inner = el.querySelector('.card-inner');
+      inner.classList.toggle('flipped');
+      progressTracker.cards.add(idx);
+      document.getElementById('flashcard-counter').innerText = progressTracker.cards.size + ' / 6 thẻ đã lật';
+      updateProgress();
+    }
+
+    /* 7. SIMULATION */
+    function runSimulation() {
+      playSound('click');
+      const btn = document.getElementById('btn-run-sim');
+      btn.disabled = true;
+      btn.className = "px-4 py-2 rounded-xl bg-slate-300 text-slate-500 font-bold text-xs cursor-not-allowed";
+
+      const s1 = document.getElementById('sim-step-1');
+      const s2 = document.getElementById('sim-step-2');
+      const s3 = document.getElementById('sim-step-3');
+      const s4 = document.getElementById('sim-step-4');
+
+      document.getElementById('sim-status-pill').innerText = "Đang truyền tải dữ liệu luồng...";
+
+      setTimeout(() => {
+        playSound('whoosh');
+        s1.className = "border-2 border-blue-500 rounded-2xl p-4 bg-blue-50 transition-all duration-300 shadow-xs";
+        document.getElementById('badge-step-1').className = "w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping";
+        document.getElementById('text-step-1').innerText = "Đơn mới #AGD-9982!";
+      }, 400);
+
+      setTimeout(() => {
+        playSound('whoosh');
+        s2.className = "border-2 border-indigo-500 rounded-2xl p-4 bg-indigo-50 transition-all duration-300 shadow-xs";
+        document.getElementById('badge-step-2').className = "w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping";
+        document.getElementById('text-step-2').innerText = "CM giải mã webhook ➔ KiotViet";
+      }, 1200);
+
+      setTimeout(() => {
+        playSound('whoosh');
+        s3.className = "border-2 border-emerald-500 rounded-2xl p-4 bg-emerald-50 transition-all duration-300 shadow-xs";
+        document.getElementById('badge-step-3').className = "w-2.5 h-2.5 rounded-full bg-emerald-600";
+        document.getElementById('text-step-3').innerText = "Đã nhận! Tồn phòng: 5 ➔ 4";
+      }, 2000);
+
+      setTimeout(() => {
+        playSound('success');
+        s4.className = "border-2 border-kvHotel rounded-2xl p-4 bg-emerald-50 transition-all duration-300 shadow-xs";
+        document.getElementById('badge-step-4').className = "w-2.5 h-2.5 rounded-full bg-kvHotel";
+        document.getElementById('text-step-4').innerText = "Cập nhật tồn sàn: 4 phòng!";
+        document.getElementById('sim-status-pill').innerText = "✅ Luồng đồng bộ 4 bước hoàn tất hoàn hảo!";
+        btn.disabled = false;
+        btn.className = "px-4 py-2 rounded-xl bg-kvHotel hover:bg-emerald-600 text-white font-extrabold text-xs flex items-center gap-2 shadow-sm transition-all";
+        progressTracker.sim = true;
+        updateProgress();
+      }, 2800);
+    }
+
+    function resetSimulation() {
+      playSound('click');
+      [1, 2, 3, 4].forEach(i => {
+        document.getElementById('sim-step-' + i).className = "border-2 border-kvBlueBorder rounded-2xl p-4 bg-[#F8FAFD] transition-all duration-300";
+        document.getElementById('badge-step-' + i).className = "w-2.5 h-2.5 rounded-full bg-slate-300";
+      });
+      document.getElementById('text-step-1').innerText = "Chờ đặt phòng";
+      document.getElementById('text-step-2').innerText = "Chờ truyền tin";
+      document.getElementById('text-step-3').innerText = "Phòng trống: 5";
+      document.getElementById('text-step-4').innerText = "Tồn sàn: 5";
+      document.getElementById('sim-status-pill').innerText = "Trạng thái: Sẵn sàng thử nghiệm";
+    }
+
+    /* 8. ROLEPLAY & ALLOTMENT */
+    function handleRoleplayChoice(choice) {
+      const fb = document.getElementById('roleplay-feedback');
+      fb.classList.remove('hidden');
+
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById('rp-btn-' + i);
+        if (!btn) continue;
+        const prefix = btn.querySelector('span');
+        if (i === choice) {
+          btn.className = "roleplay-opt-btn w-full text-left p-3.5 rounded-xl border-2 border-[#0058C6] bg-kvBlue text-white shadow-md font-medium text-xs transition-all";
+          if (prefix) prefix.className = "font-black text-white mr-1.5";
+        } else {
+          btn.className = "roleplay-opt-btn w-full text-left p-3.5 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs text-slate-800 transition-all font-medium";
+          if (prefix) prefix.className = "font-bold text-kvPrimary mr-1.5";
+        }
+      }
+
+      if (choice === 2) {
+        playSound('success');
+        fb.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border-2 border-emerald-300 shadow-xs";
+        fb.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> <strong>Chính xác!</strong> Bạn đã đồng cảm và nhấn mạnh rủi ro thảm họa Overbooking lúc nửa đêm để làm bật lên giá trị an tâm của Channel Manager.';
+        progressTracker.roleplay = true;
+      } else {
+        playSound('error');
+        fb.className = "p-3 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border-2 border-red-300 shadow-xs";
+        fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-600 mr-1.5"></i> <strong>Chưa tối ưu!</strong> Câu thoại này chưa giải thích được giá trị chống bán trùng phòng mà dễ gây cảm giác đe dọa hoặc buông xuôi cho khách. Hãy chọn lại phương án chuẩn!';
+        progressTracker.roleplay = false;
+      }
+      updateProgress();
+    }
+
+    function checkAllotment(val, clickedBtn) {
+      const fb = document.getElementById('allotment-feedback');
+      const badge = document.getElementById('allotment-badge');
+      fb.classList.remove('hidden');
+
+      const btns = document.querySelectorAll('.allotment-opt-btn');
+      btns.forEach(b => {
+        if (b === clickedBtn) {
+          b.className = "allotment-opt-btn p-3 rounded-xl border-2 border-[#0058C6] bg-kvBlue text-white shadow-md text-xs font-black transition-all text-center";
+        } else {
+          b.className = "allotment-opt-btn p-3 rounded-xl border-2 border-blue-200 bg-[#F0F7FF] hover:border-kvBlue hover:bg-blue-100/60 text-xs font-bold text-kvPrimary transition-all text-center";
+        }
+      });
+
+      if (val === 10) {
+        playSound('success');
+        badge.className = "text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-300 shadow-2xs";
+        badge.innerText = "Đạt: 10/10 phòng";
+        fb.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border-2 border-emerald-300 shadow-xs";
+        fb.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> <strong>Chính xác 100%!</strong> Quỹ phòng mở bán = 15 (tổng) - 3 (đã ở) - 2 (giữ tại quầy) = <strong>10 phòng</strong> được đẩy lên sàn.';
+        progressTracker.allotment = true;
+      } else {
+        playSound('error');
+        badge.className = "text-xs font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded border border-red-300 shadow-2xs";
+        badge.innerText = "Chưa chính xác";
+        fb.className = "p-3 rounded-xl text-xs font-semibold bg-red-50 text-red-800 border-2 border-red-300 shadow-xs";
+        fb.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-600 mr-1.5"></i> Chưa đúng! Lưu ý khách sạn có 15 phòng, trừ đi 3 phòng đang có khách ở và trừ tiếp 2 phòng giữ tại quầy.';
+        progressTracker.allotment = false;
+      }
+      updateProgress();
+    }
+
+    function triggerConfettiReward() {
+      playSound('success');
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+      }
+    }
+
+    window.onload = function() {
+      updateProgress();
+    };
+  </script>
+</body>
+</html>
