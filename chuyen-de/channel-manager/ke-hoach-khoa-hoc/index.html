@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kế Hoạch & Tiến Độ Khóa Học KiotViet Channel Manager - KiotViet L&D</title>
+    <meta name="description" content="Hệ sinh thái học liệu chuẩn hóa Khóa học KiotViet Channel Manager: Video bài giảng, Web học liệu tương tác, Đề thi trắc nghiệm LMS, Thực hành Worksheet và Cẩm nang PDF.">
+    
+    <!-- Favicon KiotViet -->
+    <link rel="icon" type="image/png" href="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2023/10/31095822/64x64.png" sizes="64x64">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PapaParse để tự động đồng bộ dữ liệu ngầm -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            word-break: break-word;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 12s linear infinite;
+        }
+
+        .lesson-card {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+            border-color: #93c5fd;
+        }
+
+        /* Action Buttons */
+        .btn-ready {
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-ready:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .btn-disabled {
+            cursor: not-allowed;
+            user-select: none;
+            opacity: 0.65;
+        }
+
+        /* Pulse live indicator */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .live-dot {
+            animation: pulse-ring 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. NAVBAR CHÍNH - MÀU XANH DƯƠNG KIOTVIET #0070F4 -->
+    <header class="sticky top-0 z-50 bg-[#0070F4] border-b border-[#0058C6] shadow-md">
+        <div class="max-w-[1360px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+            
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="#" class="inline-flex items-center gap-2 leading-none bg-white px-3 py-1.5 rounded-xl shadow-xs hover:bg-slate-50 transition-colors">
+                    <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6 object-contain block">
+                    <span class="text-slate-300 font-light text-sm select-none">|</span>
+                    <span class="font-extrabold text-[#0070F4] tracking-tight text-[11px] uppercase">L&D Portal</span>
+                </a>
+            </div>
+
+            <!-- BẢNG TRẠNG THÁI ĐỒNG BỘ TRỰC TIẾP TỪ GOOGLE SHEETS -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                
+                <!-- Trạng thái Sync -->
+                <div id="syncBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white border border-white/25 text-xs font-semibold backdrop-blur-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
+                    <span id="syncText">Đang kết nối Google Sheets...</span>
+                </div>
+
+                <!-- Nút Làm mới Dữ liệu tức thì -->
+                <button id="btnRefresh" onclick="manualRefresh()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white text-white hover:text-[#0070F4] border border-white/30 text-xs font-bold transition-all shadow-xs" title="Đồng bộ lại dữ liệu mới nhất từ Google Sheets">
+                    <i id="refreshIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
+                    <span class="hidden sm:inline">Làm mới</span>
+                </button>
+
+                <!-- Link mở trực tiếp Google Sheet gốc -->
+                <a href="https://docs.google.com/spreadsheets/d/1SOxKVVmRS5J0pvWSfv2djKJbAGkS1ojN1gLlp1ia3S0/edit" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs border border-emerald-500" title="Mở bảng theo dõi gốc trên Google Sheets">
+                    <i class="fa-solid fa-table-cells text-xs"></i>
+                    <span class="hidden md:inline">Google Sheets</span>
+                </a>
+
+            </div>
+
+        </div>
+    </header>
+
+    <!-- 2. MAIN CONTENT -->
+    <main class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 py-5 sm:py-7 flex-1 flex flex-col gap-6">
+        
+        <!-- HERO BANNER TONE XANH NAVY - EMERALD CHUYÊN NGHIỆP -->
+        <section class="rounded-2xl p-5 sm:p-7 bg-gradient-to-r from-[#002957] via-[#0b4d8c] to-[#047857] border border-slate-300 text-white grid grid-cols-1 lg:grid-cols-12 items-center gap-6 relative overflow-hidden shadow-lg">
+            
+            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="lg:col-span-5 relative z-10 flex items-start sm:items-center gap-4 min-w-0">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-600 text-white flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-lg shadow-blue-950/40 border border-emerald-200/30">
+                    <i class="fa-solid fa-arrows-spin animate-spin-slow"></i>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-emerald-200 border border-white/20 text-[11px] font-bold mb-1 backdrop-blur-md">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Khóa học Chuẩn hóa 2026
+                    </div>
+                    <h1 class="text-lg sm:text-xl md:text-2xl font-black tracking-tight leading-snug uppercase text-white mb-1 drop-shadow-xs">
+                        KẾ HOẠCH KHÓA HỌC CHANNEL MANAGER
+                    </h1>
+                    <p class="text-xs sm:text-sm text-blue-100 font-normal leading-relaxed">
+                        Hệ thống theo dõi tiến độ hoàn thiện học liệu: <strong>Video (A)</strong> • <strong>Web học liệu (B)</strong> • <strong>Quiz (C)</strong> • <strong>Thực hành (D)</strong> • <strong>Cẩm nang PDF (E)</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI: BỘ ĐẾM TIẾN ĐỘ THỰC TẾ (5 DẠNG HỌC LIỆU + GIÁO ÁN) -->
+            <div class="lg:col-span-7 relative z-10 grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5">
+                
+                <!-- 1. Video (A) -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span class="text-xl sm:text-2xl font-black text-rose-300 block" id="statVideo">0/18</span>
+                    <span class="text-[10px] sm:text-[10.5px] font-bold text-rose-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-circle-play text-[10px]"></i> A - Video
+                    </span>
+                </div>
+
+                <!-- 2. Web Học Liệu (B) -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span class="text-xl sm:text-2xl font-black text-sky-300 block" id="statWeb">0/18</span>
+                    <span class="text-[10px] sm:text-[10.5px] font-bold text-sky-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-laptop-code text-[10px]"></i> B - Web HTML
+                    </span>
+                </div>
+
+                <!-- 3. Quiz LMS (C) -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span class="text-xl sm:text-2xl font-black text-amber-300 block" id="statQuiz">0/18</span>
+                    <span class="text-[10px] sm:text-[10.5px] font-bold text-amber-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-list-check text-[10px]"></i> C - Quiz LMS
+                    </span>
+                </div>
+
+                <!-- 4. Thực hành Word (D) -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span class="text-xl sm:text-2xl font-black text-teal-300 block" id="statWorksheet">0/18</span>
+                    <span class="text-[10px] sm:text-[10.5px] font-bold text-teal-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-file-pen text-[10px]"></i> D - Thực Hành
+                    </span>
+                </div>
+
+                <!-- 5. Cẩm nang PDF (E) -->
+                <div class="col-span-2 sm:col-span-1 bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span class="text-xl sm:text-2xl font-black text-emerald-300 block" id="statPdf">0/18</span>
+                    <span class="text-[10px] sm:text-[10.5px] font-bold text-emerald-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-file-pdf text-[10px]"></i> E - Cẩm Nang PDF
+                    </span>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC CHƯƠNG -->
+        <section class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="relative flex-1 min-w-[220px]">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input id="searchInput" type="text" oninput="handleSearch()" placeholder="Tìm theo mã bài, tên bài học, nội dung..." 
+                       class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0070F4] focus:bg-white transition-all">
+            </div>
+
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                <button onclick="filterChapter('ALL')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-[#0070F4] text-white shadow-xs">Tất cả</button>
+                <button onclick="filterChapter('Chương 1')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 1</button>
+                <button onclick="filterChapter('Chương 2')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 2</button>
+                <button onclick="filterChapter('Chương 3')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 3</button>
+                <button onclick="filterChapter('Chương 4')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 4</button>
+                <button onclick="filterChapter('Chương 5')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 5</button>
+                <button onclick="filterChapter('Chương 6')" class="chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">Chương 6</button>
+            </div>
+        </section>
+
+        <!-- DANH SÁCH BÀI HỌC THEO DÕI HỌC LIỆU -->
+        <section id="lessonsContainer" class="flex flex-col gap-4 min-h-[350px]">
+            <!-- Render bằng JavaScript -->
+        </section>
+
+    </main>
+
+    <!-- FOOTER BẢN QUYỀN KIOTVIET L&D -->
+    <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 py-6 px-4 text-center text-xs mt-auto">
+        <div class="max-w-[1360px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="font-extrabold text-white">KiotViet L&D</span>
+                <span>•</span>
+                <span>Chương trình Đào tạo Chuyên sâu KiotViet Hotel Channel Manager 2026</span>
+            </div>
+            <div class="text-slate-500">
+                Tự động đồng bộ trực tiếp từ Google Sheet ID: <code class="text-slate-400 font-mono">1SOxKVVmRS5J0pvWSfv2djKJbAGkS1ojN1gLlp1ia3S0</code>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL POPUP XEM TRỰC TIẾP VIDEO / WEB / TÀI LIỆU -->
+    <div id="learningModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex flex-col">
+        <div class="flex justify-between items-center px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-white shrink-0">
+            <div class="flex items-center gap-2.5 truncate max-w-[70%]">
+                <span id="modalCategoryBadge" class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-600 text-white shrink-0">Học liệu</span>
+                <h3 id="modalTitle" class="font-bold text-xs sm:text-sm truncate">Nội dung học liệu</h3>
+            </div>
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button onclick="copyModalLink()" class="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-xs flex items-center gap-1.5 border border-slate-700" title="Sao chép link">
+                    <i class="fa-regular fa-copy"></i>
+                    <span class="hidden sm:inline text-[11px]">Sao chép link</span>
+                </button>
+                <a id="modalExternalLink" href="#" target="_blank" rel="noopener noreferrer" title="Mở sang tab mới" 
+                   class="text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-xs flex items-center gap-1.5 border border-slate-700">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span class="hidden sm:inline text-[11px]">Mở tab mới</span>
+                </a>
+                <button onclick="closeModal()" class="text-white hover:text-red-400 p-2 rounded-lg hover:bg-slate-800 transition-colors ml-1" title="Đóng (ESC)">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 w-full bg-slate-950 relative flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+            <iframe id="modalIframe" src="" class="w-full h-full border-0 rounded-xl bg-white shadow-2xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- TOAST THÔNG BÁO -->
+    <div id="copy-toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[110] bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl border border-slate-700 flex items-center gap-2 opacity-0 -translate-y-4 pointer-events-none transition-all duration-300">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-sm" id="toast-icon"></i> 
+        <span id="toast-message">Đã sao chép liên kết!</span>
+    </div>
+
+    <!-- SCRIPT ĐIỀU KHIỂN & ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG -->
+    <script>
+        const DATA_SOURCE_ID = '1SOxKVVmRS5J0pvWSfv2djKJbAGkS1ojN1gLlp1ia3S0';
+        
+        // CÁC ENDPOINT ĐỒNG BỘ DỮ LIỆU GOOGLE SHEETS
+        const ENDPOINTS = [
+            `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/gviz/tq?tqx=out:csv`,
+            `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/export?format=csv`
+        ];
+
+        // DỮ LIỆU CHUẨN MẶC ĐỊNH 18 BÀI HỌC (ĐÃ CẬP NHẬT ĐẦY ĐỦ LINK MỚI NHẤT)
+        const DEFAULT_LESSONS = [
+  {
+    "stt": "1",
+    "chapter": "Chương 1",
+    "title": "Bài 1.1: Bản chất Channel Manager & Bộ thuật ngữ cốt lõi Khách sạn",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1JV2ajr7L1SbBPJVh23gL1fb6J6wdJdc_C8uwA4uU9GE/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "https://drive.google.com/file/d/1ocONlScolZBmMrfNhSH7I9Ue3KNYjCdg/view",
+      "label": "Video MP4"
+    },
+    "web": {
+      "url": "https://kiotvietlnd.github.io/elearning/chuyen-de/channel-manager/bai-1-1-ban-chat-channel-manager.html",
+      "label": "Web Học liệu"
+    },
+    "quiz": {
+      "url": "https://drive.google.com/file/d/1w60YbhMuuCIigiITuTtPdzt1S8KctmiZ/view",
+      "label": "Đề thi 10 cột"
+    },
+    "worksheet": {
+      "url": "https://docs.google.com/document/d/1Aj2urcpCsB7atGamDmivOhk-s8aFYAx_/edit",
+      "label": "Thực hành Word"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1VqZEkWDU2nBx8ry4CgDsUtSwJczDp4sz/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "2",
+    "chapter": "Chương 1",
+    "title": "Bài 1.2: Kiến trúc luồng dữ liệu & Phân định KiotViet - Hotel Link - OTAs",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1NnmHRHJlWQlxna7TqO5rIwKc64LyuyEyEKc91D75AkM/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "https://drive.google.com/file/d/1V_2UwuxZ9kKJvbef805cK3x-vAM8R2p7/view",
+      "label": "Video MP4"
+    },
+    "web": {
+      "url": "https://kiotvietlnd.github.io/elearning/chuyen-de/channel-manager/bai-1-2-kien-truc-luong-du-lieu.html",
+      "label": "Web Học liệu"
+    },
+    "quiz": {
+      "url": "https://drive.google.com/file/d/1Qnl3iVnZkK3SEtC_iBfGjaCo7CqUvEHC/view",
+      "label": "Đề thi 10 cột"
+    },
+    "worksheet": {
+      "url": "https://docs.google.com/document/d/11jf3eTY1H0fuTDOzodE4Iv_u39OY7jpe/edit",
+      "label": "Thực hành Word"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1a8qFMpM7I2spRxz_JAk5y7BZbC9q9UD4/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "3",
+    "chapter": "Chương 1",
+    "title": "Bài 1.3: Checklist thẩm định gian hàng trước khi kết nối (Pre-onboarding)",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1qxy09uyB4NMhdoDZKVtSQ8rveUiX1KCcycYFCPgPRLU/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1evU2BGj4ji9szRRjsQCklFOCIqaKMUDv/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "4",
+    "chapter": "Chương 2",
+    "title": "Bài 2.1: Quy trình tiếp nhận yêu cầu từ NVKD qua Ticket CRM",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1O-CKln4VNNGBS7CopShvwiMwln-SSm6v2cVEuZeJKnc/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1kPwSSxhkq9OYXgrloIdQv3mxH1x338WF/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "5",
+    "chapter": "Chương 2",
+    "title": "Bài 2.2: Ý nghĩa 4 gói Hotel Link & Tư vấn Nâng gói, Nâng số lượng phòng",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1vrvpGGul82bBHYSWeu_hyz80kclzJ9Nu1Nu1IAdOyTY/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1doeX14egCxXZAG0hMBNOJT7wfVBkqgxr/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "6",
+    "chapter": "Chương 2",
+    "title": "Bài 2.3: Tiếp nhận & Bàn giao thông tin kết nối sau thiết lập ban đầu",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1WbLW0OhHAaqNjfPMBmSqTpj_b31eHCUMyvJkSRm63FU/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1W87rdkOdZMlHOiPq-GP5ksKPE1LLAV99/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "7",
+    "chapter": "Chương 3",
+    "title": "Bài 3.1: Kích hoạt phân hệ OTAs trên KiotViet bằng Hotel ID & Key",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1mzjpMuCgiN4pmALdpTVM6H6v-x6A2f0hD0uGHFuhFdA/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/17r7xe89ltQe5-rd45kAr7B_6Z39zf6XQ/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "8",
+    "chapter": "Chương 3",
+    "title": "Bài 3.2: Thêm Hạng phòng & Gói giá trên CM, Ghép nối Hạng phòng KiotViet",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1N15-3G43de-aDNYq8aDzt5hV-LuhDYiClW_-LCWbfJo/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/1nd1hgGoZXk9qo3rsKnMxy6ABToUq6ZzQ/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "9",
+    "chapter": "Chương 3",
+    "title": "Bài 3.3: Cấu hình Thiết lập chung: Xử lý Hủy phòng & Ghi nhận OTAs thu hộ",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1soAr8_7igDP3p0YaNCnb88KbhIlSB8FCPIZ0BIrNY60/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "https://drive.google.com/file/d/12KkzySuwIuIRD7bJT_EbXK_gDDOTVkNR/view",
+      "label": "Cẩm nang PDF"
+    }
+  },
+  {
+    "stt": "10",
+    "chapter": "Chương 4",
+    "title": "Bài 4.1: Hướng dẫn Liên kết & Liên kết lại (Re-connect) kênh Agoda & Agoda Homes",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1vQ16gAt242gxjLr3edHGheX9wJtErl8pYhz5N_TKVnM/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "11",
+    "chapter": "Chương 4",
+    "title": "Bài 4.2: Hướng dẫn Liên kết & Liên kết lại (Re-connect) kênh Booking.com",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1NH4WZn9zu1NP9JeIkzvkrvmRmXSWeQ1Tl0eP2FLmR9k/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "12",
+    "chapter": "Chương 4",
+    "title": "Bài 4.3: Hướng dẫn Liên kết kênh Airbnb & Nguyên lý kết nối các sàn OTA khác",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/19fGj6NFBTIv4BqzCXq8kqdWGI4OXmBWROhdIB4y9uPY/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "13",
+    "chapter": "Chương 5",
+    "title": "Bài 5.1: Tiếp nhận & Kiểm tra Đơn đặt phòng tự động từ OTAs",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1fxVdiF8PcsaLd7ZB1hEdUjSRHHECatkh7MqSVOHcna0/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "14",
+    "chapter": "Chương 5",
+    "title": "Bài 5.2: Xử lý Đơn đặt phòng rơi vào tab Lỗi Đồng Bộ",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/19DpT5Td0QocN4Hy3vxcPYQdC-QfRxnMouj6yXtkdH3Y/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "15",
+    "chapter": "Chương 5",
+    "title": "Bài 5.3: Quản lý SL phòng, Giá tiêu chuẩn, Giá riêng & Khóa phòng (Stop Sell)",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1TLfUweHUfTG6bcZ_Wa25g-wGMd3ISpSZDoCOAU3JVUY/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "16",
+    "chapter": "Chương 6",
+    "title": "Bài 6.1: Xử lý Tình huống Bán trùng phòng (Overbooking / Hết phòng)",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1NHrivNCDOG5xac4NPEv-dEYK5zGbS_r3q2WRHyCvkzk/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "17",
+    "chapter": "Chương 6",
+    "title": "Bài 6.2: Hỗ trợ Khách hàng Liên kết thêm kênh, Đổi kênh gói Lite & Lệch giá",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1ynHEPNHDuYSnuQi_mWiXud3_OUE61BrBPR2XiyuHPTI/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  },
+  {
+    "stt": "18",
+    "chapter": "Chương 6",
+    "title": "Bài 6.3: Quy trình tạo Ticket chuyển tiếp ca lỗi kỹ thuật đối tác",
+    "giaoAn": {
+      "url": "https://docs.google.com/document/d/1GuqPU2OMXqSUvkWrmbtLgkJXxTHoEbsXekbZtUlrKhs/edit",
+      "label": "Giáo án Docs"
+    },
+    "video": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "web": {
+      "url": "",
+      "label": "[Đang triển khai]"
+    },
+    "quiz": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "worksheet": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    },
+    "pdf": {
+      "url": "",
+      "label": "[Đang sản xuất]"
+    }
+  }
+];
+
+        let allLessons = JSON.parse(JSON.stringify(DEFAULT_LESSONS));
+        let activeChapterFilter = 'ALL';
+        let searchQuery = '';
+        let currentModalUrl = '';
+        let lastSyncTime = null;
+
+        function cleanText(str) {
+            if (!str) return '';
+            return str.toString()
+                      .normalize('NFD')
+                      .replace(/[\u0300-\u036f]/g, '')
+                      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                      .toLowerCase()
+                      .trim();
+        }
+
+        function isAvailableText(val) {
+            if (!val) return false;
+            const s = cleanText(val);
+            if (!s || s === '-' || s.includes('dang san xuat') || s.includes('dang trien khai') || s.includes('chua co')) {
+                return false;
+            }
+            return true;
+        }
+
+        function extractLessonCode(title) {
+            const m = title.match(/Bài\s*(\d+\.\d+)/i);
+            return m ? m[1] : '';
+        }
+
+        // Format iframe link an toàn để nhúng
+        function formatIframeUrl(url) {
+            if (!url) return '';
+            if (url.includes('drive.google.com/file/d/')) {
+                return url.replace(/\/(view|edit)(\?.*)?$/, '/preview');
+            }
+            if (url.includes('docs.google.com/document/d/')) {
+                return url.replace(/\/(edit|view)(\?.*)?$/, '/preview');
+            }
+            return url;
+        }
+
+        function findDefaultLesson(stt, title) {
+            const code = extractLessonCode(title);
+            return DEFAULT_LESSONS.find(l => (code && extractLessonCode(l.title) === code) || l.stt === stt || l.title === title);
+        }
+
+        function resolveItem(cellVal, defItem, defaultLabel) {
+            if (!cellVal) return defItem || { url: '', label: 'Đang sản xuất' };
+            const trimmed = cellVal.trim();
+            
+            if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+                return { url: trimmed, label: defaultLabel };
+            }
+
+            if (!isAvailableText(trimmed)) {
+                return { url: '', label: trimmed || 'Đang sản xuất' };
+            }
+
+            if (defItem && defItem.url) {
+                return { url: defItem.url, label: trimmed };
+            }
+
+            return { url: '', label: trimmed };
+        }
+
+        // Phân tích dữ liệu CSV trả về từ Google Sheets
+        function parseRemoteFeed(rows) {
+            if (!rows || rows.length < 2) return false;
+
+            let headerIdx = -1;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const rowStr = cleanText(rows[i].join(' '));
+                if (rowStr.includes('bai hoc') && (rowStr.includes('stt') || rowStr.includes('chuong'))) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+
+            if (headerIdx === -1) return false;
+
+            const headerRow = rows[headerIdx].map(h => cleanText(h));
+            
+            let colSTT = -1, colChapter = -1, colTitle = -1, colGiaoAn = -1, colVideo = -1, colWeb = -1, colQuiz = -1, colWorksheet = -1, colPdf = -1;
+
+            for (let c = 0; c < headerRow.length; c++) {
+                const h = headerRow[c];
+                // Bỏ qua nếu cột 0 là superheader gộp
+                if (c === 0 && (h.includes('kiotviet') || h.includes('he sinh thai'))) {
+                    colSTT = 0;
+                    continue;
+                }
+                if (colSTT === -1 && (h === 'stt' || h.endsWith('stt'))) colSTT = c;
+                if (colChapter === -1 && h.includes('chuong')) colChapter = c;
+                if (colTitle === -1 && h.includes('bai hoc')) colTitle = c;
+                if (colGiaoAn === -1 && h.includes('giao an')) colGiaoAn = c;
+                if (colVideo === -1 && (h.includes('video') || h.startsWith('a -'))) colVideo = c;
+                if (colWeb === -1 && (h.includes('github') || h.includes('web') || h.startsWith('b -'))) colWeb = c;
+                if (colQuiz === -1 && (h.includes('quiz') || h.includes('trac nghiem') || h.startsWith('c -'))) colQuiz = c;
+                if (colWorksheet === -1 && (h.includes('worksheet') || h.includes('thuc hanh') || h.startsWith('d -'))) colWorksheet = c;
+                if (colPdf === -1 && (h.includes('pdf') || h.includes('cam nang') || h.includes('tra cuu') || h.startsWith('e -'))) colPdf = c;
+            }
+
+            // Fallback cột mặc định nếu không tìm thấy
+            if (colSTT === -1) colSTT = 0;
+            if (colChapter === -1) colChapter = 1;
+            if (colTitle === -1) colTitle = 2;
+            if (colGiaoAn === -1) colGiaoAn = 3;
+            if (colVideo === -1) colVideo = 4;
+            if (colWeb === -1) colWeb = 5;
+            if (colQuiz === -1) colQuiz = 6;
+            if (colWorksheet === -1) colWorksheet = 7;
+            if (colPdf === -1) colPdf = 8;
+
+            const parsed = [];
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length === 0) continue;
+
+                const titleVal = (colTitle < r.length && r[colTitle]) ? r[colTitle].trim() : '';
+                if (!titleVal || !titleVal.toLowerCase().includes('bài')) continue;
+
+                const sttVal = (colSTT < r.length && r[colSTT]) ? r[colSTT].trim() : (parsed.length + 1).toString();
+                const defItem = findDefaultLesson(sttVal, titleVal);
+                const chapVal = ((colChapter < r.length && r[colChapter]) ? r[colChapter].trim() : '') || defItem?.chapter || 'Chương 1';
+
+                parsed.push({
+                    stt: sttVal,
+                    chapter: chapVal,
+                    title: titleVal,
+                    giaoAn: resolveItem(colGiaoAn < r.length ? r[colGiaoAn] : '', defItem?.giaoAn, 'Giáo án Docs'),
+                    video: resolveItem(colVideo < r.length ? r[colVideo] : '', defItem?.video, 'Video MP4'),
+                    web: resolveItem(colWeb < r.length ? r[colWeb] : '', defItem?.web, 'Web Học liệu'),
+                    quiz: resolveItem(colQuiz < r.length ? r[colQuiz] : '', defItem?.quiz, 'Đề thi 10 cột'),
+                    worksheet: resolveItem(colWorksheet < r.length ? r[colWorksheet] : '', defItem?.worksheet, 'Thực hành Word'),
+                    pdf: resolveItem(colPdf < r.length ? r[colPdf] : '', defItem?.pdf, 'Cẩm nang PDF')
+                });
+            }
+
+            if (parsed.length > 0) {
+                allLessons = parsed;
+                lastSyncTime = new Date();
+                updateSyncStatus('success');
+                updateTopCounters();
+                renderLessons();
+                return true;
+            }
+            return false;
+        }
+
+        // Đồng bộ dữ liệu trực tiếp với Google Sheets (Chống Cache hoàn toàn)
+        async function fetchLiveFeed(isManual = false) {
+            const syncText = document.getElementById('syncText');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
+            if (syncText) syncText.innerText = 'Đang đồng bộ Google Sheets...';
+
+            let success = false;
+            for (const endpoint of ENDPOINTS) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+                    // Thêm cache-busting timestamp và random token
+                    const cacheBuster = `t=${Date.now()}&_r=${Math.random()}`;
+                    const freshUrl = endpoint.includes('?') ? `${endpoint}&${cacheBuster}` : `${endpoint}?${cacheBuster}`;
+
+                    const response = await fetch(freshUrl, {
+                        signal: controller.signal,
+                        cache: 'no-store',
+                        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) continue;
+
+                    const csvText = await response.text();
+                    const parsedData = Papa.parse(csvText, { skipEmptyLines: 'greedy' });
+
+                    if (parsedData?.data && parseRemoteFeed(parsedData.data)) {
+                        success = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Thử endpoint tiếp theo
+                }
+            }
+
+            if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+
+            if (success) {
+                if (isManual) showToast('Đã đồng bộ dữ liệu mới nhất từ Google Sheets!', 'success');
+            } else {
+                updateSyncStatus('fallback');
+                if (isManual) showToast('Không thể kết nối Google Sheets, đang dùng bản lưu tạm!', 'error');
+            }
+        }
+
+        function manualRefresh() {
+            fetchLiveFeed(true);
+        }
+
+        function updateSyncStatus(status) {
+            const syncBadge = document.getElementById('syncBadge');
+            const syncText = document.getElementById('syncText');
+            if (!syncBadge || !syncText) return;
+
+            syncBadge.classList.remove('hidden');
+            if (status === 'success') {
+                const timeStr = lastSyncTime ? lastSyncTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+                syncText.innerHTML = `Đồng bộ trực tiếp • <span class="font-bold text-emerald-300">${timeStr}</span>`;
+            } else {
+                syncText.innerHTML = `Bản lưu sẵn (Offline)`;
+            }
+        }
+
+        function updateTopCounters() {
+            const vidEl = document.getElementById('statVideo');
+            const webEl = document.getElementById('statWeb');
+            const quizEl = document.getElementById('statQuiz');
+            const wsEl = document.getElementById('statWorksheet');
+            const pdfEl = document.getElementById('statPdf');
+
+            const total = allLessons.length;
+            const vidCount = allLessons.filter(l => l.video?.url).length;
+            const webCount = allLessons.filter(l => l.web?.url).length;
+            const quizCount = allLessons.filter(l => l.quiz?.url).length;
+            const wsCount = allLessons.filter(l => l.worksheet?.url).length;
+            const pdfCount = allLessons.filter(l => l.pdf?.url).length;
+
+            if (vidEl) vidEl.innerText = `${vidCount}/${total}`;
+            if (webEl) webEl.innerText = `${webCount}/${total}`;
+            if (quizEl) quizEl.innerText = `${quizCount}/${total}`;
+            if (wsEl) wsEl.innerText = `${wsCount}/${total}`;
+            if (pdfEl) pdfEl.innerText = `${pdfCount}/${total}`;
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            searchQuery = cleanText(input?.value || '');
+            renderLessons();
+        }
+
+        function filterChapter(chap) {
+            activeChapterFilter = chap;
+            const buttons = document.querySelectorAll('.chapter-btn');
+            buttons.forEach(btn => {
+                if ((chap === 'ALL' && btn.innerText.includes('Tất cả')) || btn.innerText.includes(chap)) {
+                    btn.className = 'chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-[#0070F4] text-white shadow-xs';
+                } else {
+                    btn.className = 'chapter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+            renderLessons();
+        }
+
+        // Render toàn bộ bài học theo nhóm Chương
+        function renderLessons() {
+            const container = document.getElementById('lessonsContainer');
+            if (!container) return;
+
+            // Lọc dữ liệu
+            const filtered = allLessons.filter(item => {
+                // Lọc theo chương
+                if (activeChapterFilter !== 'ALL' && !item.chapter.includes(activeChapterFilter)) {
+                    return false;
+                }
+                // Lọc theo tìm kiếm
+                if (searchQuery) {
+                    const fullText = cleanText(`${item.stt} ${item.chapter} ${item.title}`);
+                    return fullText.includes(searchQuery);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+                        <i class="fa-solid fa-magnifying-glass text-3xl text-slate-300 mb-2"></i>
+                        <p class="text-sm font-bold">Không tìm thấy bài học phù hợp với từ khóa "${searchQuery}"</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Nhóm theo chương
+            const chaptersMap = new Map();
+            filtered.forEach(item => {
+                const chap = item.chapter || 'Chương 1';
+                if (!chaptersMap.has(chap)) {
+                    chaptersMap.set(chap, []);
+                }
+                chaptersMap.get(chap).push(item);
+            });
+
+            let fullHtml = '';
+
+            chaptersMap.forEach((lessonsInChap, chapName) => {
+                fullHtml += `
+                    <div class="flex items-center gap-3 pt-3 pb-1">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#0070F4]"></span>
+                        <h2 class="text-sm sm:text-base font-extrabold text-[#002957] uppercase tracking-wide">
+                            ${chapName}
+                        </h2>
+                        <span class="text-xs font-bold text-slate-400">(${lessonsInChap.length} bài)</span>
+                        <div class="flex-1 h-px bg-slate-200"></div>
+                    </div>
+                `;
+
+                lessonsInChap.forEach(item => {
+                    const readyCount = [item.video?.url, item.web?.url, item.quiz?.url, item.worksheet?.url, item.pdf?.url].filter(Boolean).length;
+                    const safeTitle = item.title.replace(/'/g, "\\'");
+
+                    // Nút Giáo án (Docs)
+                    const btnGiaoAn = item.giaoAn?.url ? `
+                        <button onclick="openModal('${item.giaoAn.url}', '${safeTitle}', 'GIAOAN')" 
+                           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 text-[11px] font-bold transition-all btn-ready" title="Xem Giáo án chi tiết trên Google Docs">
+                            <i class="fa-solid fa-file-lines text-[10px]"></i>
+                            <span>Giáo án</span>
+                        </button>
+                    ` : '';
+
+                    // 1. NÚT VIDEO (A)
+                    const btnVideo = item.video?.url ? `
+                        <button onclick="openModal('${item.video.url}', '${safeTitle}', 'VIDEO')" 
+                           class="h-9 px-3 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 hover:border-rose-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Xem Video bài giảng">
+                            <i class="fa-solid fa-circle-play text-xs text-rose-600"></i>
+                            <span>Video (A)</span>
+                        </button>
+                    ` : `
+                        <div class="h-9 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 btn-disabled select-none" title="Video bài giảng (Đang sản xuất)">
+                            <i class="fa-solid fa-circle-play text-xs text-slate-400"></i>
+                            <span>Video (A)</span>
+                        </div>
+                    `;
+
+                    // 2. NÚT WEB HỌC LIỆU (B)
+                    const btnWeb = item.web?.url ? `
+                        <button onclick="openModal('${item.web.url}', '${safeTitle}', 'WEB')" 
+                           class="h-9 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white border border-sky-500 text-xs font-bold transition-all btn-ready shadow-2xs flex items-center justify-center gap-1.5" title="Mở Web học liệu tương tác">
+                            <i class="fa-solid fa-laptop-code text-xs"></i>
+                            <span>Web Học liệu (B)</span>
+                        </button>
+                    ` : `
+                        <div class="h-9 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 btn-disabled select-none" title="Web Học liệu (Đang triển khai)">
+                            <i class="fa-solid fa-laptop-code text-xs text-slate-400"></i>
+                            <span>Web Học liệu (B)</span>
+                        </div>
+                    `;
+
+                    // 3. NÚT TRẮC NGHIỆM QUIZ (C)
+                    const btnQuiz = item.quiz?.url ? `
+                        <button onclick="openModal('${item.quiz.url}', '${safeTitle}', 'QUIZ')" 
+                           class="h-9 px-3 rounded-xl bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white border border-amber-300 hover:border-amber-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Đề thi trắc nghiệm LMS 10 cột">
+                            <i class="fa-solid fa-list-check text-xs text-amber-600"></i>
+                            <span>Quiz (C)</span>
+                        </button>
+                    ` : `
+                        <div class="h-9 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 btn-disabled select-none" title="Đề thi trắc nghiệm LMS (Đang sản xuất)">
+                            <i class="fa-solid fa-list-check text-xs text-slate-400"></i>
+                            <span>Quiz (C)</span>
+                        </div>
+                    `;
+
+                    // 4. NÚT THỰC HÀNH WORKSHEET (D)
+                    const btnWorksheet = item.worksheet?.url ? `
+                        <button onclick="openModal('${item.worksheet.url}', '${safeTitle}', 'WORKSHEET')" 
+                           class="h-9 px-3 rounded-xl bg-teal-50 hover:bg-teal-600 text-teal-800 hover:text-white border border-teal-300 hover:border-teal-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Phiếu bài tập thực hành Word">
+                            <i class="fa-solid fa-file-pen text-xs text-teal-600"></i>
+                            <span>Thực hành (D)</span>
+                        </button>
+                    ` : `
+                        <div class="h-9 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 btn-disabled select-none" title="Thực hành Word (Đang sản xuất)">
+                            <i class="fa-solid fa-file-pen text-xs text-slate-400"></i>
+                            <span>Thực hành (D)</span>
+                        </div>
+                    `;
+
+                    // 5. NÚT CẨM NANG PDF (E)
+                    const btnPdf = item.pdf?.url ? `
+                        <button onclick="openModal('${item.pdf.url}', '${safeTitle}', 'PDF')" 
+                           class="h-9 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white border border-emerald-300 hover:border-emerald-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Xem Cẩm nang tra cứu 2 trang PDF">
+                            <i class="fa-solid fa-file-pdf text-xs text-emerald-600"></i>
+                            <span>Cẩm nang PDF (E)</span>
+                        </button>
+                    ` : `
+                        <div class="h-9 px-3 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 btn-disabled select-none" title="Cẩm nang PDF (Đang sản xuất)">
+                            <i class="fa-solid fa-file-pdf text-xs text-slate-400"></i>
+                            <span>Cẩm nang PDF (E)</span>
+                        </div>
+                    `;
+
+                    // Badge tiến độ hoàn thiện
+                    const progressBadge = readyCount === 5 ? `
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300 text-[11px] font-extrabold flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i> Hoàn thành 5/5
+                        </span>
+                    ` : readyCount > 0 ? `
+                        <span class="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-800 border border-blue-300 text-[11px] font-extrabold flex items-center gap-1">
+                            <i class="fa-solid fa-spinner text-blue-600"></i> Sẵn sàng ${readyCount}/5
+                        </span>
+                    ` : `
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-300 text-[11px] font-bold flex items-center gap-1">
+                            <i class="fa-regular fa-clock text-slate-400"></i> Đang sản xuất
+                        </span>
+                    `;
+
+                    fullHtml += `
+                        <article class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-col gap-3.5 lesson-card shadow-xs">
+                            
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+                                <div class="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
+                                    <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#002957] text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-xs">
+                                        ${item.stt}
+                                    </span>
+                                    <div class="min-w-0 flex-1 flex flex-wrap items-center gap-2">
+                                        <h3 class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+                                            ${item.title}
+                                        </h3>
+                                        ${btnGiaoAn}
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto pl-9 sm:pl-0">
+                                    ${progressBadge}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end w-full pt-0.5">
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 shrink-0 w-full sm:w-auto justify-end">
+                                    ${btnVideo}
+                                    ${btnWeb}
+                                    ${btnQuiz}
+                                    ${btnWorksheet}
+                                    ${btnPdf}
+                                </div>
+                            </div>
+
+                        </article>
+                    `;
+                });
+            });
+
+            container.innerHTML = fullHtml;
+        }
+
+        // Mở Modal xem học liệu
+        function openModal(rawUrl, title, type) {
+            if (!rawUrl || rawUrl === '#' || rawUrl === '') {
+                showToast('Học liệu này đang trong quá trình sản xuất!', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('learningModal');
+            const iframe = document.getElementById('modalIframe');
+            const mTitle = document.getElementById('modalTitle');
+            const mBadge = document.getElementById('modalCategoryBadge');
+            const extLink = document.getElementById('modalExternalLink');
+
+            if (!modal || !iframe) return;
+
+            currentModalUrl = rawUrl;
+            mTitle.textContent = title;
+
+            if (type === 'GIAOAN') {
+                mBadge.textContent = 'Giáo Án Docs';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-indigo-600 text-white shrink-0';
+            } else if (type === 'VIDEO') {
+                mBadge.textContent = 'Video Bài Giảng (A)';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-rose-600 text-white shrink-0';
+            } else if (type === 'WEB') {
+                mBadge.textContent = 'Web Học Liệu HTML (B)';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-sky-600 text-white shrink-0';
+            } else if (type === 'QUIZ') {
+                mBadge.textContent = 'Đề Thi LMS 10 Cột (C)';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-600 text-white shrink-0';
+            } else if (type === 'WORKSHEET') {
+                mBadge.textContent = 'Thực Hành Word (D)';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-teal-600 text-white shrink-0';
+            } else if (type === 'PDF') {
+                mBadge.textContent = 'Cẩm Nang Tra Cứu PDF (E)';
+                mBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-600 text-white shrink-0';
+            }
+
+            if (extLink) extLink.href = rawUrl;
+
+            // Xử lý link nhúng an toàn
+            const iframeSrc = formatIframeUrl(rawUrl);
+            iframe.src = iframeSrc;
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('learningModal');
+            const iframe = document.getElementById('modalIframe');
+            if (!modal) return;
+            if (iframe) iframe.src = '';
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function copyModalLink() {
+            if (!currentModalUrl) return;
+            navigator.clipboard.writeText(currentModalUrl).then(() => {
+                showToast('Đã sao chép liên kết vào clipboard!', 'success');
+            }).catch(() => {
+                showToast('Không thể sao chép liên kết!', 'error');
+            });
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('copy-toast');
+            const text = document.getElementById('toast-message');
+            const icon = document.getElementById('toast-icon');
+            if (!toast || !text) return;
+
+            text.innerText = msg;
+            if (icon) {
+                icon.className = type === 'success' 
+                    ? 'fa-solid fa-circle-check text-emerald-400 text-sm' 
+                    : 'fa-solid fa-circle-exclamation text-amber-400 text-sm';
+            }
+
+            toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+            }, 2500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTopCounters();
+            renderLessons();
+
+            // Tự động đồng bộ ngay khi tải trang
+            fetchLiveFeed(false);
+
+            // Tự động kiểm tra và cập nhật định kỳ mỗi 30 giây
+            setInterval(() => {
+                fetchLiveFeed(false);
+            }, 30000);
+
+            // Tự động kiểm tra lại khi người dùng quay lại tab trình duyệt
+            window.addEventListener('focus', () => {
+                fetchLiveFeed(false);
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    fetchLiveFeed(false);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+
+            document.getElementById('learningModal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'learningModal') closeModal();
+            });
+        });
+    </script>
+</body>
+</html>
