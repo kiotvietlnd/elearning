@@ -249,6 +249,36 @@
         // DỮ LIỆU CHUẨN MẶC ĐỊNH 18 BÀI HỌC (ĐÃ CẬP NHẬT ĐẦY ĐỦ LINK MỚI NHẤT)
         const DEFAULT_LESSONS = [
     {
+        "stt": "0",
+        "chapter": "Mở đầu khóa học",
+        "title": "Bài 0: Giới thiệu khóa học, Mục tiêu, Yêu cầu, Cấu trúc, Cách học & Checklist tự theo dõi",
+        "isIntro": true,
+        "giaoAn": {
+            "url": "https://docs.google.com/document/d/1F7oJ-5aa4RdjS-8Vp5FoXop7MDkGRJDkVdR10tY8B4c/edit?usp=drivesdk",
+            "label": "Giáo án Bài 0"
+        },
+        "video": {
+            "url": "",
+            "label": "Không có Video"
+        },
+        "web": {
+            "url": "https://kiotvietlnd.github.io/elearning/chuyen-de/channel-manager/bai-0-gioi-thieu-khoa-hoc.html",
+            "label": "Web Học liệu"
+        },
+        "quiz": {
+            "url": "",
+            "label": ""
+        },
+        "worksheet": {
+            "url": "https://docs.google.com/document/d/1kPkITAkguG3aiP22GjfFMw2PIckrKtKF-q_LvflxZ68/edit?usp=drivesdk",
+            "label": "Checklist Tự theo dõi"
+        },
+        "pdf": {
+            "url": "https://drive.google.com/file/d/1OPh7hw2Pxruw0tEnlqqlveXcEnLPxxjZ/view?usp=drivesdk",
+            "label": "Lộ trình PDF"
+        }
+    },
+    {
         "stt": "1",
         "chapter": "Chương 1",
         "title": "Bài 1.1: Bản chất Channel Manager & Bộ thuật ngữ cốt lõi Khách sạn",
@@ -771,6 +801,7 @@
         }
     }
 ];
+        const LESSON_0_PIN = {"stt": "0", "chapter": "Mở đầu khóa học", "title": "Bài 0: Giới thiệu khóa học, Mục tiêu, Yêu cầu, Cấu trúc, Cách học & Checklist tự theo dõi", "isIntro": true, "giaoAn": {"url": "https://docs.google.com/document/d/1F7oJ-5aa4RdjS-8Vp5FoXop7MDkGRJDkVdR10tY8B4c/edit?usp=drivesdk", "label": "Giáo án Bài 0"}, "video": {"url": "", "label": "Không có Video"}, "web": {"url": "https://kiotvietlnd.github.io/elearning/chuyen-de/channel-manager/bai-0-gioi-thieu-khoa-hoc.html", "label": "Web Học liệu"}, "quiz": {"url": "", "label": ""}, "worksheet": {"url": "https://docs.google.com/document/d/1kPkITAkguG3aiP22GjfFMw2PIckrKtKF-q_LvflxZ68/edit?usp=drivesdk", "label": "Checklist Tự theo dõi"}, "pdf": {"url": "https://drive.google.com/file/d/1OPh7hw2Pxruw0tEnlqqlveXcEnLPxxjZ/view?usp=drivesdk", "label": "Lộ trình PDF"}};
 
         let allLessons = JSON.parse(JSON.stringify(DEFAULT_LESSONS));
         let activeChapterFilter = 'ALL';
@@ -914,6 +945,9 @@
             }
 
             if (parsed.length > 0) {
+                if (!parsed.some(l => l.isIntro || (l.title && l.title.startsWith('Bài 0:')))) {
+                    parsed.unshift(JSON.parse(JSON.stringify(LESSON_0_PIN)));
+                }
                 allLessons = parsed;
                 lastSyncTime = new Date();
                 updateSyncStatus('success');
@@ -989,12 +1023,13 @@
             const wsEl = document.getElementById('statWorksheet');
             const pdfEl = document.getElementById('statPdf');
 
-            const total = allLessons.length;
-            const vidCount = allLessons.filter(l => l.video?.url).length;
-            const webCount = allLessons.filter(l => l.web?.url).length;
-            const quizCount = allLessons.filter(l => l.quiz?.url).length;
-            const wsCount = allLessons.filter(l => l.worksheet?.url).length;
-            const pdfCount = allLessons.filter(l => l.pdf?.url).length;
+            const coreLessons = allLessons.filter(l => !l.isIntro && !(l.title || '').startsWith('Bài 0:'));
+            const total = coreLessons.length;
+            const vidCount = coreLessons.filter(l => l.video?.url).length;
+            const webCount = coreLessons.filter(l => l.web?.url).length;
+            const quizCount = coreLessons.filter(l => l.quiz?.url).length;
+            const wsCount = coreLessons.filter(l => l.worksheet?.url).length;
+            const pdfCount = coreLessons.filter(l => l.pdf?.url).length;
 
             if (vidEl) vidEl.innerText = `${vidCount}/${total}`;
             if (webEl) webEl.innerText = `${webCount}/${total}`;
@@ -1076,8 +1111,54 @@
                 `;
 
                 lessonsInChap.forEach(item => {
+                    const safeTitle = item.title.replace(/'/g, "\\'");
+                    if (item.isIntro) {
+                        const bGiaoAn = `
+                            <button onclick="openModal('${item.giaoAn.url}', '${safeTitle}', 'GIAOAN')"
+                               class="h-9 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200 hover:border-indigo-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Xem Giáo án Mở đầu Bài 0">
+                                <i class="fa-solid fa-book-open text-xs"></i>
+                                <span>Giáo án Bài 0</span>
+                            </button>`;
+                        const bWeb0 = `
+                            <button onclick="openModal('${item.web.url}', '${safeTitle}', 'WEB')"
+                               class="h-9 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white border border-sky-500 text-xs font-bold transition-all btn-ready shadow-2xs flex items-center justify-center gap-1.5" title="Mở Web học liệu Bài 0">
+                                <i class="fa-solid fa-laptop-code text-xs"></i>
+                                <span>Web Học liệu</span>
+                            </button>`;
+                        const bChk = `
+                            <button onclick="openModal('${item.worksheet.url}', '${safeTitle} - Checklist Năng lực', 'WORKSHEET')"
+                               class="h-9 px-3 rounded-xl bg-teal-50 hover:bg-teal-600 text-teal-800 hover:text-white border border-teal-300 hover:border-teal-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Mở Checklist Tự theo dõi Năng lực (Google Docs 2 cột)">
+                                <i class="fa-solid fa-list-check text-xs"></i>
+                                <span>Checklist 2 cột</span>
+                            </button>`;
+                        const bPdf0 = `
+                            <button onclick="openModal('${item.pdf.url}', '${safeTitle}', 'PDF')"
+                               class="h-9 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white border border-emerald-300 hover:border-emerald-600 text-xs font-bold transition-all btn-ready flex items-center justify-center gap-1.5 shadow-2xs" title="Xem Tóm tắt Lộ trình PDF 2 trang">
+                                <i class="fa-solid fa-file-pdf text-xs"></i>
+                                <span>Lộ trình PDF</span>
+                            </button>`;
+                        fullHtml += `
+                            <article class="bg-blue-50/40 rounded-2xl border-2 border-[#0070F4]/40 p-4 sm:p-5 flex flex-col gap-3.5 lesson-card shadow-xs">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-blue-200/70">
+                                    <div class="flex items-start sm:items-center gap-2.5 min-w-0 flex-1">
+                                        <h3 class="text-sm sm:text-base font-extrabold text-[#002957] leading-snug">${item.title}</h3>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                                        <span class="px-2.5 py-1 rounded-lg bg-[#0070F4] text-white text-[11px] font-extrabold flex items-center gap-1">
+                                            <i class="fa-solid fa-flag-checkered"></i> Bắt buộc trước Bài 1.1
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-end w-full pt-0.5">
+                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0 w-full sm:w-auto justify-end">
+                                        ${bGiaoAn}${bWeb0}${bChk}${bPdf0}
+                                    </div>
+                                </div>
+                            </article>`;
+                        return;
+                    }
+
                     const readyCount = [item.video?.url, item.web?.url, item.worksheet?.url, item.pdf?.url].filter(Boolean).length;
-                    const safeTitle = item.title.replace(/'/g, "\'");
 
                     // 1. NÚT VIDEO (A)
                     const btnVideo = item.video?.url ? `
