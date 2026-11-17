@@ -1,1363 +1,428 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BÀI 1.1: BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI - KiotViet</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bài 1.1: Channel Manager là gì và vì sao khách sạn cần - KiotViet</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
-          colors: {
-            kvPrimary: '#166def',
-            kvOcean: '#1258c2',
-            kvBlue: '#166def',
-            kvBlueHover: '#1258c2',
-            kvHotel: '#00B63E',
-            kvHotelLight: '#E8F8EE'
-          }
-        }
-      }
-    }
-  </script>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="assets/kici-kit.css">
   <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .perspective { perspective: 1000px; }
-    .transform-style-3d { transform-style: preserve-3d; }
-    .backface-hidden { backface-visibility: hidden; }
-    .rotate-y-180 { transform: rotateY(180deg); }
-    .card-inner { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-    .card-inner.flipped { transform: rotateY(180deg); }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* Interactive Options Highlight (Section 4) */
-    .quiz-opt-label {
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .quiz-opt-label.is-selected,
-    .quiz-opt-label:has(input[type="radio"]:checked) {
-      background-color: #166def !important;
-      border-color: #1258c2 !important;
-      color: #FFFFFF !important;
-      box-shadow: 0 4px 10px rgba(22, 109, 239, 0.35) !important;
-    }
-    .quiz-opt-label.is-selected span,
-    .quiz-opt-label:has(input[type="radio"]:checked) span {
-      color: #FFFFFF !important;
-      font-weight: 600 !important;
-    }
-    .quiz-opt-label.is-selected input[type="radio"],
-    .quiz-opt-label:has(input[type="radio"]:checked) input[type="radio"] {
-      accent-color: #FFFFFF !important;
-      filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
-    }
+    /* Riêng bài 1.1 */
+    .mode-manual .res.good, .mode-auto .res.bad { display: none; }
+    .calc .opts { display: grid; grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 640px) { .calc .opts { grid-template-columns: 1fr 1fr; } }
+    .rule .num { width: 30px; height: 30px; border-radius: 50%; background: var(--orange); color: var(--kv-navy); display: grid; place-items: center; font-weight: 900; font-size: 13px; margin-bottom: 8px; }
   </style>
 </head>
-<body class="bg-[#F8FAFC] text-slate-800 flex flex-col h-screen overflow-hidden select-none">
+<body>
+<main id="main">
+<div class="page" id="page">
 
-  <!-- ==================== TOP COMPACT NAVBAR (42px) ==================== -->
-  <header class="h-[42px] bg-gradient-to-r from-[#0f4ca8] via-[#125bc4] to-[#166def] px-3 sm:px-6 flex items-center justify-between shadow-xs shrink-0 z-30 text-white">
-    <div class="flex items-center space-x-3 overflow-hidden">
-      <img src="https://cdn-kvweb-website.kiotviet.vn/images/v2/giai-phap/logos/kiotviet-logo-horizontal.svg?v=4dc78976" 
-           alt="KiotViet" class="h-5 sm:h-5.5 object-contain brightness-0 invert">
-      <div class="h-4 w-px bg-white/20 shrink-0"></div>
-      <span class="text-[10px] font-black bg-white/15 px-2 py-0.5 rounded border border-white/20 shrink-0 tracking-wider">
-        HOTEL-CM-1.1
-      </span>
-            <div class="relative group cursor-pointer overflow-hidden max-w-[220px] sm:max-w-md lg:max-w-xl">
-        <h1 class="text-xs sm:text-sm font-black uppercase truncate tracking-tight text-white/95 select-none" title="BÀI 1.1: BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI KHÁCH SẠN">
-          BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI
-        </h1>
-        <!-- Hover Tooltip for Full Title -->
-        <div class="absolute left-0 top-full mt-1.5 hidden group-hover:flex items-center gap-2 z-50 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-2xl border border-slate-700 whitespace-nowrap pointer-events-none drop-shadow-xl">
-          <i class="fa-solid fa-circle-info text-[#166def]"></i>
-          <span>BÀI 1.1: BẢN CHẤT CHANNEL MANAGER &amp; BỘ THUẬT NGỮ CỐT LÕI KHÁCH SẠN</span>
+  <!-- ================= MỞ BÀI ================= -->
+  <section class="sec" id="intro">
+    <div class="sec-head">
+      <span class="eyebrow">Chương 1 · Bài 1 trên 18 của khóa Channel Manager</span>
+      <h2>Channel Manager là gì và vì sao khách sạn cần?</h2>
+    </div>
+
+    <div class="intro-box"></div>
+
+    <div class="intro-grid mt">
+      <div class="ib p" data-focus="p">
+        <h4><i class="fa-solid fa-triangle-exclamation"></i> Vấn đề</h4>
+        <p>Bán phòng ở nhiều nơi cùng lúc thì dễ quên cập nhật một nơi. Kết quả là hai khách cùng đặt một phòng.</p>
+      </div>
+      <div class="ib s" data-focus="s">
+        <h4><i class="fa-solid fa-lightbulb"></i> Giải pháp</h4>
+        <p>Channel Manager tự cập nhật số phòng trống và giá ở mọi nơi bán, cả ngày lẫn đêm.</p>
+      </div>
+      <div class="ib g" data-focus="g">
+        <h4><i class="fa-solid fa-bullseye"></i> Học xong bạn làm được</h4>
+        <ul class="clean small">
+          <li>Giải thích Channel Manager bằng lời đơn giản</li>
+          <li>Chỉ ra dữ liệu đi theo hai chiều</li>
+          <li>Biết sửa giá, đóng phòng ở đâu</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card mt ib" data-focus="road" style="padding:18px 14px">
+      <h4 style="color:var(--kv-navy);margin-bottom:12px"><i class="fa-solid fa-route"></i> Lộ trình 5 chặng · khoảng 15 phút</h4>
+      <div class="road" style="grid-template-columns:repeat(5,1fr)">
+        <button type="button" class="stop" data-stop="1"><span class="n">1</span><span class="t">Vì sao cần</span><span class="m">2 phút</span></button>
+        <button type="button" class="stop" data-stop="2"><span class="n">2</span><span class="t">Dữ liệu đi thế nào</span><span class="m">3 phút</span></button>
+        <button type="button" class="stop" data-stop="3"><span class="n">3</span><span class="t">Từ hay gặp</span><span class="m">4 phút</span></button>
+        <button type="button" class="stop" data-stop="4"><span class="n">4</span><span class="t">Luyện trả lời khách</span><span class="m">4 phút</span></button>
+        <button type="button" class="stop" data-stop="5"><span class="n">5</span><span class="t">Tra cứu nhanh</span><span class="m">2 phút</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CHẶNG 1 ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow">Chặng 1 / 5 · Vì sao cần</span>
+      <h2>Một đêm ở Khách sạn Biển Xanh</h2>
+      <p class="lead">Khách sạn còn đúng 1 phòng Deluxe cho đêm nay. Chọn một cách làm và xem chuyện gì xảy ra.</p>
+    </div>
+
+    <div class="btn-row" id="mode-btns" role="group" aria-label="Chọn cách làm">
+      <button type="button" class="btn on" data-mode="manual"><i class="fa-solid fa-hand"></i> Lễ tân tự cập nhật từng sàn</button>
+      <button type="button" class="btn" data-mode="auto"><i class="fa-solid fa-arrows-rotate"></i> Có Channel Manager</button>
+    </div>
+
+    <div class="story mode-manual mt" id="story">
+      <div class="st">
+        <span class="clock"><i class="fa-regular fa-clock"></i> 22:00</span>
+        <p>Khách đến quầy. Lễ tân giao phòng Deluxe cuối cùng.</p>
+        <p class="res bad">Lễ tân đang bận, chưa kịp vào Agoda đóng phòng.</p>
+        <p class="res good">KiotViet trừ phòng. Channel Manager báo cho các sàn: hết phòng Deluxe.</p>
+      </div>
+      <div class="st">
+        <span class="clock"><i class="fa-regular fa-clock"></i> 23:30</span>
+        <p>Một khách khác mở Agoda tìm phòng cho đêm nay.</p>
+        <p class="res bad">Agoda vẫn hiện còn 1 phòng. Khách đặt thành công.</p>
+        <p class="res good">Agoda hiện hết phòng. Khách chọn nơi khác.</p>
+      </div>
+      <div class="st">
+        <span class="clock"><i class="fa-regular fa-clock"></i> 00:15</span>
+        <p>Khách đặt qua Agoda đến nhận phòng.</p>
+        <p class="res bad">Không còn phòng. Khách sạn phải lo chỗ ở khác cho khách, có thể bị sàn phạt và mất điểm uy tín.</p>
+        <p class="res good">Không có đơn trùng. Lễ tân làm việc bình thường.</p>
+      </div>
+    </div>
+
+    <div class="kici" data-mood="explain">Lỗi ở đây không phải do lễ tân lười. Bán ở nhiều nơi thì cập nhật bằng tay luôn có lúc chậm. Tình huống này gọi là {{Overbooking|bán trùng phòng}}.</div>
+    <div class="kici" data-mood="hint">Chặng sau, mình cùng xem Channel Manager chuyền thông tin như thế nào.</div>
+  </section>
+
+  <!-- ================= CHẶNG 2 ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow">Chặng 2 / 5 · Dữ liệu đi thế nào</span>
+      <h2>Thông tin đi theo hai chiều</h2>
+      <p class="lead">Bấm hai nút dưới sơ đồ và để ý các con số thay đổi.</p>
+    </div>
+
+    <div class="flow" id="flow">
+      <div class="flow-row">
+        <div class="node n-kv" id="n-kv">KiotViet Hotel<small>phòng Deluxe trống</small><span class="cnt" data-cnt="kv">3</span></div>
+        <div class="track"><i style="--t:0s"></i><i style="--t:.25s"></i><i style="--t:.5s"></i></div>
+        <div class="node n-hub">Channel Manager<small>bảng phòng chung</small></div>
+        <div class="track"><i style="--t:.1s"></i><i style="--t:.35s"></i><i style="--t:.6s"></i></div>
+        <div class="node n-ota">
+          <span class="o">Agoda <span class="cnt" data-cnt="agoda">3</span></span>
+          <span class="o">Booking.com <span class="cnt" data-cnt="booking">3</span></span>
+          <span class="o">Airbnb <span class="cnt" data-cnt="airbnb">3</span></span>
+        </div>
+      </div>
+      <p class="flow-cap" id="flow-cap" aria-live="polite">Hiện cả 4 nơi đều thấy <b>3 phòng Deluxe trống</b>.</p>
+      <div class="flow-btns">
+        <button type="button" class="btn btn-primary" id="btn-push"><i class="fa-solid fa-key"></i> Bán 1 phòng tại quầy</button>
+        <button type="button" class="btn btn-primary" id="btn-pull"><i class="fa-solid fa-globe"></i> Khách đặt 1 phòng trên Booking.com</button>
+        <button type="button" class="btn" id="btn-reset"><i class="fa-solid fa-rotate-left"></i> Đặt lại</button>
+      </div>
+    </div>
+
+    <h3 class="mt" style="color:var(--kv-navy);font-size:18px;font-weight:800">3 điều cần nhớ</h3>
+    <div class="grid3" style="margin-top:12px">
+      <div class="card rule"><div class="num">1</div><h3>Channel Manager không bán phòng</h3><p class="small muted" style="margin-top:6px">Nó không phải một sàn. Nó chỉ chuyền thông tin giữa KiotViet và các sàn.</p></div>
+      <div class="card rule"><div class="num">2</div><h3>KiotViet là nơi gốc</h3><p class="small muted" style="margin-top:6px">Sửa giá, đóng phòng thì làm trong KiotViet. Sửa thẳng trên sàn dễ làm hai bên lệch nhau.</p></div>
+      <div class="card rule"><div class="num">3</div><h3>Thông tin đi hai chiều</h3><p class="small muted" style="margin-top:6px">Chiều đẩy: phòng trống và giá đi lên sàn. Chiều kéo: đơn đặt phòng đi về KiotViet.</p></div>
+    </div>
+
+    <div class="kici" data-mood="hint">Bạn vừa thấy Channel Manager làm gì. Chặng sau mình gọi tên những thứ bạn vừa thấy trên sơ đồ.</div>
+  </section>
+
+  <!-- ================= CHẶNG 3 ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow">Chặng 3 / 5 · Từ hay gặp</span>
+      <h2>6 từ bạn sẽ gặp mỗi ngày</h2>
+      <p class="lead">Các sàn và màn hình phần mềm dùng tên tiếng Anh, nên bạn cần nhận ra chúng. Lật từng thẻ để xem nghĩa.</p>
+    </div>
+
+    <div id="cards">
+      <p style="margin-bottom:12px"><span class="flip-count"><i class="fa-solid fa-layer-group"></i> <span>0 / 6 thẻ đã lật</span></span></p>
+      <div class="flip-grid">
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 1</span><span class="en">Allotment</span><span class="vi">Số phòng mở bán online</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Số phòng khách sạn đưa lên các sàn để bán. Là con số trên các sàn ở sơ đồ Chặng 2.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Có 10 phòng Standard, giữ 2 phòng bán tại quầy, đưa 8 phòng lên sàn: Allotment = 8.</p></div>
+          </div>
+        </div></div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 2</span><span class="en">Rates</span><span class="vi">Giá bán trên sàn</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Giá phòng cài trong KiotViet để gửi lên các sàn.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Giá tại quầy 800.000đ, giá trên sàn 950.000đ để bù phần hoa hồng 15% sàn thu.</p></div>
+          </div>
+        </div></div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 3</span><span class="en">Stop Sell</span><span class="vi">Tạm dừng bán</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Lệnh dừng bán ngay một hạng phòng trên sàn, không cần xóa hay sửa phòng.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Phòng VIP hỏng máy lạnh: bật Stop Sell trong KiotViet, các sàn ngừng nhận đặt phòng VIP.</p></div>
+          </div>
+        </div></div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 4</span><span class="en">Overbooking</span><span class="vi">Bán trùng phòng</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Số khách đã đặt nhiều hơn số phòng thật đang có. Chính là chuyện ở Chặng 1.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Còn 1 phòng: khách tại quầy vừa nhận chìa khóa thì khách trên Agoda cũng đặt thành công.</p></div>
+          </div>
+        </div></div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 5</span><span class="en">Push Flow</span><span class="vi">Chiều đẩy</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Thông tin đi từ KiotViet lên các sàn: số phòng trống, giá, lệnh Stop Sell.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Quầy bán 1 phòng Deluxe, các sàn giảm từ 5 xuống 4 phòng.</p></div>
+          </div>
+        </div></div>
+        <div class="flip"><div class="flip-inner">
+          <div class="face front"><span class="no">THẺ 6</span><span class="en">Pull Flow</span><span class="vi">Chiều kéo</span><span class="hint"><i class="fa-solid fa-hand-pointer"></i> Chạm để lật</span></div>
+          <div class="face back">
+            <div class="row"><h5>Ý nghĩa</h5><p>Thông tin đi từ sàn về KiotViet: đơn mới, đơn sửa, đơn hủy.</p></div>
+            <div class="row ex"><h5>Ví dụ</h5><p>Khách đặt trên Booking.com lúc 23:00, khoảng 30 giây sau đơn đã có trong KiotViet.</p></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="card mt calc">
+      <div class="case-head"><span class="case-tag"><i class="fa-solid fa-calculator"></i> Thử tính</span><span class="status">Chưa trả lời</span></div>
+      <div class="choice" data-id="calc" data-answer="B">
+        <p>Khách sạn Biển Xanh có <b>15 phòng Superior</b>. Cuối tuần này giữ <b>3 phòng</b> cho khách quen đặt tại quầy, và có <b>2 phòng</b> đang sửa. Nên mở bán tối đa bao nhiêu phòng trên các sàn?</p>
+        <div class="opts">
+          <button type="button" class="opt" data-k="A"><span class="k">A.</span><span>15 phòng</span></button>
+          <button type="button" class="opt" data-k="B"><span class="k">B.</span><span>10 phòng</span></button>
+          <button type="button" class="opt" data-k="C"><span class="k">C.</span><span>12 phòng</span></button>
+          <button type="button" class="opt" data-k="D"><span class="k">D.</span><span>13 phòng</span></button>
+        </div>
+        <div class="fb fb-out" hidden></div>
+        <div class="fb-store" hidden>
+          <div data-k="A">15 là tổng số phòng. Còn phải trừ phòng giữ cho quầy và phòng đang sửa.</div>
+          <div data-k="B">15 − 3 (giữ cho quầy) − 2 (đang sửa) = 10 phòng. Đây là {{Allotment}} hợp lý.</div>
+          <div data-k="C">Bạn đã trừ 3 phòng giữ cho quầy. Phòng đang sửa cũng không bán được nên cần trừ tiếp.</div>
+          <div data-k="D">Bạn đã trừ 2 phòng đang sửa. Phòng giữ cho khách quen tại quầy cũng cần trừ.</div>
         </div>
       </div>
     </div>
-    <div class="flex items-center space-x-3 shrink-0">
-      <!-- Master Progress Badge -->
-      <div class="hidden md:flex items-center gap-2 bg-black/15 px-2.5 py-1 rounded-lg border border-white/15">
-        <span class="text-[11px] font-bold text-white/80">Tiến độ:</span>
-        <span id="master-progress-text" class="text-xs font-black text-amber-300">0%</span>
-        <div class="w-16 bg-white/20 rounded-full h-1.5 overflow-hidden">
-          <div id="master-progress-bar" class="bg-amber-300 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+
+    <div class="kici" data-mood="hint">Giờ bạn đã đủ từ để nói chuyện với chủ khách sạn. Chặng sau mình luyện trả lời nhé.</div>
+  </section>
+
+  <!-- ================= CHẶNG 4 ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow">Chặng 4 / 5 · Luyện trả lời khách</span>
+      <h2>Trả lời anh Tuấn, chủ Khách sạn Biển Xanh</h2>
+      <p class="lead">Chọn câu bạn sẽ nói. Lời giải thích hiện sau khi chọn. Chọn chưa đúng thì chọn lại.</p>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <div class="case-head"><span class="case-tag">Tình huống 1</span><span class="status">Chưa trả lời</span></div>
+        <div class="choice" data-id="rp1" data-answer="B">
+          <div class="guest"><span class="who">Anh Tuấn · chủ khách sạn</span>"Lễ tân bên anh vẫn tự vào từng sàn đổi giá, đóng phòng được mà. Sao anh phải mua thêm Channel Manager?"</div>
+          <div class="opts">
+            <button type="button" class="opt" data-k="A"><span class="k">A.</span><span>"Dạ, nếu đơn online còn ít thì anh cứ làm tay cho tiết kiệm ạ."</span></button>
+            <button type="button" class="opt" data-k="B"><span class="k">B.</span><span>"Dạ, làm tay vẫn được ạ. Nhưng chỉ cần quên đóng phòng một lần là có thể bán trùng. Channel Manager cập nhật tự động cả ngày lẫn đêm giúp anh."</span></button>
+            <button type="button" class="opt" data-k="C"><span class="k">C.</span><span>"Dạ, Channel Manager giúp khách sạn mình bán được nhiều phòng hơn trên các sàn ạ."</span></button>
+          </div>
+          <div class="fb fb-out" hidden></div>
+          <div class="fb-store" hidden>
+            <div data-k="A">Câu này đồng ý với anh Tuấn nhưng bỏ qua chuyện bán trùng phòng, là lý do chính để dùng Channel Manager.</div>
+            <div data-k="B">Bạn công nhận cách làm hiện tại, nêu rủi ro thật bằng ví dụ dễ hiểu, rồi mới nói lợi ích.</div>
+            <div data-k="C">Channel Manager không phải là sàn nên không tự bán thêm phòng. Nói quá công dụng dễ làm khách mất lòng tin.</div>
+          </div>
         </div>
       </div>
 
-      <!-- Zoom Controls -->
-      <div class="hidden sm:flex items-center bg-black/15 rounded-md border border-white/20 p-0.5">
-        <button onclick="stepZoom(-1)" class="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 text-white/90 text-xs transition-all" title="Thu nhỏ (Zoom Out)">
-          <i class="fa-solid fa-magnifying-glass-minus text-[10px]"></i>
-        </button>
-        <span id="zoom-level-text" class="text-[10px] font-bold px-1 text-white/80 select-none">100%</span>
-        <button onclick="stepZoom(1)" class="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 text-white/90 text-xs transition-all" title="Phóng to (Zoom In)">
-          <i class="fa-solid fa-magnifying-glass-plus text-[10px]"></i>
-        </button>
+      <div class="card">
+        <div class="case-head"><span class="case-tag">Tình huống 2</span><span class="status">Chưa trả lời</span></div>
+        <div class="choice" data-id="rp2" data-answer="C">
+          <div class="guest"><span class="who">Anh Tuấn · chủ khách sạn</span>"Kết nối rồi thì anh vào thẳng Agoda sửa giá cho nhanh được không em?"</div>
+          <div class="opts">
+            <button type="button" class="opt" data-k="A"><span class="k">A.</span><span>"Dạ được ạ, anh sửa ở đâu thì các nơi cũng tự khớp theo ạ."</span></button>
+            <button type="button" class="opt" data-k="B"><span class="k">B.</span><span>"Dạ được ạ, anh sửa trên Agoda xong thì sửa thêm trong KiotViet cho khớp là được."</span></button>
+            <button type="button" class="opt" data-k="C"><span class="k">C.</span><span>"Dạ anh sửa giá trong KiotViet giúp em ạ. KiotViet là nơi gốc, sửa ở đây thì các sàn tự cập nhật theo."</span></button>
+          </div>
+          <div class="fb fb-out" hidden></div>
+          <div class="fb-store" hidden>
+            <div data-k="A">Giá đi theo chiều đẩy, từ KiotViet lên sàn. Sửa trên Agoda thì KiotViet không biết, hai bên sẽ lệch nhau.</div>
+            <div data-k="B">Sửa hai nơi tốn công gấp đôi và dễ gõ lệch. Chỉ cần sửa ở một nơi là KiotViet.</div>
+            <div data-k="C">Đúng điều cần nhớ số 2. Bạn còn nói rõ lợi ích cho khách: sửa một lần, các sàn tự theo.</div>
+          </div>
+        </div>
       </div>
-
-      <!-- Sound Toggle Button -->
-      <button id="audio-toggle-btn" onclick="toggleSoundEngine()" class="w-7 h-7 rounded-md bg-white/15 hover:bg-white/25 text-white border border-white/20 flex items-center justify-center transition-colors" title="Bật/Tắt âm thanh">
-        <i id="audio-icon" class="fa-solid fa-volume-high text-xs"></i>
-      </button>
-
-      <!-- Industry Tag -->
-      <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded bg-emerald-600 border border-emerald-400/40 text-white shadow-2xs">
-        Hotel
-      </span>
     </div>
-  </header>
 
-  <!-- ==================== SUB-NAVBAR NGANG (HORIZONTAL SUB-NAV) ==================== -->
-    <!-- ==================== SUB-NAVBAR NGANG (CENTERED PILLS, NO HORIZONTAL SCROLLBAR) ==================== -->
-  <nav class="bg-white border-b border-slate-200 px-3 sm:px-6 py-2 shrink-0 z-20 shadow-2xs">
-    <div class="max-w-3xl mx-auto flex flex-col items-center gap-1.5">
-      <!-- Centered Buttons: Phần 1, Phần 2, Phần 3, Phần 4, Phần 5 -->
-      <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
+    <div class="kici" data-mood="hint">Chặng cuối là phần tra cứu. Bạn không cần học thuộc, chỉ cần biết mở lại khi cần.</div>
+  </section>
 
-        <!-- Nút Phần 1 -->
-        <div class="relative group">
-          <button id="subnav-sec-1" onclick="switchSection(1)" 
-                  class="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-[#166def] text-white shadow-xs border border-[#1258c2]">
-            <span>Phần 1</span>
-            <i id="subnav-check-1" class="fa-solid fa-circle-check text-xs hidden text-emerald-300 ml-0.5"></i>
-          </button>
-          <!-- Hover Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-slate-900 text-white text-[11px] rounded-xl shadow-xl z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 border border-slate-700">
-            <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-book-open"></i> Phần 1: Bản Chất Nghiệp Vụ
-            </div>
-            <p class="text-slate-300 leading-relaxed font-normal">
-              Phân tích nguy cơ bán trùng phòng (Overbooking) lúc nửa đêm và 3 nguyên tắc bất biến: Không phải OTA, Single Source of Truth, Luồng 2 chiều.
-            </p>
-          </div>
+  <!-- ================= CHẶNG 5 ================= -->
+  <section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow">Chặng 5 / 5 · Tra cứu nhanh</span>
+      <h2>Mở lại phần này khi đang làm việc</h2>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:10px">Đường vào Channel Manager</h3>
+      <div class="kbd-path"><span>Đăng nhập Quản lý</span><i class="fa-solid fa-chevron-right"></i><span>Kênh bán và OTA</span><i class="fa-solid fa-chevron-right"></i><span>Channel Manager</span><i class="fa-solid fa-chevron-right"></i><span>OTAs</span></div>
+    </div>
+
+    <div class="grid2 mt">
+      <div class="card"><h3>Khi chưa kết nối sàn</h3><p class="small muted" style="margin-top:6px">Màn hình giới thiệu tính năng và nút <b>Bắt đầu cài đặt</b>. Bấm vào để đi qua 4 bước kích hoạt.</p></div>
+      <div class="card"><h3>Khi đã kết nối</h3><p class="small muted" style="margin-top:6px">Vào thẳng màn hình <b>Bán phòng trên OTAs</b> với 6 mục: Đặt phòng, Hạng phòng &amp; phòng trống, Giá trên OTAs, Kênh bán, Thiết lập tài khoản, Sổ tay hỗ trợ.</p></div>
+    </div>
+
+    <h3 class="mt" style="color:var(--kv-navy);font-size:18px;font-weight:800;margin-bottom:12px">4 câu khách hay hỏi</h3>
+    <div class="faq-grid">
+      <div class="faq">
+        <div class="faq-q"><i class="fa-solid fa-comment"></i><p><small>Khách nói</small>"Có thông báo màu vàng: Lỗi đặt phòng từ OTAs."</p></div>
+        <div class="faq-b">
+          <div class="why"><h5>Vì sao</h5><p>Hạng phòng trên sàn chưa được {{ghép nối}} với hạng phòng trong KiotViet.</p></div>
+          <div><h5>Hướng dẫn khách</h5><ol class="steps"><li>Bấm <span class="ui">Xử lý ngay</span> trên thông báo.</li><li>Chọn hạng phòng KiotViet tương ứng.</li><li>Bấm <span class="ui">Xong</span>. Đơn chuyển sang tab Đã đồng bộ.</li></ol></div>
         </div>
-
-        <!-- Nút Phần 2 -->
-        <div class="relative group">
-          <button id="subnav-sec-2" onclick="switchSection(2)" 
-                  class="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200">
-            <span>Phần 2</span>
-            <i id="subnav-check-2" class="fa-solid fa-circle-check text-xs hidden text-emerald-600 ml-0.5"></i>
-          </button>
-          <!-- Hover Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-slate-900 text-white text-[11px] rounded-xl shadow-xl z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 border border-slate-700">
-            <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-layer-group"></i> Phần 2: 6 Flashcard 3D
-            </div>
-            <p class="text-slate-300 leading-relaxed font-normal">
-              Bộ 6 thẻ lật 3D tìm hiểu sâu về: Allotment, Rates, Stop Sell, Overbooking, Push Flow và Pull Flow kèm ví dụ số liệu thực tế.
-            </p>
-          </div>
-        </div>
-
-        <!-- Nút Phần 3 -->
-        <div class="relative group">
-          <button id="subnav-sec-3" onclick="switchSection(3)" 
-                  class="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200">
-            <span>Phần 3</span>
-            <i id="subnav-check-3" class="fa-solid fa-circle-check text-xs hidden text-emerald-600 ml-0.5"></i>
-          </button>
-          <!-- Hover Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-slate-900 text-white text-[11px] rounded-xl shadow-xl z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 border border-slate-700">
-            <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-play"></i> Phần 3: Mô Phỏng Đồng Bộ
-            </div>
-            <p class="text-slate-300 leading-relaxed font-normal">
-              Trực quan hóa luồng đồng bộ 4 bước: Nhập giá tại quầy ➔ Đồng bộ lên sàn ➔ Khách đặt trên OTA ➔ Khóa phòng tự động.
-            </p>
-          </div>
-        </div>
-
-        <!-- Nút Phần 4 -->
-        <div class="relative group">
-          <button id="subnav-sec-4" onclick="switchSection(4)" 
-                  class="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200">
-            <span>Phần 4</span>
-            <i id="subnav-check-4" class="fa-solid fa-circle-check text-xs hidden text-emerald-600 ml-0.5"></i>
-          </button>
-          <!-- Hover Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-slate-900 text-white text-[11px] rounded-xl shadow-xl z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 border border-slate-700">
-            <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-comments"></i> Phần 4: Thử Thách Thực Chiến
-            </div>
-            <p class="text-slate-300 leading-relaxed font-normal">
-              Roleplay tư vấn thuyết phục khách thắc mắc giá và bài toán tính Allotment quỹ phòng mở bán theo bài toán số liệu đời sống.
-            </p>
-          </div>
-        </div>
-
-        <!-- Nút Phần 5 -->
-        <div class="relative group">
-          <button id="subnav-sec-5" onclick="switchSection(5)" 
-                  class="px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200">
-            <span>Phần 5</span>
-            <i id="subnav-check-5" class="fa-solid fa-circle-check text-xs hidden text-emerald-600 ml-0.5"></i>
-          </button>
-          <!-- Hover Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-slate-900 text-white text-[11px] rounded-xl shadow-xl z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-200 border border-slate-700">
-            <div class="font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-bolt"></i> Phần 5: Cẩm Nang Tra Cứu
-            </div>
-            <p class="text-slate-300 leading-relaxed font-normal">
-              Đường dẫn menu truy cập, nhận diện 2 trạng thái màn hình, ma trận xử lý sự cố trong 30 giây và ăn mừng chiến thắng!
-            </p>
-          </div>
-        </div>
-
       </div>
-
-      <!-- Active Section Title Banner -->
-      
+      <div class="faq">
+        <div class="faq-q"><i class="fa-solid fa-comment"></i><p><small>Khách nói</small>"Sàn nào lấy được đơn đặt trước khi kết nối?"</p></div>
+        <div class="faq-b">
+          <div class="why"><h5>Vì sao</h5><p>Mỗi sàn có quy định riêng về việc gửi đơn cũ.</p></div>
+          <div><h5>Hướng dẫn khách</h5><ol class="steps"><li>Agoda, Booking.com, Expedia: tự lấy đơn cũ về KiotViet.</li><li>Các sàn khác như Airbnb, Traveloka, Trip.com: chỉ lấy đơn mới.</li><li>Nhắc khách nhập tay đơn cũ của các sàn này vào KiotViet để không bị bán trùng.</li></ol></div>
+        </div>
+      </div>
+      <div class="faq">
+        <div class="faq-q"><i class="fa-solid fa-comment"></i><p><small>Khách nói</small>"Anh đổi giá trong KiotViet mà sàn chưa đổi."</p></div>
+        <div class="faq-b">
+          <div class="why"><h5>Vì sao</h5><p>Khách đổi giá ở menu Phòng (danh mục), không phải màn hình của Channel Manager.</p></div>
+          <div><h5>Hướng dẫn khách</h5><ol class="steps"><li>Vào <span class="ui">Kênh bán và OTA</span> → <span class="ui">OTAs</span> → <span class="ui">Giá trên OTAs</span>.</li><li>Chọn hạng phòng, nhập giá mới.</li><li>Bấm lưu. Các sàn tự cập nhật theo.</li></ol></div>
+        </div>
+      </div>
+      <div class="faq">
+        <div class="faq-q"><i class="fa-solid fa-comment"></i><p><small>Khách nói</small>"KiotViet hết phòng mà sàn vẫn nhận đặt."</p></div>
+        <div class="faq-b">
+          <div class="why"><h5>Vì sao</h5><p>Sàn chưa được bật kết nối, hoặc hạng phòng chưa ghép nối.</p></div>
+          <div><h5>Hướng dẫn khách</h5><ol class="steps"><li>Vào <span class="ui">Kênh bán và OTA</span> → <span class="ui">OTAs</span> → <span class="ui">Kênh bán</span>.</li><li>Xem sàn đã ở trạng thái Đang hoạt động chưa.</li><li>Vào <span class="ui">Hạng và phòng trống</span>, kiểm tra các hạng phòng đã ghép nối đủ chưa.</li></ol></div>
+        </div>
+      </div>
     </div>
-  </nav>
 
-  <!-- ==================== KHU VỰC NỘI DUNG CHÍNH (FULL WIDTH MAIN VIEW) ==================== -->
-  <main id="main-content-scroll" class="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col">
-    <div class="max-w-5xl w-full mx-auto space-y-5">
-
-      <!-- ========== PHẦN 1: BẢN CHẤT & 3 NGUYÊN LÝ CỐT LÕI ========== -->
-      <section id="section-1" class="section-pane space-y-4">
-        <!-- Card Giới thiệu Nỗi đau & Bản chất -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-book-open-reader text-kvBlue"></i> PHẦN 1: BẢN CHẤT &amp; 3 NGUYÊN LÝ CỐT LÕI CỦA CHANNEL MANAGER
-            </span>
-            <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-              Nền tảng nghiệp vụ
-            </span>
-          </div>
-
-          <div class="flex items-start gap-4 pt-1">
-            <div class="w-11 h-11 rounded-xl bg-kvPrimary text-white flex items-center justify-center shrink-0 shadow-xs text-xl">
-              <i class="fa-solid fa-lightbulb"></i>
-            </div>
-            <div class="space-y-2">
-              <h3 class="text-sm sm:text-base font-extrabold text-slate-800">Vì sao Khách sạn cần Channel Manager?</h3>
-              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Khi khách sạn bán phòng cùng lúc trên quầy Lễ tân và các sàn OTA (Agoda, Booking.com, Airbnb...), nếu đón khách tại quầy lúc 22h nhưng quên đăng nhập vào từng sàn để đóng phòng, khách đặt online lúc 23h30 đến nhận phòng sẽ gây ra thảm họa <strong>Bán trùng phòng (Overbooking)</strong>. Khách sạn vừa phải đền tiền phòng gấp đôi, vừa bị sàn phạt hạ điểm uy tín.
-              </p>
-              <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed">
-                💡 <strong>Định nghĩa cốt lõi:</strong> Channel Manager là <em>phần mềm trung gian tự động</em> kết nối và đồng bộ số lượng phòng trống, giá bán và đơn đặt phòng 2 chiều giữa <strong>KiotViet Hotel PMS</strong> và các sàn OTA đối tác theo thời gian thực.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3 Nguyên tắc Cốt lõi Bất biến -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-          <h3 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wide flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-emerald-600"></i> 3 Nguyên Lý Bất Biến Chuyên Viên Cần Nhớ
-          </h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <!-- Box 1 -->
-            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 flex flex-col justify-between space-y-2.5">
-              <div class="space-y-1.5">
-                <span class="text-xs font-black text-kvPrimary uppercase tracking-wider">NGUYÊN TẮC 01</span>
-                <h4 class="text-xs sm:text-sm font-bold text-slate-800">Không Phải Sàn OTA</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">
-                  Channel Manager không trực tiếp bán phòng cho khách du lịch. Đây là <strong>cầu nối hạ tầng trung gian</strong> giúp đẩy giá và lấy đơn giữa KiotViet và các sàn đối tác.
-                </p>
-              </div>
-              <div class="pt-2 border-t border-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                <i class="fa-solid fa-check text-emerald-600"></i> Không cạnh tranh với sàn OTA
-              </div>
-            </div>
-
-            <!-- Box 2 -->
-            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 flex flex-col justify-between space-y-2.5">
-              <div class="space-y-1.5">
-                <span class="text-xs font-black text-kvPrimary uppercase tracking-wider">NGUYÊN TẮC 02</span>
-                <h4 class="text-xs sm:text-sm font-bold text-slate-800">Single Source of Truth</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">
-                  KiotViet Hotel PMS là <strong>nguồn dữ liệu gốc duy nhất</strong>. Mọi thao tác sửa giá, đóng phòng (Stop Sell) bắt buộc làm trên KiotViet, không chỉnh thủ công trên sàn.
-                </p>
-              </div>
-              <div class="pt-2 border-t border-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                <i class="fa-solid fa-lock text-amber-600"></i> Quản lý tập trung 1 màn hình
-              </div>
-            </div>
-
-            <!-- Box 3 -->
-            <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 flex flex-col justify-between space-y-2.5">
-              <div class="space-y-1.5">
-                <span class="text-xs font-black text-kvPrimary uppercase tracking-wider">NGUYÊN TẮC 03</span>
-                <h4 class="text-xs sm:text-sm font-bold text-slate-800">Luồng 2 Chiều Khép Kín</h4>
-                <p class="text-xs text-slate-600 leading-relaxed">
-                  <strong>Chiều Đẩy:</strong> KiotViet đẩy phòng trống &amp; giá lên sàn. <strong>Chiều Kéo:</strong> Sàn nổ đơn ➔ tự động kéo về Lễ tân KiotViet &amp; tự trừ tồn kho.
-                </p>
-              </div>
-              <div class="pt-2 border-t border-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                <i class="fa-solid fa-arrows-rotate text-kvBlue"></i> Tự động hóa 24/7
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Nav Button -->
-        <div class="flex justify-end pt-2">
-          <button onclick="switchSection(2)" class="px-5 py-2.5 bg-kvBlue hover:bg-kvBlueHover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center gap-2 transition-all">
-            <span>Tiếp tục: Khám phá 6 Flashcard 3D</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- ========== PHẦN 2: BỘ 6 FLASHCARD 3D THUẬT NGỮ (HEIGHT 280PX, NO PHONETICS) ========== -->
-      <section id="section-2" class="section-pane hidden space-y-4">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-layer-group text-kvBlue"></i> PHẦN 2: BỘ 6 THUẬT NGỮ CỐT LÕI (FLASHCARD 3D)
-            </span>
-            <span id="flashcard-counter" class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-              0 / 6 thẻ đã lật
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-600">
-            Nhấp chuột vào từng thẻ bên dưới để lật mặt sau xem <strong>Ý nghĩa và Ví dụ thực tế</strong>. Hoàn thành lật cả 6 thẻ để đạt 100% điểm tiến độ mục này!
-          </p>
-        </div>
-
-        <!-- Grid 6 Flashcards (Ample 280px height, zero overflow) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Card 1: Allotment -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 1)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 01</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Allotment</h4>
-                  <p class="text-xs font-bold text-amber-300">Quỹ Phòng Mở Bán Online</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Số lượng phòng trống mà khách sạn đưa lên sàn OTA để mở bán trực tuyến trong một khoảng thời gian nhất định.
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Khách sạn có 10 phòng Standard: giữ lại 2 phòng bán khách vãng lai tại quầy, đưa 8 phòng lên sàn OTA ➔ Allotment = 8.
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 2: Rates -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 2)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 02</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Rates</h4>
-                  <p class="text-xs font-bold text-amber-300">Giá Bán Phòng Đa Kênh</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Mức giá bán cấu hình trên KiotViet Hotel để đẩy đồng bộ lên các sàn OTA đối tác.
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Giá quầy là 800.000đ, nhưng đẩy lên sàn OTA là 950.000đ (đã tính bù trừ chi phí hoa hồng 15% cho sàn).
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 3: Stop Sell -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 3)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 03</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Stop Sell</h4>
-                  <p class="text-xs font-bold text-amber-300">Khóa Bán Phòng Tức Thì</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Lệnh cưỡng chế đóng bán ngay lập tức một hạng phòng cụ thể trên sàn OTA mà không cần xóa tài khoản hay chỉnh sửa thông tin phòng.
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Phòng VIP bị hỏng máy lạnh cần bảo dưỡng đột xuất, bật Stop Sell phòng VIP trên KiotViet là sàn dừng nhận đơn ngay.
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 4: Overbooking -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 4)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 04</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Overbooking</h4>
-                  <p class="text-xs font-bold text-amber-300">Bán Trùng Phòng</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Thảm họa số lượng đơn đặt phòng vượt quá số phòng vật lý thực tế có tại cơ sở do không kịp thời đóng phòng khi đã hết chỗ.
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Khách sạn chỉ còn 1 phòng, khách quầy vừa nhận chìa khóa thì cùng lúc khách online trên Agoda đặt thành công.
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 5: Push Flow -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 5)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 05</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Push Flow</h4>
-                  <p class="text-xs font-bold text-amber-300">Luồng Đẩy Dữ Liệu</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Luồng dữ liệu đi 1 chiều từ KiotViet sang các sàn OTA (đẩy số phòng trống, giá phòng và lệnh Stop Sell).
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Lễ tân đón khách bán phòng Deluxe tại quầy, KiotViet lập tức đẩy lệnh giảm phòng từ 5 xuống 4 sang toàn bộ sàn.
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 6: Pull Flow -->
-          <div class="perspective h-[280px] cursor-pointer" onclick="flipCard(this, 6)">
-            <div class="card-inner w-full h-full relative transform-style-3d rounded-2xl shadow-xs border border-slate-200">
-              <!-- Front -->
-              <div class="absolute inset-0 backface-hidden bg-gradient-to-br from-[#002957] via-[#072d5e] to-[#0b3875] text-white rounded-2xl shadow-md border border-slate-700/40 shadow-md border border-slate-700/40 p-5 flex flex-col justify-between">
-                <div class="flex justify-between items-start">
-                  <span class="text-[10px] font-bold bg-white/15 px-2.5 py-0.5 rounded text-white uppercase tracking-wider border border-white/20">THUẬT NGỮ 06</span>
-                  <i class="fa-solid fa-rotate text-white/60 text-xs"></i>
-                </div>
-                <div class="text-center space-y-2 my-auto">
-                  <h4 class="text-xl font-black tracking-wide text-white">Pull Flow</h4>
-                  <p class="text-xs font-bold text-amber-300">Luồng Kéo Dữ Liệu</p>
-                </div>
-                <div class="text-[11px] text-center text-white/75 flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-hand-pointer text-[10px]"></i>
-                  <span>Nhấp để xem Ý nghĩa và Ví dụ</span>
-                </div>
-              </div>
-              <!-- Back -->
-              <div class="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl p-5 flex flex-col justify-between text-left border-2 border-kvBlue">
-                <div class="space-y-2">
-                  <span class="text-[10px] font-black text-kvPrimary uppercase tracking-wider block">Ý nghĩa và Ví dụ</span>
-                  <p class="text-xs text-slate-700 leading-relaxed">
-                    <strong>Bản chất:</strong> Luồng dữ liệu đi ngược từ sàn OTA về KiotViet Hotel (kéo đơn đặt phòng mới, đơn sửa đổi và đơn báo hủy phòng).
-                  </p>
-                  <p class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 leading-relaxed">
-                    💡 <strong>Ví dụ:</strong> Khách đặt phòng trên Booking.com lúc 23h, KiotViet tự động kéo đơn về trong 30 giây và tự trừ phòng tại quầy.
-                  </p>
-                </div>
-                <div class="text-[11px] text-emerald-600 font-bold flex items-center gap-1 justify-end pt-1">
-                  <i class="fa-solid fa-check-circle"></i> Đã khám phá
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Nav Button -->
-        <div class="flex justify-between pt-2">
-          <button onclick="switchSection(1)" class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Quay lại Phần 1</span>
-          </button>
-          <button onclick="switchSection(3)" class="px-5 py-2.5 bg-kvBlue hover:bg-kvBlueHover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center gap-2 transition-all">
-            <span>Tiếp tục: Trình Mô Phỏng Đồng Bộ</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- ========== PHẦN 3: TRÌNH MÔ PHỎNG ĐỒNG BỘ 4 BƯỚC ========== -->
-      <section id="section-3" class="section-pane hidden space-y-4">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-play text-kvBlue"></i> PHẦN 3: TRÌNH MÔ PHỎNG LUỒNG ĐỒNG BỘ 4 BƯỚC TỰ ĐỘNG
-            </span>
-            <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-              Mô Phỏng Đồng Bộ 4 Bước
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-600">
-            Bấm nút <strong>Chạy Thử Nghiệm</strong> để quan sát chu trình đồng bộ 4 bước khép kín giữa KiotViet Hotel PMS và các sàn OTA đối tác:
-          </p>
-        </div>
-
-        <!-- Khung Trình Diễn Mô Phỏng -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-          <!-- 4 Steps Flow Boxes -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 relative">
-            <!-- Step 1 -->
-            <div id="sim-step-1" class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all">
-              <div class="w-10 h-10 rounded-xl bg-kvPrimary text-white flex items-center justify-center mx-auto text-base shadow-xs">
-                <i class="fa-solid fa-desktop"></i>
-              </div>
-              <h4 class="text-xs font-bold text-slate-800">Bước 1: Cấu hình KiotViet</h4>
-              <p class="text-[11px] text-slate-500">Khách sạn nhập giá &amp; số phòng trống tại quầy</p>
-              <span id="badge-step-1" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600">Chờ lệnh</span>
-            </div>
-
-            <!-- Step 2 -->
-            <div id="sim-step-2" class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all">
-              <div class="w-10 h-10 rounded-xl bg-kvBlue text-white flex items-center justify-center mx-auto text-base shadow-xs">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-              </div>
-              <h4 class="text-xs font-bold text-slate-800">Bước 2: Đẩy sang Sàn</h4>
-              <p class="text-[11px] text-slate-500">KiotViet tự động đẩy dữ liệu sang Agoda, Booking...</p>
-              <span id="badge-step-2" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600">Chờ lệnh</span>
-            </div>
-
-            <!-- Step 3 -->
-            <div id="sim-step-3" class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all">
-              <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-base shadow-xs">
-                <i class="fa-solid fa-cart-shopping"></i>
-              </div>
-              <h4 class="text-xs font-bold text-slate-800">Bước 3: Khách đặt phòng</h4>
-              <p class="text-[11px] text-slate-500">Khách du lịch đặt phòng online trên các sàn OTA</p>
-              <span id="badge-step-3" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600">Chờ lệnh</span>
-            </div>
-
-            <!-- Step 4 -->
-            <div id="sim-step-4" class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all">
-              <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center mx-auto text-base shadow-xs">
-                <i class="fa-solid fa-lock"></i>
-              </div>
-              <h4 class="text-xs font-bold text-slate-800">Bước 4: Tự trừ kho &amp; Khóa</h4>
-              <p class="text-[11px] text-slate-500">Đơn kéo về KiotViet, tự trừ phòng &amp; khóa các sàn còn lại</p>
-              <span id="badge-step-4" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600">Chờ lệnh</span>
-            </div>
-          </div>
-
-          <!-- Controls & Console Log -->
-          <div class="space-y-3 pt-2 border-t border-slate-100">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <button id="btn-run-sim" onclick="runSimulation()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 transition-all">
-                  <i class="fa-solid fa-play"></i>
-                  <span>Chạy Thử Nghiệm</span>
-                </button>
-                <button onclick="resetSimulation()" class="px-3 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5">
-                  <i class="fa-solid fa-arrows-rotate"></i>
-                  <span>Đặt lại</span>
-                </button>
-              </div>
-              <div class="text-xs font-bold text-slate-500">
-                ⏱️ Chu trình hoàn tất: <span class="font-black text-kvPrimary">Tự động trong vài giây</span>
-              </div>
-            </div>
-
-            <!-- Console Log Box (Soft slate 800) -->
-            <div class="bg-slate-800 text-emerald-300 p-3.5 rounded-xl font-mono text-[11px] space-y-1 shadow-inner h-28 overflow-y-auto border border-slate-700">
-              <div class="text-slate-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-terminal text-[10px]"></i>
-                <span>[SYSTEM READY] Sẵn sàng mô phỏng luồng đồng bộ 4 bước KiotViet Hotel...</span>
-              </div>
-              <div id="sim-log-text"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Nav Button -->
-        <div class="flex justify-between pt-2">
-          <button onclick="switchSection(2)" class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Quay lại Flashcard</span>
-          </button>
-          <button onclick="switchSection(4)" class="px-5 py-2.5 bg-kvBlue hover:bg-kvBlueHover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center gap-2 transition-all">
-            <span>Tiếp tục: Thử Thách Phản Xạ</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- ========== PHẦN 4: THỬ THÁCH PHẢN XẠ & BÀI TẬP TÌNH HUỐNG ========== -->
-      <section id="section-4" class="section-pane hidden space-y-4">
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-comments text-kvBlue"></i> PHẦN 4: ROLEPLAY TƯ VẤN &amp; THỬ THÁCH TÍNH TOÁN ALLOTMENT
-            </span>
-            <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-              Tình huống thực tế
-            </span>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-600">
-            Thực hành xử lý thắc mắc của chủ khách sạn và giải bài toán tính quỹ phòng mở bán Allotment để ghi nhận điểm tiến độ:
-          </p>
-        </div>
-
-        <!-- Tình huống 1: Xử lý thắc mắc chủ cơ sở -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide">
-              TÌNH HUỐNG 1: XỬ LÝ THẮC MẮC 'TỰ ĐĂNG NHẬP SỬA GIÁ ĐƯỢC RỒI, MUA CHANNEL MANAGER LÀM GÌ?'
-            </span>
-            <span id="csat-badge-1" class="text-[11px] font-bold px-2.5 py-0.5 rounded bg-slate-100 text-slate-600">
-              CSAT: Chờ trả lời
-            </span>
-          </div>
-
-          <!-- Lời thoại khách hàng Box xanh lá KiotViet chữ trắng -->
-          <div class="p-4 bg-kvHotel text-white rounded-xl shadow-xs space-y-1">
-            <div class="text-[10px] font-black uppercase text-emerald-100 flex items-center gap-1.5">
-              <i class="fa-solid fa-phone-volume"></i> Chủ Khách Sạn (Anh Tuấn - Đà Nẵng)
-            </div>
-            <p class="text-xs sm:text-sm font-medium leading-relaxed">
-              "Khách sạn anh xưa nay vẫn tự cho lễ tân vào từng sàn đổi giá với đóng phòng được, mất chút công thôi chứ có sao đâu. Sao anh phải tốn tiền mua thêm Channel Manager làm gì em?"
-            </p>
-          </div>
-
-          <!-- Phương án lựa chọn -->
-          <div class="space-y-2 pt-1" id="q1-options">
-            <label class="quiz-opt-label flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs">
-              <input type="radio" name="q1" value="A" class="mt-0.5" onchange="answerQ1('A')">
-              <span><strong>A.</strong> "Dạ em hoàn toàn tôn trọng cách vận hành hiện tại của cơ sở mình ạ. Nếu lượng đơn hàng ngày từ các sàn OTA của khách sạn vẫn còn ít và lễ tân có đủ thời gian đăng nhập từng kênh để chỉnh giá hay đóng phòng thủ công thì anh chưa cần kích hoạt Channel Manager vội đâu ạ, cứ giữ nguyên cách làm cũ cho tiết kiệm chi phí cũng được ạ!"</span>
-            </label>
-
-            <label class="quiz-opt-label flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs">
-              <input type="radio" name="q1" value="B" class="mt-0.5" onchange="answerQ1('B')">
-              <span><strong>B.</strong> "Dạ em rất hiểu là hiện tại cơ sở mình vẫn đang kiểm soát thủ công được ạ. Tuy nhiên, khi khách đặt tăng cao vào ban đêm, chỉ cần lễ tân quên đóng phòng 1 lần là khách đến không có phòng sẽ gây thảm họa Overbooking, vừa đền tiền gấp đôi vừa mất uy tín. Channel Manager tự động trực 24/7 giúp anh kê cao gối ngủ và tiết kiệm hàng giờ mỗi ngày ạ!"</span>
-            </label>
-
-            <label class="quiz-opt-label flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer text-xs">
-              <input type="radio" name="q1" value="C" class="mt-0.5" onchange="answerQ1('C')">
-              <span><strong>C.</strong> "Dạ anh lưu ý giúp em là chính sách mới của các sàn OTA quốc tế hiện nay yêu cầu tất cả khách sạn sử dụng phần mềm KiotViet Hotel bắt buộc phải đăng ký thêm tính năng Channel Manager thì mới duy trì được kết nối API. Nếu cơ sở mình không kích hoạt sớm và sau này bị sàn khóa tài khoản hay phạt tiền thì bên em không hỗ trợ xử lý đâu ạ."</span>
-            </label>
-          </div>
-
-          <div id="q1-feedback" class="hidden p-3.5 rounded-xl text-xs leading-relaxed"></div>
-        </div>
-
-        <!-- Tình huống 2: Bài toán tính Allotment -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide">
-              BÀI TOÁN TÍNH TOÁN: TÍNH QUỸ PHÒNG ALLOTMENT MỞ BÁN TRÊN CÁC SÀN
-            </span>
-            <span id="csat-badge-2" class="text-[11px] font-bold px-2.5 py-0.5 rounded bg-slate-100 text-slate-600">
-              Thử thách tính toán
-            </span>
-          </div>
-
-          <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs text-slate-700">
-            <p class="font-bold text-slate-800">Đề bài:</p>
-            <p>
-              Khách sạn Biển Xanh có tổng cộng <strong>15 phòng Superior</strong>. Vào dịp cuối tuần, cơ sở dự kiến giữ lại <strong>3 phòng</strong> để bán cho khách quen đặt trực tiếp tại quầy, và có <strong>2 phòng</strong> đang trong kế hoạch sửa chữa định kỳ không thể sử dụng.
-            </p>
-            <p class="font-black text-kvPrimary">Hỏi: Số lượng phòng Allotment tối đa mà cơ sở nên đưa lên cấu hình mở bán trên Channel Manager là bao nhiêu phòng?</p>
-          </div>
-
-          <!-- 4 Nút lựa chọn -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1" id="q2-options">
-            <button onclick="answerQ2(1)" class="q2-btn p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left text-xs font-medium transition-all">
-              <strong>A. 15 phòng:</strong> Đưa toàn bộ 15 phòng lên sàn để bán cho nhanh hết.
-            </button>
-            <button onclick="answerQ2(2)" class="q2-btn p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left text-xs font-medium transition-all">
-              <strong>B. 10 phòng:</strong> (15 tổng - 3 phòng quầy - 2 phòng sửa = 10 phòng mở bán).
-            </button>
-            <button onclick="answerQ2(3)" class="q2-btn p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left text-xs font-medium transition-all">
-              <strong>C. 12 phòng:</strong> Chỉ trừ 3 phòng quầy, 2 phòng sửa chữa vẫn mở bán bình thường.
-            </button>
-            <button onclick="answerQ2(4)" class="q2-btn p-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left text-xs font-medium transition-all">
-              <strong>D. 13 phòng:</strong> Chỉ trừ 2 phòng sửa chữa, 3 phòng quầy để khách tranh nhau.
-            </button>
-          </div>
-
-          <div id="q2-feedback" class="hidden p-3.5 rounded-xl text-xs leading-relaxed"></div>
-        </div>
-
-        <!-- Bottom Nav Button -->
-        <div class="flex justify-between pt-2">
-          <button onclick="switchSection(3)" class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Quay lại Mô phỏng</span>
-          </button>
-          <button onclick="switchSection(5)" class="px-5 py-2.5 bg-kvBlue hover:bg-kvBlueHover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs flex items-center gap-2 transition-all">
-            <span>Tiếp tục: Cẩm Nang Tra Cứu</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- ========== PHẦN 5: CẨM NANG TRA CỨU NHANH & VINH DANH ========== -->
-      <section id="section-5" class="section-pane hidden space-y-4">
-        <!-- Card Cẩm Nang Tra Cứu 30 Giây -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <span class="text-xs font-black text-kvPrimary uppercase tracking-wide flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-amber-500"></i> PHẦN 5: CẨM NANG TRA CỨU NHANH &amp; NHẬN DIỆN GIAO DIỆN
-            </span>
-            <span class="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-              Tra cứu 30 giây
-            </span>
-          </div>
-
-          <!-- Đường dẫn menu chuẩn -->
-          <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-            <div class="text-xs font-black text-slate-800 uppercase flex items-center gap-1.5">
-              <i class="fa-solid fa-location-crosshairs text-kvBlue"></i> Đường Dẫn Điều Hướng Phân Hệ Channel Manager Trên KiotViet Hotel:
-            </div>
-            <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-700">
-              <span class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs">Đăng nhập Quản lý</span>
-              <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-              <span class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs">[🌐 Kênh bán và OTA ⌵]</span>
-              <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-              <span class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs">Nhóm [Channel Manager]</span>
-              <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-              <span class="px-2.5 py-1 bg-kvBlue text-white rounded-lg shadow-2xs">[OTAs (Agoda, Booking...)]</span>
-            </div>
-          </div>
-
-          <!-- 2 Trạng thái màn hình -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
-              <span class="text-[10px] font-black text-slate-500 uppercase">Trạng thái 1</span>
-              <h4 class="text-xs font-bold text-slate-800">Chưa kết nối sàn</h4>
-              <p class="text-[11px] text-slate-600 leading-relaxed">Hiển thị Banner giới thiệu tính năng và nút nổi bật [Bắt đầu cài đặt] ➔ Dẫn qua Stepper 4 bước kích hoạt.</p>
-            </div>
-            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-1">
-              <span class="text-[10px] font-black text-emerald-700 uppercase">Trạng thái 2</span>
-              <h4 class="text-xs font-bold text-slate-800">Đã kết nối thành công</h4>
-              <p class="text-[11px] text-slate-600 leading-relaxed">Vào thẳng phân hệ 'Bán phòng trên OTAs' gồm 6 mục: Đặt phòng, Hạng phòng &amp; phòng trống, Giá trên OTAs, Kênh bán, Thiết lập tài khoản, Sổ tay hỗ trợ.</p>
-            </div>
-          </div>
-
-          <!-- Ma trận 30 giây xử lý sự cố -->
-          <div class="space-y-2">
-            <h4 class="text-xs font-black text-slate-800 uppercase">Ma Trận 30 Giây Xử Lý Sự Cố Tại Quầy</h4>
-                        <div class="overflow-x-auto border-2 border-slate-300 rounded-xl shadow-xs">
-              <table class="w-full text-xs text-left border-collapse">
-                <thead class="bg-slate-100 text-slate-800 font-bold border-b-2 border-slate-300">
-                  <tr>
-                    <th class="p-3 w-1/4 border-r border-slate-300">Hiện Tượng / Thắc Mắc</th>
-                    <th class="p-3 w-1/3 border-r border-slate-300">Nguyên Nhân Cốt Lõi</th>
-                    <th class="p-3">Thao Tác Xử Lý Dứt Điểm Trong 30 Giây</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-300">
-                  <tr class="bg-white hover:bg-slate-50 transition-colors">
-                    <td class="p-3 font-bold text-rose-600 border-r border-slate-300">Thông báo màu vàng: 'Lỗi đặt phòng từ OTAs'</td>
-                    <td class="p-3 text-slate-700 border-r border-slate-300">Đơn từ sàn đổ về nhưng hạng phòng trên sàn chưa được ghép nối (map) với hạng phòng KiotViet.</td>
-                    <td class="p-3 text-slate-800 font-medium">Nhấn nút <strong>[Xử lý ngay]</strong> trên thông báo ➔ Chọn Hạng phòng KiotViet tương ứng trong popup ➔ Bấm [Xong]. Đơn sẽ lập tức chuyển sang tab Đã đồng bộ.</td>
-                  </tr>
-                  <tr class="bg-slate-50/70 hover:bg-slate-100 transition-colors">
-                    <td class="p-3 font-bold text-slate-800 border-r border-slate-300">Khách hỏi: 'Sàn nào kéo được đơn cũ trước khi kết nối?'</td>
-                    <td class="p-3 text-slate-700 border-r border-slate-300">Quy định và giao thức API của từng sàn OTA quốc tế khác nhau.</td>
-                    <td class="p-3 text-slate-800 font-medium"><strong>Chỉ DUY NHẤT Agoda, Booking.com và Expedia</strong> hỗ trợ kéo đơn cũ về; các sàn khác chỉ bắt đầu kéo các đơn mới phát sinh.</td>
-                  </tr>
-                  <tr class="bg-white hover:bg-slate-50 transition-colors">
-                    <td class="p-3 font-bold text-slate-800 border-r border-slate-300">Đổi giá KiotViet nhưng trên sàn chưa cập nhật</td>
-                    <td class="p-3 text-slate-700 border-r border-slate-300">Khách đổi nhầm giá tại menu 'Phòng' (màn hình danh mục) thay vì màn hình đồng bộ OTAs.</td>
-                    <td class="p-3 text-slate-800 font-medium">Hướng dẫn khách vào <strong>[Kênh bán và OTA] ➔ [OTAs] ➔ [Giá trên OTAs]</strong>. Điền giá mới và lưu lại để hệ thống tự động đẩy đi các sàn.</td>
-                  </tr>
-                  <tr class="bg-slate-50/70 hover:bg-slate-100 transition-colors">
-                    <td class="p-3 font-bold text-slate-800 border-r border-slate-300">Sàn vẫn nổ đơn dù KiotViet đã hết phòng trống</td>
-                    <td class="p-3 text-slate-700 border-r border-slate-300">Gian hàng chưa bật công tắc liên kết kênh hoặc chưa cấu hình ghép nối hạng phòng.</td>
-                    <td class="p-3 text-slate-800 font-medium">Vào <strong>[Kênh bán và OTA] ➔ [OTAs] ➔ [Kênh bán]</strong>: Kiểm tra sàn đã ở trạng thái 'Đang hoạt động' chưa.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Banner Vinh Danh Hoàn Thành Khóa Học (Soft Ocean Gradient) -->
-        <div class="bg-gradient-to-r from-[#166def] via-[#1258c2] to-[#166def] rounded-2xl p-6 text-white text-center space-y-4 shadow-sm">
-          <div class="w-14 h-14 bg-amber-400 text-slate-900 rounded-full flex items-center justify-center mx-auto text-2xl shadow-lg animate-bounce">
-            <i class="fa-solid fa-trophy"></i>
-          </div>
-          <div class="space-y-1">
-            <h3 class="text-base sm:text-lg font-black uppercase tracking-wide">
-              Chúc Mừng Bạn Đã Hoàn Thành Học Liệu Bài 1.1!
-            </h3>
-            <p class="text-xs sm:text-sm text-white/85 max-w-lg mx-auto">
-              Bạn đã nắm vững toàn bộ bản chất, 6 thuật ngữ cốt lõi, luồng đồng bộ 4 bước và cẩm nang xử lý sự cố Channel Manager KiotViet Hotel.
-            </p>
-          </div>
-          <div class="flex items-center justify-center gap-3 pt-2">
-            <button onclick="triggerConfetti()" class="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              <span>Bắn Pháo Hoa Chúc Mừng</span>
-            </button>
-            <button onclick="restartCourse()" class="px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm rounded-xl border border-white/20 transition-all flex items-center gap-1.5">
-              <i class="fa-solid fa-rotate-left"></i>
-              <span>Ôn lại từ đầu</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Bottom Nav Button -->
-        <div class="flex justify-start pt-2">
-          <button onclick="switchSection(4)" class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-2">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Quay lại Thử Thách</span>
-          </button>
-        </div>
-      </section>
-
+    <div class="kici" data-mood="done">Bạn đã đi hết 5 chặng. Đây là 3 ý mình mong bạn nhớ.</div>
+    <div class="finish">
+      <h3><i class="fa-solid fa-circle-check" style="color:#5BE92A"></i> Hoàn thành Bài 1.1</h3>
+      <ol>
+        <li>Channel Manager tự cập nhật số phòng và giá ở mọi nơi bán, để không bán trùng phòng.</li>
+        <li>Thông tin đi hai chiều: phòng trống và giá đi lên sàn, đơn đặt phòng đi về KiotViet.</li>
+        <li>Sửa giá và đóng phòng luôn làm trong KiotViet.</li>
+      </ol>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary" onclick="KV.go(0)"><i class="fa-solid fa-rotate-left"></i> Ôn lại từ đầu</button>
+        <button type="button" class="btn" onclick="KV.confetti()"><i class="fa-solid fa-wand-magic-sparkles"></i> Bắn pháo hoa</button>
+      </div>
     </div>
-  </main>
+  </section>
 
-  <!-- ==================== LOGIC JAVASCRIPT ==================== -->
-  <script>
+</div>
+</main>
 
-    /* ===== KVCM REAL INTERACTION TRACKING & LOCALSTORAGE SYNC (V22) ===== */
-    const KVCM_LESSON_CODE = "1.1";
-    const KVCM_TOTAL_RP = 2;
-    const KVCM_STORAGE_KEY = "kvcm_learner_tracker_v1";
-    let kvcmCards = new Set();
-    let kvcmSimDone = false;
-    let kvcmRpCorrect = new Set();
-    let kvcmSec5Viewed = false;
+<script src="assets/kici-kit.js"></script>
+<script>
+  window.KV_TERMS = {
+    'OTA': 'Viết tắt tiếng Anh của "đại lý du lịch trực tuyến". Đó là các trang web, ứng dụng bán phòng online như Agoda, Booking.com, Airbnb. Trong bài gọi ngắn là "sàn".',
+    'Channel Manager': 'Công cụ tự động báo cho quầy và tất cả các sàn biết còn bao nhiêu phòng, giá bao nhiêu, và đưa đơn đặt phòng từ sàn về KiotViet.',
+    'Overbooking': 'Bán trùng phòng: số khách đã đặt nhiều hơn số phòng thật đang có.',
+    'Allotment': 'Số phòng khách sạn mở bán online trên các sàn.',
+    'ghép nối': 'Chỉ cho hệ thống biết hạng phòng trên sàn ứng với hạng phòng nào trong KiotViet. Tiếng Anh gọi là map hoặc mapping.'
+  };
 
-    function kvcmSaveState(pct) {
-      try {
-        const all = JSON.parse(localStorage.getItem(KVCM_STORAGE_KEY) || "{}");
-        const prev = all[KVCM_LESSON_CODE] || {};
-        const mergedCards = Array.from(new Set([...(prev.cardsFlipped || []), ...Array.from(kvcmCards)]));
-        const mergedRp = Array.from(new Set([...(prev.rpCorrect || []), ...Array.from(kvcmRpCorrect)]));
-        const simDone = Boolean(prev.simRun || kvcmSimDone);
-        const sec5Done = Boolean(prev.sec5 || kvcmSec5Viewed);
+  KV.init({
+    code: '1.1',
+    title: 'Bài 1.1: Channel Manager là gì và vì sao khách sạn cần',
+    shortTitle: 'Channel Manager là gì',
+    sections: [
+      { label: 'Mở bài', cp: 'intro', tip: 'Mở bài: vấn đề, giải pháp, lộ trình' },
+      { label: 'Vì sao cần', cp: 's1', tip: 'Chặng 1: Một đêm ở Khách sạn Biển Xanh' },
+      { label: 'Dữ liệu đi thế nào', cp: 's2', tip: 'Chặng 2: Thông tin đi theo hai chiều' },
+      { label: 'Từ hay gặp', cp: ['cards', 'calc'], tip: 'Chặng 3: 6 thẻ từ và bài tính' },
+      { label: 'Luyện trả lời khách', cp: ['rp1', 'rp2'], tip: 'Chặng 4: 2 tình huống với chủ khách sạn' },
+      { label: 'Tra cứu nhanh', cp: 's5', cpOnView: 's5', tip: 'Chặng 5: Đường vào, màn hình, 4 câu khách hay hỏi' }
+    ],
+    checkpoints: { intro: 10, s1: 15, s2: 20, cards: 15, calc: 5, rp1: 10, rp2: 10, s5: 15 },
+    onReady: function () {
+      KV.intro(document.getElementById('intro'), [
+        { mood: 'hello', text: 'Chào bạn, mình là KiCi. Mình sẽ cùng bạn đi qua bài 1.1, mất khoảng 15 phút.' },
+        { mood: 'explain', label: 'Vấn đề', focus: ['p'], text: 'Khách sạn Biển Xanh bán phòng ở quầy và trên các {{OTA|sàn đặt phòng online}}. Quầy vừa bán phòng cuối, nhưng sàn vẫn hiện phòng đó còn trống.' },
+        { mood: 'explain', label: 'Giải pháp', focus: ['s'], text: '{{Channel Manager}} giống một bảng phòng chung. Nơi nào bán được phòng, mọi nơi khác tự cập nhật theo.' },
+        { mood: 'hint', label: 'Lộ trình', focus: ['road'], text: 'Bài có 5 chặng, đi từ câu chuyện đến cách trả lời khách. Bạn bấm vào chặng nào cũng được.' },
+        { mood: 'done', label: 'Mục tiêu', focus: ['g'], text: 'Học xong, bạn giải thích được Channel Manager cho chủ khách sạn chỉ bằng 2 đến 3 câu.' }
+      ], function () { KV.go(1); });
 
-        let calcPct = 20;
-        calcPct += Math.round((Math.min(mergedCards.length, 6) / 6) * 25);
-        if (simDone) calcPct += 25;
-        if (KVCM_TOTAL_RP > 0) calcPct += Math.round((Math.min(mergedRp.length, KVCM_TOTAL_RP) / KVCM_TOTAL_RP) * 20);
-        if (sec5Done) calcPct += 10;
-        if (calcPct > 100) calcPct = 100;
-
-        all[KVCM_LESSON_CODE] = {
-          lessonCode: KVCM_LESSON_CODE,
-          pct: Math.max(pct || 0, calcPct),
-          sec1: true,
-          sec2: mergedCards.length >= 6,
-          sec3: simDone,
-          sec4: mergedRp.length >= KVCM_TOTAL_RP,
-          sec5: sec5Done,
-          cardsFlipped: mergedCards,
-          simRun: simDone,
-          rpCorrect: mergedRp,
-          totalRp: KVCM_TOTAL_RP,
-          updatedAt: new Date().toISOString()
-        };
-        localStorage.setItem(KVCM_STORAGE_KEY, JSON.stringify(all));
-      } catch (e) {}
-    }
-
-    function kvcmComputeAndRenderProgress() {
-      let pct = 20;
-      pct += Math.round((Math.min(kvcmCards.size, 6) / 6) * 25);
-      if (kvcmSimDone) pct += 25;
-      if (KVCM_TOTAL_RP > 0) pct += Math.round((Math.min(kvcmRpCorrect.size, KVCM_TOTAL_RP) / KVCM_TOTAL_RP) * 20);
-      if (kvcmSec5Viewed) pct += 10;
-      if (pct > 100) pct = 100;
-
-      const pText = document.getElementById('master-progress-text');
-      const pBar = document.getElementById('master-progress-bar');
-      if (pText) pText.innerText = `${pct}%`;
-      if (pBar) pBar.style.width = `${pct}%`;
-
-      const statusChecks = {
-        1: true,
-        2: kvcmCards.size >= 6,
-        3: kvcmSimDone,
-        4: kvcmRpCorrect.size >= KVCM_TOTAL_RP,
-        5: kvcmSec5Viewed
-      };
-      for (let i = 1; i <= 5; i++) {
-        const check = document.getElementById(`subnav-check-${i}`);
-        if (check) {
-          if (statusChecks[i]) {
-            check.classList.remove('hidden');
-            check.className = (typeof currentSection !== 'undefined' && i === currentSection)
-              ? 'fa-solid fa-circle-check text-xs text-emerald-300 ml-0.5'
-              : 'fa-solid fa-circle-check text-xs text-emerald-500 ml-0.5';
-          } else {
-            check.classList.add('hidden');
-          }
-        }
-      }
-      kvcmSaveState(pct);
-    }
-
-    function kvcmRestoreState() {
-      try {
-        const all = JSON.parse(localStorage.getItem(KVCM_STORAGE_KEY) || "{}");
-        const saved = all[KVCM_LESSON_CODE];
-        if (saved) {
-          (saved.cardsFlipped || []).forEach(c => kvcmCards.add(c));
-          if (saved.simRun) kvcmSimDone = true;
-          (saved.rpCorrect || []).forEach(r => kvcmRpCorrect.add(r));
-          if (saved.sec5) kvcmSec5Viewed = true;
-          const counter = document.getElementById('flashcard-counter');
-          if (counter && kvcmCards.size > 0) {
-            counter.innerText = counter.innerText.includes('/') ? `${kvcmCards.size} / 6 đã lật` : `${kvcmCards.size}/6 Đã lật`;
-          }
-        }
-      } catch (e) {}
-      kvcmComputeAndRenderProgress();
-    }
-
-    /* 1. SOUND ENGINE (WEB AUDIO API) */
-    let audioCtx = null;
-    let soundEnabled = true;
-
-    function getAudioContext() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) audioCtx = new AudioContext();
-      }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      return audioCtx;
-    }
-
-    function playSound(type) {
-      if (!soundEnabled) return;
-      try {
-        const ctx = getAudioContext();
-        if (!ctx) return;
-        const now = ctx.currentTime;
-
-        if (type === 'click') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(750, now);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.06);
-        } else if (type === 'whoosh') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(280, now);
-          osc.frequency.exponentialRampToValueAtTime(840, now + 0.18);
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.18);
-        } else if (type === 'success') {
-          const notes = [523.25, 659.25, 783.99, 1046.50];
-          notes.forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now + i * 0.08);
-            gain.gain.setValueAtTime(0.18, now + i * 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(now + i * 0.08);
-            osc.stop(now + i * 0.08 + 0.3);
-          });
-        } else if (type === 'error') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(160, now);
-          osc.frequency.linearRampToValueAtTime(110, now + 0.22);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.22);
-        }
-      } catch (e) {
-        console.warn('Audio error:', e);
-      }
-    }
-
-    function toggleSoundEngine() {
-      soundEnabled = !soundEnabled;
-      const icon = document.getElementById('audio-icon');
-      if (soundEnabled) {
-        icon.className = 'fa-solid fa-volume-high text-xs';
-        playSound('click');
-      } else {
-        icon.className = 'fa-solid fa-volume-xmark text-xs text-rose-300';
-      }
-    }
-
-    /* 2. ZOOM ENGINE (6 LEVELS) */
-    const zoomLevels = [70, 80, 90, 100, 120, 150];
-    let currentZoomIdx = 3; // 100%
-
-    function stepZoom(direction) {
-      currentZoomIdx += direction;
-      if (currentZoomIdx < 0) currentZoomIdx = 0;
-      if (currentZoomIdx >= zoomLevels.length) currentZoomIdx = zoomLevels.length - 1;
-      const zoomVal = zoomLevels[currentZoomIdx];
-      document.getElementById('zoom-level-text').textContent = zoomVal + '%';
-      document.getElementById('main-content-scroll').style.zoom = (zoomVal / 100);
-      playSound('click');
-    }
-
-    /* 3. MASTER PROGRESS TRACKER */
-    const progressState = {
-      sec1: true,
-      cardsFlipped: new Set(),
-      simRun: false,
-      q1Answered: false,
-      q2Answered: false,
-      sec5Viewed: false
-    };
-
-    function updateProgress() {
-      let score = 20; // Section 1 completed by default
-      score += Math.round((progressState.cardsFlipped.size / 6) * 30);
-      if (progressState.simRun) score += 20;
-      if (progressState.q1Answered) score += 10;
-      if (progressState.q2Answered) score += 10;
-      if (progressState.sec5Viewed) score += 10;
-
-      if (score > 100) score = 100;
-      kvcmCards = new Set(progressState.cardsFlipped); if (progressState.simRun) kvcmSimDone = true; if (progressState.q1Answered) kvcmRpCorrect.add(1); if (progressState.q2Answered) kvcmRpCorrect.add(2); if (progressState.q3Answered) kvcmRpCorrect.add(3); if (progressState.sec5Viewed) kvcmSec5Viewed = true; kvcmSaveState(score); document.getElementById('master-progress-text').textContent = score + '%';
-      document.getElementById('master-progress-bar').style.width = score + '%';
-
-      if (progressState.cardsFlipped.size >= 6) {
-        document.getElementById('subnav-check-2').classList.remove('hidden');
-      }
-      if (progressState.simRun) {
-        document.getElementById('subnav-check-3').classList.remove('hidden');
-      }
-      if (progressState.q1Answered && progressState.q2Answered) {
-        document.getElementById('subnav-check-4').classList.remove('hidden');
-      }
-      if (progressState.sec5Viewed) {
-        document.getElementById('subnav-check-5').classList.remove('hidden');
-      }
-    }
-
-    /* 4. SWITCH SECTION LOGIC */
-    let currentSection = 1;
-    const sectionTitles = {
-      1: "PHẦN 1: BẢN CHẤT NGHIỆP VỤ & 3 NGUYÊN LÝ CỐT LÕI",
-      2: "PHẦN 2: BỘ 6 THUẬT NGỮ CỐT LÕI (FLASHCARD 3D)",
-      3: "PHẦN 3: MÔ PHỎNG LUỒNG ĐỒNG BỘ 4 BƯỚC TỰ ĐỘNG",
-      4: "PHẦN 4: ROLEPLAY TƯ VẤN & TÍNH TOÁN ALLOTMENT THỰC CHIẾN",
-      5: "PHẦN 5: CẨM NANG TRA CỨU 30 GIÂY & VINH DANH HOÀN THÀNH"
-    };
-
-    function switchSection(secNum) {
-      playSound('click');
-      currentSection = secNum;
-
-      for (let i = 1; i <= 5; i++) {
-        document.getElementById('section-' + i).classList.add('hidden');
-        const btn = document.getElementById('subnav-sec-' + i);
-
-        if (i === secNum) {
-          btn.className = 'px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-[#166def] text-white shadow-xs border border-[#1258c2]';
-        } else {
-          btn.className = 'px-4 py-1.5 sm:px-5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200';
-        }
-      }
-
-      document.getElementById('section-' + secNum).classList.remove('hidden');
-      const banner = document.getElementById('active-section-banner');
-      if (banner && sectionTitles[secNum]) {
-        banner.innerText = sectionTitles[secNum];
-      }
-      document.getElementById('main-content-scroll').scrollTo({ top: 0, behavior: 'smooth' });
-
-      if (secNum === 1) progressState.sec1 = true;
-      if (secNum === 5) { progressState.sec5Viewed = true; kvcmSec5Viewed = true; }
-      updateProgress();
-    }
-
-    /* 5. FLASHCARD ENGINE */
-    function flipCard(cardEl, cardId) {
-      const inner = cardEl.querySelector('.card-inner');
-      inner.classList.toggle('flipped');
-      playSound('whoosh');
-
-      progressState.cardsFlipped.add(cardId);
-      document.getElementById('flashcard-counter').textContent = progressState.cardsFlipped.size + ' / 6 thẻ đã lật';
-      updateProgress();
-    }
-
-    /* 6. SIMULATION ENGINE */
-    let isSimulating = false;
-    function logSim(msg) {
-      const logBox = document.getElementById('sim-log-text');
-      const time = new Date().toLocaleTimeString();
-      const div = document.createElement('div');
-      div.className = 'text-white/90';
-      div.innerHTML = `<span class="text-slate-400">[${time}]</span> ${msg}`;
-      logBox.appendChild(div);
-      logBox.parentElement.scrollTop = logBox.parentElement.scrollHeight;
-    }
-
-    function runSimulation() {
-      if (isSimulating) return;
-      isSimulating = true;
-      playSound('click');
-      document.getElementById('btn-run-sim').classList.add('opacity-50', 'cursor-not-allowed');
-
-      const s1 = document.getElementById('sim-step-1');
-      const s2 = document.getElementById('sim-step-2');
-      const s3 = document.getElementById('sim-step-3');
-      const s4 = document.getElementById('sim-step-4');
-
-      logSim('🚀 [BƯỚC 1/4] Lễ tân cập nhật giá phòng 950.000đ trên KiotViet Hotel...');
-      s1.className = 'border-2 border-kvBlue rounded-xl p-4 bg-blue-50 text-center space-y-2 ring-2 ring-blue-300 transition-all';
-      document.getElementById('badge-step-1').className = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
-      document.getElementById('badge-step-1').textContent = 'Đang xử lý';
-      playSound('whoosh');
-
-      setTimeout(() => {
-        logSim('📡 [BƯỚC 2/4] KiotViet tự động đẩy giá sang Agoda, Booking.com, Airbnb...');
-        s1.className = 'border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all';
-        s2.className = 'border-2 border-kvBlue rounded-xl p-4 bg-blue-50 text-center space-y-2 ring-2 ring-blue-300 transition-all';
-        document.getElementById('badge-step-1').textContent = 'Hoàn tất';
-        document.getElementById('badge-step-2').className = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
-        document.getElementById('badge-step-2').textContent = 'Đang đẩy';
-        playSound('whoosh');
-      }, 1000);
-
-      setTimeout(() => {
-        logSim('🛒 [BƯỚC 3/4] Khách du lịch vừa bấm đặt phòng Deluxe trên Booking.com!');
-        s2.className = 'border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all';
-        s3.className = 'border-2 border-indigo-500 rounded-xl p-4 bg-indigo-50 text-center space-y-2 ring-2 ring-indigo-300 transition-all';
-        document.getElementById('badge-step-2').textContent = 'Hoàn tất';
-        document.getElementById('badge-step-3').className = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-600 text-white';
-        document.getElementById('badge-step-3').textContent = 'Có đơn mới';
-        playSound('whoosh');
-      }, 2000);
-
-      setTimeout(() => {
-        logSim('🎉 [BƯỚC 4/4] KiotViet nhận đơn, tự trừ phòng trống và khóa bán trên mọi sàn khác!');
-        s3.className = 'border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all';
-        s4.className = 'border-2 border-emerald-500 rounded-xl p-4 bg-emerald-50 text-center space-y-2 ring-2 ring-emerald-300 transition-all';
-        document.getElementById('badge-step-3').textContent = 'Hoàn tất';
-        document.getElementById('badge-step-4').className = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white';
-        document.getElementById('badge-step-4').textContent = 'Khóa phòng thành công';
-        playSound('success');
-
-        progressState.simRun = true;
-        updateProgress();
-        isSimulating = false;
-        document.getElementById('btn-run-sim').classList.remove('opacity-50', 'cursor-not-allowed');
-      }, 3200);
-    }
-
-    function resetSimulation() {
-      if (isSimulating) return;
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById('sim-step-' + i).className = 'border border-slate-200 rounded-xl p-4 bg-slate-50/70 text-center space-y-2 transition-all';
-        document.getElementById('badge-step-' + i).className = 'inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-600';
-        document.getElementById('badge-step-' + i).textContent = 'Chờ lệnh';
-      }
-      document.getElementById('sim-log-text').innerHTML = '';
-      playSound('click');
-    }
-
-    /* 7. SECTION 4 QUIZ LOGIC */
-    function answerQ1(ans) {
-      highlightSelectedOption('q1-options');
-      const fb = document.getElementById('q1-feedback');
-      const badge = document.getElementById('csat-badge-1');
-      fb.classList.remove('hidden');
-
-      if (ans === 'B') {
-        playSound('success');
-        badge.textContent = 'CSAT: 100% Rất hài lòng';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200';
-        fb.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-emerald-50 text-emerald-900 border border-emerald-200';
-        fb.innerHTML = '<strong>Tuyệt vời!</strong> Bạn đã đồng cảm, chỉ ra rủi ro Overbooking chí mạng và chốt giải pháp tự động 24/7 giúp khách an tâm.';
-        progressState.q1Answered = true;
-      } else {
-        playSound('error');
-        badge.textContent = 'CSAT: Thất vọng';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200';
-        fb.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-rose-50 text-rose-900 border border-rose-200';
-        fb.innerHTML = '<strong>Chưa thuyết phục:</strong> Cần nhấn mạnh vào rủi ro bán trùng phòng lúc đêm muộn và giá trị an tâm tự động mà giải pháp mang lại.';
-      }
-      updateProgress();
-    }
-
-    function answerQ2(opt) {
-      const fb = document.getElementById('q2-feedback');
-      const badge = document.getElementById('csat-badge-2');
-      fb.classList.remove('hidden');
-
-      const buttons = document.querySelectorAll('.q2-btn');
-      buttons.forEach((btn, idx) => {
-        if (idx === opt - 1) {
-          btn.className = 'q2-btn p-3.5 rounded-xl border-2 border-kvBlue bg-kvBlue text-white text-left text-xs font-medium shadow-xs transition-all';
-        } else {
-          btn.className = 'q2-btn p-3.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-left text-xs font-medium transition-all';
-        }
-      });
-
-      if (opt === 2) {
-        playSound('success');
-        badge.textContent = 'Chính xác 100%';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200';
-        fb.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-emerald-50 text-emerald-900 border border-emerald-200';
-        fb.innerHTML = '<strong>Chính xác!</strong> Allotment tối đa mở bán = 15 (tổng) - 3 (bán quầy) - 2 (sửa chữa) = 10 phòng. Công thức này giúp cơ sở tránh hoàn toàn nguy cơ Overbooking.';
-        progressState.q2Answered = true;
-      } else {
-        playSound('error');
-        badge.textContent = 'Sai';
-        badge.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200';
-        fb.className = 'p-3.5 rounded-xl text-xs leading-relaxed bg-rose-50 text-rose-900 border border-rose-200';
-        fb.innerHTML = '<strong>Chưa chính xác:</strong> Cần trừ cả phòng bán tại quầy và phòng bảo dưỡng để không bao giờ vượt quá số phòng thực tế có thể đón khách.';
-      }
-      updateProgress();
-    }
-
-    function highlightSelectedOption(containerId) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      const labels = container.querySelectorAll('.quiz-opt-label');
-      labels.forEach(label => {
-        const input = label.querySelector('input[type="radio"]');
-        if (input && input.checked) {
-          label.classList.add('is-selected');
-        } else {
-          label.classList.remove('is-selected');
-        }
-      });
-    }
-
-    /* 8. CELEBRATION & CONFETTI */
-    function triggerConfetti() {
-      playSound('success');
-      try {
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
+      /* Chặng 1: chọn cách làm */
+      var story = document.getElementById('story');
+      document.querySelectorAll('#mode-btns [data-mode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var m = b.getAttribute('data-mode');
+          story.className = 'story mt mode-' + m;
+          document.querySelectorAll('#mode-btns [data-mode]').forEach(function (x) { x.classList.toggle('on', x === b); });
+          KV.sound(m === 'auto' ? 'success' : 'click');
+          if (m === 'auto') KV.done('s1');
         });
-      } catch (e) {
-        console.warn(e);
+      });
+
+      /* Chặng 2: sơ đồ luồng có số */
+      var flow = document.getElementById('flow'), cap = document.getElementById('flow-cap');
+      var bPush = document.getElementById('btn-push'), bPull = document.getElementById('btn-pull');
+      var inv, busy = false, did = { push: false, pull: false };
+      function cnt(k) { return flow.querySelector('[data-cnt="' + k + '"]'); }
+      function reset() { inv = { kv: 3, agoda: 3, booking: 3, airbnb: 3 }; Object.keys(inv).forEach(function (k) { cnt(k).textContent = inv[k]; }); lock(false); cap.innerHTML = 'Hiện cả 4 nơi đều thấy <b>3 phòng Deluxe trống</b>.'; }
+      function bump(keys) {
+        keys.forEach(function (k) {
+          inv[k] = Math.max(0, inv[k] - 1); var el = cnt(k); el.textContent = inv[k];
+          el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+          setTimeout(function () { el.classList.remove('bump'); }, 400);
+        });
       }
-    }
+      function run(dir) { flow.classList.remove('run', 'pull'); void flow.offsetWidth; if (dir === 'pull') flow.classList.add('pull'); flow.classList.add('run'); KV.sound('whoosh'); }
+      function lock(v) { busy = v; var empty = inv && inv.kv === 0; bPush.disabled = v || empty; bPull.disabled = v || empty; }
+      function finish(kind) {
+        did[kind] = true; lock(false);
+        if (inv.kv === 0) cap.innerHTML = '<b>Hết phòng Deluxe ở mọi nơi.</b> Không ai đặt trùng được nữa. Bấm Đặt lại để thử tiếp.';
+        if (did.push && did.pull) KV.done('s2');
+      }
+      bPush.addEventListener('click', function () {
+        if (busy || inv.kv === 0) return; lock(true);
+        bump(['kv']);
+        cap.innerHTML = '<b>Chiều đẩy:</b> quầy bán 1 phòng, KiotViet trừ phòng, Channel Manager báo cho tất cả các sàn.';
+        run('push');
+        setTimeout(function () { bump(['agoda', 'booking', 'airbnb']); finish('push'); }, 1500);
+      });
+      bPull.addEventListener('click', function () {
+        if (busy || inv.kv === 0) return; lock(true);
+        bump(['booking']);
+        cap.innerHTML = '<b>Chiều kéo:</b> khách đặt trên Booking.com, đơn chạy về KiotViet và số phòng tự trừ.';
+        run('pull');
+        setTimeout(function () {
+          bump(['kv']);
+          cap.innerHTML = 'Sau đó <b>chiều đẩy</b> báo cho Agoda và Airbnb để hai sàn này cũng giảm theo.';
+          run('push');
+        }, 1500);
+        setTimeout(function () { bump(['agoda', 'airbnb']); finish('pull'); }, 3000);
+      });
+      document.getElementById('btn-reset').addEventListener('click', function () { if (!busy) { reset(); KV.sound('click'); } });
+      reset();
 
-    function restartCourse() {
-      playSound('click');
-      switchSection(1);
+      KV.flipcards(document.getElementById('cards'), 'cards');
+      KV.choices(document);
     }
-
-    // Init
-    document.addEventListener('DOMContentLoaded', () => {
-      const chk1 = document.getElementById('subnav-check-1'); if (chk1) chk1.classList.remove('hidden');
-      kvcmRestoreState();
-      if (kvcmCards.size > 0) kvcmCards.forEach(c => progressState.cardsFlipped.add(c));
-      if (kvcmSimDone) progressState.simRun = true;
-      if (kvcmRpCorrect.has(1)) progressState.q1Answered = true;
-      if (kvcmRpCorrect.has(2)) progressState.q2Answered = true;
-      if (kvcmRpCorrect.has(3)) progressState.q3Answered = true;
-      if (kvcmSec5Viewed) progressState.sec5Viewed = true;
-      const fc = document.getElementById('flashcard-counter'); if (fc && progressState.cardsFlipped.size > 0) fc.textContent = progressState.cardsFlipped.size + ' / 6 thẻ đã lật';
-      updateProgress();
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
