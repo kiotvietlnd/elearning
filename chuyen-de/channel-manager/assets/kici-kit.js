@@ -293,7 +293,7 @@
   /* ---------- Ảnh giao diện: .shots > figure.shot[data-sys] ----------
      data-sys: kv | hl | ota (kèm data-ota="Agoda") | leader. Nhiều ảnh trong 1 .shots thành bộ chuyển 1/N.
      Bấm ảnh để phóng to; trong khung phóng to dùng phím mũi tên, Esc để đóng. */
-  var SYS = { kv: 'KiotViet', hl: 'Hotel Link', leader: 'Việc của Leader · Bạn chỉ cần biết' };
+  var SYS = { kv: 'KiotViet', hl: 'Hotel Link', leader: 'Việc của Leader · Bạn chỉ cần biết', info: 'Minh họa' };
   var lb = null, lbList = [], lbIdx = 0;
   function lbPaint() {
     var f = lbList[lbIdx], img = f.querySelector('img'), cap = f.querySelector('figcaption');
@@ -334,7 +334,7 @@
       img.parentNode.insertBefore(frame, img); frame.appendChild(img);
       frame.insertAdjacentHTML('beforeend', (label ? '<span class="sys">' + label + '</span>' : '') + '<span class="zoom"><i class="fa-solid fa-magnifying-glass-plus"></i> Bấm để phóng to</span>');
       var cap = f.querySelector('figcaption');
-      if (cap && !cap.querySelector('i')) cap.insertAdjacentHTML('afterbegin', '<i class="fa-solid ' + (sys === 'leader' ? 'fa-user-shield' : 'fa-display') + '"></i>');
+      if (cap && !cap.querySelector('i')) cap.insertAdjacentHTML('afterbegin', '<i class="fa-solid ' + (sys === 'leader' ? 'fa-user-shield' : sys === 'info' ? 'fa-image' : 'fa-display') + '"></i>');
       f.setAttribute('data-ready', '1');
     });
     (root || document).querySelectorAll('.shots:not([data-ready])').forEach(function (set) {
