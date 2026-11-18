@@ -290,6 +290,79 @@
     });
   };
 
+  /* ---------- Ảnh giao diện: .shots > figure.shot[data-sys] ----------
+     data-sys: kv | hl | ota (kèm data-ota="Agoda") | leader. Nhiều ảnh trong 1 .shots thành bộ chuyển 1/N.
+     Bấm ảnh để phóng to; trong khung phóng to dùng phím mũi tên, Esc để đóng. */
+  var SYS = { kv: 'KiotViet', hl: 'Hotel Link', leader: 'Việc của Leader · Bạn chỉ cần biết' };
+  var lb = null, lbList = [], lbIdx = 0;
+  function lbPaint() {
+    var f = lbList[lbIdx], img = f.querySelector('img'), cap = f.querySelector('figcaption');
+    lb.querySelector('img').src = img.currentSrc || img.src;
+    lb.querySelector('img').alt = img.alt;
+    lb.querySelector('.lb-cap').innerHTML = (lbList.length > 1 ? '<b>' + (lbIdx + 1) + '/' + lbList.length + '</b>' : '') + (cap ? cap.textContent : '');
+    lb.querySelector('.lb-p').hidden = lb.querySelector('.lb-n').hidden = lbList.length < 2;
+  }
+  function lbOpen(list, i) {
+    if (!lb) {
+      lb = document.createElement('div'); lb.className = 'lb'; lb.hidden = true;
+      lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Ảnh phóng to');
+      lb.innerHTML = '<button type="button" class="lb-x" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>' +
+        '<button type="button" class="lb-p" aria-label="Ảnh trước"><i class="fa-solid fa-chevron-left"></i></button>' +
+        '<img alt=""><div class="lb-cap"></div>' +
+        '<button type="button" class="lb-n" aria-label="Ảnh sau"><i class="fa-solid fa-chevron-right"></i></button>';
+      document.body.appendChild(lb);
+      lb.addEventListener('click', function (e) {
+        if (e.target === lb || e.target.closest('.lb-x')) lbClose();
+        else if (e.target.closest('.lb-p')) lbMove(-1);
+        else if (e.target.closest('.lb-n')) lbMove(1);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (lb.hidden) return;
+        if (e.key === 'Escape') lbClose(); else if (e.key === 'ArrowLeft') lbMove(-1); else if (e.key === 'ArrowRight') lbMove(1);
+      });
+    }
+    lbList = list; lbIdx = i; lbPaint(); lb.hidden = false; lb.querySelector('.lb-x').focus(); KV.sound('click');
+  }
+  function lbMove(d) { if (lbList.length < 2) return; lbIdx = (lbIdx + d + lbList.length) % lbList.length; lbPaint(); KV.sound('click'); }
+  function lbClose() { lb.hidden = true; var f = lbList[lbIdx]; if (f) { var b = f.querySelector('.frame'); if (b) b.focus(); } }
+  KV.shots = function (root) {
+    (root || document).querySelectorAll('figure.shot:not([data-ready])').forEach(function (f) {
+      var img = f.querySelector('img'); if (!img) return;
+      var sys = f.getAttribute('data-sys') || 'kv', label = sys === 'ota' ? (f.getAttribute('data-ota') || 'Sàn OTA') : (SYS[sys] || '');
+      var frame = document.createElement('button');
+      frame.type = 'button'; frame.className = 'frame'; frame.setAttribute('aria-label', 'Phóng to ảnh: ' + (img.alt || ''));
+      img.parentNode.insertBefore(frame, img); frame.appendChild(img);
+      frame.insertAdjacentHTML('beforeend', (label ? '<span class="sys">' + label + '</span>' : '') + '<span class="zoom"><i class="fa-solid fa-magnifying-glass-plus"></i> Bấm để phóng to</span>');
+      var cap = f.querySelector('figcaption');
+      if (cap && !cap.querySelector('i')) cap.insertAdjacentHTML('afterbegin', '<i class="fa-solid ' + (sys === 'leader' ? 'fa-user-shield' : 'fa-display') + '"></i>');
+      f.setAttribute('data-ready', '1');
+    });
+    (root || document).querySelectorAll('.shots:not([data-ready])').forEach(function (set) {
+      var figs = [].slice.call(set.querySelectorAll('figure.shot')), i = 0;
+      figs.forEach(function (f, k) { f.querySelector('.frame').addEventListener('click', function () { lbOpen(figs, k); }); });
+      set.setAttribute('data-ready', '1');
+      if (figs.length < 2) { if (figs[0]) figs[0].classList.add('cur'); return; }
+      set.classList.add('multi');
+      var nav = document.createElement('div'); nav.className = 'shot-nav';
+      nav.innerHTML = '<span class="lbl"></span><span class="ctl"><button type="button" data-d="-1" aria-label="Màn hình trước"><i class="fa-solid fa-chevron-left"></i></button>' +
+        '<span class="dt">' + figs.map(function () { return '<i></i>'; }).join('') + '</span>' +
+        '<button type="button" data-d="1" aria-label="Màn hình sau"><i class="fa-solid fa-chevron-right"></i></button></span>';
+      set.insertBefore(nav, set.firstChild);
+      var dots = nav.querySelectorAll('.dt i'), prev = nav.querySelector('[data-d="-1"]'), next = nav.querySelector('[data-d="1"]');
+      function show(k) {
+        i = k; figs.forEach(function (f, j) { f.classList.toggle('cur', j === i); });
+        dots.forEach(function (d, j) { d.classList.toggle('on', j === i); });
+        nav.querySelector('.lbl').textContent = 'Màn hình ' + (i + 1) + ' / ' + figs.length;
+        prev.disabled = i === 0; next.disabled = i === figs.length - 1;
+      }
+      nav.addEventListener('click', function (e) { var b = e.target.closest('[data-d]'); if (!b || b.disabled) return; show(i + +b.getAttribute('data-d')); KV.sound('click'); });
+      show(0);
+    });
+    document.querySelectorAll('figure.shot').forEach(function (f) {
+      if (!f.closest('.shots') && !f.hasAttribute('data-lb')) { f.setAttribute('data-lb', '1'); f.querySelector('.frame').addEventListener('click', function () { lbOpen([f], 0); }); }
+    });
+  };
+
   /* ---------- Pháo hoa (tùy chọn) ---------- */
   KV.confetti = function () {
     if (window.confetti) window.confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
@@ -305,6 +378,7 @@
     buildChrome();
     buildFooters();
     mountKici(document);
+    KV.shots(document);
     render();
     if (cfg.onReady) cfg.onReady();
     KV.go(0);
