@@ -328,7 +328,7 @@
   KV.shots = function (root) {
     (root || document).querySelectorAll('figure.shot:not([data-ready])').forEach(function (f) {
       var img = f.querySelector('img'); if (!img) return;
-      var sys = f.getAttribute('data-sys') || 'kv', label = sys === 'ota' ? (f.getAttribute('data-ota') || 'Sàn OTA') : (SYS[sys] || '');
+      var sys = f.getAttribute('data-sys') || 'kv', label = sys === 'ota' ? (f.getAttribute('data-ota') || 'Kênh OTA') : (SYS[sys] || '');
       var frame = document.createElement('button');
       frame.type = 'button'; frame.className = 'frame'; frame.setAttribute('aria-label', 'Phóng to ảnh: ' + (img.alt || ''));
       img.parentNode.insertBefore(frame, img); frame.appendChild(img);
