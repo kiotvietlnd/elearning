@@ -262,6 +262,7 @@
     <script>
         const DATA_SOURCE_ID = '1SOxKVVmRS5J0pvWSfv2djKJbAGkS1ojN1gLlp1ia3S0';
         const TICKET_SOURCE_ID = '1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI';
+        const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzBRc6ujH2TPyXMyvSAiyfVe6F7W17pZ80SnnUWDM8rOABZDljPqjX6AeXI4KQJA_MQ/exec';
         const TICKET_CSV_URL = `https://docs.google.com/spreadsheets/d/${TICKET_SOURCE_ID}/gviz/tq?tqx=out:csv&sheet=Review_Tickets`;
         
         // CÁC ENDPOINT ĐỒNG BỘ DỮ LIỆU GOOGLE SHEETS
@@ -1079,39 +1080,71 @@
                 }
             }
 
-            // 2. Đồng bộ bảng ticket từ Google Sheets Review_Tickets
+            // 2. Đồng bộ bảng ticket từ Google Sheets Review_Tickets (Ưu tiên Webhook JSON real-time)
             try {
-                const ticketCacheBuster = `t=${Date.now()}&_r=${Math.random()}`;
-                const freshTicketUrl = `${TICKET_CSV_URL}&${ticketCacheBuster}`;
-                const tResp = await fetch(freshTicketUrl, {
-                    cache: 'no-store',
-                    headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
-                });
-                if (tResp.ok) {
-                    const tCsv = await tResp.text();
-                    const tParsed = Papa.parse(tCsv, { header: true, skipEmptyLines: true });
-                    if (tParsed?.data && tParsed.data.length > 0) {
-                        const newTicketsMap = {};
-                        let validCount = 0;
-                        tParsed.data.forEach(r => {
-                            const tid = r['Mã Ticket'] || '';
-                            const lesson = r['Bài học'] || '';
-                            const status = r['Trạng thái xử lý'] || 'Mới tiếp nhận';
-                            if (tid && tid.startsWith('TK-')) {
-                                validCount++;
-                                const code = extractLessonCode(lesson);
-                                if (code) {
-                                    if (!newTicketsMap[code]) newTicketsMap[code] = [];
-                                    newTicketsMap[code].push({ id: tid, status: status });
-                                }
+                let ticketsLoaded = false;
+                if (GAS_WEBHOOK_URL) {
+                    try {
+                        const wResp = await fetch(`${GAS_WEBHOOK_URL}?_ts=${Date.now()}`);
+                        if (wResp.ok) {
+                            const wJson = await wResp.json();
+                            if (wJson?.status === 'success' && Array.isArray(wJson.tickets) && wJson.tickets.length > 0) {
+                                const newTicketsMap = {};
+                                wJson.tickets.forEach(t => {
+                                    if (t.id && t.id.startsWith('TK-')) {
+                                        const code = extractLessonCode(t.lesson);
+                                        if (code) {
+                                            if (!newTicketsMap[code]) newTicketsMap[code] = [];
+                                            newTicketsMap[code].push({ id: t.id, status: t.status || 'Mới tiếp nhận' });
+                                        }
+                                    }
+                                });
+                                ticketsByLessonCode = newTicketsMap;
+                                liveTicketCount = wJson.tickets.length;
+                                const badge = document.getElementById('navTicketBadge');
+                                if (badge) badge.textContent = liveTicketCount;
+                                renderLessons();
+                                ticketsLoaded = true;
                             }
-                        });
-                        if (validCount > 0) {
-                            ticketsByLessonCode = newTicketsMap;
-                            liveTicketCount = validCount;
-                            const badge = document.getElementById('navTicketBadge');
-                            if (badge) badge.textContent = liveTicketCount;
-                            renderLessons();
+                        }
+                    } catch (we) {
+                        console.warn('Lỗi fetch GAS Webhook, chuyển sang Gviz CSV fallback:', we);
+                    }
+                }
+
+                if (!ticketsLoaded) {
+                    const ticketCacheBuster = `t=${Date.now()}&_r=${Math.random()}`;
+                    const freshTicketUrl = `${TICKET_CSV_URL}&${ticketCacheBuster}`;
+                    const tResp = await fetch(freshTicketUrl, {
+                        cache: 'no-store',
+                        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                    });
+                    if (tResp.ok) {
+                        const tCsv = await tResp.text();
+                        const tParsed = Papa.parse(tCsv, { header: true, skipEmptyLines: true });
+                        if (tParsed?.data && tParsed.data.length > 0) {
+                            const newTicketsMap = {};
+                            let validCount = 0;
+                            tParsed.data.forEach(r => {
+                                const tid = r['Mã Ticket'] || '';
+                                const lesson = r['Bài học'] || '';
+                                const status = r['Trạng thái xử lý'] || 'Mới tiếp nhận';
+                                if (tid && tid.startsWith('TK-')) {
+                                    validCount++;
+                                    const code = extractLessonCode(lesson);
+                                    if (code) {
+                                        if (!newTicketsMap[code]) newTicketsMap[code] = [];
+                                        newTicketsMap[code].push({ id: tid, status: status });
+                                    }
+                                }
+                            });
+                            if (validCount > 0) {
+                                ticketsByLessonCode = newTicketsMap;
+                                liveTicketCount = validCount;
+                                const badge = document.getElementById('navTicketBadge');
+                                if (badge) badge.textContent = liveTicketCount;
+                                renderLessons();
+                            }
                         }
                     }
                 }

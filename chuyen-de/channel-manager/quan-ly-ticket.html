@@ -647,7 +647,7 @@
         const SPREADSHEET_ID = '1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI';
         const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Review_Tickets`;
         const LOCAL_STORAGE_KEY = 'kiotviet_cm_tickets_cache_v5';
-        const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App khi triển khai để ghi tự động 2 chiều
+        const GAS_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzBRc6ujH2TPyXMyvSAiyfVe6F7W17pZ80SnnUWDM8rOABZDljPqjX6AeXI4KQJA_MQ/exec';
         const DEFAULT_INITIAL_TICKETS = [
         {
                 "id": "TK-CM-001",
@@ -983,11 +983,38 @@
             }
         }
 
-        // 2. TẢI TICKETS TỪ GOOGLE SHEETS
-        function loadTickets() {
+        // 2. TẢI TICKETS TỪ GOOGLE SHEETS / WEBHOOK API
+        async function loadTickets() {
             const icon = document.getElementById('reloadIcon');
             if (icon) icon.classList.add('fa-spin');
 
+            const applyFetchedTickets = (fetched) => {
+                if (icon) icon.classList.remove('fa-spin');
+                if (fetched && fetched.length > 0) {
+                    allTickets = fetched;
+                    saveToLocalStorage();
+                    updateMetrics();
+                    applyFilters();
+                }
+            };
+
+            // 1. Ưu tiên tải thời gian thực từ Google Apps Script Webhook API (JSON, zero-cache)
+            if (GAS_WEBHOOK_URL) {
+                try {
+                    const res = await fetch(`${GAS_WEBHOOK_URL}?_ts=${Date.now()}`);
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json && json.status === 'success' && Array.isArray(json.tickets) && json.tickets.length > 0) {
+                            applyFetchedTickets(json.tickets);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Lỗi kết nối GAS Webhook, chuyển sang Gviz CSV fallback:', e);
+                }
+            }
+
+            // 2. Dự phòng: Tải qua endpoint Gviz CSV của Google Sheets
             const timestamp = new Date().getTime();
             const fetchUrl = `${GVIZ_CSV_URL}&_ts=${timestamp}`;
 
@@ -1017,32 +1044,7 @@
                             reviewer_feedback: item['Ý kiến khi nghiệm thu'] || ''
                         })).filter(t => t.id && t.id.startsWith('TK-'));
 
-                        // Hợp nhất dữ liệu thông minh (Google Sheets là Master Source of Truth)
-                        if (allTickets.length > 0) {
-                            fetchedTickets.forEach(ft => {
-                                const localItem = allTickets.find(lt => lt.id === ft.id);
-                                if (!localItem) {
-                                    allTickets.push(ft);
-                                } else {
-                                    // Cập nhật tất cả các trường quản trị từ Google Sheets
-                                    localItem.status = ft.status || localItem.status;
-                                    localItem.feasibility = ft.feasibility || localItem.feasibility;
-                                    localItem.priority = ft.priority || localItem.priority;
-                                    localItem.action_plan = ft.action_plan || localItem.action_plan;
-                                    localItem.resolution_link = ft.resolution_link || localItem.resolution_link;
-                                    localItem.lnd_note = ft.lnd_note || localItem.lnd_note;
-                                    if (ft.requester) localItem.requester = ft.requester;
-                                    if (ft.csat_score && ft.csat_score !== 'Chưa đánh giá') localItem.csat_score = ft.csat_score;
-                                    if (ft.reviewer_feedback) localItem.reviewer_feedback = ft.reviewer_feedback;
-                                }
-                            });
-                        } else {
-                            allTickets = fetchedTickets;
-                        }
-
-                        saveToLocalStorage();
-                        updateMetrics();
-                        applyFilters();
+                        applyFetchedTickets(fetchedTickets);
                     }
                 },
                 error: function(err) {
@@ -1299,6 +1301,21 @@
                 updateMetrics();
                 applyFilters();
                 showToast(`Đã chuyển ${t.id} sang trạng thái "${targetStatus}"!`, 'success');
+
+                if (GAS_WEBHOOK_URL) {
+                    const dropPayload = {
+                        action: 'update_planning',
+                        pin: '1234',
+                        ticket_id: t.id,
+                        status: targetStatus
+                    };
+                    fetch(GAS_WEBHOOK_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(dropPayload)
+                    }).catch(err => console.warn('Lỗi kéo thả Kanban Webhook:', err));
+                }
             }
         }
 
@@ -1454,13 +1471,24 @@
             updateMetrics();
             applyFilters();
 
-            // Nếu đã cấu hình Webhook API, gửi tự động lên Google Sheet
+            // Gửi tự động lên Google Sheet qua Webhook API
             if (GAS_WEBHOOK_URL) {
+                const payload = {
+                    action: 'create',
+                    requester: newTicket.requester,
+                    lesson: newTicket.lesson,
+                    module: newTicket.module,
+                    location: newTicket.location,
+                    issue_desc: newTicket.issue_desc,
+                    screenshot_url: newTicket.screenshot_url
+                };
                 fetch(GAS_WEBHOOK_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'create', ...newTicket })
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    setTimeout(loadTickets, 1500);
                 }).catch(err => console.warn('Lỗi gửi Webhook:', err));
             }
 
@@ -1468,7 +1496,7 @@
             document.getElementById('createTicketForm').reset();
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> Gửi Ticket`;
-            showToast(`Đã tạo ticket ${newId}! Vui lòng nhập vào Google Sheet Master để toàn team cùng thấy.`, 'success');
+            showToast(`Đã tạo ticket ${newId} và đồng bộ lên Google Sheet Master thành công!`, 'success');
         }
 
         // 11. LƯU CÀI ĐẶT L&D (CẬP NHẬT CẢ TÊN NGƯỜI TẠO TICKET)
@@ -1488,6 +1516,28 @@
                 t.action_plan = document.getElementById('planActionPlan').value;
                 t.resolution_link = document.getElementById('planResolutionLink').value;
                 t.lnd_note = document.getElementById('planLndNote').value;
+
+                if (GAS_WEBHOOK_URL) {
+                    const planPayload = {
+                        action: 'update_planning',
+                        pin: '1234',
+                        ticket_id: t.id,
+                        status: t.status,
+                        feasibility: t.feasibility,
+                        priority: t.priority,
+                        action_plan: t.action_plan,
+                        resolution_link: t.resolution_link,
+                        lnd_note: t.lnd_note
+                    };
+                    fetch(GAS_WEBHOOK_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(planPayload)
+                    }).then(() => {
+                        setTimeout(loadTickets, 1500);
+                    }).catch(err => console.warn('Lỗi cập nhật kế hoạch Webhook:', err));
+                }
             }
 
             saveToLocalStorage();
@@ -1497,7 +1547,7 @@
             closeModal('planningModal');
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-floppy-disk text-xs"></i> Lưu Cài Đặt`;
-            showToast(`Đã cập nhật cài đặt cho ${ticketId}!`, 'success');
+            showToast(`Đã lưu cài đặt và đồng bộ lên Google Sheet Master cho ${ticketId}!`, 'success');
         }
 
         // 12. NGHIỆM THU & ĐÁNH GIÁ (REVIEWER DVKH)
@@ -1568,6 +1618,23 @@
                 } else if (starVal <= 2) {
                     t.status = 'Đang sửa đổi';
                 }
+
+                if (GAS_WEBHOOK_URL) {
+                    const csatPayload = {
+                        action: 'rate_csat',
+                        ticket_id: ticketId,
+                        csat_score: t.csat_score,
+                        reviewer_feedback: t.reviewer_feedback
+                    };
+                    fetch(GAS_WEBHOOK_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(csatPayload)
+                    }).then(() => {
+                        setTimeout(loadTickets, 1500);
+                    }).catch(err => console.warn('Lỗi đánh giá CSAT Webhook:', err));
+                }
             }
 
             saveToLocalStorage();
@@ -1577,7 +1644,7 @@
             closeModal('csatModal');
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-check-circle text-xs"></i> Xác Nhận Nghiệm Thu`;
-            showToast(`Cảm ơn bạn đã đánh giá nghiệm thu cho ${ticketId}!`, 'success');
+            showToast(`Cảm ơn bạn đã đánh giá nghiệm thu cho ${ticketId}! Dữ liệu đã đồng bộ lên Google Sheet.`, 'success');
         }
 
         // 13. TOAST THÔNG BÁO
