@@ -109,6 +109,14 @@
                     <span class="sm:hidden">Notes</span>
                 </a>
 
+                <!-- Nút Mở Google Sheet Master -->
+                <a href="https://docs.google.com/spreadsheets/d/1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI/edit#gid=0" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] sm:text-xs transition-all border border-emerald-400/80 shadow-xs" title="Mở trực tiếp Google Sheet Master Review_Tickets">
+                    <i class="fa-solid fa-file-excel text-xs"></i>
+                    <span class="hidden sm:inline">Google Sheet</span>
+                    <span class="sm:hidden">Sheet</span>
+                </a>
+
                 <!-- Nút QUẢN TRỊ L&D (MẬT KHẨU 6789) -->
                 <button id="btnAdminAuth" onclick="toggleAdminAuth()" 
                         class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] sm:text-xs transition-all border border-white/20 shadow-xs" title="Đăng nhập Quản trị L&D (Mã PIN 6789)">
@@ -363,6 +371,18 @@
                 <button onclick="closeModal('createModal')" class="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 rounded-lg">
                     <i class="fa-solid fa-xmark text-base"></i>
                 </button>
+            </div>
+
+            <!-- Hướng dẫn đồng bộ Google Sheet Master -->
+            <div class="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-slate-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-[#0070F4] text-base shrink-0"></i>
+                    <span class="leading-relaxed">Bạn có thể tạo nhanh tại form này hoặc nhập trực tiếp dòng mới trên <strong>Google Sheet Master</strong> để đồng bộ toàn team:</span>
+                </div>
+                <a href="https://docs.google.com/spreadsheets/d/1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI/edit#gid=0" target="_blank" rel="noopener noreferrer"
+                   class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] whitespace-nowrap shadow-xs inline-flex items-center justify-center gap-1.5 shrink-0 transition-colors">
+                    <i class="fa-solid fa-file-excel"></i> Mở Google Sheet Master
+                </a>
             </div>
 
             <form id="createTicketForm" onsubmit="handleCreateTicket(event)" class="flex flex-col gap-3 text-xs">
@@ -626,7 +646,8 @@
         // CẤU HÌNH SHEET & ĐỒNG BỘ
         const SPREADSHEET_ID = '1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI';
         const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Review_Tickets`;
-        const LOCAL_STORAGE_KEY = 'kiotviet_cm_tickets_cache_v4';
+        const LOCAL_STORAGE_KEY = 'kiotviet_cm_tickets_cache_v5';
+        const GAS_WEBHOOK_URL = ''; // Dán URL Google Apps Script Web App khi triển khai để ghi tự động 2 chiều
         const DEFAULT_INITIAL_TICKETS = [
         {
                 "id": "TK-CM-001",
@@ -996,14 +1017,21 @@
                             reviewer_feedback: item['Ý kiến khi nghiệm thu'] || ''
                         })).filter(t => t.id && t.id.startsWith('TK-'));
 
-                        // Hợp nhất dữ liệu thông minh (Giữ kết quả xử lý của L&D)
+                        // Hợp nhất dữ liệu thông minh (Google Sheets là Master Source of Truth)
                         if (allTickets.length > 0) {
                             fetchedTickets.forEach(ft => {
                                 const localItem = allTickets.find(lt => lt.id === ft.id);
                                 if (!localItem) {
                                     allTickets.push(ft);
                                 } else {
-                                    if (ft.requester && !localItem.requester) localItem.requester = ft.requester;
+                                    // Cập nhật tất cả các trường quản trị từ Google Sheets
+                                    localItem.status = ft.status || localItem.status;
+                                    localItem.feasibility = ft.feasibility || localItem.feasibility;
+                                    localItem.priority = ft.priority || localItem.priority;
+                                    localItem.action_plan = ft.action_plan || localItem.action_plan;
+                                    localItem.resolution_link = ft.resolution_link || localItem.resolution_link;
+                                    localItem.lnd_note = ft.lnd_note || localItem.lnd_note;
+                                    if (ft.requester) localItem.requester = ft.requester;
                                     if (ft.csat_score && ft.csat_score !== 'Chưa đánh giá') localItem.csat_score = ft.csat_score;
                                     if (ft.reviewer_feedback) localItem.reviewer_feedback = ft.reviewer_feedback;
                                 }
@@ -1426,11 +1454,21 @@
             updateMetrics();
             applyFilters();
 
+            // Nếu đã cấu hình Webhook API, gửi tự động lên Google Sheet
+            if (GAS_WEBHOOK_URL) {
+                fetch(GAS_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'create', ...newTicket })
+                }).catch(err => console.warn('Lỗi gửi Webhook:', err));
+            }
+
             closeModal('createModal');
             document.getElementById('createTicketForm').reset();
             btn.disabled = false;
             btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> Gửi Ticket`;
-            showToast(`Đã tạo ticket ${newId} thành công!`, 'success');
+            showToast(`Đã tạo ticket ${newId}! Vui lòng nhập vào Google Sheet Master để toàn team cùng thấy.`, 'success');
         }
 
         // 11. LƯU CÀI ĐẶT L&D (CẬP NHẬT CẢ TÊN NGƯỜI TẠO TICKET)

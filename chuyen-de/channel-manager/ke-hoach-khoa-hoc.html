@@ -107,7 +107,7 @@
                    class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md transition-all transform hover:scale-102 border border-amber-400" title="Cổng Quản Lý Ticket Review & Đánh Giá CSAT">
                     <i class="fa-solid fa-ticket-simple text-sm text-white"></i>
                     <span>Quản Lý Ticket</span>
-                    <span class="hidden sm:inline-block px-1.5 py-0.5 rounded-md bg-white/25 text-[10px] font-black text-white">14</span>
+                    <span id="navTicketBadge" class="hidden sm:inline-block px-1.5 py-0.5 rounded-md bg-white/25 text-[10px] font-black text-white">14</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-white/90"></i>
                 </a>
                 <button onclick="openModal('https://kiotvietlnd.github.io/slides/slides-hdsd/hotel/gioi-thieu-chuong-trinh-channel-manager/', 'Slides Giới thiệu Kế hoạch Khóa học KiotViet Channel Manager', 'SLIDES')"
@@ -261,12 +261,39 @@
     <!-- SCRIPT ĐIỀU KHIỂN & ĐỒNG BỘ DỮ LIỆU TỰ ĐỘNG -->
     <script>
         const DATA_SOURCE_ID = '1SOxKVVmRS5J0pvWSfv2djKJbAGkS1ojN1gLlp1ia3S0';
+        const TICKET_SOURCE_ID = '1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI';
+        const TICKET_CSV_URL = `https://docs.google.com/spreadsheets/d/${TICKET_SOURCE_ID}/gviz/tq?tqx=out:csv&sheet=Review_Tickets`;
         
         // CÁC ENDPOINT ĐỒNG BỘ DỮ LIỆU GOOGLE SHEETS
         const ENDPOINTS = [
             `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/gviz/tq?tqx=out:csv`,
             `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/export?format=csv`
         ];
+
+        // Dữ liệu mapping ticket mặc định hiển thị tức thì 0ms
+        let ticketsByLessonCode = {
+            '0': [
+                { id: 'TK-CM-012', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-013', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-014', status: 'Đã sửa - Chờ review' }
+            ],
+            '1.1': [
+                { id: 'TK-CM-001', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-002', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-003', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-004', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-005', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-006', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-007', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-008', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-009', status: 'Đã sửa - Chờ review' },
+                { id: 'TK-CM-010', status: 'Đã sửa - Chờ review' }
+            ],
+            '1.2': [
+                { id: 'TK-CM-011', status: 'Đã sửa - Chờ review' }
+            ]
+        };
+        let liveTicketCount = 14;
 
         // DỮ LIỆU CHUẨN MẶC ĐỊNH 18 BÀI HỌC (ĐÃ CẬP NHẬT ĐẦY ĐỦ LINK MỚI NHẤT)
         const DEFAULT_LESSONS = [
@@ -847,8 +874,45 @@
         }
 
         function extractLessonCode(title) {
-            const m = title.match(/Bài\s*(\d+\.\d+)/i);
+            if (!title) return '';
+            const m = title.match(/Bài\s*(\d+\.\d+|\d+)/i);
             return m ? m[1] : '';
+        }
+
+        // Tạo badge trạng thái ticket thông minh cho từng bài học
+        function renderLessonTicketBadge(code, title) {
+            const tickets = ticketsByLessonCode[code] || [];
+            if (tickets.length === 0) {
+                return `
+                    <a href="quan-ly-ticket.html?lesson=${encodeURIComponent(title)}" target="_blank" 
+                       class="px-2 py-0.5 rounded-md bg-slate-50 hover:bg-amber-50 text-slate-500 hover:text-amber-800 border border-slate-200 hover:border-amber-200 text-[10px] sm:text-[11px] font-medium inline-flex items-center gap-1 transition-colors" title="Gửi góp ý / Tạo ticket cho bài học này">
+                        <i class="fa-regular fa-comment text-slate-400"></i> Góp ý
+                    </a>
+                `;
+            }
+
+            const closedCount = tickets.filter(t => {
+                const s = t.status || '';
+                return s.includes('Đã sửa') || s.includes('Closed') || s.includes('nghiệm thu');
+            }).length;
+
+            const isAllFixed = closedCount === tickets.length;
+
+            if (isAllFixed) {
+                return `
+                    <a href="quan-ly-ticket.html?lesson=${encodeURIComponent(title)}" target="_blank" 
+                       class="px-2 py-0.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] sm:text-[11px] font-extrabold inline-flex items-center gap-1 shadow-2xs transition-colors" title="${tickets.length} ticket đã sửa xong, đang chờ review nghiệm thu">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> ${tickets.length} Ticket: Đã sửa
+                    </a>
+                `;
+            }
+
+            return `
+                <a href="quan-ly-ticket.html?lesson=${encodeURIComponent(title)}" target="_blank" 
+                   class="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[10px] sm:text-[11px] font-extrabold inline-flex items-center gap-1 shadow-2xs transition-colors" title="${tickets.length} ticket (${closedCount} đã sửa)">
+                    <i class="fa-solid fa-ticket-simple text-amber-600"></i> ${tickets.length} Ticket (${closedCount}/${tickets.length} Đã sửa)
+                </a>
+            `;
         }
 
         // Format iframe link an toàn để nhúng
@@ -1015,6 +1079,46 @@
                 }
             }
 
+            // 2. Đồng bộ bảng ticket từ Google Sheets Review_Tickets
+            try {
+                const ticketCacheBuster = `t=${Date.now()}&_r=${Math.random()}`;
+                const freshTicketUrl = `${TICKET_CSV_URL}&${ticketCacheBuster}`;
+                const tResp = await fetch(freshTicketUrl, {
+                    cache: 'no-store',
+                    headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                });
+                if (tResp.ok) {
+                    const tCsv = await tResp.text();
+                    const tParsed = Papa.parse(tCsv, { header: true, skipEmptyLines: true });
+                    if (tParsed?.data && tParsed.data.length > 0) {
+                        const newTicketsMap = {};
+                        let validCount = 0;
+                        tParsed.data.forEach(r => {
+                            const tid = r['Mã Ticket'] || '';
+                            const lesson = r['Bài học'] || '';
+                            const status = r['Trạng thái xử lý'] || 'Mới tiếp nhận';
+                            if (tid && tid.startsWith('TK-')) {
+                                validCount++;
+                                const code = extractLessonCode(lesson);
+                                if (code) {
+                                    if (!newTicketsMap[code]) newTicketsMap[code] = [];
+                                    newTicketsMap[code].push({ id: tid, status: status });
+                                }
+                            }
+                        });
+                        if (validCount > 0) {
+                            ticketsByLessonCode = newTicketsMap;
+                            liveTicketCount = validCount;
+                            const badge = document.getElementById('navTicketBadge');
+                            if (badge) badge.textContent = liveTicketCount;
+                            renderLessons();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Lỗi đồng bộ Review_Tickets:', err);
+            }
+
             if (refreshIcon) refreshIcon.classList.remove('animate-spin');
 
             if (success) {
@@ -1166,10 +1270,7 @@
                                         <span class="px-2 py-0.5 rounded-md bg-[#0070F4] text-white text-[10px] sm:text-[11px] font-extrabold inline-flex items-center gap-1">
                                             <i class="fa-solid fa-flag-checkered"></i> Bắt buộc trước Bài 1.1
                                         </span>
-                                        <a href="quan-ly-ticket.html?lesson=${encodeURIComponent(item.title)}" target="_blank" 
-                                           class="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10px] sm:text-[11px] font-bold inline-flex items-center gap-1 transition-colors" title="Gửi góp ý / Tạo ticket cho bài học này">
-                                            <i class="fa-solid fa-comment-medical text-amber-600"></i> Góp ý bài này
-                                        </a>
+                                        ${renderLessonTicketBadge('0', item.title)}
                                     </div>
                                 </div>
                                 <div class="col-span-6 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 w-full">
@@ -1252,6 +1353,8 @@
                         </span>
                     `;
 
+                    const lessonCode = extractLessonCode(item.title);
+
                     fullHtml += `
                         <article class="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 grid grid-cols-12 items-center gap-2.5 sm:gap-4 lesson-card shadow-xs">
                             <div class="col-span-6 flex flex-col items-start gap-1.5 min-w-0 pr-1">
@@ -1260,10 +1363,7 @@
                                 </h3>
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     ${progressBadge}
-                                    <a href="quan-ly-ticket.html?lesson=${encodeURIComponent(item.title)}" target="_blank" 
-                                       class="px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[10px] sm:text-[11px] font-bold inline-flex items-center gap-1 transition-colors" title="Gửi góp ý / Tạo ticket cho bài học này">
-                                        <i class="fa-solid fa-comment-medical text-amber-600"></i> Góp ý bài này
-                                    </a>
+                                    ${renderLessonTicketBadge(lessonCode, item.title)}
                                 </div>
                             </div>
                             <div class="col-span-6 grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 w-full">
