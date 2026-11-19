@@ -495,6 +495,11 @@
             let colSTT = -1, colChapter = -1, colTitle = -1, colVideo = -1, colWeb = -1, colQuiz = -1, colWorksheet = -1, colPdf = -1;
             for (let c = 0; c < headerRow.length; c++) {
                 const h = headerRow[c];
+                // Endpoint gviz gộp 2 dòng tiêu đề lớn vào ô đầu tiên của hàng tiêu đề; bỏ qua để không nhận nhầm cột
+                if (c === 0 && (h.includes('kiotviet') || h.includes('he sinh thai'))) {
+                    colSTT = 0;
+                    continue;
+                }
                 if (colSTT === -1 && (h === 'stt' || h.endsWith('stt'))) colSTT = c;
                 if (colChapter === -1 && h.includes('chuong')) colChapter = c;
                 if (colTitle === -1 && h.includes('bai hoc')) colTitle = c;
@@ -529,7 +534,8 @@
                 const wsVal = (colWorksheet < r.length && r[colWorksheet]) ? r[colWorksheet].trim() : '';
                 const pdfUrl = (colPdf < r.length && r[colPdf]) ? r[colPdf].trim() : (defItem.pdf?.url || '');
 
-                const wsOnline = ONLINE_DOCS[sttVal] || (wsVal.includes('docs.google.com') ? wsVal : '');
+                // Link trên Google Sheet được ưu tiên; ONLINE_DOCS chỉ dự phòng khi ô để trống
+                const wsOnline = (wsVal.includes('docs.google.com') ? wsVal : '') || ONLINE_DOCS[sttVal] || '';
                 const wsUrl = wsVal || defItem.worksheet?.url || '';
 
                 parsed.push({
@@ -544,7 +550,7 @@
                     worksheet: {
                         url: wsUrl,
                         online: wsOnline,
-                        label: sttVal === '0' ? 'Checklist' : `Thực hành ${sttVal}.D`,
+                        label: sttVal === '0' ? 'Checklist' : `Thực hành 1.${sttVal}D`,
                         download: !wsVal.startsWith('http')
                     },
                     pdf: { url: pdfUrl, label: sttVal === '0' ? 'Lộ trình PDF' : 'Cẩm nang PDF' }
