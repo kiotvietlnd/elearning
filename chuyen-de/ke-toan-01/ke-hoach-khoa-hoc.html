@@ -203,8 +203,13 @@
 
     <script>
         // Gắn Google Sheet ID tại đây khi bạn tạo Sheet theo dõi tiến độ Kế toán 01 (để trống = dùng dữ liệu chuẩn bên dưới)
-        const DATA_SOURCE_ID = '';
+        const DATA_SOURCE_ID = '1zCU5bRVyOprFM7h_ziLD3WknjdvH0ymZywylte8IQnM';
         const PAGES_BASE = 'https://kiotvietlnd.github.io/elearning/chuyen-de/ke-toan-01/';
+
+        const ENDPOINTS = DATA_SOURCE_ID ? [
+            `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/gviz/tq?tqx=out:csv`,
+            `https://docs.google.com/spreadsheets/d/${DATA_SOURCE_ID}/export?format=csv`
+        ] : [];
 
         const DEFAULT_LESSONS = [
             {
@@ -473,9 +478,128 @@
             }, 2400);
         }
 
+        // TỰ ĐỘNG ĐỒNG BỘ TIẾN ĐỘ TỪ GOOGLE SHEETS
+        function parseRemoteFeed(rows) {
+            if (!rows || rows.length < 2) return false;
+            let headerIdx = -1;
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                const rowStr = cleanText(rows[i].join(' '));
+                if (rowStr.includes('bai hoc') && (rowStr.includes('stt') || rowStr.includes('chuong'))) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+            if (headerIdx === -1) return false;
+
+            const headerRow = rows[headerIdx].map(h => cleanText(h));
+            let colSTT = -1, colChapter = -1, colTitle = -1, colVideo = -1, colWeb = -1, colQuiz = -1, colWorksheet = -1, colPdf = -1;
+            for (let c = 0; c < headerRow.length; c++) {
+                const h = headerRow[c];
+                if (colSTT === -1 && (h === 'stt' || h.endsWith('stt'))) colSTT = c;
+                if (colChapter === -1 && h.includes('chuong')) colChapter = c;
+                if (colTitle === -1 && h.includes('bai hoc')) colTitle = c;
+                if (colVideo === -1 && (h.includes('video') || h.startsWith('a -'))) colVideo = c;
+                if (colWeb === -1 && (h.includes('github') || h.includes('web') || h.startsWith('b -'))) colWeb = c;
+                if (colQuiz === -1 && (h.includes('quiz') || h.includes('trac nghiem') || h.startsWith('c -'))) colQuiz = c;
+                if (colWorksheet === -1 && (h.includes('worksheet') || h.includes('thuc hanh') || h.startsWith('d -'))) colWorksheet = c;
+                if (colPdf === -1 && (h.includes('pdf') || h.includes('cam nang') || h.includes('tra cuu') || h.startsWith('e -'))) colPdf = c;
+            }
+            if (colSTT === -1) colSTT = 0;
+            if (colChapter === -1) colChapter = 1;
+            if (colTitle === -1) colTitle = 2;
+            if (colVideo === -1) colVideo = 4;
+            if (colWeb === -1) colWeb = 5;
+            if (colQuiz === -1) colQuiz = 6;
+            if (colWorksheet === -1) colWorksheet = 7;
+            if (colPdf === -1) colPdf = 8;
+
+            const parsed = [];
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length === 0) continue;
+                const titleVal = (colTitle < r.length && r[colTitle]) ? r[colTitle].trim() : '';
+                if (!titleVal || !titleVal.toLowerCase().includes('bài')) continue;
+
+                const sttVal = (colSTT < r.length && r[colSTT]) ? r[colSTT].trim() : (parsed.length).toString();
+                const defItem = DEFAULT_LESSONS.find(d => d.stt === sttVal || (d.title && cleanText(d.title) === cleanText(titleVal))) || {};
+                const chapVal = ((colChapter < r.length && r[colChapter]) ? r[colChapter].trim() : '') || defItem.chapter || 'Chương 1';
+
+                const vidUrl = (colVideo < r.length && r[colVideo]) ? r[colVideo].trim() : (defItem.video?.url || '');
+                const webUrl = (colWeb < r.length && r[colWeb]) ? r[colWeb].trim() : (defItem.web?.url || '');
+                const wsVal = (colWorksheet < r.length && r[colWorksheet]) ? r[colWorksheet].trim() : '';
+                const pdfUrl = (colPdf < r.length && r[colPdf]) ? r[colPdf].trim() : (defItem.pdf?.url || '');
+
+                const wsOnline = ONLINE_DOCS[sttVal] || (wsVal.includes('docs.google.com') ? wsVal : '');
+                const wsUrl = wsVal || defItem.worksheet?.url || '';
+
+                parsed.push({
+                    stt: sttVal,
+                    chapter: chapVal,
+                    title: titleVal,
+                    isIntro: sttVal === '0' || defItem.isIntro || false,
+                    duration: defItem.duration || '30 phút',
+                    imgCount: defItem.imgCount || 0,
+                    video: { url: vidUrl, label: vidUrl ? 'Video' : 'Chờ render MP4' },
+                    web: { url: webUrl, label: 'Web Học liệu' },
+                    worksheet: {
+                        url: wsUrl,
+                        online: wsOnline,
+                        label: sttVal === '0' ? 'Checklist' : `Thực hành ${sttVal}.D`,
+                        download: !wsVal.startsWith('http')
+                    },
+                    pdf: { url: pdfUrl, label: sttVal === '0' ? 'Lộ trình PDF' : 'Cẩm nang PDF' }
+                });
+            }
+
+            if (parsed.length > 0) {
+                allLessons = parsed;
+                updateTopCounters();
+                renderLessons();
+                return true;
+            }
+            return false;
+        }
+
+        async function fetchLiveFeed(isManual = false) {
+            if (!ENDPOINTS || ENDPOINTS.length === 0) return;
+            let success = false;
+            for (const endpoint of ENDPOINTS) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    const cacheBuster = `t=${Date.now()}&_r=${Math.random()}`;
+                    const freshUrl = endpoint.includes('?') ? `${endpoint}&${cacheBuster}` : `${endpoint}?${cacheBuster}`;
+                    const resp = await fetch(freshUrl, {
+                        signal: controller.signal,
+                        cache: 'no-store',
+                        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                    });
+                    clearTimeout(timeoutId);
+                    if (!resp.ok) continue;
+                    const csvText = await resp.text();
+                    const parsedData = Papa.parse(csvText, { skipEmptyLines: 'greedy' });
+                    if (parsedData?.data && parseRemoteFeed(parsedData.data)) {
+                        success = true;
+                        break;
+                    }
+                } catch (e) {
+                    // Thử endpoint tiếp theo
+                }
+            }
+            if (isManual) {
+                if (success) showToast('Đã đồng bộ dữ liệu mới nhất từ Google Sheets!', 'success');
+                else showToast('Không thể kết nối Google Sheets, đang dùng bản lưu tạm!', 'error');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             updateTopCounters();
             renderLessons();
+            if (DATA_SOURCE_ID) {
+                fetchLiveFeed(false);
+                setInterval(() => fetchLiveFeed(false), 30000);
+                window.addEventListener('focus', () => fetchLiveFeed(false));
+            }
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
             document.getElementById('learningModal').addEventListener('click', e => { if (e.target.id === 'learningModal') closeModal(); });
         });
