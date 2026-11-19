@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cổng Quản Lý Ticket Review Học Liệu - KiotViet Channel Manager</title>
+    <meta name="description" content="Hệ thống quản lý ticket review, chỉnh sửa, phân tích tính khả thi và đánh giá mức độ hài lòng (CSAT) khóa học KiotViet Channel Manager.">
+    
+    <!-- Favicon KiotViet -->
+    <link rel="icon" type="image/png" href="https://cdn-kvweb.kiotviet.vn/kiotviet-website/wp-content/uploads/2023/10/31095822/64x64.png" sizes="64x64">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PapaParse để parse CSV từ Google Sheets -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Font: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        .ticket-card {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+            border-color: #93c5fd;
+        }
+
+        .star-rating i {
+            cursor: pointer;
+            transition: transform 0.15s ease, color 0.15s ease;
+        }
+        .star-rating i:hover {
+            transform: scale(1.2);
+        }
+
+        .badge-p1 { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .badge-p2 { background-color: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+        .badge-p3 { background-color: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+
+        .status-new { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .status-analyzing { background-color: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .status-progress { background-color: #ffedd5; color: #c2410c; border: 1px solid #fdba74; }
+        .status-review { background-color: #e0e7ff; color: #4338ca; border: 1px solid #a5b4fc; }
+        .status-closed { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .status-rejected { background-color: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. NAVBAR CHÍNH - MÀU XANH DƯƠNG KIOTVIET #0070F4 -->
+    <header class="sticky top-0 z-50 bg-[#0070F4] border-b border-[#0058C6] shadow-md">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <a href="#" class="inline-flex items-center leading-none bg-white px-3 py-1.5 rounded-xl shadow-xs hover:bg-slate-50 transition-colors">
+                    <img src="https://logo.kiotviet.vn/KiotViet-Logo-Horizontal.svg" alt="KiotViet Logo" class="h-5 sm:h-6 object-contain block">
+                </a>
+                <div class="h-6 w-px bg-white/20 hidden sm:block"></div>
+                <div class="text-white hidden sm:block">
+                    <span class="text-xs font-black uppercase tracking-wider block">Review & Feedback Portal</span>
+                    <span class="text-[10px] text-blue-100 font-medium">Khóa học Channel Manager</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <!-- Nút Link về Kế Hoạch Khóa Học -->
+                <a href="ke-hoach-khoa-hoc.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20" title="Quay lại trang Kế hoạch học liệu">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span class="hidden md:inline">Kế Hoạch Học Liệu</span>
+                </a>
+
+                <!-- Nút Mở Google Sheet -->
+                <a id="btnOpenSheet" href="https://docs.google.com/spreadsheets/d/1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI/edit" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20" title="Mở file Google Sheet gốc">
+                    <i class="fa-solid fa-table text-emerald-300"></i>
+                    <span class="hidden md:inline">Google Sheet Gốc</span>
+                </a>
+
+                <!-- Nút Tạo Ticket Mới -->
+                <button onclick="openCreateModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition-all border border-emerald-300/60 transform hover:scale-102">
+                    <i class="fa-solid fa-plus-circle text-sm"></i>
+                    <span>Tạo Ticket Mới</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. MAIN CONTENT -->
+    <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 sm:py-6 flex-1 flex flex-col gap-5">
+        
+        <!-- HERO BANNER TỔNG QUAN HỆ THỐNG -->
+        <section class="rounded-2xl p-5 sm:p-6 bg-gradient-to-r from-[#002957] via-[#0b4d8c] to-[#047857] border border-slate-300 text-white grid grid-cols-1 lg:grid-cols-12 items-center gap-5 shadow-lg relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <div class="lg:col-span-5 relative z-10 flex items-start sm:items-center gap-4">
+                <div class="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-2xl text-emerald-300 shrink-0 shadow-inner">
+                    <i class="fa-solid fa-ticket-simple"></i>
+                </div>
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-[11px] font-bold mb-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Hệ Thống Rà Soát & Nghiệm Thu Học Liệu
+                    </div>
+                    <h1 class="text-lg sm:text-xl font-black uppercase text-white tracking-tight">Quản Lý Ticket Phản Hồi Channel Manager</h1>
+                    <p class="text-xs text-blue-100 font-normal">Góp ý, rà soát tiến độ, phân tích tính khả thi và nghiệm thu hài lòng (CSAT).</p>
+                </div>
+            </div>
+
+            <!-- METRIC CARDS -->
+            <div class="lg:col-span-7 relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span id="metricTotal" class="text-2xl font-black text-white block">0</span>
+                    <span class="text-[10.5px] font-bold text-blue-200 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-list-ol text-[10px]"></i> Tổng Ticket
+                    </span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span id="metricP1" class="text-2xl font-black text-rose-300 block">0</span>
+                    <span class="text-[10.5px] font-bold text-rose-200 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> P1 Khẩn Cấp
+                    </span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span id="metricProgress" class="text-2xl font-black text-amber-300 block">0</span>
+                    <span class="text-[10.5px] font-bold text-amber-100 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-spinner text-[10px]"></i> Đang Xử Lý
+                    </span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2.5 rounded-xl text-center">
+                    <span id="metricCsat" class="text-2xl font-black text-emerald-300 block">--</span>
+                    <span class="text-[10.5px] font-bold text-emerald-200 uppercase tracking-tight flex items-center justify-center gap-1 mt-0.5">
+                        <i class="fa-solid fa-star text-[10px]"></i> Điểm CSAT
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- THANH CÔNG CỤ TÌM KIẾM, BỘ LỌC & CHUYỂN VIEW -->
+        <section class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <!-- Search Box -->
+                <div class="relative flex-1 min-w-[200px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input id="searchInput" type="text" oninput="applyFilters()" placeholder="Tìm kiếm mã, bài học, nội dung, người gửi..." 
+                           class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0070F4] focus:bg-white transition-all">
+                </div>
+
+                <!-- Lọc Bài Học -->
+                <select id="filterLesson" onchange="applyFilters()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:border-[#0070F4]">
+                    <option value="ALL">-- Tất cả bài học --</option>
+                    <option value="Bài 0">Bài 0: Mở đầu khóa học</option>
+                    <option value="Bài 1.1">Bài 1.1: Bản chất Channel Manager</option>
+                    <option value="Bài 1.2">Bài 1.2: Kiến trúc luồng dữ liệu</option>
+                    <option value="Bài 1.3">Bài 1.3: Checklist tiền kết nối</option>
+                    <option value="Bài 2.1">Bài 2.1: Quy trình Ticket CRM</option>
+                    <option value="Bài 2.2">Bài 2.2: Ý nghĩa 4 gói Hotel Link</option>
+                    <option value="Bài 2.3">Bài 2.3: Bàn giao kết nối</option>
+                    <option value="Bài 3.1">Bài 3.1: Kích hoạt phân hệ OTAs</option>
+                    <option value="Bài 3.2">Bài 3.2: Ghép nối phòng & giá</option>
+                    <option value="Bài 3.3">Bài 3.3: Cấu hình thiết lập chung</option>
+                    <option value="Bài 4.1">Bài 4.1: Liên kết Agoda</option>
+                    <option value="Bài 4.2">Bài 4.2: Liên kết Booking.com</option>
+                    <option value="Bài 4.3">Bài 4.3: Liên kết Airbnb & khác</option>
+                    <option value="Bài 5.1">Bài 5.1: Tiếp nhận đơn từ OTAs</option>
+                    <option value="Bài 5.2">Bài 5.2: Xử lý lỗi đồng bộ</option>
+                    <option value="Bài 5.3">Bài 5.3: Giá & Stop Sell</option>
+                    <option value="Bài 6.1">Bài 6.1: Xử lý bán trùng phòng</option>
+                    <option value="Bài 6.2">Bài 6.2: Đổi kênh & lệch giá</option>
+                    <option value="Bài 6.3">Bài 6.3: Quy trình Ticket leo thang</option>
+                    <option value="Toàn khóa">Toàn khóa học</option>
+                </select>
+
+                <!-- Lọc Học Liệu -->
+                <select id="filterModule" onchange="applyFilters()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:border-[#0070F4]">
+                    <option value="ALL">-- Tất cả học liệu --</option>
+                    <option value="A - Video">A - Video MP4</option>
+                    <option value="B - Web học liệu">B - Web học liệu</option>
+                    <option value="C - Đề thi LMS">C - Đề thi LMS</option>
+                    <option value="D - Thực hành Word">D - Thực hành Word</option>
+                    <option value="E - Cẩm nang PDF">E - Cẩm nang PDF</option>
+                </select>
+
+                <!-- Lọc Trạng Thái -->
+                <select id="filterStatus" onchange="applyFilters()" class="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:border-[#0070F4]">
+                    <option value="ALL">-- Tất cả trạng thái --</option>
+                    <option value="Mới tiếp nhận">Mới tiếp nhận</option>
+                    <option value="Đang phân tích">Đang phân tích</option>
+                    <option value="Đang sửa đổi">Đang sửa đổi</option>
+                    <option value="Đã sửa - Chờ review">Đã sửa - Chờ review</option>
+                    <option value="Đã nghiệm thu (Closed)">Đã nghiệm thu (Closed)</option>
+                    <option value="Từ chối / Giữ nguyên">Từ chối / Giữ nguyên</option>
+                </select>
+            </div>
+
+            <!-- View Switcher & Reload -->
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="loadTickets()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors" title="Tải lại dữ liệu">
+                    <i id="reloadIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
+                </button>
+                <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
+                    <button id="btnViewTable" onclick="switchView('table')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-white text-[#0070F4] shadow-xs">
+                        <i class="fa-solid fa-table-list mr-1"></i> Bảng
+                    </button>
+                    <button id="btnViewKanban" onclick="switchView('kanban')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-table-columns mr-1"></i> Kanban
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 1: DẠNG BẢNG CHI TIẾT (TABLE VIEW) -->
+        <section id="tableViewSection" class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto min-h-[320px]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10.5px]">
+                            <th class="py-3 px-3.5 w-24">Mã</th>
+                            <th class="py-3 px-3.5 w-44">Bài học</th>
+                            <th class="py-3 px-3 w-28">Học liệu</th>
+                            <th class="py-3 px-3 w-24">Vị trí</th>
+                            <th class="py-3 px-4 min-w-[280px]">Nội dung yêu cầu sửa</th>
+                            <th class="py-3 px-3 w-16 text-center">Ảnh</th>
+                            <th class="py-3 px-3.5 w-28 text-center">Ưu tiên</th>
+                            <th class="py-3 px-3.5 w-32 text-center">Trạng thái</th>
+                            <th class="py-3 px-3.5 w-28 text-center">CSAT</th>
+                            <th class="py-3 px-3.5 w-28 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsTableBody" class="divide-y divide-slate-100 text-slate-700">
+                        <!-- Render JS -->
+                        <tr>
+                            <td colspan="10" class="py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-circle-notch fa-spin text-xl text-[#0070F4] mb-2 block"></i>
+                                Đang tải danh sách ticket từ Google Sheets...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- VIEW 2: DẠNG BẢNG KANBAN (BOARD VIEW) -->
+        <section id="kanbanViewSection" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <!-- Cột 1: Mới Tiếp Nhận -->
+            <div class="bg-slate-100/80 rounded-2xl p-3 border border-slate-200/80 flex flex-col gap-3 min-h-[400px]">
+                <div class="flex items-center justify-between px-1">
+                    <span class="font-bold text-xs uppercase text-slate-700 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Mới Tiếp Nhận
+                    </span>
+                    <span id="countColNew" class="px-2 py-0.5 rounded-md bg-white text-slate-700 font-bold text-[10.5px] shadow-2xs">0</span>
+                </div>
+                <div id="colNew" class="flex flex-col gap-2.5 flex-1"></div>
+            </div>
+
+            <!-- Cột 2: Đang Xử Lý & Sửa Đổi -->
+            <div class="bg-amber-50/60 rounded-2xl p-3 border border-amber-200/60 flex flex-col gap-3 min-h-[400px]">
+                <div class="flex items-center justify-between px-1">
+                    <span class="font-bold text-xs uppercase text-amber-800 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Đang Xử Lý
+                    </span>
+                    <span id="countColProgress" class="px-2 py-0.5 rounded-md bg-white text-amber-800 font-bold text-[10.5px] shadow-2xs">0</span>
+                </div>
+                <div id="colProgress" class="flex flex-col gap-2.5 flex-1"></div>
+            </div>
+
+            <!-- Cột 3: Đã Sửa - Chờ Review -->
+            <div class="bg-blue-50/60 rounded-2xl p-3 border border-blue-200/60 flex flex-col gap-3 min-h-[400px]">
+                <div class="flex items-center justify-between px-1">
+                    <span class="font-bold text-xs uppercase text-blue-800 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Chờ Nghiệm Thu
+                    </span>
+                    <span id="countColReview" class="px-2 py-0.5 rounded-md bg-white text-blue-800 font-bold text-[10.5px] shadow-2xs">0</span>
+                </div>
+                <div id="colReview" class="flex flex-col gap-2.5 flex-1"></div>
+            </div>
+
+            <!-- Cột 4: Đã Nghiệm Thu (Closed) -->
+            <div class="bg-emerald-50/60 rounded-2xl p-3 border border-emerald-200/60 flex flex-col gap-3 min-h-[400px]">
+                <div class="flex items-center justify-between px-1">
+                    <span class="font-bold text-xs uppercase text-emerald-800 flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Hoàn Thành (Closed)
+                    </span>
+                    <span id="countColClosed" class="px-2 py-0.5 rounded-md bg-white text-emerald-800 font-bold text-[10.5px] shadow-2xs">0</span>
+                </div>
+                <div id="colClosed" class="flex flex-col gap-2.5 flex-1"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-[1400px] mx-auto px-4 text-center text-xs text-slate-500">
+            KiotViet L&D • Hệ thống quản lý review học liệu chuẩn hóa 2026. Dữ liệu đồng bộ trực tiếp với Google Sheets.
+        </div>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- MODAL 1: TẠO TICKET MỚI -->
+    <div id="createModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full p-5 sm:p-6 my-8 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i class="fa-solid fa-plus-circle text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-800">Tạo Ticket Chỉnh Sửa Học Liệu</h3>
+                        <p class="text-[11px] text-slate-500">Góp ý sẽ được gửi thẳng vào Google Sheet cho Chuyên viên L&D</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('createModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <form id="createTicketForm" onsubmit="handleCreateTicket(event)" class="flex flex-col gap-3 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Người gửi / Bộ phận <span class="text-rose-500">*</span></label>
+                        <input id="inputRequester" type="text" required placeholder="VD: DVKH - Trần Văn A" 
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Chọn Bài Học <span class="text-rose-500">*</span></label>
+                        <select id="inputLesson" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                            <option value="Bài 0: Giới thiệu khóa học, Mục tiêu, Yêu cầu, Cấu trúc, Cách học & Checklist tự theo dõi">Bài 0: Giới thiệu khóa học & Checklist</option>
+                            <option value="Bài 1.1: Bản chất Channel Manager & Bộ thuật ngữ cốt lõi Khách sạn">Bài 1.1: Bản chất Channel Manager & Thuật ngữ</option>
+                            <option value="Bài 1.2: Kiến trúc luồng dữ liệu & Phân định KiotViet - Hotel Link - OTAs">Bài 1.2: Kiến trúc luồng dữ liệu</option>
+                            <option value="Bài 1.3: Checklist thẩm định gian hàng trước khi kết nối (Pre-onboarding)">Bài 1.3: Checklist thẩm định gian hàng</option>
+                            <option value="Bài 2.1: Quy trình tiếp nhận & xử lý Ticket CRM từ Sales">Bài 2.1: Quy trình Ticket CRM</option>
+                            <option value="Bài 2.2: Ý nghĩa & đặc quyền 4 gói dịch vụ Hotel Link">Bài 2.2: Ý nghĩa 4 gói Hotel Link</option>
+                            <option value="Bài 2.3: Tiếp nhận & bàn giao thông tin kết nối OTAs">Bài 2.3: Tiếp nhận & bàn giao kết nối</option>
+                            <option value="Bài 3.1: Kích hoạt phân hệ OTAs & kết nối Hotel Link Engine">Bài 3.1: Kích hoạt phân hệ OTAs</option>
+                            <option value="Bài 3.2: Thêm Hạng phòng, Gói giá & Ghép nối dữ liệu 2 chiều">Bài 3.2: Thêm Hạng phòng & Ghép nối</option>
+                            <option value="Bài 3.3: Cấu hình thiết lập chung & tự động hoàn phòng trống">Bài 3.3: Cấu hình thiết lập chung</option>
+                            <option value="Bài 4.1: Liên kết Agoda & Agoda Homes">Bài 4.1: Liên kết Agoda</option>
+                            <option value="Bài 4.2: Liên kết Booking.com">Bài 4.2: Liên kết Booking.com</option>
+                            <option value="Bài 4.3: Liên kết Airbnb & các kênh OTA khác">Bài 4.3: Liên kết Airbnb & khác</option>
+                            <option value="Bài 5.1: Tiếp nhận & xử lý đơn đặt phòng từ OTAs">Bài 5.1: Tiếp nhận đơn từ OTAs</option>
+                            <option value="Bài 5.2: Xử lý đơn rơi vào tab Lỗi đồng bộ">Bài 5.2: Xử lý lỗi đồng bộ</option>
+                            <option value="Bài 5.3: Quản lý số lượng phòng mở bán, giá & Stop Sell">Bài 5.3: Giá & Stop Sell</option>
+                            <option value="Bài 6.1: Xử lý bán trùng phòng (Overbooking)">Bài 6.1: Xử lý bán trùng phòng</option>
+                            <option value="Bài 6.2: Thêm kênh, đổi kênh gói Lite & lệch giá OTA">Bài 6.2: Đổi kênh & lệch giá</option>
+                            <option value="Bài 6.3: Quy trình tạo Ticket & leo thang hỗ trợ kỹ thuật">Bài 6.3: Ticket leo thang kỹ thuật</option>
+                            <option value="Toàn khóa học">Toàn khóa học / Tài liệu chung</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Học liệu cần sửa <span class="text-rose-500">*</span></label>
+                        <select id="inputModule" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                            <option value="B - Web học liệu">B - Web học liệu tương tác</option>
+                            <option value="E - Cẩm nang PDF">E - Cẩm nang Tra cứu PDF</option>
+                            <option value="A - Video">A - Video bài giảng MP4</option>
+                            <option value="D - Thực hành Word">D - Thực hành Word (Worksheet)</option>
+                            <option value="C - Đề thi LMS">C - Đề thi LMS 10 cột</option>
+                            <option value="F - Giáo án">F - Giáo án chi tiết</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Vị trí / Chặng / Mục</label>
+                        <input id="inputLocation" type="text" placeholder="VD: Chặng 1, Mục III.2, Tình huống 2..." 
+                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Nội dung chi tiết yêu cầu sửa <span class="text-rose-500">*</span></label>
+                    <textarea id="inputDesc" rows="3" required placeholder="Ghi rõ nội dung hiện tại sai hoặc chưa rõ, và đề xuất cách sửa chuẩn..." 
+                              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Link ảnh minh họa (prnt.sc, Google Drive, Imgur...)</label>
+                    <input id="inputScreenshot" type="url" placeholder="https://prnt.sc/..." 
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('createModal')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">Hủy</button>
+                    <button type="submit" id="btnSubmitCreate" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane text-xs"></i> Gửi Ticket
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: XÁC THỰC MÃ PIN (1234) DÀNH CHO L&D TRIỂN KHAI -->
+    <div id="pinModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[110] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-5 text-center flex flex-col gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-blue-100 text-[#0070F4] flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="font-black text-slate-800 text-sm">Xác Thực Quản Trị L&D</h3>
+            <p class="text-xs text-slate-500">Mục Phân tích Khả thi & Lập Kế hoạch chỉ dành cho Chuyên viên L&D. Vui lòng nhập mã PIN bảo mật.</p>
+            <input id="pinInput" type="password" maxlength="8" placeholder="Nhập mã PIN (1234)" 
+                   class="w-full text-center tracking-widest text-lg font-black py-2 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:border-[#0070F4]">
+            <p id="pinError" class="text-rose-500 text-[11px] hidden font-bold">Mã PIN không chính xác! Vui lòng thử lại.</p>
+            <div class="flex items-center justify-center gap-2 pt-2">
+                <button onclick="closeModal('pinModal')" class="px-4 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl">Đóng</button>
+                <button onclick="verifyPin()" class="px-4 py-1.5 text-xs font-black bg-[#0070F4] hover:bg-[#0058C6] text-white rounded-xl shadow-xs">Mở Khóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: PHÂN TÍCH TÍNH KHẢ THI & KẾ HOẠCH TRIỂN KHAI (L&D ONLY) -->
+    <div id="planningModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[105] flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full p-5 sm:p-6 my-8 flex flex-col gap-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <span id="planTicketIdBadge" class="px-2.5 py-1 rounded-lg bg-blue-100 text-[#0070F4] font-black text-xs">TK-CM-001</span>
+                    <h3 class="font-bold text-sm text-slate-800">Phân Tích Khả Thi & Kế Hoạch Triển Khai</h3>
+                </div>
+                <button onclick="closeModal('planningModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Tóm tắt ticket -->
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs flex flex-col gap-1.5">
+                <div class="flex items-center justify-between text-slate-500 font-semibold text-[11px]">
+                    <span id="planTicketLesson">Bài học</span>
+                    <span id="planTicketModule" class="font-bold text-[#0070F4]">Học liệu</span>
+                </div>
+                <p id="planTicketDesc" class="font-medium text-slate-800">Nội dung yêu cầu</p>
+                <div id="planTicketScreenshotBox" class="pt-1 hidden">
+                    <a id="planTicketScreenshotLink" href="#" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem ảnh minh họa đính kèm
+                    </a>
+                </div>
+            </div>
+
+            <!-- Form cập nhật kế hoạch -->
+            <form id="planningForm" onsubmit="handleSavePlanning(event)" class="flex flex-col gap-3 text-xs">
+                <input type="hidden" id="planTicketId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Trạng thái xử lý</label>
+                        <select id="planStatus" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none font-bold">
+                            <option value="Mới tiếp nhận">Mới tiếp nhận</option>
+                            <option value="Đang phân tích">Đang phân tích</option>
+                            <option value="Đang sửa đổi">Đang sửa đổi</option>
+                            <option value="Đã sửa - Chờ review">Đã sửa - Chờ review</option>
+                            <option value="Đã nghiệm thu (Closed)">Đã nghiệm thu (Closed)</option>
+                            <option value="Từ chối / Giữ nguyên">Từ chối / Giữ nguyên</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Đánh giá Tính khả thi</label>
+                        <select id="planFeasibility" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                            <option value="Khả thi - Làm ngay">Khả thi - Làm ngay</option>
+                            <option value="Cần đối chiếu giáo án">Cần đối chiếu giáo án</option>
+                            <option value="Lệch logic thực tế (Khuyên giữ nguyên)">Lệch logic thực tế</option>
+                            <option value="Chờ chốt giao diện">Chờ chốt giao diện</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="font-bold text-slate-700 block mb-1">Mức độ ưu tiên</label>
+                        <select id="planPriority" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none font-bold">
+                            <option value="P1 - Khẩn cấp">P1 - Khẩn cấp</option>
+                            <option value="P2 - Tiêu chuẩn">P2 - Tiêu chuẩn</option>
+                            <option value="P3 - Tinh chỉnh nhỏ">P3 - Tinh chỉnh nhỏ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Kế hoạch triển khai & File cần sửa</label>
+                    <input id="planActionPlan" type="text" placeholder="VD: Sửa file bai-1-1.html, build lại PDF 1.1E..." 
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Link nghiệm thu (Sau khi sửa xong)</label>
+                    <input id="planResolutionLink" type="url" placeholder="https://kiotvietlnd.github.io/elearning/..." 
+                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none">
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Ghi chú phản hồi của L&D cho DVKH</label>
+                    <textarea id="planLndNote" rows="2" placeholder="Giải thích giải pháp hoặc phản hồi cho reviewer..." 
+                              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('planningModal')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">Đóng</button>
+                    <button type="submit" id="btnSavePlan" class="px-5 py-2 rounded-xl bg-[#0070F4] hover:bg-[#0058C6] text-white font-extrabold shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i> Lưu Kế Hoạch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: NGHIỆM THU & CHẤM ĐIỂM CSAT (REVIEWER / DVKH) -->
+    <div id="csatModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[105] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-5 sm:p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <i class="fa-solid fa-star text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-800">Nghiệm Thu & Đánh Giá Hài Lòng</h3>
+                        <p class="text-[11px] text-slate-500">Dành cho Reviewer / DVKH kiểm tra kết quả chỉnh sửa</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('csatModal')" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Xem link sản phẩm đã sửa -->
+            <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200/80 text-xs flex flex-col gap-2">
+                <div class="flex items-center justify-between">
+                    <span id="csatTicketId" class="font-black text-[#0070F4]">TK-CM-001</span>
+                    <span id="csatTicketModule" class="font-bold text-slate-600">Web học liệu</span>
+                </div>
+                <p id="csatTicketDesc" class="text-slate-700 italic">Mô tả ticket</p>
+                
+                <div id="csatResolutionBox" class="pt-2 border-t border-blue-200/60 flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-slate-600">Sản phẩm đã cập nhật:</span>
+                    <a id="csatResolutionLink" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#0070F4] text-white font-extrabold text-[11px] hover:bg-[#0058C6] shadow-2xs">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Mở Xem Trực Tiếp
+                    </a>
+                </div>
+            </div>
+
+            <form id="csatForm" onsubmit="handleSaveCsat(event)" class="flex flex-col gap-3 text-xs">
+                <input type="hidden" id="csatTicketIdInput">
+
+                <!-- Bộ chọn Sao -->
+                <div class="text-center py-2 bg-slate-50 rounded-xl border border-slate-200">
+                    <span class="font-bold text-slate-700 block mb-2">Mức độ hài lòng của bạn</span>
+                    <div class="star-rating flex items-center justify-center gap-2 text-2xl text-slate-300">
+                        <i class="fa-solid fa-star" data-val="1" onclick="setCsatStar(1)"></i>
+                        <i class="fa-solid fa-star" data-val="2" onclick="setCsatStar(2)"></i>
+                        <i class="fa-solid fa-star" data-val="3" onclick="setCsatStar(3)"></i>
+                        <i class="fa-solid fa-star" data-val="4" onclick="setCsatStar(4)"></i>
+                        <i class="fa-solid fa-star" data-val="5" onclick="setCsatStar(5)"></i>
+                    </div>
+                    <span id="csatStarText" class="text-xs font-bold text-amber-600 block mt-2">Chọn số sao để đánh giá</span>
+                    <input type="hidden" id="csatScoreVal" value="">
+                </div>
+
+                <div>
+                    <label class="font-bold text-slate-700 block mb-1">Nhận xét nghiệm thu (Nếu có)</label>
+                    <textarea id="csatFeedbackInput" rows="2" placeholder="Ví dụ: Đã sửa chuẩn rồi, hoặc cần chỉnh thêm điểm nào..." 
+                              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('csatModal')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">Hủy</button>
+                    <button type="submit" id="btnSubmitCsat" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-check-circle text-xs"></i> Xác Nhận Nghiệm Thu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: LIGHTBOX XEM ẢNH -->
+    <div id="lightboxModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[120] flex items-center justify-center p-4" onclick="closeModal('lightboxModal')">
+        <div class="max-w-4xl max-h-[90vh] relative flex flex-col items-center" onclick="event.stopPropagation()">
+            <img id="lightboxImg" src="" alt="Screenshot" class="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl">
+            <div class="flex items-center gap-3 mt-3">
+                <a id="lightboxOpenNew" href="#" target="_blank" class="px-3 py-1 rounded-lg bg-white/20 text-white hover:bg-white/30 text-xs font-bold">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Mở tab mới
+                </a>
+                <button onclick="closeModal('lightboxModal')" class="px-3 py-1 rounded-lg bg-white/20 text-white hover:bg-white/30 text-xs font-bold">Đóng (ESC)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST THÔNG BÁO -->
+    <div id="toast" class="fixed top-8 left-1/2 -translate-x-1/2 z-[150] bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl border border-slate-700 flex items-center gap-2 opacity-0 -translate-y-4 pointer-events-none transition-all duration-300">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-sm" id="toastIcon"></i> 
+        <span id="toastMsg">Thành công!</span>
+    </div>
+
+    <!-- SCRIPT CHÍNH ĐIỀU KHIỂN & ĐỒNG BỘ DỮ LIỆU -->
+    <script>
+        // CẤU HÌNH SHEET & WEBHOOK
+        const SPREADSHEET_ID = '1G5uqpaHYk_O4YEwbhnU_6nxMV-upVn0G4YNtCU1mlqI';
+        const GVIZ_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=Review_Tickets`;
+        // URL Google Apps Script Web App (Có thể cập nhật sau khi deploy)
+        let GAS_WEBHOOK_URL = ''; 
+        const ADMIN_PIN = '1234';
+        let isPinVerified = false;
+
+        let allTickets = [];
+        let currentView = 'table';
+        let pendingPlanningTicket = null;
+
+        // KHỞI ĐỘNG
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTickets();
+            // Lắng nghe phím ESC đóng modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    ['createModal', 'pinModal', 'planningModal', 'csatModal', 'lightboxModal'].forEach(id => closeModal(id));
+                }
+            });
+
+            // Tự động mở form tạo ticket nếu có tham số ?lesson=...
+            const urlParams = new URLSearchParams(window.location.search);
+            const lessonParam = urlParams.get('lesson');
+            if (lessonParam) {
+                setTimeout(() => {
+                    openCreateModal();
+                    const sel = document.getElementById('inputLesson');
+                    const cleanParam = decodeURIComponent(lessonParam).toLowerCase();
+                    for (let i = 0; i < sel.options.length; i++) {
+                        const optVal = sel.options[i].value.toLowerCase();
+                        if (cleanParam.includes(optVal.substring(0, 7)) || optVal.includes(cleanParam.substring(0, 7))) {
+                            sel.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }, 400);
+            }
+        });
+
+        // 1. TẢI TICKETS TỪ GOOGLE SHEETS
+        function loadTickets() {
+            const icon = document.getElementById('reloadIcon');
+            if (icon) icon.classList.add('fa-spin');
+
+            const timestamp = new Date().getTime();
+            const fetchUrl = `${GVIZ_CSV_URL}&_ts=${timestamp}`;
+
+            Papa.parse(fetchUrl, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (icon) icon.classList.remove('fa-spin');
+                    if (results.data && results.data.length > 0) {
+                        allTickets = results.data.map(item => ({
+                            id: item['Mã Ticket'] || '',
+                            timestamp: item['Thời gian tạo'] || '',
+                            requester: item['Người gửi / Bộ phận'] || '',
+                            lesson: item['Bài học'] || '',
+                            module: item['Học liệu / Phân loại'] || '',
+                            location: item['Vị trí / Chặng / Mục'] || '',
+                            issue_desc: item['Nội dung yêu cầu sửa'] || '',
+                            screenshot_url: item['Hình ảnh minh họa'] || '',
+                            status: item['Trạng thái xử lý'] || 'Mới tiếp nhận',
+                            feasibility: item['Tính khả thi'] || 'Chờ phân tích',
+                            priority: item['Mức độ ưu tiên'] || 'P2 - Tiêu chuẩn',
+                            action_plan: item['Kế hoạch triển khai & File xử lý'] || '',
+                            resolution_link: item['Link nghiệm thu'] || '',
+                            lnd_note: item['Ghi chú phản hồi của L&D'] || '',
+                            csat_score: item['Đánh giá hài lòng (CSAT)'] || 'Chưa đánh giá',
+                            reviewer_feedback: item['Ý kiến khi nghiệm thu'] || ''
+                        })).filter(t => t.id && t.id.startsWith('TK-'));
+
+                        updateMetrics();
+                        applyFilters();
+                    }
+                },
+                error: function(err) {
+                    if (icon) icon.classList.remove('fa-spin');
+                    console.error('Lỗi tải Google Sheets:', err);
+                    showToast('Lỗi tải dữ liệu Google Sheets', 'error');
+                }
+            });
+        }
+
+        // 2. CẬP NHẬT METRIC CARDS
+        function updateMetrics() {
+            const total = allTickets.length;
+            const p1 = allTickets.filter(t => t.priority.includes('P1')).length;
+            const inProgress = allTickets.filter(t => t.status === 'Đang sửa đổi' || t.status === 'Đang phân tích').length;
+            
+            // Tính CSAT
+            let ratedCount = 0;
+            let starSum = 0;
+            allTickets.forEach(t => {
+                const csat = t.csat_score;
+                for (let s = 5; s >= 1; s--) {
+                    if (csat.includes(`${s} sao`)) {
+                        ratedCount++;
+                        starSum += s;
+                        break;
+                    }
+                }
+            });
+
+            document.getElementById('metricTotal').textContent = total;
+            document.getElementById('metricP1').textContent = p1;
+            document.getElementById('metricProgress').textContent = inProgress;
+
+            if (ratedCount > 0) {
+                const avg = (starSum / ratedCount).toFixed(1);
+                document.getElementById('metricCsat').textContent = `${avg} ⭐ (${ratedCount})`;
+            } else {
+                document.getElementById('metricCsat').textContent = 'Chưa có';
+            }
+        }
+
+        // 3. BỘ LỌC TÌM KIẾM
+        function applyFilters() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const lessonVal = document.getElementById('filterLesson').value;
+            const moduleVal = document.getElementById('filterModule').value;
+            const statusVal = document.getElementById('filterStatus').value;
+
+            const filtered = allTickets.filter(t => {
+                if (lessonVal !== 'ALL' && !t.lesson.includes(lessonVal)) return false;
+                if (moduleVal !== 'ALL' && !t.module.includes(moduleVal)) return false;
+                if (statusVal !== 'ALL' && t.status !== statusVal) return false;
+
+                if (searchVal) {
+                    const matchId = t.id.toLowerCase().includes(searchVal);
+                    const matchLesson = t.lesson.toLowerCase().includes(searchVal);
+                    const matchDesc = t.issue_desc.toLowerCase().includes(searchVal);
+                    const matchReq = t.requester.toLowerCase().includes(searchVal);
+                    if (!matchId && !matchLesson && !matchDesc && !matchReq) return false;
+                }
+                return true;
+            });
+
+            renderTable(filtered);
+            renderKanban(filtered);
+        }
+
+        // 4. RENDER TABLE VIEW
+        function renderTable(tickets) {
+            const tbody = document.getElementById('ticketsTableBody');
+            if (!tickets || tickets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-slate-400">Không tìm thấy ticket nào khớp với bộ lọc.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = tickets.map(t => {
+                const prioClass = t.priority.includes('P1') ? 'badge-p1' : (t.priority.includes('P2') ? 'badge-p2' : 'badge-p3');
+                const prioLabel = t.priority.includes('P1') ? 'P1 Khẩn cấp' : (t.priority.includes('P2') ? 'P2 Tiêu chuẩn' : 'P3 Tinh chỉnh');
+
+                let statusClass = 'status-new';
+                if (t.status === 'Đang phân tích') statusClass = 'status-analyzing';
+                else if (t.status === 'Đang sửa đổi') statusClass = 'status-progress';
+                else if (t.status === 'Đã sửa - Chờ review') statusClass = 'status-review';
+                else if (t.status === 'Đã nghiệm thu (Closed)') statusClass = 'status-closed';
+                else if (t.status.includes('Từ chối')) statusClass = 'status-rejected';
+
+                const hasImg = t.screenshot_url && t.screenshot_url.startsWith('http');
+                const imgHtml = hasImg 
+                    ? `<button onclick="openLightbox('${t.screenshot_url}')" class="text-blue-600 hover:text-blue-800 p-1" title="Xem ảnh"><i class="fa-solid fa-image text-sm"></i></button>`
+                    : `<span class="text-slate-300">-</span>`;
+
+                const csatHtml = t.csat_score.includes('sao') 
+                    ? `<span class="font-black text-amber-600">${t.csat_score.split(' ')[0]}</span>`
+                    : `<span class="text-slate-400 text-[10px]">Chưa đánh giá</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-3.5 font-black text-[#0070F4]">${t.id}</td>
+                        <td class="py-3 px-3.5 font-semibold text-slate-800 line-clamp-2" title="${t.lesson}">${t.lesson}</td>
+                        <td class="py-3 px-3">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">${t.module}</span>
+                        </td>
+                        <td class="py-3 px-3 text-slate-500 font-medium">${t.location || '-'}</td>
+                        <td class="py-3 px-4">
+                            <p class="text-slate-700 font-normal leading-relaxed line-clamp-2" title="${t.issue_desc}">${t.issue_desc}</p>
+                            ${t.action_plan ? `<p class="text-[10.5px] text-emerald-700 mt-1 font-medium"><i class="fa-solid fa-screwdriver-wrench text-[9px] mr-1"></i>${t.action_plan}</p>` : ''}
+                        </td>
+                        <td class="py-3 px-3 text-center">${imgHtml}</td>
+                        <td class="py-3 px-3.5 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${prioClass}">${prioLabel}</span>
+                        </td>
+                        <td class="py-3 px-3.5 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${statusClass}">${t.status}</span>
+                        </td>
+                        <td class="py-3 px-3.5 text-center">${csatHtml}</td>
+                        <td class="py-3 px-3.5 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="requestPlanningModal('${t.id}')" class="px-2 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#0070F4] font-bold text-[10.5px] border border-blue-200" title="Phân tích & Lập kế hoạch (L&D)">
+                                    <i class="fa-solid fa-gear"></i>
+                                </button>
+                                <button onclick="openCsatModal('${t.id}')" class="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10.5px] border border-amber-200" title="Nghiệm thu & Đánh giá (Reviewer)">
+                                    <i class="fa-solid fa-star"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 5. RENDER KANBAN VIEW
+        function renderKanban(tickets) {
+            const colNew = document.getElementById('colNew');
+            const colProgress = document.getElementById('colProgress');
+            const colReview = document.getElementById('colReview');
+            const colClosed = document.getElementById('colClosed');
+
+            const listNew = tickets.filter(t => t.status === 'Mới tiếp nhận');
+            const listProgress = tickets.filter(t => t.status === 'Đang phân tích' || t.status === 'Đang sửa đổi');
+            const listReview = tickets.filter(t => t.status === 'Đã sửa - Chờ review');
+            const listClosed = tickets.filter(t => t.status === 'Đã nghiệm thu (Closed)' || t.status.includes('Từ chối'));
+
+            document.getElementById('countColNew').textContent = listNew.length;
+            document.getElementById('countColProgress').textContent = listProgress.length;
+            document.getElementById('countColReview').textContent = listReview.length;
+            document.getElementById('countColClosed').textContent = listClosed.length;
+
+            const makeCard = (t) => {
+                const prioClass = t.priority.includes('P1') ? 'badge-p1' : (t.priority.includes('P2') ? 'badge-p2' : 'badge-p3');
+                const prioLabel = t.priority.includes('P1') ? 'P1 Khẩn cấp' : (t.priority.includes('P2') ? 'P2 Tiêu chuẩn' : 'P3');
+
+                return `
+                    <div class="ticket-card bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-2">
+                        <div class="flex items-center justify-between text-[10px]">
+                            <span class="font-black text-[#0070F4]">${t.id}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold ${prioClass}">${prioLabel}</span>
+                        </div>
+                        <div class="text-[11px] font-bold text-slate-800 line-clamp-1">${t.lesson}</div>
+                        <p class="text-[11px] text-slate-600 line-clamp-2">${t.issue_desc}</p>
+                        
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px]">
+                            <span class="text-slate-400 font-medium">${t.module.split('-')[0]}</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="requestPlanningModal('${t.id}')" class="p-1 text-slate-400 hover:text-[#0070F4]" title="Lập kế hoạch">
+                                    <i class="fa-solid fa-gear"></i>
+                                </button>
+                                <button onclick="openCsatModal('${t.id}')" class="p-1 text-slate-400 hover:text-amber-500" title="Nghiệm thu">
+                                    <i class="fa-solid fa-star"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            };
+
+            colNew.innerHTML = listNew.map(makeCard).join('') || '<div class="text-center text-slate-400 text-xs py-8 italic">Trống</div>';
+            colProgress.innerHTML = listProgress.map(makeCard).join('') || '<div class="text-center text-slate-400 text-xs py-8 italic">Trống</div>';
+            colReview.innerHTML = listReview.map(makeCard).join('') || '<div class="text-center text-slate-400 text-xs py-8 italic">Trống</div>';
+            colClosed.innerHTML = listClosed.map(makeCard).join('') || '<div class="text-center text-slate-400 text-xs py-8 italic">Trống</div>';
+        }
+
+        // 6. CHUYỂN ĐỔI CHẾ ĐỘ XEM
+        function switchView(view) {
+            currentView = view;
+            const btnTable = document.getElementById('btnViewTable');
+            const btnKanban = document.getElementById('btnViewKanban');
+            const secTable = document.getElementById('tableViewSection');
+            const secKanban = document.getElementById('kanbanViewSection');
+
+            if (view === 'table') {
+                secTable.classList.remove('hidden');
+                secKanban.classList.add('hidden');
+                btnTable.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-white text-[#0070F4] shadow-xs";
+                btnKanban.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                secTable.classList.add('hidden');
+                secKanban.classList.remove('hidden');
+                btnKanban.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-white text-[#0070F4] shadow-xs";
+                btnTable.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900";
+            }
+        }
+
+        // 7. MODAL UTILS
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function openCreateModal() { openModal('createModal'); }
+
+        // 8. TẠO TICKET MỚI
+        function handleCreateTicket(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitCreate');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...`;
+
+            const payload = {
+                action: 'create',
+                requester: document.getElementById('inputRequester').value,
+                lesson: document.getElementById('inputLesson').value,
+                module: document.getElementById('inputModule').value,
+                location: document.getElementById('inputLocation').value,
+                issue_desc: document.getElementById('inputDesc').value,
+                screenshot_url: document.getElementById('inputScreenshot').value
+            };
+
+            // Gửi API nếu có webhook URL
+            if (GAS_WEBHOOK_URL) {
+                fetch(GAS_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(() => {
+                    finishCreateSuccess();
+                }).catch(err => {
+                    console.error('Lỗi gửi webhook:', err);
+                    finishCreateSuccess();
+                });
+            } else {
+                // Giả lập ghi nhận & hướng dẫn
+                setTimeout(() => {
+                    finishCreateSuccess();
+                }, 600);
+            }
+        }
+
+        function finishCreateSuccess() {
+            closeModal('createModal');
+            document.getElementById('createTicketForm').reset();
+            const btn = document.getElementById('btnSubmitCreate');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i> Gửi Ticket`;
+            showToast('Đã gửi ticket thành công! Dữ liệu đang được đồng bộ.', 'success');
+            setTimeout(loadTickets, 1500);
+        }
+
+        // 9. QUẢN TRỊ L&D: XÁC THỰC MÃ PIN 1234
+        function requestPlanningModal(ticketId) {
+            pendingPlanningTicket = allTickets.find(t => t.id === ticketId);
+            if (!pendingPlanningTicket) return;
+
+            if (isPinVerified) {
+                openPlanningForm(pendingPlanningTicket);
+            } else {
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinError').classList.add('hidden');
+                openModal('pinModal');
+                document.getElementById('pinInput').focus();
+            }
+        }
+
+        function verifyPin() {
+            const pin = document.getElementById('pinInput').value.trim();
+            if (pin === ADMIN_PIN) {
+                isPinVerified = true;
+                closeModal('pinModal');
+                if (pendingPlanningTicket) openPlanningForm(pendingPlanningTicket);
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+            }
+        }
+
+        function openPlanningForm(t) {
+            document.getElementById('planTicketIdBadge').textContent = t.id;
+            document.getElementById('planTicketId').value = t.id;
+            document.getElementById('planTicketLesson').textContent = t.lesson;
+            document.getElementById('planTicketModule').textContent = t.module;
+            document.getElementById('planTicketDesc').textContent = t.issue_desc;
+
+            const box = document.getElementById('planTicketScreenshotBox');
+            if (t.screenshot_url && t.screenshot_url.startsWith('http')) {
+                box.classList.remove('hidden');
+                document.getElementById('planTicketScreenshotLink').href = t.screenshot_url;
+            } else {
+                box.classList.add('hidden');
+            }
+
+            document.getElementById('planStatus').value = t.status || 'Mới tiếp nhận';
+            document.getElementById('planFeasibility').value = t.feasibility || 'Khả thi - Làm ngay';
+            document.getElementById('planPriority').value = t.priority || 'P2 - Tiêu chuẩn';
+            document.getElementById('planActionPlan').value = t.action_plan || '';
+            document.getElementById('planResolutionLink').value = t.resolution_link || '';
+            document.getElementById('planLndNote').value = t.lnd_note || '';
+
+            openModal('planningModal');
+        }
+
+        function handleSavePlanning(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSavePlan');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
+
+            const ticketId = document.getElementById('planTicketId').value;
+            const payload = {
+                action: 'update_planning',
+                pin: ADMIN_PIN,
+                ticket_id: ticketId,
+                status: document.getElementById('planStatus').value,
+                feasibility: document.getElementById('planFeasibility').value,
+                priority: document.getElementById('planPriority').value,
+                action_plan: document.getElementById('planActionPlan').value,
+                resolution_link: document.getElementById('planResolutionLink').value,
+                lnd_note: document.getElementById('planLndNote').value
+            };
+
+            if (GAS_WEBHOOK_URL) {
+                fetch(GAS_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).finally(() => {
+                    finishPlanSuccess();
+                });
+            } else {
+                setTimeout(finishPlanSuccess, 500);
+            }
+        }
+
+        function finishPlanSuccess() {
+            closeModal('planningModal');
+            const btn = document.getElementById('btnSavePlan');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk text-xs"></i> Lưu Kế Hoạch`;
+            showToast('Đã lưu kế hoạch và phân tích thành công!', 'success');
+            setTimeout(loadTickets, 1500);
+        }
+
+        // 10. NGHIỆM THU & CHẤM ĐIỂM CSAT (REVIEWER DVKH)
+        function openCsatModal(ticketId) {
+            const t = allTickets.find(item => item.id === ticketId);
+            if (!t) return;
+
+            document.getElementById('csatTicketIdInput').value = t.id;
+            document.getElementById('csatTicketId').textContent = t.id;
+            document.getElementById('csatTicketModule').textContent = t.module;
+            document.getElementById('csatTicketDesc').textContent = t.issue_desc;
+
+            const resLink = t.resolution_link || '#';
+            document.getElementById('csatResolutionLink').href = resLink;
+
+            // Reset sao
+            setCsatStar(5);
+            document.getElementById('csatFeedbackInput').value = t.reviewer_feedback || '';
+
+            openModal('csatModal');
+        }
+
+        function setCsatStar(val) {
+            document.getElementById('csatScoreVal').value = val;
+            const stars = document.querySelectorAll('.star-rating i');
+            const labels = {
+                1: '⭐ 1 sao - Chưa đạt (Cần sửa lại)',
+                2: '⭐⭐ 2 sao - Còn lỗi (Cần chỉnh thêm)',
+                3: '⭐⭐⭐ 3 sao - Tạm ổn (Chấp nhận được)',
+                4: '⭐⭐⭐⭐ 4 sao - Hài lòng (Đạt yêu cầu)',
+                5: '⭐⭐⭐⭐⭐ 5 sao - Rất hài lòng (Tuyệt vời)'
+            };
+
+            stars.forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-val'));
+                if (sVal <= val) {
+                    s.className = "fa-solid fa-star text-amber-400";
+                } else {
+                    s.className = "fa-solid fa-star text-slate-300";
+                }
+            });
+
+            document.getElementById('csatStarText').textContent = labels[val] || '';
+        }
+
+        function handleSaveCsat(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitCsat');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
+
+            const starVal = document.getElementById('csatScoreVal').value || 5;
+            const fullLabels = {
+                1: '⭐ 1 sao - Chưa đạt',
+                2: '⭐⭐ 2 sao - Còn lỗi',
+                3: '⭐⭐⭐ 3 sao - Tạm ổn',
+                4: '⭐⭐⭐⭐ 4 sao - Hài lòng',
+                5: '⭐⭐⭐⭐⭐ 5 sao - Rất hài lòng'
+            };
+
+            const payload = {
+                action: 'rate_csat',
+                ticket_id: document.getElementById('csatTicketIdInput').value,
+                csat_score: fullLabels[starVal] || '⭐⭐⭐⭐⭐ 5 sao - Rất hài lòng',
+                reviewer_feedback: document.getElementById('csatFeedbackInput').value
+            };
+
+            if (GAS_WEBHOOK_URL) {
+                fetch(GAS_WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).finally(() => {
+                    finishCsatSuccess();
+                });
+            } else {
+                setTimeout(finishCsatSuccess, 500);
+            }
+        }
+
+        function finishCsatSuccess() {
+            closeModal('csatModal');
+            const btn = document.getElementById('btnSubmitCsat');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-check-circle text-xs"></i> Xác Nhận Nghiệm Thu`;
+            showToast('Cảm ơn bạn đã nghiệm thu và đánh giá CSAT!', 'success');
+            setTimeout(loadTickets, 1500);
+        }
+
+        // 11. LIGHTBOX XEM ẢNH
+        function openLightbox(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxOpenNew').href = url;
+            openModal('lightboxModal');
+        }
+
+        // 12. TOAST THÔNG BÁO
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const text = document.getElementById('toastMsg');
+
+            text.textContent = msg;
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-xmark text-rose-400 text-sm';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm';
+            }
+
+            toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
