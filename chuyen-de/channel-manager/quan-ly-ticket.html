@@ -1094,6 +1094,18 @@
         }
 
 
+        let pendingDeepLinkTicketId = '';
+        let deepLinkTicketOpened = false;
+
+        function tryOpenDeepLinkTicket() {
+            if (!pendingDeepLinkTicketId || deepLinkTicketOpened) return;
+            const found = allTickets.find(t => String(t.id).toUpperCase() === pendingDeepLinkTicketId.toUpperCase());
+            if (found) {
+                deepLinkTicketOpened = true;
+                setTimeout(() => openDetailModal(found.id), 150);
+            }
+        }
+
         // KHỞI ĐỘNG
         window.addEventListener('DOMContentLoaded', () => {
             // Kiểm tra trạng thái admin session
@@ -1102,8 +1114,29 @@
                 updateAdminNavButton();
             }
 
+            const urlParams = new URLSearchParams(window.location.search);
+            pendingDeepLinkTicketId = (urlParams.get('ticket') || '').trim();
+            const filterLessonParam = (urlParams.get('filterLesson') || '').trim();
+            const lessonParam = urlParams.get('lesson');
+
+            // Nếu có ?filterLesson=... thì lọc danh sách theo bài học trước khi render
+            if (filterLessonParam) {
+                const filterSel = document.getElementById('filterLesson');
+                if (filterSel) {
+                    const cleanFilter = decodeURIComponent(filterLessonParam).toLowerCase();
+                    for (let i = 0; i < filterSel.options.length; i++) {
+                        const optVal = filterSel.options[i].value.toLowerCase();
+                        if (optVal !== 'all' && (cleanFilter === optVal || cleanFilter.includes(optVal) || optVal.includes(cleanFilter))) {
+                            filterSel.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+
             // Load từ cache trước để hiển thị tức thì 0ms
             loadFromLocalStorage();
+            tryOpenDeepLinkTicket();
             // Fetch dữ liệu mới nhất từ Google Sheets
             loadTickets();
 
@@ -1114,10 +1147,8 @@
                 }
             });
 
-            // Tự động mở form tạo ticket nếu có tham số ?lesson=...
-            const urlParams = new URLSearchParams(window.location.search);
-            const lessonParam = urlParams.get('lesson');
-            if (lessonParam) {
+            // Tự động mở form tạo ticket nếu có tham số ?lesson=... (và không phải deep-link mở chi tiết ticket)
+            if (!pendingDeepLinkTicketId && lessonParam) {
                 setTimeout(() => {
                     openCreateModal();
                     const sel = document.getElementById('inputLesson');
@@ -1182,6 +1213,7 @@
                     saveToLocalStorage();
                     updateMetrics();
                     applyFilters();
+                    tryOpenDeepLinkTicket();
                 }
             };
 
