@@ -1764,6 +1764,18 @@
             }).join('');
         }
 
+        // Kiểm tra ticket Backlog có nội dung Trùng (để bỏ qua hiển thị trên Kanban)
+        function isDuplicateBacklog(t) {
+            if (!t) return false;
+            const normSt = normalizeStatus(t.status);
+            if (normSt !== 'Backlog') return false;
+            const note = (t.lnd_note || '').toLowerCase();
+            const plan = (t.action_plan || '').toLowerCase();
+            const desc = (t.issue_desc || '').toLowerCase();
+            const feas = (t.feasibility || '').toLowerCase();
+            return note.includes('trùng') || plan.includes('trùng') || desc.includes('trùng') || feas.includes('trùng');
+        }
+
         // 6. RENDER KANBAN VIEW (KÉO THẢ TICKET KHI L&D ĐÃ ĐĂNG NHẬP 6789)
         function renderKanban(tickets) {
             const colNew = document.getElementById('colNew');
@@ -1776,7 +1788,8 @@
             const listProgress = tickets.filter(t => normalizeStatus(t.status) === 'Đang xử lý');
             const listReview = tickets.filter(t => normalizeStatus(t.status) === 'Chờ nghiệm thu');
             const listClosed = tickets.filter(t => normalizeStatus(t.status) === 'Hoàn thành');
-            const listBacklog = tickets.filter(t => normalizeStatus(t.status) === 'Backlog');
+            // Backlog với nội dung Trùng thì bỏ qua hiển thị trên kanban luôn
+            const listBacklog = tickets.filter(t => normalizeStatus(t.status) === 'Backlog' && !isDuplicateBacklog(t));
 
             document.getElementById('countColNew').textContent = listNew.length;
             document.getElementById('countColProgress').textContent = listProgress.length;
