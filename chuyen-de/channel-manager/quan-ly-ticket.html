@@ -1281,7 +1281,9 @@
                 "proof_image_url": ""
         }
 ];
-        const ADMIN_PIN = '4321';
+        // Mã PIN thiết lập KHÔNG lưu trong trang: máy chủ (Apps Script) kiểm tra PIN ở mọi thao tác ghi.
+        // Trang chỉ giữ tạm PIN học viên vừa nhập trong phiên làm việc (sessionStorage) để gửi kèm.
+        let adminPin = '';
         let isPinVerified = false;
 
         let allTickets = [];
@@ -1417,7 +1419,8 @@
         // KHỞI ĐỘNG
         window.addEventListener('DOMContentLoaded', () => {
             // Kiểm tra trạng thái admin session
-            if (sessionStorage.getItem('lnd_admin_unlocked') === 'true') {
+            try { adminPin = sessionStorage.getItem('lnd_admin_pin') || ''; } catch (e) { adminPin = ''; }
+            if (adminPin) {
                 isPinVerified = true;
                 updateAdminNavButton();
             }
@@ -1883,7 +1886,7 @@
                 if (GAS_WEBHOOK_URL) {
                     const dropPayload = {
                         action: 'update_planning',
-                        pin: '1234',
+                        pin: adminPin,
                         ticket_id: t.id,
                         status: targetStatus
                     };
@@ -1929,7 +1932,8 @@
             if (isPinVerified) {
                 if (confirm('Bạn đang ở chế độ Thiết lập. Bạn có muốn khóa lại chế độ xem thường không?')) {
                     isPinVerified = false;
-                    sessionStorage.removeItem('lnd_admin_unlocked');
+                    adminPin = '';
+                    try { sessionStorage.removeItem('lnd_admin_pin'); } catch (e) {}
                     updateAdminNavButton();
                     applyFilters();
                     showToast('Đã khóa lại chế độ xem thường.', 'info');
@@ -1942,17 +1946,39 @@
             }
         }
 
-        function verifyPin() {
+        // Gửi PIN lên máy chủ Apps Script để kiểm tra (PIN không nằm trong mã nguồn trang)
+        async function verifyPin() {
             const pin = document.getElementById('pinInput').value.trim();
-            if (pin === ADMIN_PIN) {
+            const errEl = document.getElementById('pinError');
+            if (!pin) return;
+            errEl.classList.add('hidden');
+
+            let ok = false;
+            let message = 'Mã PIN không chính xác! Vui lòng thử lại.';
+            try {
+                const res = await fetch(GAS_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'verify_pin', pin: pin })
+                });
+                const data = await res.json();
+                ok = data.status === 'success';
+                if (!ok && data.message) message = data.message;
+            } catch (err) {
+                message = 'Không kết nối được máy chủ để kiểm tra mã PIN. Vui lòng thử lại.';
+            }
+
+            if (ok) {
+                adminPin = pin;
                 isPinVerified = true;
-                sessionStorage.setItem('lnd_admin_unlocked', 'true');
+                try { sessionStorage.setItem('lnd_admin_pin', pin); } catch (e) {}
                 closeModal('pinModal');
                 updateAdminNavButton();
                 applyFilters();
                 showToast('Đã mở khóa Thiết lập! Bạn có quyền Setting từng câu và kéo thả Kanban.', 'success');
             } else {
-                document.getElementById('pinError').classList.remove('hidden');
+                errEl.textContent = message;
+                errEl.classList.remove('hidden');
             }
         }
 
@@ -2101,7 +2127,7 @@
                 if (GAS_WEBHOOK_URL) {
                     const planPayload = {
                         action: 'update_planning',
-                        pin: '1234',
+                        pin: adminPin,
                         ticket_id: t.id,
                         status: t.status,
                         feasibility: t.feasibility,
