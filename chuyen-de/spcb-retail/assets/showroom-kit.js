@@ -1,9 +1,8 @@
 /* ==========================================================================
-   KiotViet Showroom Narrative Kit v2.0 - Calm Onboarding UI (SPCB Retail)
+   KiotViet Showroom Narrative Kit v2.1 - LMS Narrow Embed Edition (SPCB Retail)
+   - Font Inter, bố cục 1 cột LMS, trình xem từng ảnh lớn (.shot-viewer)
    - Lưu tiến độ chung khóa học theo từng Buổi & từng Học phần vào localStorage:
      khóa 'kv_spcb_retail_showroom_v1'
-   - Sticky Rail sáng 1 dòng mỏng kèm nút Về Cổng Khóa học
-   - Quiz từng câu nhẹ nhàng (1/6) có thể chuyển sang Xem tất cả
    ========================================================================== */
 (function () {
   'use strict';
@@ -14,6 +13,7 @@
   var state = null;
   var actx = null;
   var shotGroups = {};
+  var viewerIdx = {};
   var lbState = { group: null, idx: 0 };
   var quizView = { idx: 0, showAll: false };
 
@@ -158,16 +158,12 @@
     var m = computeMetrics();
     var heroText = document.getElementById('hero-progress-text');
     if (heroText) {
-      heroText.textContent = 'Tiến độ ' + m.pct + '% · ' + m.doneSecs + '/' + m.totalSecs + ' học phần · ' + m.answeredQuiz + '/' + m.totalQuiz + ' tình huống · ' + m.checkedCount + '/' + m.totalCheck + ' checklist';
+      heroText.textContent = 'Tiến độ ' + m.pct + '% · ' + m.doneSecs + '/' + m.totalSecs + ' phần';
     }
     var railPct = document.getElementById('rail-progress-text');
     if (railPct) railPct.textContent = m.doneSecs + '/' + m.totalSecs + ' phần (' + m.pct + '%)';
 
     document.querySelectorAll('.rail-pill[data-sec]').forEach(function (el) {
-      var sid = el.getAttribute('data-sec');
-      el.classList.toggle('done', !!state.sectionsDone[sid]);
-    });
-    document.querySelectorAll('.nav-pill[data-sec]').forEach(function (el) {
       var sid = el.getAttribute('data-sec');
       el.classList.toggle('done', !!state.sectionsDone[sid]);
     });
@@ -273,7 +269,7 @@
       rail.innerHTML =
         '<div class="sticky-rail-inner">' +
           '<div class="rail-left">' +
-            '<a href="ke-hoach-khoa-hoc.html" class="rail-back" title="Quay về Cổng Khóa học">← Cổng</a>' +
+            '<a href="ke-hoach-khoa-hoc.html" class="rail-back" title="Quay về Cổng Học tập">← Cổng</a>' +
             '<div class="rail-brand"><span class="rail-badge">' + cfg.sessionLabel + '</span></div>' +
           '</div>' +
           '<div class="rail-pills">' + pillsHtml + '</div>' +
@@ -311,7 +307,7 @@
       var sid = host.getAttribute('data-sec-complete');
       host.className = 'sec-complete-bar';
       host.innerHTML =
-        '<span class="sec-complete-note">Bấm xác nhận sau khi bạn đã xem và thử xong phần này (tự động lưu tiến độ).</span>' +
+        '<span class="sec-complete-note">Bấm xác nhận sau khi bạn đã xem xong phần này (tự lưu tiến độ).</span>' +
         '<button type="button" class="btn btn-sec-done" data-sec="' + sid + '" onclick="KVShowroom.toggleSectionDone(\'' + sid + '\')">Đánh dấu hoàn thành học phần</button>';
     });
   }
@@ -333,14 +329,14 @@
     }).join('');
 
     var fbHtml = answered
-      ? '<div class="callout ' + (ok ? 'success' : 'warning') + '" style="margin-top:14px;">' +
+      ? '<div class="callout ' + (ok ? 'success' : 'warning') + '" style="margin-top:12px;">' +
           '<div class="callout-title">' + (ok ? 'Tuyệt vời, bạn nắm bài rất chắc!' : 'Chưa chính xác lắm — KiCi gợi ý nhỏ để bạn dễ nhớ nhé:') + '</div>' +
           '<p>' + q.explanation + '</p>' +
         '</div>'
       : '';
 
     return '<div class="quiz-question-title">' + q.question + '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:10px;">' + optsHtml + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;">' + optsHtml + '</div>' +
       fbHtml;
   }
 
@@ -377,14 +373,14 @@
     var topBar =
       '<div class="quiz-stepper-top">' +
         '<div class="quiz-dot-nav" role="tablist" aria-label="Chọn nhanh câu tình huống">' + dotsHtml + '</div>' +
-        '<button type="button" class="btn btn-secondary" style="min-height:40px;padding:7px 14px;font-size:0.875rem;" onclick="KVShowroom.toggleQuizViewMode()">' +
-          (quizView.showAll ? 'Xem từng câu (gọn)' : 'Xem cả ' + total + ' câu') +
+        '<button type="button" class="btn btn-secondary" style="min-height:38px;padding:6px 12px;font-size:0.875rem;" onclick="KVShowroom.toggleQuizViewMode()">' +
+          (quizView.showAll ? 'Xem từng câu' : 'Xem cả ' + total + ' câu') +
         '</button>' +
       '</div>';
 
     if (quizView.showAll) {
       container.innerHTML = topBar + '<div class="stack-md">' + cfg.quiz.map(function (q) {
-        return '<div class="tile">' + buildQuestionCardHtml(q) + '</div>';
+        return '<div class="sub-panel">' + buildQuestionCardHtml(q) + '</div>';
       }).join('') + '</div>';
       return;
     }
@@ -393,12 +389,12 @@
     var navFoot =
       '<div class="quiz-nav-footer">' +
         '<button type="button" class="btn btn-secondary" onclick="KVShowroom.goToQuizQuestion(' + (quizView.idx - 1) + ')" ' + (quizView.idx === 0 ? 'disabled' : '') + '>← Câu trước</button>' +
-        '<span style="font-size:0.9375rem;font-weight:600;color:var(--on-surface-variant);">Tình huống ' + (quizView.idx + 1) + ' / ' + total + ' · Đã trả lời ' + m.answeredQuiz + '/' + total + '</span>' +
+        '<span style="font-size:0.9rem;font-weight:600;color:var(--on-surface-variant);">Tình huống ' + (quizView.idx + 1) + ' / ' + total + '</span>' +
         '<button type="button" class="btn btn-primary" onclick="KVShowroom.goToQuizQuestion(' + (quizView.idx + 1) + ')" ' + (quizView.idx >= total - 1 ? 'disabled' : '') + '>Câu tiếp theo →</button>' +
       '</div>';
 
     container.innerHTML = topBar +
-      '<div class="tile">' +
+      '<div class="sub-panel">' +
         buildQuestionCardHtml(curQ) +
         navFoot +
       '</div>';
@@ -519,7 +515,7 @@
     if (msgEl) msgEl.textContent = 'Đã đặt lại toàn bộ tiến độ ' + cfg.sessionLabel + '.';
   };
 
-  /* ================= LIGHTBOX ẢNH GIAO DIỆN THẬT ================= */
+  /* ================= TRÌNH XEM TỪNG ẢNH LỚN (.SHOT-VIEWER) & LIGHTBOX ================= */
   function ensureLightbox() {
     if (document.getElementById('shotLightbox')) return;
     var lb = document.createElement('div');
@@ -563,7 +559,7 @@
     var img = document.getElementById('shotLbImg');
     img.src = item.src;
     img.alt = item.alt;
-    document.getElementById('shotLbCap').textContent = item.caption;
+    document.getElementById('shotLbCap').textContent = item.desc || item.caption;
     document.getElementById('shotLbPrev').disabled = list.length <= 1;
     document.getElementById('shotLbNext').disabled = list.length <= 1;
   }
@@ -588,6 +584,60 @@
     paintLightbox();
   };
 
+  function paintShotViewer(host, groupKey) {
+    var items = shotGroups[groupKey] || [];
+    if (!items.length) return;
+    var idx = viewerIdx[groupKey] || 0;
+    if (idx >= items.length) idx = 0;
+    viewerIdx[groupKey] = idx;
+    var cur = items[idx];
+
+    var tabsHtml = items.map(function (it, i) {
+      return '<button type="button" class="shot-tab-btn ' + (i === idx ? 'active' : '') + '" data-shot-jump="' + i + '">' + (i + 1) + '. ' + it.title + '</button>';
+    }).join('');
+
+    host.innerHTML =
+      '<div class="shot-viewer-head">' +
+        '<span class="shot-viewer-title">Ảnh giao diện minh họa trên KiotViet</span>' +
+        '<span class="badge badge-blue">Ảnh ' + (idx + 1) + ' / ' + items.length + '</span>' +
+      '</div>' +
+      '<div class="shot-viewer-tabs">' + tabsHtml + '</div>' +
+      '<div class="shot-viewer-stage" role="button" tabindex="0" aria-label="Bấm phóng to ảnh ' + (idx + 1) + '">' +
+        '<img src="' + cur.src + '" alt="' + cur.alt + '">' +
+        '<span class="shot-zoom-badge">Bấm để phóng to</span>' +
+      '</div>' +
+      '<div class="shot-viewer-foot">' +
+        '<div class="shot-viewer-cap"><b>' + cur.title + ':</b> ' + (cur.desc || cur.caption) + '</div>' +
+        '<div class="shot-viewer-nav">' +
+          '<button type="button" class="btn btn-secondary" style="min-height:38px;padding:6px 13px;font-size:0.875rem;" data-shot-step="-1">← Trước</button>' +
+          '<button type="button" class="btn btn-primary" style="min-height:38px;padding:6px 13px;font-size:0.875rem;" data-shot-step="1">Ảnh tiếp →</button>' +
+        '</div>' +
+      '</div>';
+
+    host.querySelectorAll('[data-shot-jump]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        viewerIdx[groupKey] = parseInt(b.getAttribute('data-shot-jump'), 10) || 0;
+        KVShowroom.sound('click');
+        paintShotViewer(host, groupKey);
+      });
+    });
+    host.querySelectorAll('[data-shot-step]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var delta = parseInt(b.getAttribute('data-shot-step'), 10) || 1;
+        viewerIdx[groupKey] = (idx + delta + items.length) % items.length;
+        KVShowroom.sound('click');
+        paintShotViewer(host, groupKey);
+      });
+    });
+    var stage = host.querySelector('.shot-viewer-stage');
+    if (stage) {
+      stage.addEventListener('click', function () { KVShowroom.openLightbox(groupKey, idx); });
+      stage.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); KVShowroom.openLightbox(groupKey, idx); }
+      });
+    }
+  }
+
   KVShowroom.bindShots = function () {
     shotGroups = {};
     document.querySelectorAll('.shot-strip').forEach(function (strip, gIdx) {
@@ -597,15 +647,30 @@
         var img = card.querySelector('img');
         var capB = card.querySelector('.shot-cap b');
         var capEl = card.querySelector('.shot-cap');
+        var titleText = capB ? capB.textContent.trim() : ('Hình ' + (cIdx + 1));
+        var fullCap = capEl ? capEl.textContent.trim() : '';
+        var descText = (capB && fullCap.indexOf(titleText) === 0) ? fullCap.slice(titleText.length).trim() : fullCap;
         items.push({
           src: img ? img.getAttribute('src') : '',
           alt: img ? (img.getAttribute('alt') || '') : '',
-          title: capB ? capB.textContent.trim() : 'Ảnh giao diện KiotViet',
-          caption: capEl ? capEl.textContent.trim() : ''
+          title: titleText,
+          desc: descText,
+          caption: fullCap
         });
-        card.onclick = function () { KVShowroom.openLightbox(groupKey, cIdx); };
       });
       shotGroups[groupKey] = items;
+
+      if (items.length >= 2) {
+        var viewer = document.createElement('div');
+        viewer.className = 'shot-viewer';
+        viewer.setAttribute('data-shot-viewer', groupKey);
+        strip.parentNode.replaceChild(viewer, strip);
+        viewerIdx[groupKey] = 0;
+        paintShotViewer(viewer, groupKey);
+      } else if (items.length === 1) {
+        var singleCard = strip.querySelector('.shot-card');
+        if (singleCard) singleCard.onclick = function () { KVShowroom.openLightbox(groupKey, 0); };
+      }
     });
   };
 
