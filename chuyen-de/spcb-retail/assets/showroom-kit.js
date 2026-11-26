@@ -1,9 +1,9 @@
 /* ==========================================================================
-   KiotViet Showroom Narrative Kit v1.0 - SPCB KiotViet Retail
+   KiotViet Showroom Narrative Kit v2.0 - Calm Onboarding UI (SPCB Retail)
    - Lưu tiến độ chung khóa học theo từng Buổi & từng Học phần vào localStorage:
      khóa 'kv_spcb_retail_showroom_v1'
-   - Nhân vật KiCi SVG dẫn dắt xuyên suốt, Sticky Rail 5 Học phần, Lightbox ảnh,
-     Quiz 6 tình huống, Checklist 8 mục và Xuất báo cáo .txt bằng Blob thuần JS
+   - Sticky Rail sáng 1 dòng mỏng kèm nút Về Cổng Khóa học
+   - Quiz từng câu nhẹ nhàng (1/6) có thể chuyển sang Xem tất cả
    ========================================================================== */
 (function () {
   'use strict';
@@ -15,6 +15,7 @@
   var actx = null;
   var shotGroups = {};
   var lbState = { group: null, idx: 0 };
+  var quizView = { idx: 0, showAll: false };
 
   var FACES = {
     hello: '<circle cx="25" cy="30" r="3.4" fill="#5BE92A"/><circle cx="39" cy="30" r="3.4" fill="#5BE92A"/><path d="M26 36.5q6 5 12 0" stroke="#5BE92A" stroke-width="2.4" fill="none" stroke-linecap="round"/>',
@@ -27,11 +28,11 @@
   KVShowroom.kiciSvg = function (mood) {
     return '<svg viewBox="0 0 64 64" role="img" aria-label="KiCi">' +
       '<line x1="32" y1="5" x2="32" y2="13" stroke="#166def" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<circle cx="32" cy="5" r="3.5" fill="#00B63E"/>' +
+      '<circle cx="32" cy="5" r="3.5" fill="#047a2e"/>' +
       '<rect x="4" y="27" width="6" height="12" rx="3" fill="#166def"/>' +
       '<rect x="54" y="27" width="6" height="12" rx="3" fill="#166def"/>' +
-      '<rect x="9" y="13" width="46" height="40" rx="14" fill="#002957"/>' +
-      '<rect x="15" y="20" width="34" height="24" rx="9" fill="#0b3875"/>' +
+      '<rect x="9" y="13" width="46" height="40" rx="14" fill="#0b3875"/>' +
+      '<rect x="15" y="20" width="34" height="24" rx="9" fill="#002957"/>' +
       (FACES[mood] || FACES.explain) +
       '<rect x="24" y="53" width="16" height="5" rx="2.5" fill="#166def"/>' +
       '</svg>';
@@ -160,7 +161,7 @@
       heroText.textContent = 'Tiến độ ' + m.pct + '% · ' + m.doneSecs + '/' + m.totalSecs + ' học phần · ' + m.answeredQuiz + '/' + m.totalQuiz + ' tình huống · ' + m.checkedCount + '/' + m.totalCheck + ' checklist';
     }
     var railPct = document.getElementById('rail-progress-text');
-    if (railPct) railPct.textContent = m.doneSecs + '/' + m.totalSecs + ' học phần (' + m.pct + '%)';
+    if (railPct) railPct.textContent = m.doneSecs + '/' + m.totalSecs + ' phần (' + m.pct + '%)';
 
     document.querySelectorAll('.rail-pill[data-sec]').forEach(function (el) {
       var sid = el.getAttribute('data-sec');
@@ -202,7 +203,7 @@
     });
     document.querySelectorAll('.kici-mentor:not([data-ready])').forEach(function (el) {
       var mood = el.getAttribute('data-mood') || 'explain';
-      var role = el.getAttribute('data-role') || 'KiCi · Chuyên viên L&D đồng hành';
+      var role = el.getAttribute('data-role') || 'KiCi · Người bạn đồng hành L&D';
       var content = KVShowroom.termifyString(el.innerHTML);
       el.innerHTML =
         '<div class="kici-ava">' + KVShowroom.kiciSvg(mood) + '</div>' +
@@ -271,9 +272,12 @@
       }).join('');
       rail.innerHTML =
         '<div class="sticky-rail-inner">' +
-          '<div class="rail-brand"><span class="rail-badge">' + cfg.sessionLabel + '</span><span>SPCB Retail</span></div>' +
+          '<div class="rail-left">' +
+            '<a href="ke-hoach-khoa-hoc.html" class="rail-back" title="Quay về Cổng Khóa học">← Cổng</a>' +
+            '<div class="rail-brand"><span class="rail-badge">' + cfg.sessionLabel + '</span></div>' +
+          '</div>' +
           '<div class="rail-pills">' + pillsHtml + '</div>' +
-          '<div class="rail-pct"><span class="progress-dot" aria-hidden="true"></span><span id="rail-progress-text">0/' + cfg.sections.length + ' học phần</span></div>' +
+          '<div class="rail-pct"><span class="progress-dot" aria-hidden="true"></span><span id="rail-progress-text">0/' + cfg.sections.length + ' phần</span></div>' +
         '</div>';
       document.body.insertBefore(rail, document.body.firstChild);
 
@@ -307,47 +311,97 @@
       var sid = host.getAttribute('data-sec-complete');
       host.className = 'sec-complete-bar';
       host.innerHTML =
-        '<span class="sec-complete-note">Bấm xác nhận sau khi bạn đã xem kỹ và thử thao tác ở học phần này (tự lưu tiến độ).</span>' +
+        '<span class="sec-complete-note">Bấm xác nhận sau khi bạn đã xem và thử xong phần này (tự động lưu tiến độ).</span>' +
         '<button type="button" class="btn btn-sec-done" data-sec="' + sid + '" onclick="KVShowroom.toggleSectionDone(\'' + sid + '\')">Đánh dấu hoàn thành học phần</button>';
     });
   }
 
-  /* ================= QUIZ, CHECKLIST & REPORT ================= */
+  /* ================= QUIZ TỪNG CÂU NHẸ NHÀNG (1/6), CHECKLIST & REPORT ================= */
+  function buildQuestionCardHtml(q) {
+    var picked = state.quizAnswers[q.id];
+    var answered = picked !== undefined && picked !== null;
+    var ok = picked === q.correct;
+    var optsHtml = q.options.map(function (opt, idx) {
+      var cls = 'quiz-option';
+      if (answered) {
+        if (idx === q.correct) cls += ' correct';
+        else if (idx === picked) cls += ' incorrect';
+      }
+      var letter = ['A', 'B', 'C', 'D'][idx];
+      return '<button type="button" class="' + cls + '" onclick="KVShowroom.answerQuiz(\'' + q.id + '\', ' + idx + ')">' +
+        '<strong style="flex-shrink:0;">' + letter + '.</strong><span>' + opt + '</span></button>';
+    }).join('');
+
+    var fbHtml = answered
+      ? '<div class="callout ' + (ok ? 'success' : 'warning') + '" style="margin-top:14px;">' +
+          '<div class="callout-title">' + (ok ? 'Tuyệt vời, bạn nắm bài rất chắc!' : 'Chưa chính xác lắm — KiCi gợi ý nhỏ để bạn dễ nhớ nhé:') + '</div>' +
+          '<p>' + q.explanation + '</p>' +
+        '</div>'
+      : '';
+
+    return '<div class="quiz-question-title">' + q.question + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px;">' + optsHtml + '</div>' +
+      fbHtml;
+  }
+
+  KVShowroom.goToQuizQuestion = function (idx) {
+    var total = (cfg.quiz || []).length;
+    if (!total) return;
+    quizView.idx = Math.max(0, Math.min(total - 1, idx));
+    KVShowroom.sound('click');
+    KVShowroom.renderQuiz();
+  };
+
+  KVShowroom.toggleQuizViewMode = function () {
+    quizView.showAll = !quizView.showAll;
+    KVShowroom.sound('click');
+    KVShowroom.renderQuiz();
+  };
+
   KVShowroom.renderQuiz = function () {
     var container = document.getElementById('quiz-questions-container');
     var badge = document.getElementById('quiz-score-badge');
-    if (!container || !cfg.quiz) return;
+    if (!container || !cfg.quiz || !cfg.quiz.length) return;
     var m = computeMetrics();
     if (badge) badge.textContent = 'Điểm: ' + m.correctQuiz + '/' + m.totalQuiz;
 
-    container.innerHTML = cfg.quiz.map(function (q) {
-      var picked = state.quizAnswers[q.id];
-      var answered = picked !== undefined && picked !== null;
-      var ok = picked === q.correct;
-      var optsHtml = q.options.map(function (opt, idx) {
-        var cls = 'quiz-option';
-        if (answered) {
-          if (idx === q.correct) cls += ' correct';
-          else if (idx === picked) cls += ' incorrect';
-        }
-        var letter = ['A', 'B', 'C', 'D'][idx];
-        return '<button type="button" class="' + cls + '" onclick="KVShowroom.answerQuiz(\'' + q.id + '\', ' + idx + ')">' +
-          '<strong style="flex-shrink:0;">' + letter + '.</strong><span>' + opt + '</span></button>';
-      }).join('');
+    var total = cfg.quiz.length;
+    if (quizView.idx >= total) quizView.idx = 0;
 
-      var fbHtml = answered
-        ? '<div class="callout ' + (ok ? 'success' : 'danger') + '" style="margin-top:10px;">' +
-            '<div class="callout-title">' + (ok ? 'Chính xác' : 'Chưa đúng — Xem giải thích từ KiCi') + '</div>' +
-            '<p>' + q.explanation + '</p>' +
-          '</div>'
-        : '';
-
-      return '<div class="tile">' +
-        '<div style="font-weight:700;margin-bottom:10px;color:var(--kv-navy);">' + q.question + '</div>' +
-        '<div style="display:flex;flex-direction:column;gap:8px;">' + optsHtml + '</div>' +
-        fbHtml +
-      '</div>';
+    var dotsHtml = cfg.quiz.map(function (q, idx) {
+      var ans = state.quizAnswers[q.id] !== undefined && state.quizAnswers[q.id] !== null;
+      var cls = 'quiz-dot-btn' + (ans ? ' is-answered' : '') + (!quizView.showAll && idx === quizView.idx ? ' active' : '');
+      return '<button type="button" class="' + cls + '" onclick="KVShowroom.goToQuizQuestion(' + idx + ')">Câu ' + (idx + 1) + (ans ? ' ✓' : '') + '</button>';
     }).join('');
+
+    var topBar =
+      '<div class="quiz-stepper-top">' +
+        '<div class="quiz-dot-nav" role="tablist" aria-label="Chọn nhanh câu tình huống">' + dotsHtml + '</div>' +
+        '<button type="button" class="btn btn-secondary" style="min-height:40px;padding:7px 14px;font-size:0.875rem;" onclick="KVShowroom.toggleQuizViewMode()">' +
+          (quizView.showAll ? 'Xem từng câu (gọn)' : 'Xem cả ' + total + ' câu') +
+        '</button>' +
+      '</div>';
+
+    if (quizView.showAll) {
+      container.innerHTML = topBar + '<div class="stack-md">' + cfg.quiz.map(function (q) {
+        return '<div class="tile">' + buildQuestionCardHtml(q) + '</div>';
+      }).join('') + '</div>';
+      return;
+    }
+
+    var curQ = cfg.quiz[quizView.idx];
+    var navFoot =
+      '<div class="quiz-nav-footer">' +
+        '<button type="button" class="btn btn-secondary" onclick="KVShowroom.goToQuizQuestion(' + (quizView.idx - 1) + ')" ' + (quizView.idx === 0 ? 'disabled' : '') + '>← Câu trước</button>' +
+        '<span style="font-size:0.9375rem;font-weight:600;color:var(--on-surface-variant);">Tình huống ' + (quizView.idx + 1) + ' / ' + total + ' · Đã trả lời ' + m.answeredQuiz + '/' + total + '</span>' +
+        '<button type="button" class="btn btn-primary" onclick="KVShowroom.goToQuizQuestion(' + (quizView.idx + 1) + ')" ' + (quizView.idx >= total - 1 ? 'disabled' : '') + '>Câu tiếp theo →</button>' +
+      '</div>';
+
+    container.innerHTML = topBar +
+      '<div class="tile">' +
+        buildQuestionCardHtml(curQ) +
+        navFoot +
+      '</div>';
   };
 
   KVShowroom.answerQuiz = function (qId, idx) {
@@ -381,7 +435,7 @@
       var checked = state.checkedIds.indexOf(item.id) !== -1;
       return '<label class="checklist-item ' + (checked ? 'checked' : '') + '">' +
         '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="KVShowroom.toggleChecklist(\'' + item.id + '\')">' +
-        '<span style="font-size:0.9rem;">' + item.text + '</span>' +
+        '<span>' + item.text + '</span>' +
       '</label>';
     }).join('');
   };
@@ -454,6 +508,7 @@
       btn.textContent = 'Đặt lại tiến độ buổi này';
     }
     state = { sectionsDone: {}, quizAnswers: {}, checkedIds: [], notes: '' };
+    quizView.idx = 0;
     var notesEl = document.getElementById('trainer-notes');
     if (notesEl) notesEl.value = '';
     saveSessionState();
