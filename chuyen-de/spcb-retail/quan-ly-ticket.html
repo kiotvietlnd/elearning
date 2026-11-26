@@ -323,6 +323,12 @@
 
             <form id="createTicketForm" onsubmit="handleCreateTicket(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
                 <div class="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-3.5 flex flex-col gap-3">
+                    <div id="createModalError" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800 leading-relaxed">
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
+                            <div id="createModalErrorText" class="flex-1 font-medium"></div>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="font-bold text-slate-700 block mb-1">Người gửi / Bộ phận <span class="text-rose-500">*</span></label>
@@ -1093,6 +1099,10 @@
         }
 
         function openCreateModal() {
+            const errBox = document.getElementById('createModalError');
+            const errText = document.getElementById('createModalErrorText');
+            if (errBox) errBox.classList.add('hidden');
+            if (errText) errText.textContent = '';
             renderAttachedImages();
             openModal('createModal');
         }
@@ -1325,6 +1335,22 @@
             e.preventDefault();
             const btn = document.getElementById('btnSubmitCreate');
             const origBtnHtml = btn.innerHTML;
+            const errBox = document.getElementById('createModalError');
+            const errText = document.getElementById('createModalErrorText');
+            if (errBox) errBox.classList.add('hidden');
+            if (errText) errText.textContent = '';
+
+            const showCreateError = (msg) => {
+                if (errBox && errText) {
+                    errText.textContent = msg;
+                    errBox.classList.remove('hidden');
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                btn.disabled = false;
+                btn.innerHTML = origBtnHtml;
+                showToast(msg, 'error');
+            };
+
             const imgCount = attachedImages.length;
             btn.disabled = true;
             btn.innerHTML = imgCount > 0
@@ -1379,37 +1405,45 @@
                     payload.screenshot_base64 = attachedImages[0].base64;
                     payload.screenshot_mime = attachedImages[0].mime;
                 }
+                let json = null;
                 try {
                     const res = await fetch(gasUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload)
                     });
-                    const json = await res.json();
-                    if (json && json.status === 'success') {
-                        if (json.ticket_id) newTicket.id = json.ticket_id;
-                        if (json.timestamp) newTicket.timestamp = json.timestamp;
-                        if (json.screenshot_url) newTicket.screenshot_url = json.screenshot_url;
-                        const savedCount = parseImageUrls(newTicket.screenshot_url).length;
-                        if (imgCount > 0 && savedCount === 0) {
-                            toastMsg = `Đã tạo ${newTicket.id}, nhưng ảnh chưa lên Drive do Apps Script chưa cập nhật v3!`;
-                            toastType = 'info';
-                        } else if (imgCount > 1 && savedCount < imgCount) {
-                            toastMsg = `Đã tạo ${newTicket.id}, nhưng mới lưu ${savedCount}/${imgCount} ảnh (cần cập nhật Apps Script lên v3 để lưu nhiều ảnh)!`;
-                            toastType = 'info';
-                        } else {
-                            toastMsg = imgCount > 0
-                                ? `Đã tạo ${newTicket.id} và lưu ${imgCount} ảnh lên Google Drive thành công!`
-                                : `Đã tạo ticket ${newTicket.id} và gửi lên Google Sheet!`;
-                            toastType = 'success';
-                        }
-                    } else {
-                        throw new Error((json && json.message) || 'Lỗi phản hồi từ Apps Script');
-                    }
+                    json = await res.json();
                 } catch (err) {
-                    console.warn('POST Apps Script cần fallback:', err);
-                    toastMsg = `Không đọc được phản hồi từ Apps Script (${err.message || 'CORS'}). Đang thử tải lại Sheet...`;
-                    toastType = 'info';
+                    console.warn('Lỗi kết nối POST Apps Script:', err);
+                    showCreateError('Không kết nối được tới Apps Script (' + (err.message || 'Lỗi mạng') + '). Nội dung và ảnh của bạn vẫn được giữ nguyên — hãy thử bấm Gửi Ticket lại hoặc kiểm tra kết nối.');
+                    return;
+                }
+
+                if (json && json.status === 'success') {
+                    if (json.ticket_id) newTicket.id = json.ticket_id;
+                    if (json.timestamp) newTicket.timestamp = json.timestamp;
+                    if (json.screenshot_url) newTicket.screenshot_url = json.screenshot_url;
+                    const savedCount = parseImageUrls(newTicket.screenshot_url).length;
+                    if (imgCount > 0 && savedCount === 0) {
+                        toastMsg = `Đã tạo ${newTicket.id}, nhưng ảnh chưa lên Drive do Apps Script chưa cập nhật v3!`;
+                        toastType = 'info';
+                    } else if (imgCount > 1 && savedCount < imgCount) {
+                        toastMsg = `Đã tạo ${newTicket.id}, nhưng mới lưu ${savedCount}/${imgCount} ảnh (cần cập nhật Apps Script lên v3 để lưu nhiều ảnh)!`;
+                        toastType = 'info';
+                    } else {
+                        toastMsg = imgCount > 0
+                            ? `Đã tạo ${newTicket.id} và lưu ${imgCount} ảnh lên Google Drive thành công!`
+                            : `Đã tạo ticket ${newTicket.id} và gửi lên Google Sheet!`;
+                        toastType = 'success';
+                    }
+                } else {
+                    const rawMsg = String((json && json.message) || 'Lỗi phản hồi từ Apps Script');
+                    if (/DriveApp|auth\/drive|permission/i.test(rawMsg)) {
+                        showCreateError('Apps Script chưa được cấp quyền lưu ảnh vào Google Drive! Hãy mở Apps Script → chọn hàm authorizeDriveOnce → bấm Chạy (Run) và bấm Cho phép quyền Drive, sau đó bấm Gửi Ticket lại (nội dung và ảnh của bạn vẫn được giữ nguyên).');
+                        return;
+                    }
+                    showCreateError('Chưa gửi được Ticket lên Google Sheet: ' + rawMsg + ' (nội dung và ảnh của bạn vẫn được giữ nguyên).');
+                    return;
                 }
             }
 
@@ -1594,6 +1628,8 @@
             openModal('ticketDetailModal');
         }
 
+        let toastTimer = null;
+
         function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
@@ -1602,7 +1638,8 @@
                 : type === 'info' ? 'fa-solid fa-circle-info text-blue-400 text-sm'
                 : 'fa-solid fa-circle-check text-emerald-400 text-sm';
             toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
-            setTimeout(() => toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none'), 3200);
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none'), type === 'error' ? 6500 : 3500);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
