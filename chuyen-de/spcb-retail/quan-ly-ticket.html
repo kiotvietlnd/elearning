@@ -375,9 +375,42 @@
                 </div>
 
                 <div>
-                    <label class="font-bold text-slate-700 block mb-1">Link ảnh minh họa (nếu có)</label>
-                    <input id="inputScreenshot" type="url" placeholder="https://prnt.sc/..."
-                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none text-xs sm:text-sm">
+                    <label class="font-bold text-slate-700 block mb-1.5">Ảnh minh họa (Ctrl + V dán trực tiếp hoặc chọn ảnh — tự lưu vào Google Drive)</label>
+                    <input id="inputImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" onchange="handleImageFileSelect(this.files && this.files[0])">
+                    <div id="pasteZone" tabindex="0"
+                         ondragover="event.preventDefault(); this.classList.add('border-[#0070F4]','bg-blue-50/70');"
+                         ondragleave="this.classList.remove('border-[#0070F4]','bg-blue-50/70');"
+                         ondrop="handleImageDrop(event)"
+                         class="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 hover:border-[#0070F4] transition-colors p-3 text-center cursor-pointer outline-none focus:border-[#0070F4] focus:bg-blue-50/40"
+                         onclick="if(!pastedImageState.base64) document.getElementById('inputImageFile').click()">
+                        <div id="pasteEmptyState" class="flex flex-col items-center justify-center gap-1.5 py-2">
+                            <div class="w-9 h-9 rounded-xl bg-blue-100 text-[#0070F4] flex items-center justify-center text-base">
+                                <i class="fa-regular fa-paste"></i>
+                            </div>
+                            <div class="text-xs font-bold text-slate-700">
+                                Bấm <kbd class="px-1.5 py-0.5 rounded bg-white border border-slate-300 font-black text-[#002957] shadow-2xs">Ctrl + V</kbd> để dán ảnh chụp màn hình
+                            </div>
+                            <div class="text-[11px] text-slate-500">
+                                Hoặc kéo thả ảnh vào đây · <span class="text-[#0070F4] font-bold underline">Chọn ảnh từ máy</span>
+                            </div>
+                        </div>
+                        <div id="pastePreviewState" class="hidden flex flex-col gap-2" onclick="event.stopPropagation()">
+                            <img id="pastePreviewImg" src="" alt="Ảnh xem trước" class="max-h-44 mx-auto rounded-lg border border-slate-200 bg-white object-contain shadow-xs">
+                            <div class="flex items-center justify-between gap-2 text-[11px] pt-1">
+                                <span id="pasteImageMeta" class="font-semibold text-emerald-700 inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check"></i> Đã sẵn sàng tải lên Drive
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="document.getElementById('inputImageFile').click()" class="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold cursor-pointer">Đổi ảnh</button>
+                                    <button type="button" onclick="clearPastedImage()" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold cursor-pointer"><i class="fa-solid fa-trash-can mr-1"></i>Xóa ảnh</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <input id="inputScreenshot" type="url" placeholder="Hoặc dán link ảnh có sẵn (nếu đã có URL ngoài)..."
+                               class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-[#0070F4] outline-none text-[11px]">
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
@@ -584,10 +617,16 @@
             <div class="flex flex-col gap-1.5">
                 <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wide flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-[#0070F4]"></i> Nội dung góp ý chi tiết</span>
                 <div id="detailTicketDesc" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed">--</div>
-                <div id="detailScreenshotBox" class="hidden pt-1">
-                    <a id="detailScreenshotLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold text-xs border border-blue-200 transition-all">
-                        <i class="fa-solid fa-image"></i> Xem ảnh đính kèm <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                <div id="detailScreenshotBox" class="hidden pt-1 flex flex-col gap-2">
+                    <a id="detailScreenshotThumbWrap" href="#" target="_blank" rel="noopener noreferrer" class="hidden block">
+                        <img id="detailScreenshotImg" src="" alt="Ảnh minh họa ticket" onerror="this.parentElement.classList.add('hidden')"
+                             class="w-full max-h-[340px] object-contain rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xs cursor-zoom-in">
                     </a>
+                    <div>
+                        <a id="detailScreenshotLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold text-xs border border-blue-200 transition-all">
+                            <i class="fa-solid fa-image"></i> Mở ảnh minh họa gốc <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -710,6 +749,28 @@
         function escapeHtml(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function formatDisplayTimestamp(ts) {
+            if (!ts) return '';
+            const raw = String(ts).trim();
+            if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
+                const d = new Date(raw);
+                if (!isNaN(d.getTime())) {
+                    const pad = n => (n < 10 ? '0' + n : n);
+                    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                }
+            }
+            return raw;
+        }
+
+        function getDriveImagePreviewUrl(url) {
+            if (!url) return '';
+            const u = String(url).trim();
+            const m = u.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i) || u.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/i);
+            if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200`;
+            if (/\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(u)) return u;
+            return '';
         }
 
         function formatMultiSentenceHtml(text) {
@@ -903,7 +964,7 @@
                                 <div class="font-bold text-slate-900 group-hover:text-[#0070F4] text-xs leading-snug">${escapeHtml(t.lesson)}</div>
                                 <div class="text-[10.5px] text-slate-500 font-medium flex items-center gap-2 flex-wrap">
                                     <span class="text-slate-700 font-bold"><i class="fa-solid fa-user-pen text-[9.5px] text-[#0070F4] mr-1"></i>${escapeHtml(t.requester)}</span>
-                                    <span class="text-slate-400 text-[10px]"><i class="fa-regular fa-clock text-[9px] mr-0.5"></i>${escapeHtml(t.timestamp)}</span>
+                                    <span class="text-slate-400 text-[10px]"><i class="fa-regular fa-clock text-[9px] mr-0.5"></i>${escapeHtml(formatDisplayTimestamp(t.timestamp))}</span>
                                 </div>
                             </div>
                         </td>
@@ -987,7 +1048,73 @@
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function openCreateModal() { openModal('createModal'); }
+        function openCreateModal() {
+            openModal('createModal');
+        }
+
+        const pastedImageState = { base64: '', mime: '', previewUrl: '', sizeKb: 0 };
+
+        function clearPastedImage() {
+            pastedImageState.base64 = '';
+            pastedImageState.mime = '';
+            pastedImageState.previewUrl = '';
+            pastedImageState.sizeKb = 0;
+            const fileInput = document.getElementById('inputImageFile');
+            if (fileInput) fileInput.value = '';
+            const previewImg = document.getElementById('pastePreviewImg');
+            if (previewImg) previewImg.src = '';
+            document.getElementById('pastePreviewState')?.classList.add('hidden');
+            document.getElementById('pasteEmptyState')?.classList.remove('hidden');
+        }
+
+        function compressAndAttachImage(file) {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                showToast('Vui lòng chọn hoặc dán đúng định dạng ảnh (PNG, JPG, WEBP).', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const img = new Image();
+                img.onload = function () {
+                    const maxW = 1600;
+                    const scale = img.width > maxW ? (maxW / img.width) : 1;
+                    const w = Math.max(1, Math.round(img.width * scale));
+                    const h = Math.max(1, Math.round(img.height * scale));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    const b64 = dataUrl.split(',')[1] || '';
+                    const kb = Math.max(1, Math.round((b64.length * 3) / 4 / 1024));
+                    pastedImageState.base64 = b64;
+                    pastedImageState.mime = 'image/jpeg';
+                    pastedImageState.previewUrl = dataUrl;
+                    pastedImageState.sizeKb = kb;
+                    document.getElementById('pastePreviewImg').src = dataUrl;
+                    document.getElementById('pasteImageMeta').innerHTML = `<i class="fa-solid fa-circle-check"></i> Đã nhận ảnh (${w}×${h}px · ~${kb} KB) — tự lưu Drive khi gửi`;
+                    document.getElementById('pasteEmptyState').classList.add('hidden');
+                    document.getElementById('pastePreviewState').classList.remove('hidden');
+                    showToast(`Đã dán ảnh (~${kb} KB)! Bấm Gửi Ticket để lưu vào Google Drive.`, 'success');
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageFileSelect(file) {
+            if (file) compressAndAttachImage(file);
+        }
+
+        function handleImageDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('border-[#0070F4]', 'bg-blue-50/70');
+            const file = e.dataTransfer?.files?.[0];
+            if (file) compressAndAttachImage(file);
+        }
 
         function toggleAdminAuth() {
             if (isPinVerified) {
@@ -1083,25 +1210,32 @@
             openModal('planningModal');
         }
 
-        function handleCreateTicket(e) {
+        async function handleCreateTicket(e) {
             e.preventDefault();
+            const btn = document.getElementById('btnSubmitCreate');
+            const origBtnHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = pastedImageState.base64
+                ? `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang tải ảnh lên Drive &amp; gửi...`
+                : `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Đang gửi...`;
+
             let nextNum = allTickets.length + 1;
             allTickets.forEach(t => {
                 const m = String(t.id || '').match(/TK-RT-(\d+)/i);
                 if (m) nextNum = Math.max(nextNum, parseInt(m[1], 10) + 1);
             });
-            const newId = `TK-RT-${String(nextNum).padStart(3, '0')}`;
+            const tempId = `TK-RT-${String(nextNum).padStart(3, '0')}`;
             const pad = n => (n < 10 ? '0' + n : n);
             const now = new Date();
             const newTicket = {
-                id: newId,
+                id: tempId,
                 timestamp: `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
                 requester: document.getElementById('inputRequester').value,
                 lesson: document.getElementById('inputLesson').value,
                 module: document.getElementById('inputModule').value,
                 location: document.getElementById('inputLocation').value,
                 issue_desc: document.getElementById('inputDesc').value,
-                screenshot_url: document.getElementById('inputScreenshot').value,
+                screenshot_url: document.getElementById('inputScreenshot').value.trim(),
                 status: 'Mới tạo',
                 feasibility: 'Chờ phân tích',
                 priority: 'P2 - Tiêu chuẩn',
@@ -1112,24 +1246,68 @@
                 reviewer_feedback: '',
                 proof_image_url: ''
             };
+
+            const hasPastedImg = !!pastedImageState.base64;
+            const gasUrl = getWebhookUrl();
+            let toastMsg = `Đã lưu ${tempId} trên trình duyệt (cần gắn Webhook để đồng bộ lên Sheet).`;
+            let toastType = 'info';
+
+            if (gasUrl) {
+                const payload = {
+                    action: 'create',
+                    requester: newTicket.requester,
+                    lesson: newTicket.lesson,
+                    module: newTicket.module,
+                    location: newTicket.location,
+                    issue_desc: newTicket.issue_desc,
+                    screenshot_url: newTicket.screenshot_url
+                };
+                if (hasPastedImg) {
+                    payload.screenshot_base64 = pastedImageState.base64;
+                    payload.screenshot_mime = pastedImageState.mime;
+                }
+                try {
+                    const res = await fetch(gasUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                    const json = await res.json();
+                    if (json && json.status === 'success') {
+                        if (json.ticket_id) newTicket.id = json.ticket_id;
+                        if (json.timestamp) newTicket.timestamp = json.timestamp;
+                        if (json.screenshot_url) newTicket.screenshot_url = json.screenshot_url;
+                        if (hasPastedImg && !json.screenshot_url) {
+                            toastMsg = `Đã tạo ${newTicket.id}, nhưng ảnh chưa lên Drive do Apps Script chưa nâng cấp v2!`;
+                            toastType = 'info';
+                        } else {
+                            toastMsg = hasPastedImg
+                                ? `Đã tạo ${newTicket.id} và lưu ảnh lên Google Drive thành công!`
+                                : `Đã tạo ticket ${newTicket.id} và gửi lên Google Sheet!`;
+                            toastType = 'success';
+                        }
+                    } else {
+                        throw new Error((json && json.message) || 'Lỗi phản hồi từ Apps Script');
+                    }
+                } catch (err) {
+                    console.warn('POST Apps Script cần fallback:', err);
+                    toastMsg = `Không đọc được phản hồi từ Apps Script (${err.message || 'CORS'}). Đang thử tải lại Sheet...`;
+                    toastType = 'info';
+                }
+            }
+
             allTickets.unshift(newTicket);
             saveToLocalStorage();
             updateMetrics();
             applyFilters();
+            if (gasUrl) setTimeout(loadTickets, 1200);
 
-            const gasUrl = getWebhookUrl();
-            if (gasUrl) {
-                fetch(gasUrl, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'create', ...newTicket })
-                }).then(() => setTimeout(loadTickets, 1500));
-                showToast(`Đã tạo ticket ${newId} và gửi lên Google Sheet!`, 'success');
-            } else {
-                showToast(`Đã lưu ${newId} trên trình duyệt (cần gắn Webhook để đồng bộ lên Sheet).`, 'info');
-            }
+            clearPastedImage();
             closeModal('createModal');
             document.getElementById('createTicketForm').reset();
+            btn.disabled = false;
+            btn.innerHTML = origBtnHtml;
+            showToast(toastMsg, toastType);
         }
 
         function handleSavePlanning(e) {
@@ -1238,16 +1416,31 @@
             document.getElementById('detailTicketPriority').textContent = t.priority || 'P2 - Tiêu chuẩn';
             document.getElementById('detailTicketLesson').textContent = t.lesson;
             document.getElementById('detailTicketRequester').textContent = t.requester;
-            document.getElementById('detailTicketTimestamp').textContent = t.timestamp;
+            document.getElementById('detailTicketTimestamp').textContent = formatDisplayTimestamp(t.timestamp);
             document.getElementById('detailTicketModule').textContent = t.module;
             document.getElementById('detailTicketLocation').textContent = t.location || 'Toàn bài / Chung';
             document.getElementById('detailTicketDesc').innerHTML = formatMultiSentenceHtml(t.issue_desc) || '<p>--</p>';
 
             const imgBox = document.getElementById('detailScreenshotBox');
+            const thumbWrap = document.getElementById('detailScreenshotThumbWrap');
+            const thumbImg = document.getElementById('detailScreenshotImg');
             if (t.screenshot_url && t.screenshot_url.startsWith('http')) {
                 document.getElementById('detailScreenshotLink').href = t.screenshot_url;
+                const previewUrl = getDriveImagePreviewUrl(t.screenshot_url);
+                if (previewUrl) {
+                    thumbWrap.href = t.screenshot_url;
+                    thumbImg.src = previewUrl;
+                    thumbWrap.classList.remove('hidden');
+                } else {
+                    thumbImg.src = '';
+                    thumbWrap.classList.add('hidden');
+                }
                 imgBox.classList.remove('hidden');
-            } else imgBox.classList.add('hidden');
+            } else {
+                thumbImg.src = '';
+                thumbWrap.classList.add('hidden');
+                imgBox.classList.add('hidden');
+            }
 
             document.getElementById('detailFeasibility').textContent = t.feasibility || 'Chờ phân tích';
             document.getElementById('detailActionPlanWrap').classList.toggle('hidden', !t.action_plan);
@@ -1295,6 +1488,21 @@
             loadTickets();
             document.addEventListener('keydown', e => {
                 if (e.key === 'Escape') ['createModal', 'pinModal', 'planningModal', 'csatModal', 'ticketDetailModal'].forEach(closeModal);
+            });
+            document.addEventListener('paste', e => {
+                const modal = document.getElementById('createModal');
+                if (!modal || modal.classList.contains('hidden')) return;
+                const items = e.clipboardData?.items || [];
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type && items[i].type.startsWith('image/')) {
+                        const file = items[i].getAsFile();
+                        if (file) {
+                            e.preventDefault();
+                            compressAndAttachImage(file);
+                            break;
+                        }
+                    }
+                }
             });
         });
     </script>
