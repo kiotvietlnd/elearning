@@ -482,6 +482,16 @@
           title: 'Thẻ so sánh — Bấm chuyển qua lại để phân biệt nhanh',
           body: '<p><b>Chỗ cần bấm:</b> Bấm từng nút trong thanh tab này để so sánh rõ sự khác nhau giữa các trường hợp; khung nội dung tự giữ nguyên chiều cao.</p>'
         });
+      } else {
+        var cmp2El = document.querySelector('.cmp-grid-2');
+        if (cmp2El) {
+          list.push({
+            el: cmp2El,
+            mood: 'explain',
+            title: 'Khung so sánh song song — Đặt 2 trường hợp cạnh nhau để đối chiếu',
+            body: '<p>Hai hộp được xếp song song giúp bạn nhìn thẳng và phân biệt nhanh hai trường hợp mà không phải bấm chuyển qua lại.</p>'
+          });
+        }
       }
 
       var flipEl = document.querySelector('.flip-grid');
