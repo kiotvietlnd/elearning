@@ -390,7 +390,7 @@
     if (multi) {
       document.addEventListener('keydown', function (e) {
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-        if (document.querySelector('.g-full') || document.querySelector('.help-modal:not([hidden])')) return;
+        if (document.querySelector('.g-full') || document.querySelector('.tour-pop:not([hidden])')) return;
         var ae = document.activeElement;
         if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
         var next = e.key === 'ArrowRight' ? idx + 1 : idx - 1;
@@ -402,157 +402,308 @@
     }
   };
 
-  /* ---------- Float Button ? -> Modal Hướng dẫn 3 bước (KiCi, Section, Tương tác) ---------- */
+  /* ---------- Float Button ? -> Spotlight Tour tương tác từng section từ đầu đến cuối ---------- */
   function buildHelpGuide() {
     var fab = document.createElement('button');
     fab.type = 'button';
     fab.id = 'help-fab';
     fab.className = 'help-fab';
     fab.innerHTML = '<span class="q"><i class="fa-solid fa-question"></i></span><span class="txt">Hướng dẫn học</span>';
-    fab.title = 'Xem hướng dẫn cách học bài này cùng KiCi';
+    fab.title = 'Mở Spotlight Tour hướng dẫn từng phần cùng KiCi';
     document.body.appendChild(fab);
 
-    var modal = null;
-    var stepIdx = 0;
+    var backdrop = null;
+    var spot = null;
+    var pop = null;
+    var steps = [];
+    var curIdx = 0;
+    var rafId = 0;
 
-    function collectSections() {
+    function buildSectionRoadmapHtml() {
       var arr = [];
       document.querySelectorAll('.lms-wrap > .lms-card').forEach(function (sec, i) {
-        var tagEl = sec.querySelector('.lesson-eyebrow, .sec-tag');
-        var titleEl = sec.querySelector('h1.lesson-title, .sec-head h2');
-        var tag = tagEl ? tagEl.textContent.trim() : ('Phần ' + (i + 1));
-        var title = titleEl ? titleEl.textContent.trim() : '';
-        arr.push({ tag: tag, title: title });
+        var tagEl = sec.querySelector('.sec-tag, .lesson-eyebrow');
+        var tag = tagEl ? tagEl.textContent.trim() : ('Mục ' + (i + 1));
+        if (i === 0) tag = 'Mở bài & Mục tiêu';
+        arr.push('<li><b>' + (i + 1) + '.</b> ' + tag + '</li>');
       });
-      return arr;
+      return '<ol class="tour-roadmap">' + arr.join('') + '</ol>';
     }
 
-    function collectFeatures() {
+    function collectTourSteps() {
       var list = [];
-      if (document.querySelector('.term')) {
-        list.push({ ico: 'fa-underline', txt: '<b>Chữ gạch chân nét đứt màu xanh:</b> Bấm vào để xem nhanh giải thích thuật ngữ ngay bên dưới.' });
+      var kiciTop = document.querySelector('.lms-wrap > .lms-card:first-of-type .kici-box');
+      if (kiciTop) {
+        var hasTerm = !!document.querySelector('.term');
+        list.push({
+          el: kiciTop,
+          mood: 'hello',
+          title: 'KiCi là gì? — Người bạn đồng hành L&D',
+          body: '<p>KiCi luôn đứng ngay đầu mỗi khung màu để tóm tắt mục tiêu và nhắc mẹo cần nhớ trước khi bạn xem chi tiết.</p>' +
+            (hasTerm ? '<p><b>Chỗ cần bấm:</b> Chữ gạch chân nét đứt màu xanh trong bài đều chạm được để xem nhanh giải thích thuật ngữ nhé!</p>' : '')
+        });
       }
-      if (document.querySelector('.seg-btn, .tl-step, .lf-box')) {
-        list.push({ ico: 'fa-hand-pointer', txt: '<b>Các nút chuyển tab &amp; Sơ đồ Logic vận hành:</b> Bấm từng bước hoặc nút <b>Bước tiếp</b> để xem luồng dữ liệu, giúp bạn đọc hiểu và nhớ quy trình dễ dàng.' });
+
+      var goalEl = document.querySelector('.goal-list') || document.querySelector('.lms-wrap > .lms-card:first-of-type .lesson-title');
+      if (goalEl) {
+        list.push({
+          el: goalEl,
+          mood: 'hint',
+          title: 'Trình tự học toàn bài từ trên xuống dưới',
+          body: '<p>Bài này được chia ngắn theo đúng các chặng sau để bạn học gọn trong khung LMS:</p>' + buildSectionRoadmapHtml()
+        });
       }
-      if (document.querySelector('.flip')) {
-        list.push({ ico: 'fa-clone', txt: '<b>Thẻ lật 3D:</b> Chạm trực tiếp vào từng thẻ để lật mặt sau xem Ý nghĩa và Ví dụ thực tế.' });
+
+      var ytEl = document.querySelector('.yt-box');
+      if (ytEl) {
+        list.push({
+          el: ytEl,
+          mood: 'explain',
+          title: 'Chặng Video — Bấm Play xem trọn tình huống mẫu',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm vào khung phát video YouTube bên trên để xem thao tác thực tế trước khi đọc diễn giải chi tiết bên dưới.</p>'
+        });
       }
-      if (document.querySelector('#quiz-host')) {
-        list.push({ ico: 'fa-clipboard-question', txt: '<b>Trắc nghiệm nhanh:</b> Chọn đáp án A, B hoặc C để KiCi chấm ngay và giải thích tại chỗ.' });
+
+      var lfEl = document.querySelector('.lf-box');
+      if (lfEl) {
+        list.push({
+          el: lfEl,
+          mood: 'hint',
+          title: 'Sơ đồ Logic vận hành — Bấm từng bước luồng dữ liệu',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm vào từng nút tròn phía trên hoặc nút <b>Bước tiếp</b> ở góc dưới để xem trọn mạch Đầu vào → Hệ thống xử lý → Kết quả mà không bị nhảy trang.</p>'
+        });
       }
-      if (document.querySelector('#gallery-host')) {
-        list.push({ ico: 'fa-images', txt: '<b>Gallery Giao diện ôn tập:</b> Bấm hai mũi tên nằm ngoài ảnh hoặc dùng phím <b>← →</b> để xem lại ảnh màn hình; chỉ bấm nút <b>Phóng to</b> khi cần xem cỡ lớn.' });
+
+      var segEl = document.querySelector('.seg-group, .tl');
+      if (segEl) {
+        list.push({
+          el: segEl,
+          mood: 'explain',
+          title: 'Thẻ tab so sánh — Bấm chuyển qua lại để phân biệt nhanh',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm từng nút trong thanh tab này để so sánh rõ sự khác nhau; khung nội dung tự giữ nguyên chiều cao nên không đẩy màn hình.</p>'
+        });
       }
-      if (document.querySelector('#chk-host')) {
-        list.push({ ico: 'fa-list-check', txt: '<b>Checklist tự kiểm:</b> Tích đánh dấu các ý đã hiểu và ghi nhớ trước khi sang bài tiếp theo trên LMS.' });
+
+      var flipEl = document.querySelector('.flip-grid');
+      if (flipEl) {
+        list.push({
+          el: flipEl,
+          mood: 'explain',
+          title: 'Thẻ lật 3D — Chạm trực tiếp vào thẻ để lật mặt sau',
+          body: '<p><b>Chỗ cần bấm:</b> Chạm vào từng thẻ xanh đậm để lật xem phần <b>Ý nghĩa</b> và <b>Ví dụ</b> thực chiến.</p>'
+        });
       }
-      list.push({ ico: 'fa-lightbulb', txt: '<b>Lưu ý cách học:</b> Bài học tương tác dùng để đọc hiểu và tương tác cho nhớ; bạn không cần chia đôi màn hình làm song song vì cuối buổi đã có Bài tập Thực hành riêng.' });
-      return list;
+
+      var docBtnsEl = !ytEl ? document.querySelector('.lms-wrap .btn-row') : null;
+      if (docBtnsEl) {
+        list.push({
+          el: docBtnsEl,
+          mood: 'hint',
+          title: 'Mở Google Docs mẫu & Chọn Tệp › Tạo bản sao',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm nút <b>Mở Google Docs mẫu</b> để tạo bản sao riêng vào Drive của bạn, rồi chụp ảnh từng nhiệm vụ dán vào các khung nét đứt phía dưới.</p>'
+        });
+      }
+
+      var practiceGridEl = !ytEl ? document.querySelector('.lms-card:nth-of-type(3) .val-grid') : null;
+      if (practiceGridEl) {
+        list.push({
+          el: practiceGridEl,
+          mood: 'explain',
+          title: 'Danh sách khung ảnh minh chứng cần chụp',
+          body: '<p>Làm tuần tự từng nhiệm vụ trên gian hàng mã <b>3670</b>, chụp màn hình kết quả dán vào đúng từng khung ảnh rồi xuất PDF nộp LMS.</p>'
+        });
+      }
+
+      var quizEl = document.querySelector('#quiz-host .quiz-item') || document.querySelector('#quiz-host');
+      if (quizEl) {
+        list.push({
+          el: quizEl,
+          mood: 'hint',
+          title: 'Trắc nghiệm nhanh — Chọn A, B hoặc C để tự kiểm tra',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm chọn 1 phương án trong mỗi câu hỏi. Hệ thống sẽ chấm ngay tại chỗ và hiện giải thích chi tiết lý do đúng/sai.</p>'
+        });
+      }
+
+      var galEl = document.querySelector('.gallery-box');
+      if (galEl) {
+        list.push({
+          el: galEl,
+          mood: 'done',
+          title: 'Gallery Giao diện ôn tập — Dùng mũi tên ngoài ảnh hoặc ← →',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm 2 nút mũi tên <b>‹ ›</b> bên ngoài ảnh (hoặc phím <b>← →</b>) để lướt xem lại ảnh màn hình; khi cần xem to mới bấm nút <b>Phóng to</b> ở góc trên phải.</p>'
+        });
+      }
+
+      var chkEl = document.querySelector('#chk-host');
+      if (chkEl) {
+        list.push({
+          el: chkEl,
+          mood: 'done',
+          title: 'Checklist tự kiểm — Đánh dấu trước khi sang bài tiếp',
+          body: '<p><b>Chỗ cần bấm:</b> Tích vào từng ô vuông khi bạn chắc chắn đã hiểu và ghi nhớ trọn nội dung để hoàn tất bài học này trước khi bấm sang bài tiếp theo trên LMS.</p>'
+        });
+      }
+
+      return list.filter(function (s) {
+        if (!s.el) return false;
+        var r = s.el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
     }
 
-    function ensureModal() {
-      if (modal) return;
-      modal = document.createElement('div');
-      modal.className = 'help-modal';
-      modal.hidden = true;
-      modal.innerHTML =
-        '<div class="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-dlg-title">' +
-          '<div class="help-head">' +
-            '<div class="kici-ava">' + KVL.kiciSvg('hello') + '</div>' +
-            '<div class="help-head-meta">' +
-              '<span class="help-k">Hướng dẫn sử dụng bài học</span>' +
-              '<h4 id="help-dlg-title">KiCi đồng hành cùng bạn</h4>' +
-            '</div>' +
-            '<button type="button" class="help-x" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>' +
-          '</div>' +
-          '<div class="help-tabs">' +
-            '<button type="button" class="help-tab active" data-htab="0">1. KiCi là gì?</button>' +
-            '<button type="button" class="help-tab" data-htab="1">2. Trình tự bài</button>' +
-            '<button type="button" class="help-tab" data-htab="2">3. Chỗ cần bấm</button>' +
-          '</div>' +
-          '<div id="help-stage-host"></div>' +
-          '<div class="help-foot">' +
-            '<div class="help-dots"><i class="on"></i><i></i><i></i></div>' +
-            '<div class="btn-row">' +
-              '<button type="button" class="btn" data-hnav="-1" disabled><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
-              '<button type="button" class="btn btn-primary" data-hnav="1">Tiếp <i class="fa-solid fa-arrow-right"></i></button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      document.body.appendChild(modal);
+    function ensureOverlay() {
+      if (backdrop) return;
+      backdrop = document.createElement('div');
+      backdrop.className = 'tour-backdrop';
+      backdrop.hidden = true;
 
-      var secs = collectSections();
-      var feats = collectFeatures();
+      spot = document.createElement('div');
+      spot.className = 'tour-spot';
+      spot.hidden = true;
 
-      var p1 = '<ul class="help-list">' +
-        '<li><span class="help-ico"><i class="fa-solid fa-robot"></i></span><span><b>KiCi — Người bạn đồng hành L&amp;D:</b> Luôn xuất hiện ở ngay đầu mỗi khung để chào bạn, tóm tắt mục tiêu và dẫn dắt ý chính trước khi bạn đọc chi tiết.</span></li>' +
-        '<li><span class="help-ico"><i class="fa-solid fa-palette"></i></span><span><b>Khung màu xanh dương &amp; xanh lá xen kẽ:</b> Mỗi khung là một chặng học riêng giúp mắt bạn dễ nghỉ và phân tách nội dung gọn gàng trong khung LMS.</span></li>' +
-        '<li><span class="help-ico"><i class="fa-solid fa-underline"></i></span><span><b>Thuật ngữ chạm xem nghĩa:</b> Những từ gạch chân nét đứt màu xanh đều bấm vào được để xem định nghĩa ngắn ngay bên dưới.</span></li>' +
-      '</ul>';
+      pop = document.createElement('div');
+      pop.className = 'tour-pop';
+      pop.setAttribute('role', 'dialog');
+      pop.setAttribute('aria-modal', 'true');
+      pop.hidden = true;
 
-      var p2 = '<ul class="help-list">' +
-        secs.map(function (s, i) {
-          return '<li><span class="help-num">' + (i + 1) + '</span><span><b>' + s.tag + ':</b> ' + s.title + '</span></li>';
-        }).join('') +
-      '</ul>';
+      document.body.appendChild(backdrop);
+      document.body.appendChild(spot);
+      document.body.appendChild(pop);
 
-      var p3 = '<ul class="help-list">' +
-        feats.map(function (f) {
-          return '<li><span class="help-ico"><i class="fa-solid ' + f.ico + '"></i></span><span>' + f.txt + '</span></li>';
-        }).join('') +
-      '</ul>';
-
-      var tabsCtrl = KVL.tabs('help-stage-host', [p1, p2, p3], 0);
-      var hTabs = Array.prototype.slice.call(modal.querySelectorAll('.help-tab'));
-      var hDots = Array.prototype.slice.call(modal.querySelectorAll('.help-dots i'));
-      var prevB = modal.querySelector('[data-hnav="-1"]');
-      var nextB = modal.querySelector('[data-hnav="1"]');
-
-      function goStep(n, play) {
-        stepIdx = Math.max(0, Math.min(2, n));
-        tabsCtrl.select(stepIdx, play);
-        hTabs.forEach(function (t, i) { t.classList.toggle('active', i === stepIdx); });
-        hDots.forEach(function (d, i) { d.classList.toggle('on', i === stepIdx); });
-        prevB.disabled = stepIdx === 0;
-        nextB.innerHTML = stepIdx === 2 ? 'Đã hiểu <i class="fa-solid fa-check"></i>' : 'Tiếp <i class="fa-solid fa-arrow-right"></i>';
-      }
-
-      modal.addEventListener('click', function (e) {
-        if (e.target === modal || e.target.closest('.help-x')) { closeModal(); return; }
-        var tb = e.target.closest('[data-htab]');
-        if (tb) { goStep(+tb.getAttribute('data-htab'), true); return; }
-        var nb = e.target.closest('[data-hnav]');
+      backdrop.addEventListener('click', closeTour);
+      pop.addEventListener('click', function (e) {
+        if (e.target.closest('.tour-x')) { closeTour(); return; }
+        var nb = e.target.closest('[data-tnav]');
         if (nb && !nb.disabled) {
-          var d = +nb.getAttribute('data-hnav');
-          if (stepIdx + d >= 3) closeModal();
-          else goStep(stepIdx + d, true);
+          var next = curIdx + (+nb.getAttribute('data-tnav'));
+          if (next >= steps.length) closeTour();
+          else showStep(next, true);
         }
       });
 
       document.addEventListener('keydown', function (e) {
-        if (modal.hidden) return;
-        if (e.key === 'Escape') closeModal();
+        if (!pop || pop.hidden) return;
+        if (e.key === 'Escape') { e.preventDefault(); closeTour(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); if (curIdx + 1 < steps.length) showStep(curIdx + 1, true); else closeTour(); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (curIdx > 0) showStep(curIdx - 1, true); }
       });
 
-      modal._reset = function () { goStep(0, false); };
+      function onReposition() {
+        if (!pop || pop.hidden) return;
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(positionCurrent);
+      }
+      window.addEventListener('resize', onReposition, { passive: true });
+      window.addEventListener('scroll', onReposition, { passive: true });
     }
 
-    function openModal() {
-      ensureModal();
-      modal._reset();
-      modal.hidden = false;
+    function positionCurrent() {
+      if (!pop || pop.hidden || !steps[curIdx]) return;
+      var el = steps[curIdx].el;
+      var raw = el.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var pad = 6;
+
+      // Clamp spotlight vertical frame so there is always room for the popover inside short LMS viewports (e.g. 680x520)
+      var sLeft = Math.max(8, raw.left - pad);
+      var sRight = Math.min(vw - 8, raw.right + pad);
+      var sWidth = Math.max(80, sRight - sLeft);
+      var sTop = Math.max(8, raw.top - pad);
+      var maxSpotH = Math.max(110, vh - 210);
+      var sHeight = Math.min(Math.max(44, raw.height + pad * 2), maxSpotH);
+      if (sTop + sHeight > vh - 12) sTop = Math.max(8, vh - 12 - sHeight);
+
+      spot.style.left = sLeft + 'px';
+      spot.style.top = sTop + 'px';
+      spot.style.width = sWidth + 'px';
+      spot.style.height = sHeight + 'px';
+
+      // Measure popover and place cleanly below or above spotlight, always clamped inside viewport
+      var pRect = pop.getBoundingClientRect();
+      var pW = pRect.width || Math.min(370, vw - 24);
+      var pH = pRect.height || 185;
+      var gap = 10;
+
+      var pLeft = Math.max(12, Math.min(sLeft, vw - pW - 12));
+      var spaceBelow = vh - (sTop + sHeight) - 12;
+      var spaceAbove = sTop - 12;
+      var pTop;
+
+      if (spaceBelow >= pH + gap) {
+        pTop = sTop + sHeight + gap;
+      } else if (spaceAbove >= pH + gap) {
+        pTop = sTop - pH - gap;
+      } else {
+        pTop = vh - pH - 12;
+      }
+      pTop = Math.max(12, Math.min(pTop, vh - pH - 12));
+
+      pop.style.left = pLeft + 'px';
+      pop.style.top = pTop + 'px';
+    }
+
+    function renderPopContent(idx) {
+      var st = steps[idx];
+      var dots = steps.map(function (_, i) {
+        return '<i class="' + (i === idx ? 'on' : '') + '"></i>';
+      }).join('');
+      pop.innerHTML =
+        '<div class="tour-head">' +
+          '<div class="kici-ava">' + KVL.kiciSvg(st.mood || 'hello') + '</div>' +
+          '<div class="tour-head-meta">' +
+            '<span class="tour-step">Spotlight Tour · Bước ' + (idx + 1) + ' / ' + steps.length + '</span>' +
+            '<h4 class="tour-title">' + st.title + '</h4>' +
+          '</div>' +
+          '<button type="button" class="tour-x" aria-label="Đóng hướng dẫn"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="tour-body">' + st.body + '</div>' +
+        '<div class="tour-foot">' +
+          '<div class="tour-dots">' + dots + '</div>' +
+          '<div class="tour-actions">' +
+            '<button type="button" class="btn" data-tnav="-1"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
+            '<button type="button" class="btn btn-primary" data-tnav="1">' + (idx === steps.length - 1 ? 'Hoàn tất <i class="fa-solid fa-check"></i>' : 'Tiếp <i class="fa-solid fa-arrow-right"></i>') + '</button>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function showStep(idx, play) {
+      curIdx = Math.max(0, Math.min(steps.length - 1, idx));
+      renderPopContent(curIdx);
+      var targetEl = steps[curIdx].el;
+      var rect = targetEl.getBoundingClientRect();
+      var vh = window.innerHeight;
+      // Bring target cleanly toward upper area so spotlight + popover both fit inside viewport
+      var desiredTop = Math.max(16, Math.round(vh * 0.14));
+      var targetScroll = Math.max(0, window.scrollY + rect.top - desiredTop);
+      window.scrollTo({ top: targetScroll, behavior: 'auto' });
+      requestAnimationFrame(function () {
+        positionCurrent();
+      });
+      if (play) KVL.sound('click');
+    }
+
+    function openTour() {
+      steps = collectTourSteps();
+      if (!steps.length) return;
+      ensureOverlay();
+      backdrop.hidden = false;
+      spot.hidden = false;
+      pop.hidden = false;
+      showStep(0, true);
+    }
+
+    function closeTour() {
+      if (backdrop) backdrop.hidden = true;
+      if (spot) spot.hidden = true;
+      if (pop) pop.hidden = true;
       KVL.sound('click');
     }
 
-    function closeModal() {
-      if (modal) modal.hidden = true;
-      KVL.sound('click');
-    }
-
-    fab.addEventListener('click', openModal);
+    fab.addEventListener('click', openTour);
     document.addEventListener('click', function (e) {
-      if (e.target.closest('[data-tour]')) openModal();
+      if (e.target.closest('[data-tour]')) openTour();
     });
   }
 
