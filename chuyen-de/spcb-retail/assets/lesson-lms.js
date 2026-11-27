@@ -402,14 +402,14 @@
     }
   };
 
-  /* ---------- Float Button ? -> Spotlight Tour tương tác từng section từ đầu đến cuối ---------- */
+  /* ---------- Float Button ? -> Hướng dẫn học tập tương tác từ đầu đến cuối ---------- */
   function buildHelpGuide() {
     var fab = document.createElement('button');
     fab.type = 'button';
     fab.id = 'help-fab';
     fab.className = 'help-fab';
     fab.innerHTML = '<span class="q"><i class="fa-solid fa-question"></i></span><span class="txt">Hướng dẫn học</span>';
-    fab.title = 'Mở Spotlight Tour hướng dẫn từng phần cùng KiCi';
+    fab.title = 'Mở hướng dẫn học tập từng phần cùng KiCi';
     document.body.appendChild(fab);
 
     var backdrop = null;
@@ -438,9 +438,9 @@
         list.push({
           el: kiciTop,
           mood: 'hello',
-          title: 'KiCi là gì? — Người bạn đồng hành L&D',
-          body: '<p>KiCi luôn đứng ngay đầu mỗi khung màu để tóm tắt mục tiêu và nhắc mẹo cần nhớ trước khi bạn xem chi tiết.</p>' +
-            (hasTerm ? '<p><b>Chỗ cần bấm:</b> Chữ gạch chân nét đứt màu xanh trong bài đều chạm được để xem nhanh giải thích thuật ngữ nhé!</p>' : '')
+          title: 'KiCi là gì? — Người bạn đồng hành của bạn',
+          body: '<p>KiCi luôn đứng ngay đầu mỗi khung màu để chào bạn, tóm tắt mục tiêu và nhắc mẹo cần nhớ trước khi bạn đọc chi tiết.</p>' +
+            (hasTerm ? '<p><b>Chỗ cần bấm:</b> Các chữ gạch chân nét đứt màu xanh trong bài đều chạm vào được để mở nhanh giải thích thuật ngữ.</p>' : '')
         });
       }
 
@@ -449,18 +449,18 @@
         list.push({
           el: goalEl,
           mood: 'hint',
-          title: 'Trình tự học toàn bài từ trên xuống dưới',
-          body: '<p>Bài này được chia ngắn theo đúng các chặng sau để bạn học gọn trong khung LMS:</p>' + buildSectionRoadmapHtml()
+          title: 'Trình tự bài học gồm các phần từ trên xuống',
+          body: '<p>Bài này được chia thành từng chặng ngắn dễ theo dõi:</p>' + buildSectionRoadmapHtml()
         });
       }
 
-      var ytEl = document.querySelector('.yt-box');
+      var ytEl = document.querySelector('.video-box');
       if (ytEl) {
         list.push({
           el: ytEl,
           mood: 'explain',
-          title: 'Chặng Video — Bấm Play xem trọn tình huống mẫu',
-          body: '<p><b>Chỗ cần bấm:</b> Bấm vào khung phát video YouTube bên trên để xem thao tác thực tế trước khi đọc diễn giải chi tiết bên dưới.</p>'
+          title: 'Phần Video — Bấm phát để xem trọn tình huống mẫu',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm vào nút Play trên khung video YouTube để xem thao tác thực tế trước khi đọc diễn giải chi tiết bên dưới.</p>'
         });
       }
 
@@ -469,8 +469,8 @@
         list.push({
           el: lfEl,
           mood: 'hint',
-          title: 'Sơ đồ Logic vận hành — Bấm từng bước luồng dữ liệu',
-          body: '<p><b>Chỗ cần bấm:</b> Bấm vào từng nút tròn phía trên hoặc nút <b>Bước tiếp</b> ở góc dưới để xem trọn mạch Đầu vào → Hệ thống xử lý → Kết quả mà không bị nhảy trang.</p>'
+          title: 'Sơ đồ quy trình — Bấm từng bước để xem luồng xử lý',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm từng nút số thứ tự phía trên hoặc nút <b>Bước tiếp</b> ở góc dưới để xem trọn mạch Đầu vào → Hệ thống xử lý → Kết quả.</p>'
         });
       }
 
@@ -479,8 +479,8 @@
         list.push({
           el: segEl,
           mood: 'explain',
-          title: 'Thẻ tab so sánh — Bấm chuyển qua lại để phân biệt nhanh',
-          body: '<p><b>Chỗ cần bấm:</b> Bấm từng nút trong thanh tab này để so sánh rõ sự khác nhau; khung nội dung tự giữ nguyên chiều cao nên không đẩy màn hình.</p>'
+          title: 'Thẻ so sánh — Bấm chuyển qua lại để phân biệt nhanh',
+          body: '<p><b>Chỗ cần bấm:</b> Bấm từng nút trong thanh tab này để so sánh rõ sự khác nhau giữa các trường hợp; khung nội dung tự giữ nguyên chiều cao.</p>'
         });
       }
 
@@ -489,28 +489,29 @@
         list.push({
           el: flipEl,
           mood: 'explain',
-          title: 'Thẻ lật 3D — Chạm trực tiếp vào thẻ để lật mặt sau',
-          body: '<p><b>Chỗ cần bấm:</b> Chạm vào từng thẻ xanh đậm để lật xem phần <b>Ý nghĩa</b> và <b>Ví dụ</b> thực chiến.</p>'
+          title: 'Thẻ lật 3D — Chạm trực tiếp vào thẻ để xem mặt sau',
+          body: '<p><b>Chỗ cần bấm:</b> Chạm vào từng thẻ xanh đậm để lật xem phần <b>Ý nghĩa</b> và <b>Ví dụ</b> thực tế.</p>'
         });
       }
 
-      var docBtnsEl = !ytEl ? document.querySelector('.lms-wrap .btn-row') : null;
+      var docsLink = !ytEl ? document.querySelector('a[href*="docs.google.com/document"]') : null;
+      var docBtnsEl = docsLink ? docsLink.closest('.btn-row') : null;
       if (docBtnsEl) {
         list.push({
           el: docBtnsEl,
           mood: 'hint',
           title: 'Mở Google Docs mẫu & Chọn Tệp › Tạo bản sao',
-          body: '<p><b>Chỗ cần bấm:</b> Bấm nút <b>Mở Google Docs mẫu</b> để tạo bản sao riêng vào Drive của bạn, rồi chụp ảnh từng nhiệm vụ dán vào các khung nét đứt phía dưới.</p>'
+          body: '<p><b>Chỗ cần bấm:</b> Bấm nút <b>Mở Google Docs mẫu</b> để lưu bản sao riêng vào Drive của bạn trước khi chụp ảnh dán vào khung nét đứt.</p>'
         });
       }
 
-      var practiceGridEl = !ytEl ? document.querySelector('.lms-card:nth-of-type(3) .val-grid') : null;
+      var practiceGridEl = docsLink ? document.querySelector('.lms-card:nth-of-type(3) .val-grid') : null;
       if (practiceGridEl) {
         list.push({
           el: practiceGridEl,
           mood: 'explain',
           title: 'Danh sách khung ảnh minh chứng cần chụp',
-          body: '<p>Làm tuần tự từng nhiệm vụ trên gian hàng mã <b>3670</b>, chụp màn hình kết quả dán vào đúng từng khung ảnh rồi xuất PDF nộp LMS.</p>'
+          body: '<p>Thực hành tuần tự từng nhiệm vụ trên gian hàng mã <b>3670</b>, chụp màn hình kết quả dán vào đúng từng khung ảnh rồi xuất file PDF nộp bài.</p>'
         });
       }
 
@@ -520,7 +521,7 @@
           el: quizEl,
           mood: 'hint',
           title: 'Trắc nghiệm nhanh — Chọn A, B hoặc C để tự kiểm tra',
-          body: '<p><b>Chỗ cần bấm:</b> Bấm chọn 1 phương án trong mỗi câu hỏi. Hệ thống sẽ chấm ngay tại chỗ và hiện giải thích chi tiết lý do đúng/sai.</p>'
+          body: '<p><b>Chỗ cần bấm:</b> Bấm chọn 1 phương án trong mỗi câu hỏi. Hệ thống sẽ chấm ngay tại chỗ và hiện giải thích chi tiết lý do đúng hay sai.</p>'
         });
       }
 
@@ -539,8 +540,8 @@
         list.push({
           el: chkEl,
           mood: 'done',
-          title: 'Checklist tự kiểm — Đánh dấu trước khi sang bài tiếp',
-          body: '<p><b>Chỗ cần bấm:</b> Tích vào từng ô vuông khi bạn chắc chắn đã hiểu và ghi nhớ trọn nội dung để hoàn tất bài học này trước khi bấm sang bài tiếp theo trên LMS.</p>'
+          title: 'Checklist tự kiểm — Đánh dấu trước khi sang bài tiếp theo',
+          body: '<p><b>Chỗ cần bấm:</b> Tích vào từng ô vuông khi bạn chắc chắn đã hiểu và ghi nhớ trọn nội dung trước khi chuyển sang bài học tiếp theo.</p>'
         });
       }
 
@@ -584,9 +585,19 @@
 
       document.addEventListener('keydown', function (e) {
         if (!pop || pop.hidden) return;
-        if (e.key === 'Escape') { e.preventDefault(); closeTour(); }
-        else if (e.key === 'ArrowRight') { e.preventDefault(); if (curIdx + 1 < steps.length) showStep(curIdx + 1, true); else closeTour(); }
-        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (curIdx > 0) showStep(curIdx - 1, true); }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeTour();
+        } else if (e.key === 'Enter' || e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (curIdx + 1 < steps.length) showStep(curIdx + 1, true);
+          else closeTour();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (curIdx > 0) showStep(curIdx - 1, true);
+        }
       });
 
       function onReposition() {
@@ -653,7 +664,7 @@
         '<div class="tour-head">' +
           '<div class="kici-ava">' + KVL.kiciSvg(st.mood || 'hello') + '</div>' +
           '<div class="tour-head-meta">' +
-            '<span class="tour-step">Spotlight Tour · Bước ' + (idx + 1) + ' / ' + steps.length + '</span>' +
+            '<span class="tour-step">Hướng dẫn học tập · Bước ' + (idx + 1) + ' / ' + steps.length + '</span>' +
             '<h4 class="tour-title">' + st.title + '</h4>' +
           '</div>' +
           '<button type="button" class="tour-x" aria-label="Đóng hướng dẫn"><i class="fa-solid fa-xmark"></i></button>' +
@@ -687,6 +698,7 @@
     function openTour() {
       steps = collectTourSteps();
       if (!steps.length) return;
+      if (fab && fab.blur) fab.blur();
       ensureOverlay();
       backdrop.hidden = false;
       spot.hidden = false;
