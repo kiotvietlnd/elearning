@@ -93,13 +93,45 @@
     });
   }
 
-  function wireTerms() {
-    document.querySelectorAll('.termify').forEach(function (el) {
-      if (!el.getAttribute('data-termified')) {
-        el.innerHTML = KVL.termify(el.innerHTML);
-        el.setAttribute('data-termified', '1');
+  function termifyWalk(root) {
+    if (!root || !document.createTreeWalker) return;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        if (!node.nodeValue || node.nodeValue.indexOf('{{') === -1) return NodeFilter.FILTER_REJECT;
+        var p = node.parentNode;
+        if (!p || p.closest('script, style, code, pre, textarea, input, button.term, svg')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
       }
     });
+    var nodes = [];
+    var cur;
+    while ((cur = walker.nextNode())) nodes.push(cur);
+    nodes.forEach(function (tn) {
+      var text = tn.nodeValue;
+      var re = /\{\{([^}|]+)(?:\|([^}]+))?\}\}/g;
+      var m, last = 0;
+      var frag = document.createDocumentFragment();
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var key = m[1].trim();
+        var label = (m[2] || m[1]).trim();
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'term';
+        btn.setAttribute('data-term', key);
+        btn.setAttribute('aria-expanded', 'false');
+        btn.textContent = label;
+        frag.appendChild(btn);
+        last = re.lastIndex;
+      }
+      if (last === 0) return;
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      tn.parentNode.replaceChild(frag, tn);
+    });
+  }
+
+  function wireTerms() {
+    termifyWalk(document.querySelector('.lms-wrap') || document.body);
     document.addEventListener('click', function (e) {
       var b = e.target.closest && e.target.closest('.term');
       if (!b) return;
@@ -108,7 +140,7 @@
       var key = b.getAttribute('data-term');
       var def = (window.KV_TERMS || {})[key];
       if (!def) return;
-      var host = b.closest('p, li, td, .kici-text, .g-col, .tl-panel') || b.parentElement;
+      var host = b.closest('p, li, td, .kici-text, .g-col, .tl-panel, .cmp-card, .val-item, .step-detail, .callout') || b.parentElement;
       var ex = host.nextElementSibling && host.nextElementSibling.classList.contains('term-def')
         ? host.nextElementSibling
         : host.querySelector(':scope > .term-def');
@@ -195,6 +227,123 @@
         KVL.sound('click');
       }
     });
+    render();
+  };
+
+  /* ---------- Gallery Giao diện Slider (chỉ ảnh, bấm Next/Prev + phóng to) ---------- */
+  KVL.gallery = function (hostId, imgs) {
+    var host = document.getElementById(hostId);
+    if (!host || !imgs || !imgs.length) return;
+    var list = imgs.map(function (item, i) {
+      return typeof item === 'string'
+        ? { src: item, alt: 'Ảnh giao diện KiotViet ' + (i + 1) }
+        : { src: item.src || item.img, alt: item.alt || ('Ảnh giao diện KiotViet ' + (i + 1)) };
+    });
+    var idx = 0;
+    var touchX = 0;
+
+    function render() {
+      var cur = list[idx];
+      var multi = list.length > 1;
+      host.innerHTML =
+        '<div class="gallery-box">' +
+          '<div class="gallery-top">' +
+            '<span class="gallery-count"><i class="fa-regular fa-images"></i> Ảnh ' + (idx + 1) + ' / ' + list.length + '</span>' +
+            '<button type="button" class="gallery-zoom-btn" data-gzoom="1"><i class="fa-solid fa-expand"></i> Phóng to</button>' +
+          '</div>' +
+          '<div class="gallery-stage" title="Bấm để phóng to ảnh">' +
+            (multi ? '<button type="button" class="gallery-arrow prev" data-gnav="-1" aria-label="Ảnh trước"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button>' : '') +
+            '<img src="' + cur.src + '" alt="' + cur.alt + '" loading="lazy">' +
+            (multi ? '<button type="button" class="gallery-arrow next" data-gnav="1" aria-label="Ảnh tiếp theo"' + (idx === list.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button>' : '') +
+          '</div>' +
+          (multi
+            ? '<div class="gallery-nav">' +
+                '<div class="gallery-dots">' +
+                  list.map(function (_, i) {
+                    return '<button type="button" class="gallery-dot' + (i === idx ? ' on' : '') + '" data-gidx="' + i + '" aria-label="Xem ảnh ' + (i + 1) + '"></button>';
+                  }).join('') +
+                '</div>' +
+                '<div class="gallery-btns">' +
+                  '<button type="button" class="btn" data-gnav="-1"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
+                  '<button type="button" class="btn btn-primary" data-gnav="1"' + (idx === list.length - 1 ? ' disabled' : '') + '>Tiếp <i class="fa-solid fa-arrow-right"></i></button>' +
+                '</div>' +
+              '</div>'
+            : '') +
+        '</div>';
+    }
+
+    function openZoom() {
+      var dlg = document.createElement('div');
+      dlg.className = 'g-full';
+      dlg.setAttribute('role', 'dialog');
+      function paintDlg() {
+        var cur = list[idx];
+        dlg.innerHTML =
+          '<button type="button" class="g-full-x" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>' +
+          '<div class="g-stage"><div class="g-imgbox"><img src="' + cur.src + '" alt="' + cur.alt + '"></div></div>' +
+          '<div class="g-full-bar">' +
+            '<div class="g-full-cap"><b>Ảnh ' + (idx + 1) + ' / ' + list.length + '</b><small>Dùng phím ← / → để chuyển ảnh · Esc để đóng</small></div>' +
+            (list.length > 1
+              ? '<div class="btn-row">' +
+                  '<button type="button" class="btn" data-fnav="-1"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
+                  '<button type="button" class="btn btn-primary" data-fnav="1"' + (idx === list.length - 1 ? ' disabled' : '') + '>Tiếp <i class="fa-solid fa-arrow-right"></i></button>' +
+                '</div>'
+              : '') +
+          '</div>';
+      }
+      function closeDlg() { dlg.remove(); document.removeEventListener('keydown', onK); }
+      function onK(ev) {
+        if (ev.key === 'Escape') closeDlg();
+        else if (ev.key === 'ArrowLeft' && idx > 0) { idx--; render(); paintDlg(); }
+        else if (ev.key === 'ArrowRight' && idx < list.length - 1) { idx++; render(); paintDlg(); }
+      }
+      dlg.addEventListener('click', function (ev) {
+        var fnav = ev.target.closest('[data-fnav]');
+        if (fnav && !fnav.disabled) {
+          idx = Math.max(0, Math.min(list.length - 1, idx + (+fnav.getAttribute('data-fnav'))));
+          KVL.sound('click');
+          render();
+          paintDlg();
+          return;
+        }
+        if (ev.target === dlg || ev.target.closest('.g-full-x')) closeDlg();
+      });
+      paintDlg();
+      document.body.appendChild(dlg);
+      document.addEventListener('keydown', onK);
+      KVL.sound('click');
+    }
+
+    host.addEventListener('click', function (e) {
+      var nb = e.target.closest('[data-gnav]');
+      if (nb && !nb.disabled) {
+        idx = Math.max(0, Math.min(list.length - 1, idx + (+nb.getAttribute('data-gnav'))));
+        KVL.sound('click');
+        render();
+        return;
+      }
+      var db = e.target.closest('[data-gidx]');
+      if (db) {
+        idx = +db.getAttribute('data-gidx');
+        KVL.sound('click');
+        render();
+        return;
+      }
+      if (e.target.closest('[data-gzoom]') || (e.target.closest('.gallery-stage') && !e.target.closest('.gallery-arrow'))) {
+        openZoom();
+      }
+    });
+    host.addEventListener('touchstart', function (e) {
+      if (e.touches && e.touches[0]) touchX = e.touches[0].clientX;
+    }, { passive: true });
+    host.addEventListener('touchend', function (e) {
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 42) {
+        var next = dx < 0 ? Math.min(list.length - 1, idx + 1) : Math.max(0, idx - 1);
+        if (next !== idx) { idx = next; KVL.sound('click'); render(); }
+      }
+    }, { passive: true });
     render();
   };
 
@@ -581,6 +730,123 @@
     render();
   };
 
+  /* ---------- Gallery Giao diện Slider (chỉ ảnh, bấm Next/Prev + phóng to) ---------- */
+  KVL.gallery = function (hostId, imgs) {
+    var host = document.getElementById(hostId);
+    if (!host || !imgs || !imgs.length) return;
+    var list = imgs.map(function (item, i) {
+      return typeof item === 'string'
+        ? { src: item, alt: 'Ảnh giao diện KiotViet ' + (i + 1) }
+        : { src: item.src || item.img, alt: item.alt || ('Ảnh giao diện KiotViet ' + (i + 1)) };
+    });
+    var idx = 0;
+    var touchX = 0;
+
+    function render() {
+      var cur = list[idx];
+      var multi = list.length > 1;
+      host.innerHTML =
+        '<div class="gallery-box">' +
+          '<div class="gallery-top">' +
+            '<span class="gallery-count"><i class="fa-regular fa-images"></i> Ảnh ' + (idx + 1) + ' / ' + list.length + '</span>' +
+            '<button type="button" class="gallery-zoom-btn" data-gzoom="1"><i class="fa-solid fa-expand"></i> Phóng to</button>' +
+          '</div>' +
+          '<div class="gallery-stage" title="Bấm để phóng to ảnh">' +
+            (multi ? '<button type="button" class="gallery-arrow prev" data-gnav="-1" aria-label="Ảnh trước"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button>' : '') +
+            '<img src="' + cur.src + '" alt="' + cur.alt + '" loading="lazy">' +
+            (multi ? '<button type="button" class="gallery-arrow next" data-gnav="1" aria-label="Ảnh tiếp theo"' + (idx === list.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button>' : '') +
+          '</div>' +
+          (multi
+            ? '<div class="gallery-nav">' +
+                '<div class="gallery-dots">' +
+                  list.map(function (_, i) {
+                    return '<button type="button" class="gallery-dot' + (i === idx ? ' on' : '') + '" data-gidx="' + i + '" aria-label="Xem ảnh ' + (i + 1) + '"></button>';
+                  }).join('') +
+                '</div>' +
+                '<div class="gallery-btns">' +
+                  '<button type="button" class="btn" data-gnav="-1"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
+                  '<button type="button" class="btn btn-primary" data-gnav="1"' + (idx === list.length - 1 ? ' disabled' : '') + '>Tiếp <i class="fa-solid fa-arrow-right"></i></button>' +
+                '</div>' +
+              '</div>'
+            : '') +
+        '</div>';
+    }
+
+    function openZoom() {
+      var dlg = document.createElement('div');
+      dlg.className = 'g-full';
+      dlg.setAttribute('role', 'dialog');
+      function paintDlg() {
+        var cur = list[idx];
+        dlg.innerHTML =
+          '<button type="button" class="g-full-x" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>' +
+          '<div class="g-stage"><div class="g-imgbox"><img src="' + cur.src + '" alt="' + cur.alt + '"></div></div>' +
+          '<div class="g-full-bar">' +
+            '<div class="g-full-cap"><b>Ảnh ' + (idx + 1) + ' / ' + list.length + '</b><small>Dùng phím ← / → để chuyển ảnh · Esc để đóng</small></div>' +
+            (list.length > 1
+              ? '<div class="btn-row">' +
+                  '<button type="button" class="btn" data-fnav="-1"' + (idx === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-left"></i> Trước</button>' +
+                  '<button type="button" class="btn btn-primary" data-fnav="1"' + (idx === list.length - 1 ? ' disabled' : '') + '>Tiếp <i class="fa-solid fa-arrow-right"></i></button>' +
+                '</div>'
+              : '') +
+          '</div>';
+      }
+      function closeDlg() { dlg.remove(); document.removeEventListener('keydown', onK); }
+      function onK(ev) {
+        if (ev.key === 'Escape') closeDlg();
+        else if (ev.key === 'ArrowLeft' && idx > 0) { idx--; render(); paintDlg(); }
+        else if (ev.key === 'ArrowRight' && idx < list.length - 1) { idx++; render(); paintDlg(); }
+      }
+      dlg.addEventListener('click', function (ev) {
+        var fnav = ev.target.closest('[data-fnav]');
+        if (fnav && !fnav.disabled) {
+          idx = Math.max(0, Math.min(list.length - 1, idx + (+fnav.getAttribute('data-fnav'))));
+          KVL.sound('click');
+          render();
+          paintDlg();
+          return;
+        }
+        if (ev.target === dlg || ev.target.closest('.g-full-x')) closeDlg();
+      });
+      paintDlg();
+      document.body.appendChild(dlg);
+      document.addEventListener('keydown', onK);
+      KVL.sound('click');
+    }
+
+    host.addEventListener('click', function (e) {
+      var nb = e.target.closest('[data-gnav]');
+      if (nb && !nb.disabled) {
+        idx = Math.max(0, Math.min(list.length - 1, idx + (+nb.getAttribute('data-gnav'))));
+        KVL.sound('click');
+        render();
+        return;
+      }
+      var db = e.target.closest('[data-gidx]');
+      if (db) {
+        idx = +db.getAttribute('data-gidx');
+        KVL.sound('click');
+        render();
+        return;
+      }
+      if (e.target.closest('[data-gzoom]') || (e.target.closest('.gallery-stage') && !e.target.closest('.gallery-arrow'))) {
+        openZoom();
+      }
+    });
+    host.addEventListener('touchstart', function (e) {
+      if (e.touches && e.touches[0]) touchX = e.touches[0].clientX;
+    }, { passive: true });
+    host.addEventListener('touchend', function (e) {
+      if (!e.changedTouches || !e.changedTouches[0]) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 42) {
+        var next = dx < 0 ? Math.min(list.length - 1, idx + 1) : Math.max(0, idx - 1);
+        if (next !== idx) { idx = next; KVL.sound('click'); render(); }
+      }
+    }, { passive: true });
+    render();
+  };
+
   /* ---------- Spotlight Tour Hướng dẫn Cách học (từ Demo Nhật Vi) ---------- */
   function buildTour() {
     var hasGuide = !!document.querySelector('.guide');
@@ -693,11 +959,6 @@
     document.addEventListener('click', function (e) {
       if (e.target.closest('[data-tour]')) start();
     });
-    try {
-      if (!localStorage.getItem(STORE_TOUR) && (hasGuide || hasVideo)) {
-        setTimeout(start, 700);
-      }
-    } catch (e) {}
   }
 
   /* ---------- Thẻ lật 3D ---------- */
